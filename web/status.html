@@ -2,74 +2,96 @@
 <title>hzwest 集成看板</title>
 <style>
 *{box-sizing:border-box}
-:root{--ink:#1c1c1e;--mid:rgba(28,28,30,.62);--low:rgba(28,28,30,.40);--line:#ececec;--bg:#f6f6f4;--card:#fff;--blue:#2f6fe4;--red:#d64535;--orange:#e5892b;--yellow:#d9a400;--green:#2f9e5b}
+:root{--ink:#1c1c1e;--mid:rgba(28,28,30,.62);--low:rgba(28,28,30,.40);--line:#ececec;--bg:#f5f5f3;--blue:#2f6fe4;--red:#d64535;--amber:#e08a00;--green:#2f9e5b;--gray:#c9c9c9}
 html,body{height:100%}body{margin:0;overflow:hidden;font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
-a{color:var(--blue);text-decoration:none}
+a{color:var(--blue);text-decoration:none}button{font:inherit;cursor:pointer}
 .wrap{height:100%;max-width:1600px;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
-header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex:none}
+header{display:flex;align-items:center;gap:14px;flex:none}
 h1{font-size:17px;margin:0;font-weight:600}
 .fresh{font-size:12px;color:var(--low);display:flex;align-items:center;gap:6px}
 .fresh i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:p 2.4s infinite}
-.fresh.old i{background:var(--red);animation:none}.fresh.old{color:var(--red)}
+.fresh.old,.fresh.old span{color:var(--red)}.fresh.old i{background:var(--red);animation:none}
 @keyframes p{50%{opacity:.35}}
 header nav{margin-left:auto;display:flex;gap:14px;font-size:12px}
-.lbl{font-size:11px;letter-spacing:.12em;color:var(--low);margin:0 0 8px;font-weight:600}
-.top{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;flex:none}
-.ask{background:#fff6ec;border-radius:10px;padding:12px 16px;max-height:236px;overflow:auto}
-.ask h2{font-size:15px;margin:0 0 8px;font-weight:600}.ask h2 b{color:var(--red);font-size:22px;margin-right:4px}
-.ar{display:flex;gap:10px;align-items:baseline;padding:4px 0;border-top:1px solid rgba(0,0,0,.05)}
-.ar:first-of-type{border-top:0}.ar .n{color:var(--low);font-variant-numeric:tabular-nums;width:14px;flex:none}
-.ar span{flex:1}
-.prog{background:var(--card);border-radius:10px;padding:12px 16px}
-.big{display:flex;align-items:baseline;gap:8px}.big b{font-size:28px;font-weight:700;line-height:1}.big span{color:var(--mid)}
-.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:12px 0 8px;background:#eee}
-.bar i{display:block;height:100%}
-.leg{display:flex;gap:14px;flex-wrap:wrap;color:var(--mid);font-size:12px}.leg b{color:var(--ink)}.leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
-.pulse{display:flex;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-.pulse div{flex:1}.pulse b{font-size:20px;font-weight:700;display:block;line-height:1.1}.pulse span{color:var(--low);font-size:12px}
-.spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:4px}.spark i{flex:1;background:#c9d8f6;border-radius:1px;min-height:2px}
-.card{background:var(--card);border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;min-height:0}.card>div{overflow:auto;min-height:0;flex:1}
-.main{flex:1;min-height:0;display:grid;grid-template-columns:1.75fr 1fr;gap:10px}.side{display:grid;grid-template-rows:1fr 1fr;gap:10px;min-height:0}
-.lane{display:grid;grid-template-columns:150px 70px 1fr 80px;gap:12px;align-items:center;padding:6px 4px;border-top:1px solid var(--line);cursor:pointer}
-.lane:first-of-type{border-top:0}.lane:hover{background:#fafafa}.lane.sel{background:#f2f6ff}
-.who b{font-size:14px;font-weight:600;display:block}.who span{color:var(--low);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.st{font-size:12px;padding:2px 8px;border-radius:10px;text-align:center;white-space:nowrap}
-.st.run{background:#e8f0ff;color:var(--blue)}.st.stuck{background:#fde9e6;color:var(--red)}.st.wait{background:#fff3df;color:#a86400}.st.idle{background:#f0f0f0;color:var(--mid)}.st.hub{background:#eef7f1;color:var(--green)}
-.jobs{display:flex;flex-wrap:nowrap;gap:6px;overflow:hidden;mask-image:linear-gradient(90deg,#000 92%,transparent)}
-.job{font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid #dfe5ef;color:var(--mid);white-space:nowrap}
-.job.on{background:var(--blue);border-color:var(--blue);color:#fff}
-.job.more{border-style:dashed}
-.cm{text-align:right;font-variant-numeric:tabular-nums}.cm b{font-size:15px}.cm span{display:block;color:var(--low);font-size:11px}
-.cmbar{height:4px;background:#eef2fb;border-radius:2px;margin-top:3px}.cmbar i{display:block;height:100%;background:#9db8ee;border-radius:2px}
-
-.grp{margin-bottom:10px}.grp h3{font-size:12px;margin:0 0 4px;color:var(--mid);font-weight:600}
-.bk{display:flex;gap:8px;padding:5px 0 5px 10px;border-left:3px solid var(--orange);margin:4px 0}
-.bk.risk{border-color:var(--yellow)}.bk.hub{border-color:#9aa3b5}
-.bk span{flex:1}.bk em{font-style:normal;color:var(--low);font-size:12px;white-space:nowrap}
-.ev{display:grid;grid-template-columns:58px 1fr;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
-.ev:first-of-type{border-top:0}.ev time{color:var(--low);font-size:12px;font-variant-numeric:tabular-nums}
-.ev .mg{color:var(--green);font-weight:600}
-.dim{opacity:.28}
-.empty{color:var(--low);padding:6px 0}
-@media(max-height:780px){.ar{padding:2px 0}.ask h2{margin-bottom:4px}.lane{padding:3px 4px}.big b{font-size:24px}.bar{margin:8px 0 6px}.pulse{margin-top:6px;padding-top:6px}.pulse b{font-size:17px}}
-@media(max-width:900px){body{overflow:auto}.wrap{height:auto}.top,.main{grid-template-columns:1fr}.side{grid-template-rows:auto}.card>div{overflow:visible}.lane{grid-template-columns:1fr auto;gap:6px}.lane .jobs{grid-column:1/-1;flex-wrap:wrap;mask-image:none}.lane .cm{display:none}}
+.lbl{font-size:11px;letter-spacing:.12em;color:var(--low);margin:0 0 6px;font-weight:600}
+/* 该你介入 */
+.act{flex:none;background:#fff6ec;border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start}
+.dec{border:0;background:none;text-align:left;padding:0}.dec b{display:block;font-size:28px;font-weight:700;line-height:1.1;color:var(--red)}.dec span{color:var(--mid)}.dec u{text-decoration:none;color:var(--blue);font-size:12px}
+.al{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px}
+.a{display:flex;gap:8px;align-items:baseline;padding:3px 0;cursor:pointer;min-width:0}
+.a .t{flex:none;font-size:11px;padding:0 6px;border-radius:4px;color:#fff;line-height:18px}
+.t.red{background:var(--red)}.t.amber{background:var(--amber)}.t.blue{background:var(--blue)}.t.gray{background:#8e8e93}
+.a span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a:hover span:last-child{text-decoration:underline}
+/* 主区 */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 300px;gap:10px}
+.card{background:#fff;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;min-height:0}
+.scroll{overflow:auto;min-height:0;flex:1}
+.key{display:flex;gap:4px;align-items:center;font-size:11px;color:var(--low);margin-left:auto}
+.key em{font-style:normal;margin-right:6px}
+.hd{display:flex;align-items:center}
+.row{display:grid;grid-template-columns:150px 150px 1fr;gap:14px;align-items:center;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:6px}
+.row:first-child{border-top:0}.row:hover{background:#fafafa}
+.nm{display:flex;align-items:center;gap:8px;min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.d-working{background:var(--green)}.d-stopped{background:var(--amber)}.d-overload{background:var(--red)}.d-idle{background:var(--gray)}.d-hub{background:var(--blue)}
+.nm b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss{font-size:12px;color:var(--mid);line-height:1.3}.ss b{font-weight:600;color:var(--ink)}
+.ss.warn b{color:var(--amber)}.ss.bad b{color:var(--red)}
+.load{display:flex;gap:3px;margin-top:3px}.load i{width:14px;height:5px;border-radius:2px;background:#d8e3f8}.load.hi i{background:#f2b5ad}
+.jobs{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.job{display:flex;align-items:center;gap:8px;border:1px solid #e6e8ee;border-radius:8px;padding:4px 9px;max-width:300px}
+.job.red{border-color:#f0b8b0;background:#fff6f5}.job.amber{border-color:#f3d39a;background:#fffaf0}
+.job span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.trk{display:flex;align-items:center;flex:none}
+.trk i{width:7px;height:7px;border-radius:50%;background:#dcdcdc}
+.trk s{width:8px;height:2px;background:#dcdcdc;text-decoration:none}
+.trk i.f{background:var(--green)}.trk s.f{background:var(--green)}
+.trk i.cur{width:9px;height:9px;background:#fff;border:2px solid var(--blue)}
+.trk i.cur.amber{border-color:var(--amber)}.trk i.cur.red{border-color:var(--red);background:var(--red)}
+.trk i.ret{border-color:#e5892b;background:#e5892b}
+.none{color:var(--low);font-size:12px}
+.done{font-size:12px;color:var(--low);white-space:nowrap}
+/* 流水线 */
+.st{padding:8px 0;border-top:1px solid var(--line)}.st:first-of-type{border-top:0}
+.st h4{display:flex;align-items:baseline;gap:8px;margin:0 0 4px;font-size:13px;font-weight:600}
+.st h4 b{font-size:20px;margin-left:auto}.st h4 small{color:var(--low);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chips span{font-size:11px;padding:1px 7px;border-radius:9px;background:#f1f3f7;color:var(--mid);cursor:pointer}
+.chips span.red{background:#fde9e6;color:var(--red)}.chips span.amber{background:#fff1d9;color:#a86400}
+.arrow{color:var(--low);text-align:center;font-size:11px;line-height:1}
+.prog{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#eee;margin:6px 0 4px}.bar i{display:block}
+/* 抽屉 */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.18);display:none}.mask.on{display:block}
+aside{position:fixed;top:0;right:0;bottom:0;width:min(520px,94vw);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.12);padding:18px 22px;overflow:auto;transform:translateX(105%);transition:transform .22s}
+aside.on{transform:none}
+aside h2{font-size:18px;margin:0 0 2px}aside .sub{color:var(--mid);margin-bottom:14px}
+aside .x{position:absolute;top:12px;right:14px;border:0;background:none;font-size:20px;color:var(--low)}
+.jd{border-top:1px solid var(--line);padding:12px 0}
+.jd h3{font-size:14px;margin:0 0 8px;font-weight:600}.jd h3 small{color:var(--low);font-weight:400;margin-left:6px}
+.step{display:grid;grid-template-columns:repeat(5,1fr);position:relative;margin:4px 0 8px}
+.step div{text-align:center;font-size:11px;color:var(--low);position:relative}
+.step div:before{content:"";display:block;width:12px;height:12px;border-radius:50%;background:#e0e0e0;margin:0 auto 4px;position:relative;z-index:1}
+.step div:after{content:"";position:absolute;top:5px;left:-50%;width:100%;height:2px;background:#e0e0e0}
+.step div:first-child:after{display:none}
+.step .f:before,.step .f:after{background:var(--green)}.step .f{color:var(--ink)}
+.step .cur:before{background:#fff;border:2px solid var(--blue);box-sizing:border-box}.step .cur.amber:before{border-color:var(--amber)}.step .cur.red:before{border-color:var(--red)}
+.wt{font-size:13px;padding:6px 10px;border-radius:6px;background:#f5f7fb}.wt.amber{background:#fff6e6}.wt.red{background:#fdeeec}
+.meta{font-size:12px;color:var(--low);margin-top:6px;word-break:break-all}
+.decl li{margin:6px 0}
+@media(max-height:760px){.row{padding:5px 6px}.act{padding:8px 14px}.dec b{font-size:24px}}
+@media(max-width:980px){body{overflow:auto}.wrap{height:auto}.main{grid-template-columns:1fr}.act{grid-template-columns:1fr}.al{grid-template-columns:1fr}.row{grid-template-columns:1fr auto}.row .jobs{grid-column:1/-1}}
 </style></head><body><div class="wrap">
-<header><h1>杭州西站图册 · 团队进度</h1><span class="fresh" id="fresh"><i></i><span></span></span>
+<header><h1>杭州西站图册 · 团队</h1><span class="fresh" id="fresh"><i></i><span>读取中…</span></span>
 <nav><a id="lk-live" target="_blank">看图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></nav></header>
-
-<div class="top">
-  <section class="ask" id="ask"></section>
-  <section class="prog" id="prog"></section>
-</div>
-
+<section class="act" id="act"></section>
 <div class="main">
-  <section class="card"><p class="lbl">谁在做什么 · 点一个人只看他</p><div id="lanes"></div></section>
-  <div class="side">
-    <section class="card"><p class="lbl">卡在哪（团队内部，不用你管）</p><div id="blk"></div></section>
-    <section class="card"><p class="lbl">刚刚发生了什么</p><div id="feed"></div></section>
-  </div>
-</div>
-</div>
+  <section class="card"><div class="hd"><p class="lbl">队伍 · 点人看详情</p>
+    <span class="key"><em>每件活五站：</em>接到 → 开工 → 交了 → 合入 → 完成</span></div>
+    <div class="scroll" id="team"></div></section>
+  <section class="card"><p class="lbl">活卡在哪一站</p><div class="scroll" id="pipe"></div><div class="prog" id="prog"></div></section>
+</div></div>
+<div class="mask" id="mask"></div><aside id="dr"><button class="x" id="x">×</button><div id="drb"></div></aside>
 <script>
 const SRC = location.protocol === 'file:'
   ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json'
@@ -77,109 +99,134 @@ const SRC = location.protocol === 'file:'
 const URL_ = new URLSearchParams(location.search).get('src') || SRC; // ?src= 只给本地截图测试用
 const E = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cut = s => String(s ?? '').replace(/[（(].*$/, '').trim();
-// "Sat 2026-11-07 10:51 PM PST (UTC-08:00)" 或 ISO
 function parseT(s) {
+  if (typeof s === 'number') return new Date(s * 1000);
   const m = String(s).match(/(\d{4}-\d\d-\d\d)\s+(\d{1,2}):(\d\d)\s*(AM|PM)?.*?UTC([+-]\d\d):?(\d\d)/);
   if (!m) return new Date(s);
   let h = +m[2]; if (m[4] === 'PM' && h < 12) h += 12; if (m[4] === 'AM' && h === 12) h = 0;
-  return new Date(`${m[1]}T${String(h).padStart(2,'0')}:${m[3]}:00${m[5]}:${m[6]}`);
+  return new Date(`${m[1]}T${String(h).padStart(2, '0')}:${m[3]}:00${m[5]}:${m[6]}`);
 }
 const bj = d => d.toLocaleTimeString('zh-CN', {timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false});
-const ago = d => { const m = Math.round((Date.now() - d) / 60000); return isNaN(m) ? '' : m < 1 ? '刚刚' : m < 60 ? `${m} 分钟前` : m < 1440 ? `${Math.round(m/60)} 小时前` : `${Math.round(m/1440)} 天前`; };
-let sel = location.hash.slice(1) ? decodeURIComponent(location.hash.slice(1)) : '';
+const dur = m => m == null ? '' : m < 1 ? '刚刚' : m < 60 ? `${m} 分钟` : m < 1440 ? `${Math.round(m / 60 * 10) / 10} 小时`.replace('.0 ', ' ') : `${Math.round(m / 1440)} 天`;
+const ST = ['接到', '开工', '交了', '合入', '完成'], KEYS = ['派出', '开工', '交付', '合入', '关单'];
+let D, F, openWho = decodeURIComponent(location.hash.slice(1));
 
-function model(d) {
+// 没有 flow 字段时，从派单与认领粗略推一个（只能分「没开工 / 在做」）
+function fallback(d) {
   const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
-  const P = {};
-  const get = a => P[a] ||= {name: a, role: role[a] || '', jobs: new Map(), today: 0, total: 0, kept: 0, blocks: [], last: null};
-  Object.keys(role).forEach(get);
-  // 派单和认领常是同一件活，按名字合并成一条
-  for (const x of d.dispatches_open || []) for (const a of x.agent.split(/[、,]/)) {
-    const st = cut(x.state); get(a.trim()).jobs.set(x.item, {name: x.item, id: x.id, on: /在做|进行/.test(st), st});
-  }
-  for (const x of d.live_claims || []) { const p = get(x.agent), j = p.jobs.get(x.item); if (j) j.claimed = true; else p.jobs.set(x.item, {name: cut(x.item), on: true, st: '已认领'}); }
-  for (const x of d.claimed_items || []) if (x.state === '保留' && x.agent !== '—') get(x.agent).kept++;
-  for (const x of d.by_agent || []) if (x.agent !== '—') { const p = get(x.agent); p.today = x.today; p.total = x.total; }
-  for (const c of d.recent_commits || []) { const p = get(c.agent), t = parseT(c.at); if (!p.last || t > p.last) p.last = t; }
-  for (const b of d.blockers || []) if (P[b.who]) P[b.who].blocks.push(b);
-  for (const p of Object.values(P)) {
-    const jobs = [...p.jobs.values()];
-    const hub = /集成/.test(p.role);
-    p.state = p.blocks.some(b => b.kind === '协作者') ? ['stuck', '卡住了']
-      : hub ? ['hub', '在把关'] : jobs.some(j => j.on) || p.today > 0 && jobs.length ? ['run', '在干活']
-      : jobs.length ? ['wait', '还没开工'] : ['idle', '空闲'];
-    p.rank = {stuck: 0, hub: 1, run: 2, wait: 3, idle: 4}[p.state[0]];
-  }
-  return Object.values(P).sort((a, b) => a.rank - b.rank || b.today - a.today);
+  const jobs = [], seen = new Set();
+  for (const x of d.dispatches_open || []) { const on = /在做/.test(x.state); seen.add(x.item);
+    jobs.push({id: x.id, title: x.item, who: x.agent.split(/[、,]/).map(s => s.trim()), stage: on ? 1 : 0, stages: {}, wait: on ? null : {who: x.agent, what: '还没开工'}, done: false}); }
+  for (const x of d.live_claims || []) if (!seen.has(x.item)) jobs.push({id: x.item, title: x.item, who: [x.agent], stage: 1, stages: {}, wait: null, done: false});
+  const people = Object.keys(role).map(n => { const a = jobs.filter(j => j.who.includes(n)).map(j => j.id);
+    return {name: n, active: a, state: a.length >= 3 ? 'overload' : a.length ? 'working' : 'idle', done_today: 0}; });
+  return {people, jobs, suggestions: [], rough: true};
 }
 
-function render(d) {
-  const h = d.headline || {}, t = parseT(d.generated_at), age = (Date.now() - t) / 60000;
+function personLine(p) {
+  if (/集成/.test(p.role || '') && !p.active.length) return [`<b>在把关</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
+  if (p.state === 'overload') return [`<b>活太多</b> · 手上 ${p.active.length} 件`, 'bad'];
+  if (p.state === 'stopped') return [`<b>停了</b> · ${p.idle_min == null ? '一直没动静' : dur(p.idle_min) + '没动静'}`, 'warn'];
+  if (p.state === 'working') return [`<b>在干</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
+  return [`<b>空闲</b> · 可以派活`, ''];
+}
+function track(j) {
+  let h = '';
+  for (let i = 0; i < 5; i++) {
+    if (i) h += `<s class="${i <= j.stage ? 'f' : ''}"></s>`;
+    const cur = !j.done && i === j.stage + 1;
+    h += `<i class="${i <= j.stage ? 'f' : ''}${cur ? ' cur ' + (j.returned ? 'ret' : (j.wait?.level || '')) : ''}"></i>`;
+  }
+  return `<span class="trk" title="${ST.map((s, i) => (i <= j.stage ? '●' : '○') + s).join(' ')}">${h}</span>`;
+}
+const lvl = j => j.returned ? 'amber' : j.wait?.level === 'red' ? 'red' : j.wait?.level === 'amber' ? 'amber' : '';
+
+function render() {
+  const d = D, t = parseT(d.generated_at), age = (Date.now() - t) / 60000;
   const fr = document.getElementById('fresh'); fr.className = 'fresh' + (age > 60 ? ' old' : '');
-  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : `${ago(t)}更新（北京 ${bj(t)}）` + (age > 60 ? ' · 数据停了，集成任务可能没在跑' : '');
+  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : (age > 60 ? `数据过期：${dur(Math.round(age))}前（集成任务可能停了）` : `${dur(Math.round(age))}前更新 · 北京 ${bj(t)}`) + (F.rough ? ' · 粗略模式（数据还没有 flow 字段）' : '');
   for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = (d.links || {})[k] || '#';
+  const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+  const J = Object.fromEntries(F.jobs.map(j => [j.id, j]));
+  const P = F.people.map(p => ({...p, role: role[p.name] || ''}))
+    .filter(p => p.active.length || p.done_today || role[p.name]);
+  const rank = p => /集成/.test(p.role) ? 5 : {overload: 0, stopped: 1, working: 2, idle: 3}[p.state];
+  P.sort((a, b) => rank(a) - rank(b) || b.active.length - a.active.length);
 
-  // 1 要你拍板
-  const asks = (d.blockers || []).filter(b => b.who === '委托人' || /委托人/.test(b.kind));
-  document.getElementById('ask').innerHTML = asks.length
-    ? `<h2><b>${asks.length}</b>件事等你拍板</h2>` + asks.map((b, i) => `<div class="ar"><span class="n">${i + 1}</span><span>${E(b.what)}</span></div>`).join('')
-    : '<h2>没有要你拍板的事</h2><div class="empty">团队自己在转，看下面就行。</div>';
+  // 该你介入：拍板 + 自动发现的问题
+  const asks = (d.blockers || []).filter(b => b.who === '委托人');
+  const al = [];
+  for (const s of F.suggestions || []) al.push(['blue', '分流', `${J[s.job]?.title || s.job}：${s.why}${s.to.length ? '，可分给 ' + s.to.join('、') : ''}`, s.from]);
+  for (const j of F.jobs) if (!j.done && j.wait?.level === 'red') al.push(['red', '卡住', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
+  for (const p of P) if (p.state === 'stopped' && !/集成/.test(p.role)) al.push(['amber', '停了', `${p.name} ${p.idle_min == null ? '还没交过东西' : dur(p.idle_min) + '没动静'}，手上 ${p.active.length} 件`, p.name]);
+  const stopped = new Set(P.filter(p => p.state === 'stopped').map(p => p.name));
+  for (const j of F.jobs) if (!j.done && j.wait?.level === 'amber' && !j.who.some(w => stopped.has(w))) al.push(['amber', '快卡了', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
+  for (const j of F.jobs) if (j.returned) al.push(['amber', '退回', `${cut(j.title)} 被退回，等 ${j.who.join('、')} 改`, j.who[0]]);
+  for (const b of d.blockers || []) if (b.kind === '风险') al.push(['gray', '风险', b.what, '']);
+  const MAX = 8;
+  document.getElementById('act').innerHTML = `<button class="dec" id="decb"><b>${asks.length}</b><span>件事等你拍板</span><br><u>${asks.length ? '看是哪几件 ›' : ''}</u></button>
+    <div><p class="lbl" style="margin-bottom:2px">该你留意的 · ${al.length ? al.length + ' 条' : '没有'}</p><div class="al">${al.slice(0, MAX).map(a =>
+      `<div class="a" data-w="${E(a[3])}"><span class="t ${a[0]}">${a[1]}</span><span>${E(a[2])}</span></div>`).join('') || '<span class="none">队伍运转正常，不用介入。</span>'}
+      ${al.length > MAX ? `<div class="a"><span class="none">还有 ${al.length - MAX} 条，点人看</span></div>` : ''}</div></div>`;
+  document.getElementById('decb').onclick = () => asks.length && drawer('__ask');
+  document.querySelectorAll('.a[data-w]').forEach(el => el.onclick = () => el.dataset.w && drawer(el.dataset.w));
 
-  // 2 整体进度
-  const P = model(d), total = h.items_total || 0, done = h.items_done || 0;
-  const running = P.reduce((s, p) => s + [...p.jobs.values()].filter(j => j.on).length, 0);
-  const queued = P.reduce((s, p) => s + [...p.jobs.values()].filter(j => !j.on).length, 0);
-  const rest = Math.max(0, total - done - running - queued);
-  const seg = [[done, 'var(--green)', '做完'], [running, 'var(--blue)', '在做'], [queued, '#9fb6e6', '排队'], [rest, '#e3e3e3', '还没人接']];
-  const hours = new Array(12).fill(0);
-  for (const c of d.recent_commits || []) { const k = Math.floor((Date.now() - parseT(c.at)) / 3600000); if (k >= 0 && k < 12) hours[11 - k]++; }
-  const mx = Math.max(1, ...hours), blocked = (d.blockers || []).length - asks.length;
-  document.getElementById('prog').innerHTML = `<p class="lbl">整体走到哪了</p>
-    <div class="big"><b>${done} / ${total}</b><span>件活做完了（${total ? Math.round(done / total * 100) : 0}%）</span></div>
-    <div class="bar">${seg.map(([v, c, n]) => v ? `<i style="width:${v / Math.max(1, total) * 100}%;background:${c}" title="${n} ${v}"></i>` : '').join('')}</div>
-    <div class="leg">${seg.map(([v, c, n]) => `<span><i style="background:${c}"></i>${n} <b>${v}</b></span>`).join('')}</div>
-    <div class="pulse">
-      <div><b>${P.filter(p => p.state[0] === 'run' || p.state[0] === 'hub').length} / ${P.length}</b><span>人在干活</span></div>
-      <div><b style="color:${blocked ? 'var(--orange)' : 'inherit'}">${blocked}</b><span>处卡点（团队内部）</span></div>
-      <div><b>${h.commits_today ?? '–'}</b><span>今天提交（累计 ${h.commits_total ?? '–'}）</span></div>
-    </div>`;
-
-  // 3 泳道
-  const maxT = Math.max(1, ...P.map(p => p.today));
-  document.getElementById('lanes').innerHTML = P.map(p => {
-    const jobs = [...p.jobs.values()].sort((a, b) => b.on - a.on);
-    const chips = jobs.slice(0, 4).map(j => `<span class="job${j.on ? ' on' : ''}" title="${E(j.id ? j.id + ' · ' : '')}${E(j.st)}">${E(j.name)}${j.on ? '' : ' · 排队'}</span>`).join('')
-      + (jobs.length > 4 ? `<span class="job more">还有 ${jobs.length - 4} 件</span>` : '')
-      + (p.kept ? `<span class="job more">替大家保管 ${p.kept} 件</span>` : '')
-      + (p.blocks.length ? p.blocks.map(b => `<span class="job" style="border-color:#f3c2bb;color:var(--red)">${E(cut(b.what)).slice(0, 26)}</span>`).join('') : '')
-      || '<span class="empty">手上没活</span>';
-    return `<div class="lane${sel === p.name ? ' sel' : ''}${sel && sel !== p.name ? ' dim' : ''}" data-a="${E(p.name)}">
-      <div class="who"><b>${E(p.name)}</b><span>${E(cut(p.role.split('：').pop()) || p.role)}</span></div>
-      <span class="st ${p.state[0]}">${p.state[1]}</span>
-      <div class="jobs">${chips}</div>
-      <div class="cm"><b>${p.today}</b> 次<span>${p.last ? '最近 ' + ago(p.last) : '今天提交'}</span><div class="cmbar"><i style="width:${p.today / maxT * 100}%"></i></div></div></div>`;
+  // 队伍
+  document.getElementById('team').innerHTML = P.map(p => {
+    const [line, cls] = personLine(p), act = p.active.map(i => J[i]).filter(Boolean);
+    act.sort((a, b) => (lvl(b) === 'red') - (lvl(a) === 'red') || b.stage - a.stage);
+    return `<div class="row" data-w="${E(p.name)}">
+      <div class="nm"><i class="dot d-${/集成/.test(p.role) ? 'hub' : p.state}"></i><b>${E(p.name)}</b></div>
+      <div><div class="ss ${cls}">${line}</div></div>
+      <div class="jobs">${act.map(j => `<div class="job ${lvl(j)}">${track(j)}<span>${E(cut(j.title))}</span></div>`).join('')
+        || `<span class="none">手上没活</span>`}${p.done_today ? `<span class="done">今天完成 ${p.done_today} 件</span>` : ''}</div></div>`;
   }).join('');
-  document.querySelectorAll('.lane').forEach(el => el.onclick = () => { sel = sel === el.dataset.a ? '' : el.dataset.a; location.hash = sel ? encodeURIComponent(sel) : ''; render(d); });
+  document.querySelectorAll('.row').forEach(el => el.onclick = () => drawer(el.dataset.w));
 
-  // 4 卡点，按卡在谁身上分组
-  const grp = {}; const nm = {协作者: '卡在干活的人', 集成: '卡在集成人（hark-cr）', 风险: '要留意的风险'};
-  for (const b of d.blockers || []) { if (asks.includes(b)) continue; (grp[nm[b.kind] || '其他'] ||= []).push(b); }
-  for (const s of d.stale_locks || []) (grp['卡在集成人（hark-cr）'] ||= []).push({kind: '集成', what: '做完了但没放回认领板：' + s, who: 'hark-cr'});
-  document.getElementById('blk').innerHTML = Object.entries(grp).map(([g, l]) => `<div class="grp"><h3>${g} · ${l.length}</h3>${l.map(b =>
-    `<div class="bk ${b.kind === '风险' ? 'risk' : b.kind === '集成' ? 'hub' : ''}${sel && b.who !== sel ? ' dim' : ''}"><span>${E(b.what)}</span><em>${E(b.who === '—' ? '' : b.who)}</em></div>`).join('')}</div>`).join('') || '<div class="empty">没有卡点</div>';
-
-  // 5 动态：把 Merge 翻成人话
-  const dn = Object.fromEntries((d.dispatches_open || []).map(x => [x.id, x.item]));
-  document.getElementById('feed').innerHTML = (d.recent_commits || []).map(c => {
-    const t = parseT(c.at), m = c.subj.match(/^Merge (?:branch '?)?agent\/([^/]+)\/(.+?)'?$/);
-    let txt;
-    if (m) { const id = (m[2].match(/D-\d+/) || [])[0]; txt = `<span class="mg">合入</span> ${E(m[1])} 的 ${E(id ? id + ' ' + (dn[id] || '') : m[2])}`; }
-    else txt = `${E(c.agent)}：${E(c.subj.replace(/^\[[^\]]+\]\s*/, ''))}`;
-    const mine = !sel || c.agent === sel || (m && m[1] === sel);
-    return `<div class="ev${mine ? '' : ' dim'}"><time title="${E(c.sha)}">${isNaN(t) ? '' : bj(t)}</time><span>${txt}</span></div>`;
-  }).join('') || '<div class="empty">还没有提交</div>';
+  // 流水线：每件未完成的活停在哪一站
+  const open = F.jobs.filter(j => !j.done), bucket = [[], [], [], []];
+  for (const j of open) bucket[Math.min(j.stage === 0 ? 0 : j.stage === 1 || j.stage === 2 ? (j.returned ? 1 : j.stage === 2 ? 2 : 1) : 3, 3)].push(j);
+  const names = [['还没开工', '等干活的人'], ['在做 / 被退回', '等干活的人'], ['交了，等审查合入', '等 hark-cr'], ['合入了，等关单', '等 hark-cr']];
+  const doneToday = F.jobs.filter(j => j.done && j.stages['关单'] && Date.now() / 1000 - j.stages['关单'] < 86400).length;
+  document.getElementById('pipe').innerHTML = names.map(([n, w], i) => `${i ? '<div class="arrow">↓</div>' : ''}<div class="st"><h4>${n}<small>${w}</small><b>${bucket[i].length}</b></h4>
+    <div class="chips">${bucket[i].map(j => `<span class="${lvl(j)}" data-w="${E(j.who[0])}" title="${E(j.who.join('、'))}">${E(cut(j.title))}</span>`).join('')}</div></div>`).join('')
+    + `<div class="arrow">↓</div><div class="st"><h4>今天完成<b>${F.rough ? '–' : doneToday}</b></h4></div>`;
+  document.querySelectorAll('.chips span').forEach(el => el.onclick = () => drawer(el.dataset.w));
+  const h = d.headline || {}, tot = h.items_total || 0, dn = h.items_done || 0;
+  document.getElementById('prog').innerHTML = `<p class="lbl">整个项目</p><b style="font-size:18px">${dn} / ${tot}</b> <span class="none">件做完 · 今天 ${h.commits_today ?? '–'} 次提交</span>
+    <div class="bar"><i style="width:${tot ? dn / tot * 100 : 0}%;background:var(--green)"></i></div>`;
+  if (openWho) drawer(openWho, true);
 }
-async function load() { const d = await (await fetch(URL_ + (URL_.includes('?') ? '&' : '?') + 't=' + Date.now(), {cache: 'no-store'})).json(); render(d); }
-load().catch(e => { const f = document.getElementById('fresh'); f.className = 'fresh old'; f.querySelector('span').textContent = '读取失败（离线或数据地址打不开）：' + e.message; document.getElementById('ask').innerHTML = '<h2>暂时读不到数据</h2><div class="empty">联网后会自动重试（每 60 秒）。</div>'; });
+
+function drawer(who, keep) {
+  openWho = who; if (!keep) location.hash = encodeURIComponent(who);
+  const d = D, b = document.getElementById('drb');
+  if (who === '__ask') {
+    b.innerHTML = `<h2>等你拍板</h2><div class="sub">这些事团队自己定不了</div><ol class="decl">${(d.blockers || []).filter(x => x.who === '委托人').map(x => `<li>${E(x.what)}</li>`).join('')}</ol>`;
+  } else {
+    const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+    const p = F.people.find(x => x.name === who) || {name: who, active: [], state: 'idle'};
+    const mine = F.jobs.filter(j => j.who.includes(who)), act = mine.filter(j => !j.done), dn = mine.filter(j => j.done);
+    const blk = (d.blockers || []).filter(x => x.who === who);
+    b.innerHTML = `<h2>${E(who)}</h2><div class="sub">${E(role[who] || '')}<br>${personLine({...p, role: role[who] || ''})[0]}</div>
+      ${blk.map(x => `<div class="wt amber" style="margin-bottom:8px">${E(x.what)}</div>`).join('')}
+      ${act.map(j => { const st = j.stages || {};
+        return `<div class="jd"><h3>${E(cut(j.title))}<small>${E(j.id !== j.title ? j.id : '')}${j.who.length > 1 ? ' · 和 ' + E(j.who.filter(x => x !== who).join('、')) + ' 一起' : ''}</small></h3>
+        <div class="step">${ST.map((s, i) => `<div class="${i <= j.stage ? 'f' : ''}${i === j.stage + 1 ? ' cur ' + (j.wait?.level || '') : ''}">${s}${st[KEYS[i]] ? '<br>' + bj(parseT(st[KEYS[i]])) : ''}</div>`).join('')}</div>
+        ${j.wait ? `<div class="wt ${j.wait.level || ''}">${j.returned ? '被退回 · ' : ''}${E(j.wait.what)} · 等 <b>${E(j.wait.who)}</b>${j.wait.age_min != null ? ` · 已等 ${dur(j.wait.age_min)}` : ''}</div>` : ''}
+        ${j.branches?.length ? `<div class="meta">分支：${j.branches.map(E).join('、')} · ${j.commits} 次提交</div>` : ''}</div>`; }).join('') || '<div class="jd none">手上没活</div>'}
+      ${dn.length ? `<div class="jd"><h3>做完的 <small>${dn.length} 件</small></h3><div class="chips">${dn.map(j => `<span>${E(cut(j.title))}</span>`).join('')}</div></div>` : ''}`;
+  }
+  document.getElementById('dr').classList.add('on'); document.getElementById('mask').classList.add('on');
+}
+function close_() { openWho = ''; history.replaceState(null, '', location.pathname + location.search); document.getElementById('dr').classList.remove('on'); document.getElementById('mask').classList.remove('on'); }
+document.getElementById('x').onclick = close_; document.getElementById('mask').onclick = close_;
+document.addEventListener('keydown', e => e.key === 'Escape' && close_());
+
+async function load() {
+  const d = await (await fetch(URL_ + (URL_.includes('?') ? '&' : '?') + 't=' + Date.now(), {cache: 'no-store'})).json();
+  D = d; F = d.flow && d.flow.jobs ? d.flow : fallback(d); render();
+}
+load().catch(e => { const f = document.getElementById('fresh'); f.className = 'fresh old'; f.querySelector('span').textContent = '读取失败（离线或数据地址打不开），60 秒后自动重试：' + e.message; });
 setInterval(() => load().catch(() => {}), 60000);
 </script></body></html>

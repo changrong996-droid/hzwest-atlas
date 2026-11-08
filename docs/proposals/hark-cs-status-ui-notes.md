@@ -7,3 +7,17 @@
 另：派单和认领常是同一件活（如 Blender 参考渲染），新界面按名字合并后算「在做 / 排队」，所以显示的数会比 headline.workflows_running 小，这是有意的。
 
 Agent: hark-cs
+
+## 接口请求：加 `flow` 字段（新界面的「流程视图」靠它）
+
+委托人要看「每件活走到哪一站、谁停了、谁活太多、哪里要卡」。现在的 status.json 只有派单状态文字，推不出流程。
+脚本已写好：`docs/proposals/status-flow/flow.py`（只读 git 和 CLAIMS.md，不联网，约 2 秒）。
+请在 `tools/status/gen.py` 里调用它，把输出放进 `docs/status.json` 的 `"flow"` 字段：
+
+- `flow.jobs[]`：`{id, title, who[], stage(0–4), stages{派出,开工,交付,合入,关单: 时间戳}, returned, wait{who, what, since, age_min, level(ok/amber/red)}, branches, commits, done}`
+- `flow.people[]`：`{name, active[], state(working/stopped/overload/idle), idle_min, last_at, done_today}`
+- `flow.suggestions[]`：活太多的人还没开工的活，建议分给空闲的人
+- 口径：等了 2 小时黄、4 小时红（与超时提醒一致）；「停了」= 手上有活但 2 小时没提交
+
+没有 `flow` 时界面自动退回粗略模式（只分没开工/在做），不会坏。
+推得准的前提：提交标题带 `[D-xx]` 或 `[事项名]`，分支名带单号——现在大家基本都这么做。
