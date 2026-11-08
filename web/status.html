@@ -1,52 +1,185 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>hzwest 集成看板</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font:14px/1.45 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f2ec;color:#1d1d1b;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-header{display:flex;align-items:baseline;gap:16px;padding:12px 20px 6px}h1{font-size:18px;margin:0}#ts{color:#888;font-size:12px}#ts.old{color:#c0392b;font-weight:600}
-header a{font-size:12px;color:#555;margin-left:auto}header a+a{margin-left:12px}
-#kpi{display:flex;gap:10px;padding:6px 20px 10px}.k{flex:1;background:#fff;border-radius:10px;padding:10px 14px}.k b{display:block;font-size:30px;line-height:1.1}.k span{color:#777;font-size:12px}.k.warn b{color:#c0392b}
-main{flex:1;display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:10px;padding:0 20px 10px;min-height:0}
-section{background:#fff;border-radius:10px;padding:12px 14px;overflow:auto;min-height:0}h2{font-size:13px;margin:0 0 8px;color:#555;letter-spacing:.05em}
-.bl{padding:7px 0;border-bottom:1px solid #eee;display:flex;gap:8px}.tag{flex:none;font-size:11px;padding:1px 6px;border-radius:4px;background:#eee;height:18px}.tag.o{background:#c0392b;color:#fff}.tag.i{background:#2c3e50;color:#fff}.tag.c{background:#e67e22;color:#fff}
-.who{color:#999;font-size:12px;margin-left:auto;flex:none}
-#wf{columns:2;column-gap:16px}.ag{margin-bottom:10px;break-inside:avoid}.ag h3{font-size:13px;margin:0 0 4px}.ag h3 small{color:#999;font-weight:400}.w{font-size:13px;padding:2px 0 2px 10px;border-left:3px solid #ddd;margin:2px 0}.w.d{border-color:#2c7be5}.w.c{border-color:#27ae60}.w em{color:#999;font-style:normal;font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:13px}td{padding:5px 4px;border-bottom:1px solid #eee;vertical-align:top}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}td.r{color:#777;font-size:12px}
-footer{padding:0 20px 12px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}footer code{background:#fff;padding:1px 5px;border-radius:4px;margin-right:4px}
-.legend{font-size:11px;color:#999;margin-bottom:6px}.legend i{display:inline-block;width:10px;height:3px;margin:0 3px 2px 8px;vertical-align:middle}
-</style></head><body>
-<header><h1>hzwest 集成看板</h1><span id="ts"></span><a id="lk-live" target="_blank">线上图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></header>
-<div id="kpi"></div>
-<main>
-<section><h2>卡点 · 等谁</h2><div id="bl"></div></section>
-<section><h2>进行中 · 谁在做什么</h2><div class="legend"><i style="background:#2c7be5"></i>派单（我下发）<i style="background:#27ae60"></i>认领（他们自取）</div><div id="wf"></div></section>
-<section><h2>协作者 · 提交 · 职责</h2><table id="ag"></table></section>
-</main>
-<footer id="rc"></footer>
+*{box-sizing:border-box}
+:root{--ink:#1c1c1e;--mid:rgba(28,28,30,.62);--low:rgba(28,28,30,.40);--line:#ececec;--bg:#f6f6f4;--card:#fff;--blue:#2f6fe4;--red:#d64535;--orange:#e5892b;--yellow:#d9a400;--green:#2f9e5b}
+html,body{height:100%}body{margin:0;overflow:hidden;font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--blue);text-decoration:none}
+.wrap{height:100%;max-width:1600px;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex:none}
+h1{font-size:17px;margin:0;font-weight:600}
+.fresh{font-size:12px;color:var(--low);display:flex;align-items:center;gap:6px}
+.fresh i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:p 2.4s infinite}
+.fresh.old i{background:var(--red);animation:none}.fresh.old{color:var(--red)}
+@keyframes p{50%{opacity:.35}}
+header nav{margin-left:auto;display:flex;gap:14px;font-size:12px}
+.lbl{font-size:11px;letter-spacing:.12em;color:var(--low);margin:0 0 8px;font-weight:600}
+.top{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;flex:none}
+.ask{background:#fff6ec;border-radius:10px;padding:12px 16px;max-height:236px;overflow:auto}
+.ask h2{font-size:15px;margin:0 0 8px;font-weight:600}.ask h2 b{color:var(--red);font-size:22px;margin-right:4px}
+.ar{display:flex;gap:10px;align-items:baseline;padding:4px 0;border-top:1px solid rgba(0,0,0,.05)}
+.ar:first-of-type{border-top:0}.ar .n{color:var(--low);font-variant-numeric:tabular-nums;width:14px;flex:none}
+.ar span{flex:1}
+.prog{background:var(--card);border-radius:10px;padding:12px 16px}
+.big{display:flex;align-items:baseline;gap:8px}.big b{font-size:28px;font-weight:700;line-height:1}.big span{color:var(--mid)}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:12px 0 8px;background:#eee}
+.bar i{display:block;height:100%}
+.leg{display:flex;gap:14px;flex-wrap:wrap;color:var(--mid);font-size:12px}.leg b{color:var(--ink)}.leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.pulse{display:flex;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.pulse div{flex:1}.pulse b{font-size:20px;font-weight:700;display:block;line-height:1.1}.pulse span{color:var(--low);font-size:12px}
+.spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:4px}.spark i{flex:1;background:#c9d8f6;border-radius:1px;min-height:2px}
+.card{background:var(--card);border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;min-height:0}.card>div{overflow:auto;min-height:0;flex:1}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:1.75fr 1fr;gap:10px}.side{display:grid;grid-template-rows:1fr 1fr;gap:10px;min-height:0}
+.lane{display:grid;grid-template-columns:150px 70px 1fr 80px;gap:12px;align-items:center;padding:6px 4px;border-top:1px solid var(--line);cursor:pointer}
+.lane:first-of-type{border-top:0}.lane:hover{background:#fafafa}.lane.sel{background:#f2f6ff}
+.who b{font-size:14px;font-weight:600;display:block}.who span{color:var(--low);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st{font-size:12px;padding:2px 8px;border-radius:10px;text-align:center;white-space:nowrap}
+.st.run{background:#e8f0ff;color:var(--blue)}.st.stuck{background:#fde9e6;color:var(--red)}.st.wait{background:#fff3df;color:#a86400}.st.idle{background:#f0f0f0;color:var(--mid)}.st.hub{background:#eef7f1;color:var(--green)}
+.jobs{display:flex;flex-wrap:nowrap;gap:6px;overflow:hidden;mask-image:linear-gradient(90deg,#000 92%,transparent)}
+.job{font-size:12px;padding:2px 8px;border-radius:6px;border:1px solid #dfe5ef;color:var(--mid);white-space:nowrap}
+.job.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.job.more{border-style:dashed}
+.cm{text-align:right;font-variant-numeric:tabular-nums}.cm b{font-size:15px}.cm span{display:block;color:var(--low);font-size:11px}
+.cmbar{height:4px;background:#eef2fb;border-radius:2px;margin-top:3px}.cmbar i{display:block;height:100%;background:#9db8ee;border-radius:2px}
+
+.grp{margin-bottom:10px}.grp h3{font-size:12px;margin:0 0 4px;color:var(--mid);font-weight:600}
+.bk{display:flex;gap:8px;padding:5px 0 5px 10px;border-left:3px solid var(--orange);margin:4px 0}
+.bk.risk{border-color:var(--yellow)}.bk.hub{border-color:#9aa3b5}
+.bk span{flex:1}.bk em{font-style:normal;color:var(--low);font-size:12px;white-space:nowrap}
+.ev{display:grid;grid-template-columns:58px 1fr;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
+.ev:first-of-type{border-top:0}.ev time{color:var(--low);font-size:12px;font-variant-numeric:tabular-nums}
+.ev .mg{color:var(--green);font-weight:600}
+.dim{opacity:.28}
+.empty{color:var(--low);padding:6px 0}
+@media(max-height:780px){.ar{padding:2px 0}.ask h2{margin-bottom:4px}.lane{padding:3px 4px}.big b{font-size:24px}.bar{margin:8px 0 6px}.pulse{margin-top:6px;padding-top:6px}.pulse b{font-size:17px}}
+@media(max-width:900px){body{overflow:auto}.wrap{height:auto}.top,.main{grid-template-columns:1fr}.side{grid-template-rows:auto}.card>div{overflow:visible}.lane{grid-template-columns:1fr auto;gap:6px}.lane .jobs{grid-column:1/-1;flex-wrap:wrap;mask-image:none}.lane .cm{display:none}}
+</style></head><body><div class="wrap">
+<header><h1>杭州西站图册 · 团队进度</h1><span class="fresh" id="fresh"><i></i><span></span></span>
+<nav><a id="lk-live" target="_blank">看图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></nav></header>
+
+<div class="top">
+  <section class="ask" id="ask"></section>
+  <section class="prog" id="prog"></section>
+</div>
+
+<div class="main">
+  <section class="card"><p class="lbl">谁在做什么 · 点一个人只看他</p><div id="lanes"></div></section>
+  <div class="side">
+    <section class="card"><p class="lbl">卡在哪（团队内部，不用你管）</p><div id="blk"></div></section>
+    <section class="card"><p class="lbl">刚刚发生了什么</p><div id="feed"></div></section>
+  </div>
+</div>
+</div>
 <script>
-const SRC = location.protocol === 'file:' ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json' : '../docs/status.json';
-const E = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const short = s => E(s).replace(/（.*$/, '');
-async function load() {
-  const d = await (await fetch(SRC + '?t=' + Date.now(), {cache: 'no-store'})).json(), h = d.headline;
-  const t = new Date(d.generated_at);
-  const age = Math.round((Date.now() - t) / 60000), ts = document.getElementById('ts');
-  ts.textContent = isNaN(age) ? '数据时间 ' + d.generated_at : `数据 ${age} 分钟前（集成任务每 20 分钟更新）`; ts.className = age > 60 ? 'old' : '';
-  for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = d.links[k];
-  const K = [[h.workflows_running, '进行中工作流', `派单 ${h.dispatch_open} · 认领 ${h.live_claims}`], [h.waiting_on_owner, '等你决定', '', 1], [h.blockers, '卡点总数', h.pending_review ? `待审分支 ${h.pending_review}` : '待审分支 0'], [`${h.items_done}/${h.items_total}`, '事项完成', ''], [h.commits_today, '今日提交', `累计 ${h.commits_total} · 文件 ${h.files}`]];
-  document.getElementById('kpi').innerHTML = K.map(([v, a, b, w]) => `<div class="k${w && v ? ' warn' : ''}"><b>${E(v)}</b><span>${a}${b ? ' · ' + E(b) : ''}</span></div>`).join('');
-  const cls = {'待委托人': 'o', '集成': 'i', '协作者': 'c'};
-  const bl = [...d.blockers].sort((a, b) => (b.who == '委托人') - (a.who == '委托人'));
-  document.getElementById('bl').innerHTML = bl.map(b => `<div class="bl"><span class="tag ${cls[b.kind] || ''}">${E(b.kind)}</span><span>${E(b.what)}</span><span class="who">${E(b.who)}</span></div>`).join('') +
-    (d.stale_locks?.length ? `<div class="bl"><span class="tag i">集成</span><span>已完成但认领锁未释放：${d.stale_locks.map(E).join('、')}</span><span class="who">hark-cr</span></div>` : '') || '<p>没有卡点</p>';
-  const by = {};
-  for (const x of d.dispatches_open) for (const a of x.agent.split(/[、,]/)) (by[a.trim()] ||= []).push(`<div class="w d">${E(x.id)} ${E(x.item)} <em>${short(x.state)}</em></div>`);
-  for (const x of d.live_claims) (by[x.agent] ||= []).push(`<div class="w c">${E(x.item)}</div>`);
-  document.getElementById('wf').innerHTML = Object.entries(by).sort((a, b) => b[1].length - a[1].length).map(([a, l]) => `<div class="ag"><h3>${E(a)} <small>${l.length} 项</small></h3>${l.join('')}</div>`).join('');
-  const role = Object.fromEntries(Object.entries(d.roles).flatMap(([k, v]) => k.split(' / ').map(x => [x, v])));
-  const seen = new Set(d.by_agent.map(x => x.agent));
-  const rows = d.by_agent.map(x => [x.agent == '—' ? '无署名（早期/PR #1）' : x.agent, x.today, x.total, role[x.agent] || '']).concat(Object.keys(role).filter(k => !seen.has(k)).map(k => [k, 0, 0, role[k]]));
-  document.getElementById('ag').innerHTML = '<tr><td></td><td class="n r">今日</td><td class="n r">累计</td><td class="r">职责</td></tr>' + rows.map(r => `<tr><td>${E(r[0])}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="r">${E(r[3])}</td></tr>`).join('');
-  document.getElementById('rc').innerHTML = '最近提交：' + d.recent_commits.slice(0, 6).map(c => `<code>${E(c.agent)}</code>${E(c.subj)}`).join('　');
+const SRC = location.protocol === 'file:'
+  ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json'
+  : '../docs/status.json';
+const URL_ = new URLSearchParams(location.search).get('src') || SRC; // ?src= 只给本地截图测试用
+const E = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cut = s => String(s ?? '').replace(/[（(].*$/, '').trim();
+// "Sat 2026-11-07 10:51 PM PST (UTC-08:00)" 或 ISO
+function parseT(s) {
+  const m = String(s).match(/(\d{4}-\d\d-\d\d)\s+(\d{1,2}):(\d\d)\s*(AM|PM)?.*?UTC([+-]\d\d):?(\d\d)/);
+  if (!m) return new Date(s);
+  let h = +m[2]; if (m[4] === 'PM' && h < 12) h += 12; if (m[4] === 'AM' && h === 12) h = 0;
+  return new Date(`${m[1]}T${String(h).padStart(2,'0')}:${m[3]}:00${m[5]}:${m[6]}`);
 }
-load().catch(e => document.getElementById('ts').textContent = '读取失败：' + e); setInterval(() => load().catch(() => {}), 60000);
+const bj = d => d.toLocaleTimeString('zh-CN', {timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false});
+const ago = d => { const m = Math.round((Date.now() - d) / 60000); return isNaN(m) ? '' : m < 1 ? '刚刚' : m < 60 ? `${m} 分钟前` : m < 1440 ? `${Math.round(m/60)} 小时前` : `${Math.round(m/1440)} 天前`; };
+let sel = location.hash.slice(1) ? decodeURIComponent(location.hash.slice(1)) : '';
+
+function model(d) {
+  const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+  const P = {};
+  const get = a => P[a] ||= {name: a, role: role[a] || '', jobs: new Map(), today: 0, total: 0, kept: 0, blocks: [], last: null};
+  Object.keys(role).forEach(get);
+  // 派单和认领常是同一件活，按名字合并成一条
+  for (const x of d.dispatches_open || []) for (const a of x.agent.split(/[、,]/)) {
+    const st = cut(x.state); get(a.trim()).jobs.set(x.item, {name: x.item, id: x.id, on: /在做|进行/.test(st), st});
+  }
+  for (const x of d.live_claims || []) { const p = get(x.agent), j = p.jobs.get(x.item); if (j) j.claimed = true; else p.jobs.set(x.item, {name: cut(x.item), on: true, st: '已认领'}); }
+  for (const x of d.claimed_items || []) if (x.state === '保留' && x.agent !== '—') get(x.agent).kept++;
+  for (const x of d.by_agent || []) if (x.agent !== '—') { const p = get(x.agent); p.today = x.today; p.total = x.total; }
+  for (const c of d.recent_commits || []) { const p = get(c.agent), t = parseT(c.at); if (!p.last || t > p.last) p.last = t; }
+  for (const b of d.blockers || []) if (P[b.who]) P[b.who].blocks.push(b);
+  for (const p of Object.values(P)) {
+    const jobs = [...p.jobs.values()];
+    const hub = /集成/.test(p.role);
+    p.state = p.blocks.some(b => b.kind === '协作者') ? ['stuck', '卡住了']
+      : hub ? ['hub', '在把关'] : jobs.some(j => j.on) || p.today > 0 && jobs.length ? ['run', '在干活']
+      : jobs.length ? ['wait', '还没开工'] : ['idle', '空闲'];
+    p.rank = {stuck: 0, hub: 1, run: 2, wait: 3, idle: 4}[p.state[0]];
+  }
+  return Object.values(P).sort((a, b) => a.rank - b.rank || b.today - a.today);
+}
+
+function render(d) {
+  const h = d.headline || {}, t = parseT(d.generated_at), age = (Date.now() - t) / 60000;
+  const fr = document.getElementById('fresh'); fr.className = 'fresh' + (age > 60 ? ' old' : '');
+  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : `${ago(t)}更新（北京 ${bj(t)}）` + (age > 60 ? ' · 数据停了，集成任务可能没在跑' : '');
+  for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = (d.links || {})[k] || '#';
+
+  // 1 要你拍板
+  const asks = (d.blockers || []).filter(b => b.who === '委托人' || /委托人/.test(b.kind));
+  document.getElementById('ask').innerHTML = asks.length
+    ? `<h2><b>${asks.length}</b>件事等你拍板</h2>` + asks.map((b, i) => `<div class="ar"><span class="n">${i + 1}</span><span>${E(b.what)}</span></div>`).join('')
+    : '<h2>没有要你拍板的事</h2><div class="empty">团队自己在转，看下面就行。</div>';
+
+  // 2 整体进度
+  const P = model(d), total = h.items_total || 0, done = h.items_done || 0;
+  const running = P.reduce((s, p) => s + [...p.jobs.values()].filter(j => j.on).length, 0);
+  const queued = P.reduce((s, p) => s + [...p.jobs.values()].filter(j => !j.on).length, 0);
+  const rest = Math.max(0, total - done - running - queued);
+  const seg = [[done, 'var(--green)', '做完'], [running, 'var(--blue)', '在做'], [queued, '#9fb6e6', '排队'], [rest, '#e3e3e3', '还没人接']];
+  const hours = new Array(12).fill(0);
+  for (const c of d.recent_commits || []) { const k = Math.floor((Date.now() - parseT(c.at)) / 3600000); if (k >= 0 && k < 12) hours[11 - k]++; }
+  const mx = Math.max(1, ...hours), blocked = (d.blockers || []).length - asks.length;
+  document.getElementById('prog').innerHTML = `<p class="lbl">整体走到哪了</p>
+    <div class="big"><b>${done} / ${total}</b><span>件活做完了（${total ? Math.round(done / total * 100) : 0}%）</span></div>
+    <div class="bar">${seg.map(([v, c, n]) => v ? `<i style="width:${v / Math.max(1, total) * 100}%;background:${c}" title="${n} ${v}"></i>` : '').join('')}</div>
+    <div class="leg">${seg.map(([v, c, n]) => `<span><i style="background:${c}"></i>${n} <b>${v}</b></span>`).join('')}</div>
+    <div class="pulse">
+      <div><b>${P.filter(p => p.state[0] === 'run' || p.state[0] === 'hub').length} / ${P.length}</b><span>人在干活</span></div>
+      <div><b style="color:${blocked ? 'var(--orange)' : 'inherit'}">${blocked}</b><span>处卡点（团队内部）</span></div>
+      <div><b>${h.commits_today ?? '–'}</b><span>今天提交（累计 ${h.commits_total ?? '–'}）</span></div>
+    </div>`;
+
+  // 3 泳道
+  const maxT = Math.max(1, ...P.map(p => p.today));
+  document.getElementById('lanes').innerHTML = P.map(p => {
+    const jobs = [...p.jobs.values()].sort((a, b) => b.on - a.on);
+    const chips = jobs.slice(0, 4).map(j => `<span class="job${j.on ? ' on' : ''}" title="${E(j.id ? j.id + ' · ' : '')}${E(j.st)}">${E(j.name)}${j.on ? '' : ' · 排队'}</span>`).join('')
+      + (jobs.length > 4 ? `<span class="job more">还有 ${jobs.length - 4} 件</span>` : '')
+      + (p.kept ? `<span class="job more">替大家保管 ${p.kept} 件</span>` : '')
+      + (p.blocks.length ? p.blocks.map(b => `<span class="job" style="border-color:#f3c2bb;color:var(--red)">${E(cut(b.what)).slice(0, 26)}</span>`).join('') : '')
+      || '<span class="empty">手上没活</span>';
+    return `<div class="lane${sel === p.name ? ' sel' : ''}${sel && sel !== p.name ? ' dim' : ''}" data-a="${E(p.name)}">
+      <div class="who"><b>${E(p.name)}</b><span>${E(cut(p.role.split('：').pop()) || p.role)}</span></div>
+      <span class="st ${p.state[0]}">${p.state[1]}</span>
+      <div class="jobs">${chips}</div>
+      <div class="cm"><b>${p.today}</b> 次<span>${p.last ? '最近 ' + ago(p.last) : '今天提交'}</span><div class="cmbar"><i style="width:${p.today / maxT * 100}%"></i></div></div></div>`;
+  }).join('');
+  document.querySelectorAll('.lane').forEach(el => el.onclick = () => { sel = sel === el.dataset.a ? '' : el.dataset.a; location.hash = sel ? encodeURIComponent(sel) : ''; render(d); });
+
+  // 4 卡点，按卡在谁身上分组
+  const grp = {}; const nm = {协作者: '卡在干活的人', 集成: '卡在集成人（hark-cr）', 风险: '要留意的风险'};
+  for (const b of d.blockers || []) { if (asks.includes(b)) continue; (grp[nm[b.kind] || '其他'] ||= []).push(b); }
+  for (const s of d.stale_locks || []) (grp['卡在集成人（hark-cr）'] ||= []).push({kind: '集成', what: '做完了但没放回认领板：' + s, who: 'hark-cr'});
+  document.getElementById('blk').innerHTML = Object.entries(grp).map(([g, l]) => `<div class="grp"><h3>${g} · ${l.length}</h3>${l.map(b =>
+    `<div class="bk ${b.kind === '风险' ? 'risk' : b.kind === '集成' ? 'hub' : ''}${sel && b.who !== sel ? ' dim' : ''}"><span>${E(b.what)}</span><em>${E(b.who === '—' ? '' : b.who)}</em></div>`).join('')}</div>`).join('') || '<div class="empty">没有卡点</div>';
+
+  // 5 动态：把 Merge 翻成人话
+  const dn = Object.fromEntries((d.dispatches_open || []).map(x => [x.id, x.item]));
+  document.getElementById('feed').innerHTML = (d.recent_commits || []).map(c => {
+    const t = parseT(c.at), m = c.subj.match(/^Merge (?:branch '?)?agent\/([^/]+)\/(.+?)'?$/);
+    let txt;
+    if (m) { const id = (m[2].match(/D-\d+/) || [])[0]; txt = `<span class="mg">合入</span> ${E(m[1])} 的 ${E(id ? id + ' ' + (dn[id] || '') : m[2])}`; }
+    else txt = `${E(c.agent)}：${E(c.subj.replace(/^\[[^\]]+\]\s*/, ''))}`;
+    const mine = !sel || c.agent === sel || (m && m[1] === sel);
+    return `<div class="ev${mine ? '' : ' dim'}"><time title="${E(c.sha)}">${isNaN(t) ? '' : bj(t)}</time><span>${txt}</span></div>`;
+  }).join('') || '<div class="empty">还没有提交</div>';
+}
+async function load() { const d = await (await fetch(URL_ + (URL_.includes('?') ? '&' : '?') + 't=' + Date.now(), {cache: 'no-store'})).json(); render(d); }
+load().catch(e => { const f = document.getElementById('fresh'); f.className = 'fresh old'; f.querySelector('span').textContent = '读取失败（离线或数据地址打不开）：' + e.message; document.getElementById('ask').innerHTML = '<h2>暂时读不到数据</h2><div class="empty">联网后会自动重试（每 60 秒）。</div>'; });
+setInterval(() => load().catch(() => {}), 60000);
 </script></body></html>
