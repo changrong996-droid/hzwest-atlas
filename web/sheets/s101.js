@@ -19,11 +19,13 @@
 // 物理不变量（check_s101 逐时刻断言）：撑只在挖过它之后出现、在它下面那层板浇完后才拆；
 // 板只浇在已挖到的标高之上；挖土不超过墙已成槽的深度；坑底不低于设计坑底。
 (function (G) {
-  const X0 = 39;                                   // 剖切位置，与 S-301 的 B–B 同一条线
+  let X0 = 39;                                     // 剖切位置 = HZ.SEC_X（3D 剖切刀、S-301 的 B–B 同一条线），model() 里从 HZ 读
   const C = { paper: '#f6f2ea', ink: '#1d1a17', ink2: '#5d564c', ink3: '#948b7d', line: '#d4cbbb', red: '#b3202a', red2: '#e6bab4', red3: '#f3dcd8', temp: '#c46a12', soil: '#e9e1d2', soil2: '#d9cdb7', conc: '#cfc8bb', water: '#5b7fa6' };
   const MONO = '"SF Mono","JetBrains Mono",Menlo,Consolas,"DejaVu Sans Mono","Noto Sans Mono CJK SC",monospace';
   const SANS = '"PingFang SC","Noto Sans CJK SC","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
+  const VPUB = 120e4;   // 站房地下土方 120 万 m³（科极网 2020-09-16）
+  const TRUCK = 15;     // 一车出土约 15 m³（常见重型自卸车的松方装载量，按此折算车次；不是公开数字，是换算假设）
   const prog = (t, a, b) => (b <= a ? (t >= b ? 1 : 0) : clamp((t - a) / (b - a), 0, 1));
 
   // ---- 几何（米；z 向南为正，y 向上）----
@@ -51,9 +53,14 @@
   // ---- 从 HZ 推导节拍 ----
   let M = null;
   function model(HZ) {
-    if (M && M.HZ === HZ) return M;
     const F = HZ.K.found, parts = F.parts;
     const metro = parts.find(p => p.geo && p.geo.mat === 'metro');
+    const sig = [HZ.SEC_X, HZ.P && HZ.P.gap, F.start, F.end].concat(parts.map(p => p.st + ':' + p.du)).join('|');
+    if (M && M.HZ === HZ && M.sig === sig) return M;
+    // 尺寸从 HZ 读（二稿：改 HZ，图跟着变）：剖切位置、地铁槽半宽、B1 板标高、两翼顶板标高
+    if (typeof HZ.SEC_X === 'number') X0 = HZ.SEC_X;
+    if (HZ.P && typeof HZ.P.gap === 'number') { GEO.zIn = HZ.P.gap - 0.8; GEO.zW0 = HZ.P.gap; GEO.zW1 = HZ.P.gap + 1; }
+    if (metro && metro.geo.boxes) { const fl = metro.geo.boxes.reduce((a, b) => (b.max[2] - b.min[2] > a.max[2] - a.min[2] ? b : a)); GEO.lv[2].y0 = fl.min[1]; GEO.lv[2].y1 = fl.max[1]; }
     const UGT = metro ? metro.st + metro.du : F.start + (F.end - F.start) * 0.65;
     const MS = metro ? metro.st : UGT * 0.81;
     // 覆盖 x = X0 的两翼 found 板（南 z>0、北 z<0）
@@ -79,7 +86,31 @@
         ph(st, st + du, 'roofF' + s, (side > 0 ? '南' : '北') + '翼 柱 · 顶板 ±0（= 3D 板）')]; };
     wing(1).concat(wing(-1)).forEach(p => L.push(p));
     const by = {}; for (const p of L) by[p.k] = p;
-    M = { HZ, UGT, MS, L, by, win: [F.start, F.end] };
+    // 全场土方：每块 3D found 板 = 一个分坑。顶板 = 板自身 [st, st+du]；有 60 天以上提前量的板按剖面同一规则倒推
+    // （挖 [st−60, st−15]、底板 [st−15, st]），开工即有板的早期分坑把挖、底板、顶板压进 [0, st+du]（0.45 / 0.55 / 1）。
+    const tiles = parts.filter(p => p.geo && p.geo.mat === 'found').map(p => { const st = p.st, du = p.du, b = p.geo;
+      const T = st >= 60 ? { d0: st - 60, d1: st - 15, b1: st, r0: st, r1: st + du } : (e => ({ d0: 0, d1: e * 0.45, b1: e * 0.55, r0: e * 0.55, r1: e }))(st + du);
+      return Object.assign(T, { s3: st, e3: st + du, x0: b.min[0], x1: b.max[0], z0: b.min[2], z1: b.max[2], depth: GEO.fPit, area: (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) }); });
+    { const NS = side => tiles.filter(q => side < 0 ? q.z1 <= 0 : q.z0 >= 0).sort((a, b) => a.x0 - b.x0); NS(-1).forEach((q, i) => q.id = 'F-N' + String(i + 1).padStart(2, '0')); NS(1).forEach((q, i) => q.id = 'F-S' + String(i + 1).padStart(2, '0')); }
+    const cX = metro ? [metro.geo.min[0], metro.geo.max[0]] : [-200, 200];
+    const core = { id: 'C-METRO', x0: cX[0], x1: cX[1], z0: -GEO.zW0, z1: GEO.zW0, depth: GEO.pit, area: (cX[1] - cX[0]) * 2 * GEO.zW0 };
+    const Vtot = tiles.reduce((a, q) => a + q.area * -q.depth, 0) + core.area * -core.depth;
+    const ft = tiles[0] && parts.find(p => p.geo && p.geo.mat === 'found'); if (ft) GEO.fRoof = [ft.geo.min[1], ft.geo.max[1]];
+    M = { HZ, sig, UGT, MS, L, by, win: [F.start, F.end], tiles, core, Vtot };
+    // 镜头关键帧从 3D 板的出现节拍算出（不手写，GPU 审计 #3）：每 12 天一帧，框住「3D 里已经出现的板 + 12 天内将出现的下一块」，
+    // 让镜头始终对准实体而不是满屏未建幽灵线；开工那一刻只有第一块板，就贴近看它。机位在西侧偏南低角度向东看（与剖面同向），
+    // 距离由框的对角线定（200–480 m）；收尾拉远看全场。相机高度 = dist·sin(el) > 0，不进地下。
+    const frameAt = t => { let on = tiles.filter(q => q.s3 <= t + 12); if (!on.length) on = [tiles.slice().sort((a, b) => a.s3 - b.s3)[0]];
+      const newest = on.reduce((a, q) => (q.s3 > a.s3 ? q : a));
+      // 已建部分太长时只框最新的 3 块（正在盖的那一端），保证主体够大
+      const near = on.slice().sort((a, b) => b.s3 - a.s3).slice(0, 4);
+      const x0 = Math.min(...near.map(q => q.x0)), x1 = Math.max(...near.map(q => q.x1)), z0 = Math.min(...near.map(q => q.z0)), z1 = Math.max(...near.map(q => q.z1));
+      const diag = Math.hypot(x1 - x0, z1 - z0);
+      return { target: [Math.round((x0 + x1) / 2 * 0.7 + (newest.x0 + newest.x1) / 2 * 0.3), 0, Math.round((z0 + z1) / 2)], dist: Math.round(clamp(diag * 1.5, 200, 480)) }; };
+    const cam = [];
+    for (let t = F.start; t <= F.end - 24; t += 12) { const f = frameAt(t); cam.push({ t, target: f.target, az: -104, el: 26, dist: f.dist }); }
+    cam.push({ t: F.end, target: [0, 0, 0], az: -112, el: 30, dist: 540 });
+    M.cam = cam;
     return M;
   }
 
@@ -104,15 +135,31 @@
       return { side, pile: p('pile' + S), dig: lerp(0, GEO.fPit, p('digF' + S)), base: p('baseF' + S), roof: p('roofF' + S) }; });
     s.cur = m.L.filter(q => t >= q.a && t < q.b).map(q => q.n);
     // 完成的地下层数（中央坑按 B3/B2/B1，底板算第 4 层的底；两翼顶板封顶 = ±0 层完成）
+    // 全场土方（m³ → 按公开总量 120 万 m³ 缩放；几何总量 m.Vtot 只用来算比例）
+    s.tiles = m.tiles.map(q => ({ q, dig: lerp(0, q.depth, prog(t, q.d0, q.d1)), base: prog(t, q.d1, q.b1), roof: prog(t, q.r0, q.r1) }));
+    s.coreDig = dc;
+    const vd = s.tiles.reduce((a, o) => a + o.q.area * -o.dig, 0) + m.core.area * -dc;
+    s.vFrac = clamp(vd / m.Vtot, 0, 1); s.vol = s.vFrac * VPUB;
     s.layers = (s.base >= 1 ? 1 : 0) + (rb.B3 >= 1 ? 1 : 0) + (rb.B2 >= 1 ? 1 : 0) + (rb.B1 >= 1 ? 1 : 0);
     return s;
   }
 
-  // 大数字：挖的阶段 = 开挖深度（m），回筑阶段 = 已完成地下层数（/4）
+  // 土方车流：车次全部由开挖进度换算（不手排）——今天出土车次 = 前后半天已挖方量之差 ÷ 每车方量；累计 = 已挖 ÷ 每车方量
+  function trucks(HZ, t) {
+    const v0 = stateAt(HZ, t - 0.5).vol, v1 = stateAt(HZ, t + 0.5).vol, s = stateAt(HZ, t);
+    return { day: Math.max(0, Math.round((v1 - v0) / TRUCK)), cum: Math.round(s.vol / TRUCK), total: Math.round(VPUB / TRUCK) };
+  }
+
+  // 大数字：全场已挖土方（万 m³）——4 层地下真正的工程量；挖完后标签改报地下结构层数
   function big(HZ, t) {
     const s = stateAt(HZ, t);
-    if (s.base < 1) return { num: +Math.abs(s.dig).toFixed(1), unit: 'm', label: s.dig < 0 ? '已挖深度（设计坑底 25.2 m）' : '准备开挖' };
-    return { num: s.layers, unit: '/ 4 层', label: '地下结构已完成' };
+    const num = +(s.vol / 1e4).toFixed(1);
+    // GPU 审计 #4：挖完后副标题报「已完成层数 x / 4」，不写「已完成」以免读成全部完成。
+    // GPU 审计 #5：中央坑先做地连墙、立柱桩、降水，期间土方主要来自两翼早期分坑；副标题点明中央坑在做什么。
+    if (s.vFrac >= 1) return { num, unit: '万 m³', label: '土方挖完 · 已完成层数 ' + s.layers + ' / 4' };
+    const cc = s.cur.find(n => !/翼/.test(n)), pre = cc ? '中央坑 ' + cc.split(/ → | · /)[0] : '';
+    if (num <= 0) return { num, unit: '万 m³', label: '准备开挖 · ' + (pre || '分坑放线') };
+    return { num, unit: '万 m³', label: '已挖土方（共 120 万 m³）' + (pre ? ' · ' + pre : '') };
   }
 
   // ---- 2D 绘制 ----
@@ -134,8 +181,12 @@
     return { x0: 8, y0: 8, x1: w - 8, y1: y - 2 };
   }
 
+  // ---- 联动 v2：draw() 时登记可点构件（图上点击框 + 3D 世界盒），parts() 返回最近一次绘制的登记 ----
+  let HITS = [], HITW = null;
   function draw(g, w, h, t, ctx) {
     const HZ = G.HZ; ctx = ctx || {};
+    HITS = []; HITW = { w, h, t };
+    const addHit = (id, lbl, r, b) => { const x0 = Math.max(0, r[0]), y0 = Math.max(0, r[1]), x1 = Math.min(w, r[0] + r[2]), y1 = Math.min(h, r[1] + r[3]); if (x1 - x0 < 2 || y1 - y0 < 2) return; const i = HITS.findIndex(o => o.id === id); if (i >= 0) HITS.splice(i, 1); HITS.push({ id, label: lbl, hit: [x0, y0, x1 - x0, y1 - y0], box: b }); };
     const PJ = (G.HZA && G.HZA.PROJECT) || HZ.PROJECT || 'HZW';
     const no = PJ + '-S-101-1';
     const tbo = ctx.tb ? ctx.tb(w, h, no, ['地下 · 横剖面 x = ' + X0 + ' m · 向东看', '地下 · 横剖面'], t) : { tb: 20, no, name: '地下' };
@@ -150,12 +201,19 @@
 
     // 版面：左侧大数字栏 + 右侧剖面；矮窗口把大数字压到左上角
     const bw = box.x1 - box.x0, bh = box.y1 - box.y0, small = bh < 220 || bw < 380;
-    const gut = small ? 0 : clamp(bw * 0.2, 96, 150);
-    const da = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 30 : 18), x1: box.x1 - (small ? 4 : 56), y1: box.y1 - 6 };
+    // 竖长条（GPU 审计 #7 / D-08：右栏约 600×980、800×1200）：大数字改成顶部横带，斜俯图与剖面都用满宽，上下不留大片空白
+    const tall = !small && bh > bw * 1.15 && bh >= 460;
+    const gut = small ? 0 : tall ? 0 : clamp(bw * 0.2, 96, 150);
+    const topH = tall ? Math.round(clamp(bh * 0.17, 120, 180)) : 0;
+    // 大画幅：上 = 全场斜俯剖切（土方体量），下 = x = 39 横剖面；小画幅只留剖面
+    // 斜俯图的屏幕范围是常量（见下方 xmin..ymax，约 734 × 242 m），竖长条按满宽算它的自然高度
+    const axoOn = !small && (tall ? bw >= 300 : bh >= 300 && bw >= 460);
+    const split = tall ? box.y0 + topH + Math.round(clamp((bw - 10) * 0.335 + 10, 80, (bh - topH) * 0.5)) : box.y0 + Math.round(bh * 0.55);
+    const da = { x0: box.x0 + gut + 6, y0: axoOn ? split + 14 : box.y0 + (small ? 30 : 18), x1: box.x1 - (small ? 4 : tall ? 40 : 56), y1: box.y1 - 6 };
     const zv = GEO.zView, yT = GEO.yTop, yB = GEO.yBot;
-    const dw = da.x1 - da.x0, dh = da.y1 - da.y0, sx = dw / (2 * zv), ve = clamp(Math.floor(dh / (yT - yB) / sx * 2) / 2, 1, 2), sy = sx * ve;
+    const dw = da.x1 - da.x0, dh = da.y1 - da.y0, sx = Math.min(dw / (2 * zv), dh / (yT - yB)), ve = clamp(Math.floor(dh / (yT - yB) / sx * 2) / 2, 1, tall ? 2.5 : 2), sy = sx * ve;
     const oy = da.y0 + (dh - (yT - yB) * sy) / 2;
-    const X = z => da.x0 + (z + zv) * sx, Y = y => oy + (yT - y) * sy;   // 向东看：左 = 北（z<0），右 = 南
+    const ox0 = da.x0 + (dw - 2 * zv * sx) / 2, X = z => ox0 + (z + zv) * sx, Y = y => oy + (yT - y) * sy;   // 向东看：左 = 北（z<0），右 = 南
     const R = (z0, y0, z1, y1) => [X(Math.min(z0, z1)), Y(Math.max(y0, y1)), Math.abs(z1 - z0) * sx, Math.abs(y1 - y0) * sy];
     const fillR = (z0, y0, z1, y1, col) => { const r = R(z0, y0, z1, y1); g.fillStyle = col; g.fillRect(r[0], r[1], r[2], r[3]); };
     const strokeR = (z0, y0, z1, y1, col, lw) => { const r = R(z0, y0, z1, y1); g.strokeStyle = col; g.lineWidth = lw || 1; g.strokeRect(r[0], r[1], r[2], r[3]); };
@@ -214,6 +272,16 @@
     for (const ze of [-zv + 0.6, zv - 0.6]) { g.strokeStyle = C.ink2; g.lineWidth = 0.8; g.beginPath(); const x = X(ze); g.moveTo(x, Y(2)); g.lineTo(x, Y(-6)); g.lineTo(x - 4, Y(-8)); g.lineTo(x + 4, Y(-10)); g.lineTo(x, Y(-12)); g.lineTo(x, Y(yB + 1)); g.stroke(); }
     g.restore();
 
+    // 剖面上的可点构件（3D 盒取剖切位置 x = X0 两侧各 6 m 的一段，与 3D 剖切刀同一处）
+    { const xa = X0 - 6, xb = X0 + 6, Rc = (z0, y0, z1, y1) => { const r = R(z0, y0, z1, y1); return [r[0] - 2, r[1] - 2, r[2] + 4, r[3] + 4]; };
+      addHit('SEC', '横剖面 x = ' + X0 + ' m', [da.x0, da.y0, dw, dh], [X0 - 0.5, GEO.yBot, -zv, X0 + 0.5, 0, zv]);
+      for (const sg of [-1, 1]) if (s.wings.find(W => W.side === sg).roof > 0 || s.wings.find(W => W.side === sg).dig < 0) { const za = sg * GEO.zW1, zb = sg * zv;
+        addHit(sg < 0 ? 'WG-N' : 'WG-S', (sg < 0 ? '北' : '南') + '翼地下室（x = ' + X0 + '）', Rc(za, 0, zb, GEO.fPit), [xa, GEO.fPit, Math.min(za, zb), xb, 0, Math.max(za, zb)]); }
+      if (s.wall > 0) for (const sg of [-1, 1]) addHit(sg < 0 ? 'W-N' : 'W-S', '地下连续墙 ' + (sg < 0 ? '北' : '南'), Rc(sg * GEO.zW0, 0, sg * GEO.zW1, s.wallY), [m.core.x0, s.wallY, Math.min(sg * GEO.zW0, sg * GEO.zW1), m.core.x1, 0, Math.max(sg * GEO.zW0, sg * GEO.zW1)]);
+      if (s.base > 0) addHit('SL-B4', '底板 ' + GEO.base[1].toFixed(1), Rc(-GEO.zIn, GEO.base[0], GEO.zIn, GEO.base[1]), [m.core.x0, GEO.base[0], -GEO.zIn, m.core.x1, GEO.base[1], GEO.zIn]);
+      GEO.lv.forEach((L, i) => { if (s.lv[i] > 0) addHit('SL-' + L.n, L.n + ' 板 ' + L.y1.toFixed(1) + ' · ' + L.d, Rc(-GEO.zIn, L.y0, GEO.zIn, L.y1), [m.core.x0, L.y0, -GEO.zIn, m.core.x1, L.y1, GEO.zIn]); });
+      GEO.struts.forEach((y, i) => { if (s.struts[i] === 1) addHit('ST-' + (i + 1), '第 ' + (i + 1) + ' 道内支撑 ' + y.toFixed(1), Rc(-GEO.zW0, y + 0.6, GEO.zW0, y - 0.6), [m.core.x0, y - 0.6, -GEO.zW0, m.core.x1, y + 0.6, GEO.zW0]); }); }
+
     // 标高刻度（右侧）
     const ticks = [[0, '±0.0'], [-9.2, '−9.2'], [-15.4, '−15.4'], [-20.0, '−20.0'], [GEO.pit, '−25.2']];
     for (const [y, txt] of ticks) { const yy = Y(y); if (yy < da.y0 || yy > da.y1) continue; g.strokeStyle = C.ink3; g.lineWidth = 0.6; g.beginPath(); g.moveTo(da.x1 + 2, yy); g.lineTo(da.x1 + 7, yy); g.stroke(); if (!small) label(txt, da.x1 + 9, yy, C.ink2, { fs: 9 }); }
@@ -235,42 +303,108 @@
       label('北', X(-zv) + 6, Y(yT) + 6, C.ink3, { sans: true }); label('南', X(zv) - 6, Y(yT) + 6, C.ink3, { al: 'r', sans: true });
     }
 
+    // ---- 全场斜俯剖切（真实比例，不放大竖向）：每个分坑按自己的节拍往下挖、浇底板、盖顶板；挖出的土堆成一个立方体 ----
+    if (axoOn) {
+      const aa = { x0: box.x0 + gut + 6, y0: box.y0 + topH + 4, x1: box.x1 - 4, y1: split - 2 };
+      const KX = 0.5, KZ = 0.36;                          // 斜投影：向南（z+）往左下退，北在后
+      const edge = Math.cbrt(Math.max(1, s.vol)), Emax = Math.cbrt(VPUB), CX = 262;   // 土方立方体放在场地东侧
+      const xs = [-240 - KX * 150, CX + Emax - KX * -Emax / 2 + 6], ys = [-(KZ * -135) - 0, KZ * 150 + 28];   // 屏幕坐标范围（米）
+      const PX = (x, y, z) => x - KX * z, PY = (x, y, z) => KZ * z - y;
+      const xmin = -240 - KX * 150, xmax = CX + Emax + KX * Emax / 2 + 4, ymin = KZ * -135 - Emax - 6, ymax = KZ * 150 + 27;
+      const k = Math.min((aa.x1 - aa.x0) / (xmax - xmin), (aa.y1 - aa.y0 - 4) / (ymax - ymin));
+      const ox = aa.x0 + ((aa.x1 - aa.x0) - (xmax - xmin) * k) / 2 - xmin * k, oy2 = aa.y0 + 2 - ymin * k;
+      const P2 = (x, y, z) => [ox + PX(x, y, z) * k, oy2 + PY(x, y, z) * k];
+      const poly = (pts, fill, stroke, lw) => { g.beginPath(); pts.forEach((p, i) => { const q = P2(p[0], p[1], p[2]); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 0.7; g.stroke(); } };
+      g.save(); g.beginPath(); g.rect(aa.x0, aa.y0, aa.x1 - aa.x0, aa.y1 - aa.y0); g.clip();
+      // 地面（场地范围）
+      poly([[-240, 0, -135], [240, 0, -135], [240, 0, 150], [-240, 0, 150]], C.soil, C.ink3, 0.6);
+      // 一个开挖体：坑底 + 后壁 + 两侧壁（前壁背对观者），挖的过程中坑底线红；底板 / 顶板按进度盖上
+      const pit = (q, d, base, roof, live) => { if (d >= -0.05) return;
+        const { x0, x1, z0, z1 } = q;
+        poly([[x0, d, z0], [x1, d, z0], [x1, d, z1], [x0, d, z1]], base >= 1 ? C.conc : '#cbbd9f', null);
+        poly([[x0, 0, z0], [x1, 0, z0], [x1, d, z0], [x0, d, z0]], '#b9a882', C.ink2, 0.5);          // 北壁（后）
+        poly([[x0, 0, z0], [x0, 0, z1], [x0, d, z1], [x0, d, z0]], '#c9b996', C.ink2, 0.5);          // 西壁
+        poly([[x1, 0, z0], [x1, 0, z1], [x1, d, z1], [x1, d, z0]], '#a8966f', C.ink2, 0.5);          // 东壁
+        if (live) poly([[x0, d, z0], [x1, d, z0], [x1, d, z1], [x0, d, z1]], null, C.red, 1.1);
+        if (roof > 0) { const xr = lerp(x0, x1, roof); poly([[x0, 0, z0], [xr, 0, z0], [xr, 0, z1], [x0, 0, z1]], roof < 1 ? C.red3 : '#ddd6c8', roof < 1 ? C.red : C.ink, roof < 1 ? 1 : 0.6); }
+        else poly([[x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]], null, C.ink, 0.8); };
+      // 画家顺序：北（后）→ 南（前），同排西 → 东
+      const items = s.tiles.map(o => ({ q: o.q, d: o.dig, base: o.base, roof: o.roof, live: o.dig < 0 && o.dig > o.q.depth + 1e-6 }));
+      items.push({ q: m.core, d: s.coreDig, base: s.base, roof: s.lv[2] >= 1 ? 0 : 0, live: s.coreDig < 0 && s.base < 1 });
+      items.sort((a, b) => a.q.z0 - b.q.z0 || a.q.x0 - b.q.x0).forEach(o => pit(o.q, o.d, o.base, o.roof, o.live));
+      // 土方车：正在出土的坑往近的场地边（北 z = −135 / 南 z = 150）发车；小车数 = 该坑今天出土车次 ÷ 40（1–12 辆），虚线为出土道路，由前后半天的开挖深度差换算
+      { const vs = VPUB / m.Vtot, sa = stateAt(HZ, t - 0.5), sb = stateAt(HZ, t + 0.5); g.fillStyle = C.temp;
+        const runs = m.tiles.map((q, i) => [q, q.area * (sa.tiles[i].dig - sb.tiles[i].dig)]).concat([[m.core, m.core.area * (sa.coreDig - sb.coreDig)]]);
+        for (const [q, dv] of runs) { const day = dv * vs / TRUCK; if (!(day > 1)) continue;
+          const n = clamp(Math.round(day / 40), 1, 12), xc = (q.x0 + q.x1) / 2, south = q.z0 + q.z1 >= 0, za = south ? q.z1 : q.z0, zb = south ? 150 : -135;
+          const pa2 = P2(xc, 0, za), pb2 = P2(xc, 0, zb); g.strokeStyle = C.temp; g.lineWidth = 0.8; g.setLineDash([3, 2]); g.beginPath(); g.moveTo(pa2[0], pa2[1]); g.lineTo(pb2[0], pb2[1]); g.stroke(); g.setLineDash([]);
+          for (let i = 0; i < n; i++) { const f = ((t * 3 + i / n) % 1 + 1) % 1, pp = P2(xc, 0, za + (zb - za) * f); g.fillRect(pp[0] - 3.5, pp[1] - 1.8, 7, 3.6); } } }
+      for (const o of items) { if (!(o.d < -0.05 || o.roof > 0)) continue; const q = o.q, c = [[q.x0, 0, q.z0], [q.x1, 0, q.z0], [q.x1, o.d, q.z1], [q.x0, o.d, q.z1], [q.x0, 0, q.z1], [q.x1, 0, q.z1]].map(v => P2(v[0], v[1], v[2]));
+        const xs2 = c.map(v => v[0]), ys2 = c.map(v => v[1]), r = [Math.min(...xs2), Math.min(...ys2), Math.max(...xs2) - Math.min(...xs2), Math.max(...ys2) - Math.min(...ys2)];
+        const r2 = [Math.max(r[0], aa.x0), Math.max(r[1], aa.y0), 0, 0]; r2[2] = Math.min(r[0] + r[2], aa.x1) - r2[0]; r2[3] = Math.min(r[1] + r[3], aa.y1) - r2[1];
+        addHit(q.id, q.id === 'C-METRO' ? '中央地铁坑（深 ' + (-q.depth).toFixed(1) + ' m）' : '分坑 ' + q.id + (o.roof >= 1 ? ' · 已封顶' : o.d > q.depth + 1e-6 ? ' · 开挖中' : ' · 回筑中'), r2, [q.x0, q.depth, q.z0, q.x1, 0, q.z1]); }
+      // 中央地铁坑里已回筑的层（只画板边线，看得出 4 层叠起来）
+      if (s.coreDig < 0) { const q = m.core; [GEO.base[1]].concat(GEO.lv.map(L => L.y1)).forEach((y, i) => { const ok = i ? s.lv[i - 1] >= GEO.slabDone : s.base >= 1; if (ok && y >= s.coreDig) poly([[q.x0, y, q.z0], [q.x1, y, q.z0], [q.x1, y, q.z1], [q.x0, y, q.z1]], 'rgba(207,200,187,.85)', C.ink, 0.6); }); }
+      // 剖切面 x = 39（与下方剖面同一刀）
+      g.setLineDash([5, 3]); poly([[X0, 0, -135], [X0, 0, 150], [X0, GEO.yBot * 0.66, 150], [X0, GEO.yBot * 0.66, -135]], 'rgba(179,32,42,.06)', C.red, 0.9); g.setLineDash([]);
+      // 土方立方体（真实比例）+ 80 m 高度参照（云门）
+      if (s.vol > 0) { const e = edge, x0 = CX, z0 = -e / 2, z1 = e / 2;
+        poly([[x0, 0, z1], [x0 + e, 0, z1], [x0 + e, e, z1], [x0, e, z1]], '#d9cdb7', C.ink, 0.8);
+        poly([[x0, e, z0], [x0 + e, e, z0], [x0 + e, e, z1], [x0, e, z1]], '#e9e1d2', C.ink, 0.8);
+        poly([[x0 + e, 0, z0], [x0 + e, 0, z1], [x0 + e, e, z1], [x0 + e, e, z0]], '#c4b597', C.ink, 0.8);
+        const r = P2(x0 + e + 2, 80, 0), r0 = P2(x0 - 4, 80, z1); g.strokeStyle = C.ink3; g.lineWidth = 0.6; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(r0[0], r0[1]); g.lineTo(r[0] + 14, r[1]); g.stroke(); g.setLineDash([]); }
+      g.restore();
+      if (s.vol > 0) { const e = edge, q = P2(CX + e / 2, e, Emax / 2); label('挖出的土 = 边长 ' + Math.round(e) + ' m 的立方体', Math.max(aa.x0 + 4, q[0] - 60), Math.max(aa.y0 + 8, q[1] - 10), C.ink, { sans: true, b: true });
+        const r = P2(CX + Emax + 2, 80, 0); label('80 m（云门高）', r[0] - 4, r[1] - 7, C.ink3, { sans: true, fs: 8, al: 'r' }); }
+      { const q = P2(X0, 0, -135); label('剖面 x = 39 ↓', q[0] + 3, q[1] - 7, C.red, { sans: true }); }
+      { const q = P2(-240, 0, -135); label('全场 · 真实比例', q[0] + 2, q[1] - 8, C.ink3, { sans: true, fs: 8 }); }
+      g.strokeStyle = C.line; g.lineWidth = 0.6; g.beginPath(); g.moveTo(aa.x0, split + 4); g.lineTo(aa.x1, split + 4); g.stroke();
+    }
+
     // 大数字（左栏）+ 当前工序（一行）
     const B = big(HZ, t), dayTxt = '第 ' + Math.round(t) + ' 天' + (HZ.dayDate ? ' · ' + HZ.dayDate(t) : '');
     if (!small) {
-      const cx = box.x0 + 8, FS = clamp(Math.round(gut / 3.4), 28, 44);
+      const colW = tall ? Math.round(bw * 0.55) : gut, cx = box.x0 + 8, FS = tall ? clamp(Math.round(bw / 14), 32, 52) : clamp(Math.round(gut / 3.4), 28, 44);
       g.textBaseline = 'alphabetic'; g.fillStyle = C.ink; g.font = `600 ${FS}px ${MONO}`; const nt = String(B.num); g.fillText(nt, cx, box.y0 + 14 + FS);
       const nw = g.measureText(nt).width; g.font = `600 ${Math.round(FS * 0.32)}px ${SANS}`; g.fillStyle = C.ink2; g.fillText(B.unit, cx + nw + 4, box.y0 + 14 + FS);
       g.font = `${10}px ${SANS}`; g.fillStyle = C.ink2; let ly = box.y0 + 32 + FS;
-      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > gut - 6) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 6; } };
-      wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9); ly += 4;
+      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > colW - 6) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 6; } };
+      wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9);
+      { const tk = trucks(HZ, t); if (tk.cum > 0) wrap(tk.day > 0 ? '今天约 ' + tk.day + ' 车出土 · 累计 ' + (tk.cum / 1e4).toFixed(1) + ' 万车' : '出土共 ' + (tk.cum / 1e4).toFixed(1) + ' 万车（每车约 ' + TRUCK + ' m³）', C.temp, 9); }
+      ly += 4;
       for (const n of s.cur.slice(0, 3)) wrap('▸ ' + n, C.red, 10);
       if (!s.cur.length && t >= m.win[1]) wrap('地下结构封顶，转入地上', '#2f7a3a', 10);
       // 工序条：本剖面全部工序在时间窗内的位置，当前时刻一根红竖线
-      const bx0 = cx, bx1 = box.x0 + gut, by1 = box.y1 - 8, rows = m.L.length, rh = clamp(Math.floor((by1 - ly - 6) / rows), 2, 6), by0 = by1 - rows * rh;
-      if (by0 > ly) { const W0 = m.win[0], W1 = m.win[1], XT = v => bx0 + (v - W0) / (W1 - W0) * (bx1 - bx0);
+      // 竖长条：工序条放在顶部横带右半，与文字并排
+      const bx0 = tall ? box.x0 + colW + 16 : cx, bx1 = tall ? box.x1 - 10 : box.x0 + gut, by1 = tall ? box.y0 + topH - 8 : box.y1 - 8, rows = m.L.length;
+      const top = tall ? box.y0 + 14 : ly, rh = clamp(Math.floor((by1 - top - 6) / rows), 2, tall ? 8 : 6), by0 = by1 - rows * rh;
+      if (by0 > top) { const W0 = m.win[0], W1 = m.win[1], XT = v => bx0 + (v - W0) / (W1 - W0) * (bx1 - bx0);
         m.L.forEach((q, i) => { const done = t >= q.b, on = t >= q.a && t < q.b; g.fillStyle = on ? C.red : done ? C.ink2 : C.line; g.fillRect(XT(q.a), by0 + i * rh, Math.max(1, XT(q.b) - XT(q.a)), rh - 1); });
         g.strokeStyle = C.red; g.lineWidth = 1; g.beginPath(); g.moveTo(XT(clamp(t, W0, W1)), by0 - 3); g.lineTo(XT(clamp(t, W0, W1)), by1 + 1); g.stroke(); }
     } else {
       label(B.num + ' ' + B.unit, box.x0 + 6, box.y0 + 9, C.ink, { b: true, fs: 12, sans: true });
       if (s.cur[0]) label(s.cur[0], box.x0 + 6, box.y0 + 23, C.red, { sans: true, fs: 9 });
     }
+    // 选中项（ctx.focus）描黄
+    const fh = ctx.focus && HITS.find(o => o.id === ctx.focus);
+    if (fh) { g.save(); g.strokeStyle = '#f2b705'; g.lineWidth = 2.2; g.strokeRect(fh.hit[0] + 0.5, fh.hit[1] + 0.5, fh.hit[2] - 1, fh.hit[3] - 1); g.restore(); label(fh.label, fh.hit[0] + 2, Math.max(box.y0 + 8, fh.hit[1] - 7), '#8a6a00', { sans: true, b: true }); }
     return { state: s };
   }
+  // parts(t)：最近一次 draw 的登记；时刻不同（或从未画过）时先在同一画幅离屏量一次版面（不出像素）
+  function parts(t, ctx) {
+    if (!HITW || Math.abs(HITW.t - t) > 1e-9) { const W = HITW ? HITW.w : 760, H = HITW ? HITW.h : 420; draw(nullCtx(), W, H, t, Object.assign({}, ctx || {}, { focus: null })); }
+    return HITS.map(o => ({ id: o.id, label: o.label, hit: o.hit.slice(), box: o.box.slice() }));
+  }
+  function nullCtx() { const noop = () => {}; return new Proxy({ measureText: s => ({ width: String(s).length * 6 }), setLineDash: noop }, { get: (o, k) => (k in o ? o[k] : noop), set: () => true }); }
 
   const plugin = {
     id: 'S-101', name: '地下',
     window: [0, 365],
     big: t => big(G.HZ, t),
-    draw,
-    // 镜头关键帧（米、度）：全部从地面以上低角度看基坑，目标点 y = 0，相机高度 = dist·sin(el) > 0，不进地下
-    cam: [
-      { t: 0, target: [0, 0, 0], az: 35, el: 30, dist: 420 },
-      { t: 90, target: [X0, 0, 0], az: 25, el: 16, dist: 170 },
-      { t: 150, target: [X0, 0, 0], az: 15, el: 12, dist: 130 },
-      { t: 236, target: [X0, 0, 0], az: 60, el: 20, dist: 140 },
-      { t: 365, target: [0, 0, 0], az: 35, el: 28, dist: 380 },
-    ],
+    trucks: t => trucks(G.HZ, t),
+    draw, parts,
+    // 镜头关键帧（米、度）：model().cam 从分坑节拍推导（见 model）；HZ 未就绪时退回一帧全景。相机高度 = dist·sin(el) > 0，不进地下
+    get cam() { return G.HZ && G.HZ.K && G.HZ.K.found ? model(G.HZ).cam : [{ t: 0, target: [0, 0, 0], az: -112, el: 30, dist: 540 }]; },
     // 供检查与其他模块读取（只读）
     model: () => model(G.HZ), stateAt: t => stateAt(G.HZ, t), GEO,
   };
