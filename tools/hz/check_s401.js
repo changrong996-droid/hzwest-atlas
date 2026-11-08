@@ -53,4 +53,32 @@ for (const k of pl.cam || []) {
 }
 if (!(pl.cam && pl.cam.length >= 2)) fail('镜头关键帧不足 2 个');
 
-console.log(`OK check_s401 runs=${runs} close=${pl.big(w1).num}% pv=${Math.round(sEnd.pv)} holes=${sEnd.holesTot}`);
+// 5 二稿 parts：窗内每个采样时刻 ≥1 项、id 唯一、hit 在画布内、box 有限且非零体积；选中项绘制不抛错
+if (typeof pl.parts !== 'function') fail('缺 parts()');
+let nParts = 0;
+for (const [w, h] of [[600, 420], [300, 560], [1258 * 0.45, 540 - 60]]) {
+  const c0 = makeCtx(); pl.draw(c0.g, w, h, w0, sheetCtx());   // 先画一次，parts 用同一版面
+  for (let t = w0; t <= w1; t += (w1 - w0) / 8) {
+    const ps = pl.parts(t, { w, h });
+    if (!ps.length) fail(`parts(${t}) 为空`);
+    const ids = new Set();
+    for (const q of ps) {
+      if (ids.has(q.id)) fail('part id 重复 ' + q.id); ids.add(q.id);
+      const [x, y, ww, hh] = q.hit; if (!(x >= 0 && y >= 0 && x + ww <= w + 0.5 && y + hh <= h + 0.5 && ww > 0 && hh > 0)) fail(`hit 越界 ${q.id} ${q.hit.map(v => v.toFixed(1))} @${w}x${h}`);
+      const b = q.box; if (!(b.every(Number.isFinite) && b[3] > b[0] && b[4] > b[1] && b[5] > b[2])) fail('box 非法 ' + q.id + ' ' + b);
+      if (!q.label || !Array.isArray(q.info) || q.info.length < 3) fail('label / info 缺 ' + q.id);
+    }
+    nParts = ps.length;
+  }
+}
+const kinds = new Set(pl.parts(w1).map(q => q.kind)); for (const k of ['hole', 'sky', 'clad', 'pv']) if (!kinds.has(k)) fail('parts 缺类别 ' + k);
+for (const id of ['CL-ZN-E', 'SK-ZM', 'PV-ZS-W']) { const c = makeCtx(); try { pl.draw(c.g, 600, 420, K.pv.start + 10, sheetCtx(null, { focus: id })); } catch (e) { fail('focus=' + id + ' 绘制抛错 ' + e.message); } }
+const hj = pl.parts(w0).filter(q => q.kind === 'hole' && /^H-J\d\d[ab]$/.test(q.id)).length;
+if (hj < 40) fail('提升孔与提升器 Jnn 对应过少：' + hj);
+// 6 改 HZ 图跟着变：光伏开工推后 10 天 → 同一时刻光伏面积变小、PV 构件工期跟着变
+const tp = K.pv.start + 15, pvA = pl.stats(tp).pv, pvInfo = JSON.stringify(pl.parts(tp).find(q => q.kind === 'pv').info);
+K.pv.start += 10; const pvB = pl.stats(tp).pv, pvInfo2 = JSON.stringify(pl.parts(tp).find(q => q.kind === 'pv').info); K.pv.start -= 10;
+if (!(pvB < pvA)) fail(`改 HZ.K.pv.start 后光伏面积未变 ${pvA} → ${pvB}`);
+if (pvInfo === pvInfo2) fail('改 HZ.K.pv.start 后 parts 工期未变');
+
+console.log(`OK check_s401 runs=${runs} parts=${nParts} close=${pl.big(w1).num}% pv=${Math.round(sEnd.pv)} holes=${sEnd.holesTot}`);
