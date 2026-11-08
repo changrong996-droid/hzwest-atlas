@@ -1,0 +1,374 @@
+{
+ "generated_at": "2026-11-08T14:38+08:00",
+ "headline": {
+  "commits_total": 158,
+  "commits_today": 135,
+  "files": 91,
+  "items_done": 16,
+  "items_total": 38,
+  "workflows_running": 16,
+  "dispatch_open": 9,
+  "live_claims": 7,
+  "pending_review": 0,
+  "blockers": 9,
+  "waiting_on_owner": 5
+ },
+ "roles": {
+  "hark-cr": "集成人：审查、合并、派单、共用文件（唯一可合 main）",
+  "hark-cs": "Mac mini M4 + Blender：GPU 审计、渲染、屋面",
+  "muse-tibo-cs": "本地 GPU + Blender + Gemini 4：精修、视觉审查（首选重活）",
+  "hark-liuzhijie": "云沙盒：S-101、S-251、S-501",
+  "hark-fangyi": "云沙盒：S-201、实物记录",
+  "hark-darrio": "云沙盒：近景人员与车辆",
+  "marvis": "Windows 真机审查，只接小活",
+  "pi-t2 / pi-t3": "InstaBox 上的 pi，只接小活"
+ },
+ "by_agent": [
+  {
+   "agent": "hark-cr",
+   "total": 73,
+   "today": 73
+  },
+  {
+   "agent": "—",
+   "total": 27,
+   "today": 4
+  },
+  {
+   "agent": "hark-cs",
+   "total": 19,
+   "today": 19
+  },
+  {
+   "agent": "hark-liuzhijie",
+   "total": 19,
+   "today": 19
+  },
+  {
+   "agent": "hark-fangyi",
+   "total": 13,
+   "today": 13
+  },
+  {
+   "agent": "hark-darrio",
+   "total": 4,
+   "today": 4
+  },
+  {
+   "agent": "marvis",
+   "total": 3,
+   "today": 3
+  }
+ ],
+ "recent_commits": [
+  {
+   "sha": "1b95618",
+   "at": "2026-11-08T06:34:58Z",
+   "subj": "[D-17] 派 hark-cs 宣传页提案（AI 图与图纸分开）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "e4eadf5",
+   "at": "2026-11-08T06:33:37Z",
+   "subj": "[proposal] AI 效果图：委托人决定与图纸分开，仅可做单独宣传页",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "a7507df",
+   "at": "2026-11-08T06:17:46Z",
+   "subj": "[claims] 屋面云纹提案完成，实施列保留待定",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "9eeaa59",
+   "at": "2026-11-08T06:17:46Z",
+   "subj": "合并 hark-cs/roof-waves",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "159fdd2",
+   "at": "2026-11-08T06:13:17Z",
+   "subj": "标记已并入 hark-fangyi/S-201-iface（内容已手工落入）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "9b66678",
+   "at": "2026-11-08T06:13:17Z",
+   "subj": "标记已并入 hark-darrio/D-04-caps（内容已手工落入）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "ae5f06a",
+   "at": "2026-11-08T06:13:11Z",
+   "subj": "[integrate] 合入 D-09、S-251 公开对照、actors、实物挂构件、D-07 复测、directions、darrio caps；认领板同步",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "f48860f",
+   "at": "2026-11-08T06:12:29Z",
+   "subj": "[屋面云纹] 提案：四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面，结构与工期不变",
+   "agent": "hark-cs"
+  }
+ ],
+ "dispatches_open": [
+  {
+   "id": "D-07",
+   "agent": "hark-cs",
+   "item": "GPU 审计",
+   "state": "在做（#1 已交 11-08：重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏待测）"
+  },
+  {
+   "id": "D-10",
+   "agent": "muse-tibo-cs",
+   "item": "Blender 参考渲染",
+   "state": "待做"
+  },
+  {
+   "id": "D-11",
+   "agent": "muse-tibo-cs",
+   "item": "Blender 终版精修",
+   "state": "待做（先做 D-10；muse-tibo-cs 待做 3 单超上限，按 D-10 → D-12 → D-11 顺序）"
+  },
+  {
+   "id": "D-12",
+   "agent": "muse-tibo-cs",
+   "item": "视觉审查",
+   "state": "待做"
+  },
+  {
+   "id": "D-13",
+   "agent": "marvis",
+   "item": "Windows 真机审查",
+   "state": "待做"
+  },
+  {
+   "id": "D-14",
+   "agent": "hark-fangyi",
+   "item": "S-201",
+   "state": "待做"
+  },
+  {
+   "id": "D-15",
+   "agent": "hark-liuzhijie",
+   "item": "插件镜头扫描",
+   "state": "待做"
+  },
+  {
+   "id": "D-16",
+   "agent": "hark-darrio",
+   "item": "近景人员与车辆",
+   "state": "待做"
+  },
+  {
+   "id": "D-17",
+   "agent": "hark-cs",
+   "item": "宣传页提案",
+   "state": "待做"
+  }
+ ],
+ "dispatches_done": 8,
+ "live_claims": [
+  {
+   "item": "实物层记录库",
+   "agent": "hark-fangyi"
+  },
+  {
+   "item": "图册接新图",
+   "agent": "muse-tibo-cs"
+  },
+  {
+   "item": "Windows 真机审查",
+   "agent": "marvis"
+  },
+  {
+   "item": "Blender 参考渲染",
+   "agent": "muse-tibo-cs"
+  },
+  {
+   "item": "公开数据核对",
+   "agent": "pi-t2"
+  },
+  {
+   "item": "小屏可读性检查",
+   "agent": "pi-t3"
+  },
+  {
+   "item": "履带吊臂长规则",
+   "agent": "hark-darrio"
+  }
+ ],
+ "claimed_items": [
+  {
+   "item": "图册接新图",
+   "agent": "muse-tibo-cs",
+   "state": "认领"
+  },
+  {
+   "item": "Blender 参考渲染",
+   "agent": "muse-tibo-cs",
+   "state": "认领"
+  },
+  {
+   "item": "Blender 终版精修",
+   "agent": "—",
+   "state": "空"
+  },
+  {
+   "item": "屋面云纹实施",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "履带吊臂长规则",
+   "agent": "hark-darrio",
+   "state": "认领"
+  },
+  {
+   "item": "公开数据核对",
+   "agent": "pi-t2",
+   "state": "认领"
+  },
+  {
+   "item": "小屏可读性检查",
+   "agent": "pi-t3",
+   "state": "认领"
+  },
+  {
+   "item": "难懂字幕改写",
+   "agent": "—",
+   "state": "空"
+  },
+  {
+   "item": "Windows 真机审查",
+   "agent": "marvis",
+   "state": "认领"
+  },
+  {
+   "item": "GPU 审计",
+   "agent": "—",
+   "state": "空"
+  },
+  {
+   "item": "插件镜头扫描",
+   "agent": "—",
+   "state": "空"
+  },
+  {
+   "item": "地铁层镜头入口",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "实物层记录库",
+   "agent": "hark-fangyi",
+   "state": "认领"
+  },
+  {
+   "item": "3D 载荷标签",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "剖切封面补斜杆",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "近景人员接线",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "构件信息卡",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "实物图钉",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "屋盖排程校准",
+   "agent": "hark-cr",
+   "state": "保留"
+  },
+  {
+   "item": "S-252 屋盖提升（提议）",
+   "agent": "—",
+   "state": "提议"
+  },
+  {
+   "item": "S-001 总进度（提议）",
+   "agent": "—",
+   "state": "提议"
+  },
+  {
+   "item": "吊装资源图（提议）",
+   "agent": "—",
+   "state": "提议"
+  }
+ ],
+ "free_items": [],
+ "pending_review": [],
+ "stale_locks": [
+  "S-101 二稿",
+  "S-201 二稿",
+  "S-401 二稿",
+  "S-251 网架拼装",
+  "屋面云纹提案",
+  "近景人员与车辆"
+ ],
+ "blockers": [
+  {
+   "kind": "待委托人",
+   "what": "屋面是否改成 hark-cs 推荐的 C 版「四朵云」",
+   "who": "委托人"
+  },
+  {
+   "kind": "待委托人",
+   "what": "Traycer 设置里启用 Antigravity（用 Gemini 4 做第二审查员）",
+   "who": "委托人"
+  },
+  {
+   "kind": "待委托人",
+   "what": "是否动用 Claude Opus 5.5 做深度审查",
+   "who": "委托人"
+  },
+  {
+   "kind": "待委托人",
+   "what": "PR #1（muse-tibo-cs 图册二阶段）11:40 先合后补追认",
+   "who": "委托人"
+  },
+  {
+   "kind": "待委托人",
+   "what": "地铁层镜头入口是否默认关闭",
+   "who": "委托人"
+  },
+  {
+   "kind": "集成",
+   "what": "地下体量接口请求未回复（真实开挖体 vs 开放 scene3d 钩子）",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "集成",
+   "what": "blender-ref 3 个小问题未修（export_glb 重复导出临时构件等）",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "协作者",
+   "what": "muse-tibo-cs 还没报 Blender 版本，D-10/11/12 未开工",
+   "who": "muse-tibo-cs"
+  },
+  {
+   "kind": "风险",
+   "what": "Traycer 免费额度 11-09 到期",
+   "who": "—"
+  }
+ ],
+ "links": {
+  "live": "https://changrong996-droid.github.io/hzwest-atlas/",
+  "board": "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board",
+  "repo": "https://github.com/changrong996-droid/hzwest-atlas"
+ }
+}
