@@ -1,0 +1,2 @@
+/* 手机适配样式，归 D-27 负责人；只放 @media 规则 */
+/* 在 hzwest.html 内联 <style> 之后加载，可用 !important 覆盖；不改 id、不改 JS（需宿主改 DOM 的在 CLAIMS 接口请求提）。 */
