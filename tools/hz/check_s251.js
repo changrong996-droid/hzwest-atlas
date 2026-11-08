@@ -2,7 +2,7 @@
 // S-251 网架拼装（web/sheets/s251.js）无头检查：绘制不抛错、图号、大数字单调（已拼单元 x / 总数）、
 // 数据从 HZ 读（改单元工期图跟着变）、联动 v2 parts()、镜头不进地下且跟着正在拼的单元走。
 const { load, sheetCtx } = require('./harness');
-const { G, HZ, makeCtx } = load({ extra: ['web/sheets/s251.js'] });
+const { G, HZ, makeCtx } = load({ extra: ['web/sheets/s251.js', 'web/mods/s251.js'] });
 HZ.make();
 const fail = m => { console.log('FAIL check_s251: ' + m); process.exit(1); };
 const P = (G.HZ_SHEET_PLUGINS || []).find(p => p.id === 'S-251');
@@ -53,4 +53,30 @@ for (const k of P.cam) {
 const RC = P.realCmp(); if (RC.length < 2) fail('公开对照少于 2 条');
 for (const r of RC) { if (!Number.isFinite(r.dev)) fail(`公开对照 ${r.date} 算不出模型日期`); if (Math.abs(r.dev) > 20) fail(`公开对照 ${r.date} ${r.txt} 偏差 ${r.dev} 天，超过 ±20`); }
 const devTxt = RC.map(r => r.date + '=' + (r.dev > 0 ? '+' : '') + r.dev + 'd').join(' ');
-console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}`);
+// ---- 3D 施工面模块 web/mods/s251.js：在拼单元数 = stateAt.live、红杆件根数 = 进度、每台汽车吊脚下有楼面且不压构件（暴力比对，不走模块网格）、耗时、opts.clip ----
+let faceTxt = '';
+{ const MD = (G.HZ_MODS || []).find(m => m.id === 's251-face');
+  if (!MD || typeof MD.build !== 'function' || typeof MD.update !== 'function') fail('未登记 HZ_MODS s251-face（build / update）');
+  const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
+  const BX = []; for (const a of HZ.acts) if (a.kind !== 'untemp') for (const p of a.parts) { if (p.grp || p.cells || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) BX.push({ p, a, b }); }
+  let nLive = 0, nCr = 0, nSeg = 0; const W = P.window;
+  for (let t = W[0]; t <= W[1]; t += 0.5) { const L = MD.lines(HZ, t), s = P.stateAt(t);
+    if (L.live.length !== s.live.length) fail(`t=${t} 施工面单元 ${L.live.length} ≠ 在拼 ${s.live.length}`);
+    const want = s.live.reduce((a, u) => a + Math.floor(u.rods * s.frac(u)), 0); if (L.rods !== want) fail(`t=${t} 红杆件 ${L.rods} ≠ 进度应有 ${want}`);
+    if (L.cranes.length !== L.live.length) fail(`t=${t} 在拼单元 ${L.live.length} 个、汽车吊 ${L.cranes.length} 台`);
+    for (const c of L.cranes) { const here = BX.filter(e => { const k = stOf(e.p, t); return k >= 0 && k < 3; });
+      if (!here.some(e => e.b.min[0] <= c.x && e.b.max[0] >= c.x && e.b.min[2] <= c.z && e.b.max[2] >= c.z && Math.abs(e.b.max[1] - c.y) < 0.6)) fail(`t=${t} 汽车吊 ${c.unit} 脚下没有楼面 (${c.x.toFixed(1)}, ${c.z.toFixed(1)})`);
+      const hit = here.find(e => e.b.max[0] > c.x - 3.5 && e.b.min[0] < c.x + 3.5 && e.b.max[2] > c.z - 3.5 && e.b.min[2] < c.z + 3.5 && e.b.max[1] > c.y + 0.05 && e.b.min[1] < c.y + 4);
+      if (hit) fail(`t=${t} 汽车吊 ${c.unit} 压在 ${hit.a.key} 上`); }
+    nLive += L.live.length; nCr += L.cranes.length; nSeg = Math.max(nSeg, L.face.length / 6); }
+  if (nLive < 100) fail(`施工面抽样只有 ${nLive}`);
+  const made = []; const T = { BufferGeometry: function () { this.setAttribute = () => {}; this.setDrawRange = () => {}; }, BufferAttribute: function () {}, DynamicDrawUsage: 1,
+    LineBasicMaterial: function (o) { Object.assign(this, o); made.push(this); }, LineSegments: function (g, m) { this.geometry = g; this.material = m; } };
+  const plane = { normal: [0, 0, 1], constant: 0 }; MD.build({ add: () => {} }, HZ, T, { clip: [plane] });
+  if (!made.length || made.some(m => !m.clippingPlanes || m.clippingPlanes[0] !== plane)) fail('opts.clip 未传到材质');
+  MD.build(null, HZ);
+  const ms = [], re = []; let key = null; for (let f = 0; f < 2400; f++) { const t = W[0] + 8 + f / 60, k = Math.round(t * 8), t0 = process.hrtime.bigint(); MD.update(t, [0, 50, 0]); const d = Number(process.hrtime.bigint() - t0) / 1e6; if (f > 30) { ms.push(d); if (k !== key) re.push(d); } key = k; }
+  re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, med = re[re.length >> 1];   // 同 check_actors：60 帧/秒、1 天/秒播放
+  if (avg > 2 || med > 2) fail(`update 平均 ${avg.toFixed(2)} ms、重算帧中位 ${med.toFixed(2)} ms，应 < 2 ms`);
+  faceTxt = ` face=${nLive} cranes=${nCr} segmax=${nSeg} face_ms=${avg.toFixed(2)}`; }
+console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}${faceTxt}`);
