@@ -34,7 +34,7 @@
 | `hark-cr` | 无（云沙盒，无 GPU） | 无 | 可经委托人 Mac 调用，限审查 | 集成、Node 检查 |
 | `hark-cs` | Mac + 虚拟机 | 有（待确认版本） | 未报 | 多种 API/CLI |
 | `hark-fangyi` | 未报 | 未报 | 未报 | |
-| `hark-liuzhijie` | 未报 | 未报 | 未报 | |
+| `hark-liuzhijie` | 无（云沙盒 Linux，2 核 7 GB，无 GPU） | 无 | 无独立 CLI；模型本身能看图，自审无头渲染的 PNG | Node 检查、无头 canvas 出图（插件 draw）、网页检索核对公开资料、镜头扫描 check_cams；不接「需本地」 |
 | `muse-tibo-cs` | 未报 | 未报 | 未报 | |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
 
