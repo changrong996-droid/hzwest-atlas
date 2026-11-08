@@ -8,6 +8,8 @@
 
   HZA.PAGES = {
     'S-000': { title: '总图', on: 1, sheets: [] },
+    'S-001': { title: '总进度', on: 1, sheets: ['S-001-1'] },
+    'S-002': { title: '吊装资源', on: 1, sheets: ['S-002-1'] },
     'S-101': { title: '地下', on: 1, sheets: ['S-101-1'] },
     'S-201': { title: '承轨层', on: 1, sheets: ['S-201-1'] },
     'S-251': { title: '网架拼装', on: 1, sheets: ['S-251-1'] },
@@ -17,6 +19,8 @@
   };
 
   HZA.SHEETS = {
+    'S-001-1': { no: PFX + 'S-001-1', title: '总进度横道图', plugin: 'S-001', canvas: 'sh-s001-1', owner: 'S-001', aliases: [] },
+    'S-002-1': { no: PFX + 'S-002-1', title: '全场吊机平面 · 每天在场台数', plugin: 'S-002', canvas: 'sh-s002-1', owner: 'S-002', aliases: [] },
     'S-101-1': { no: PFX + 'S-101-1', title: '地下横剖面 · 向东看', plugin: 'S-101', canvas: 'sh-s101-1', owner: 'S-101', aliases: [] },
     'S-201-1': { no: PFX + 'S-201-1', title: '承轨层平面', plugin: 'S-201', canvas: 'sh-s201-1', owner: 'S-201', aliases: [] },
     'S-251-1': { no: PFX + 'S-251-1', title: '网架拼装平面', plugin: 'S-251', canvas: 'sh-s251-1', owner: 'S-251', aliases: [] },
@@ -48,6 +52,8 @@
       built: slot('部分', '同上'),
       real: slot('无', '同上'),
     },
+    'S-001': sub(slot('有', 'S-001-1')),
+    'S-002': sub(slot('有', 'S-002-1')),
     'S-101': sub(slot('有', 'S-101-1')),
     'S-201': sub(slot('有', 'S-201-1')),
     'S-251': sub(slot('有', 'S-251-1')),

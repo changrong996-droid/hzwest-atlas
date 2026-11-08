@@ -11,7 +11,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js'];
+const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js'];
 const CAMS = ['S-001', 'S-002', 'S-101', 'S-201', 'S-251', 'S-401', 'S-501'];
 const CAMS_REPORT = [];   // 只报告、不判失败的图号（有遗留违反时临时放这里，并在 CLAIMS 记明）
 const items = scripts.map(s => ({ name: s, args: [s], report: false }))

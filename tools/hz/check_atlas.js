@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { load, makeCtx, sheetCtx } = require('./harness');
-const { G, HZ, HZS } = load({ extra: ['web/hzreal.js', 'web/sheets/s101.js', 'web/sheets/s201.js', 'web/sheets/s251.js', 'web/sheets/s401.js', 'web/sheets/s501.js', 'web/hzatlas.js'] });
+const { G, HZ, HZS } = load({ extra: ['web/hzreal.js', 'web/sheets/s001.js', 'web/sheets/s002.js', 'web/sheets/s101.js', 'web/sheets/s201.js', 'web/sheets/s251.js', 'web/sheets/s401.js', 'web/sheets/s501.js', 'web/hzatlas.js'] });
 const HZA = G.HZA;
 HZ.make();
 const SH = HZS.make(HZ);
@@ -114,7 +114,7 @@ check('focusFor 用例', () => {
 for (const s of ['HZA.focusFor', 'wireFly', 'location.hash = ', 'hz-hint']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=6')) fail('hzatlas.html 缺少 hzatlas.js?v=6');
+if (!atlasHtml.includes('hzatlas.js?v=7')) fail('hzatlas.html 缺少 hzatlas.js?v=7');
 
 // 12 HZ2-02 平面图小地图断言
 const approx = (a, b, tol = 0.75) => assert.ok(Math.abs(a - b) <= tol, a + ' !≈ ' + b);
@@ -163,7 +163,7 @@ check('planCamPose 用例', () => {
 for (const s of ['HZA.planMap', 'HZA.planCamPose']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=6')) fail('hzatlas.html 缺少 hzatlas.js?v=6');
+if (!atlasHtml.includes('hzatlas.js?v=7')) fail('hzatlas.html 缺少 hzatlas.js?v=7');
 
 // 13 接新图断言
 check('接新图断言', () => {
@@ -178,6 +178,9 @@ check('接新图断言', () => {
   assert.strictEqual(HZA.FORMS['S-251'].sheet.status, '有');
   assert.strictEqual(HZA.FORMS['S-501'].sheet.status, '有');
   assert.strictEqual(HZA.FORMS['S-101'].sheet.status, '有');
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-001').map((s) => s.id)), JSON.stringify(['S-001-1']));
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-002').map((s) => s.id)), JSON.stringify(['S-002-1']));
+  assert.strictEqual(HZA.resolve('HZW-S-002-1'), 'S-002-1');
 });
 
 console.log('OK check_atlas pages=' + Object.keys(HZA.PAGES).length + ' sheets=' + keys.length + ' aliases=' + nal);

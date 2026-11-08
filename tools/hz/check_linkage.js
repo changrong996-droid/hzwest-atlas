@@ -88,6 +88,12 @@ if (!/\['S-501',\s*'开通',\s*1\]/.test(src)) fail('SHEETS_ALL 中 S-501 应 on
 const html = fs.readFileSync(path.join(root, 'web/hzwest.html'), 'utf8');
 if (!/<script src="sheets\/s501\.js\?v=\d+"><\/script>/.test(html)) fail('hzwest.html 未加载 sheets/s501.js');
 if (html.indexOf('sheets/s501.js') > html.indexOf('hzview.js')) fail('s501.js 须在 hzview.js 之前加载');
+// S-001 / S-002 插件与 3D 模块钩子（11-08 接线）
+for (const f of ['sheets/s001.js', 'sheets/s002.js', 'mods/s101.js']) { if (!new RegExp('<script src="' + f.replace(/[./]/g, '\\$&') + '\\?v=\\d+"></script>').test(html)) fail('hzwest.html 未加载 ' + f); if (html.indexOf(f) > html.indexOf('hzview.js')) fail(f + ' 须在 hzview.js 之前加载'); }
+if (html.indexOf('mods/s101.js') < html.indexOf('sheets/s101.js')) fail('mods/s101.js 须在 sheets/s101.js 之后加载（读 S-101 插件 stateAt）');
+has("PLUG[SHEET].focusZoom !== false", '插件 focusZoom:false 选中不放大图纸');
+has("m.build(scene, HZ, THREE, { clip: [CUTP] })", 'HZ_MODS build(scene, HZ, THREE, {clip})');
+has("modsUpdate(S.st.t); rebuildDyn(S.st.t);", 'HZ_MODS 每次渲染前 update(t, cam)');
 // 合同：SHEETS[0] 仍是千斤顶图、id 不变
 if (!/const SHEETS = \[\{ id: 'sh-jack'/.test(src)) fail('SHEETS[0] 必须仍是 sh-jack');
 if (!/if \(w < 20 \|\| h < 20\) (return;|\{[^}]*return; \})/.test(src)) fail('drawSheet 须保留 clientWidth<20 跳过');

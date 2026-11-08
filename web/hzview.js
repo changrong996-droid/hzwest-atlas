@@ -6,7 +6,7 @@
   const THREE_BASE = 'https://unpkg.com/three@0.160.0/';
   const $ = id => document.getElementById(id), hp = new URLSearchParams(location.hash.slice(1));
   const HZ = window.HZ, SEQ = window.SEQ, S = window.__pv = { ready: false, frames: 0, calls: 0, auditDone: false, sheetDraws: 0, st: { t: 0, u: 0, play: false, auto: true, info: false, pref: hp.get('mode') === 'lit' ? 'lit' : 'ink' } };
-  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-251', '网架拼装', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 1]];
+  const SHEETS_ALL = [['S-000', '总图', 1], ['S-001', '总进度', 1], ['S-002', '吊装资源', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-251', '网架拼装', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 1]];
   const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' || PLUG[v] ? v : 'S-000'; };
   // 插件图纸（web/sheets/*.js 登记到 window.HZ_SHEET_PLUGINS）：{ id, name, window:[t0,t1], big(t), draw(g,w,h,t,ctx), cam:[{t,target,az,el,dist}] }
   const PLUG = {}; for (const pl of (window.HZ_SHEET_PLUGINS || [])) PLUG[pl.id] = pl;
@@ -677,7 +677,7 @@
     // src：'sheet' 图纸点击（镜头飞，图纸不动）/ '3d' 3D 点击（镜头轻对准，图纸居中 ×3）/ 'url' #focus=（两者都做）
     function plugSelect(id, src) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { PV.pend = String(id); hashSync(); return false; } PV.pend = null;   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
       PV.focus = String(p.id); PV.label = p.label || String(p.id); PV.box = PL.okBox(p) ? p.box.slice() : null; PFOL = null; dynKey = ''; leadKey = ''; sheetInv();
-      if (src !== 'sheet' && PL.okHit(p)) { const [hx, hy, hw, hh] = p.hit; plugSheetAnim(3, hx + hw / 2, hy + hh / 2); }
+      if (src !== 'sheet' && PL.okHit(p) && PLUG[SHEET].focusZoom !== false) { const [hx, hy, hw, hh] = p.hit;   /* 插件 focusZoom:false（如 S-001 横道图）：选中只高亮不放大图纸 */ plugSheetAnim(3, hx + hw / 2, hy + hh / 2); }
       if (PV.box) { const b = PV.box; if (src === '3d') { const tg = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2), p1 = cam.position.clone().sub(ctl.target).multiplyScalar(0.92).add(tg); flyTo(tg, p1, 600); }
         else { const k = shotForBox(b, S.st.t); S.plugShot = k; flyTo(k.tgt, k.pos, 1000); } }
       S.plugSel = (S.plugSel || 0) + 1; hashSync(); return true; }
@@ -947,7 +947,7 @@
       if (GL2 && FEN.length >= 2) { const st = GL2.clientWaitSync(FEN[0], 0, 0); if (st === GL2.TIMEOUT_EXPIRED) return; GL2.deleteSync(FEN.shift()); }
       dirty = false;
       { const dd = cam.position.distanceTo(ctl.target), nr = Math.max(0.1, Math.min(4, dd * 0.12, nearCap())); if (Math.abs(nr - cam.near) > cam.near * 0.05) { cam.near = nr; cam.updateProjectionMatrix(); } }   // set2d：近景时近裁剪面跟着缩，免得贴近实体时被裁穿
-      const pf0 = performance.now(); rebuildDyn(S.st.t); U.uCam.value.copy(cam.position); const pf1 = performance.now();
+      const pf0 = performance.now(); modsUpdate(S.st.t); rebuildDyn(S.st.t); U.uCam.value.copy(cam.position); const pf1 = performance.now();
       renderer.info.reset(); const b = S.blend; document.body.classList.toggle('lit', b > 0.5);
       if (b <= 0.001) renderInk(1);
       else { renderLit(); if (b < 0.999) { renderer.autoClear = false; paperQuad.m.uniforms.uA.value = Math.max(0, (0.85 - b) / 0.85) * 0.9; renderer.render(paperQuad.sc, cam);
@@ -1003,6 +1003,10 @@
       if (pos) { const [lx, ly] = pos, ux = lx + w / 2 < x ? lx + w : lx, yb = ly + F1 + 4; const esc = q => q.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
         o += `<polyline points="${x},${y} ${ux},${yb}" fill="none" stroke="#b3202a" stroke-width=".9"/><rect class="lb" x="${lx}" y="${ly}" width="${w}" height="${h}" rx="3"/><line x1="${lx}" y1="${yb}" x2="${lx + w}" y2="${yb}" stroke="#b3202a" stroke-width=".9"/><text class="lt" x="${lx + 6}" y="${ly + F1 + 1}" font-size="${F1}" font-weight="700">${esc(t1)}</text><text class="ls" x="${lx + 6}" y="${ly + F1 + F2 + 7}" font-size="${F2}">${esc(t2)}</text>`; }
       LEAD.innerHTML = o; S.leadPlaced = !!pos; S.leadText = t1; }
+    // 3D 模块钩子（近景人员 actors、S-101 地下体量等）：window.HZ_MODS 逐个 build(scene, HZ, THREE, { clip:[CUTP] })，每次渲染前 update(t, cam)；单个模块抛错只 warn 一次并停用，不连坐
+    const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (m && typeof m.build === 'function') { m.build(scene, HZ, THREE, { clip: [CUTP] }); MODS.push(m); } } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }
+    function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; try { m.update(t, cam); } catch (e) { console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e); MODS.splice(i, 1); } } }
+    S.mods = MODS.map(m => m.id);
     tabs(); applyLook(); layout();
     { STR.visible = true; renderer.compile(scene, cam); MESH.material = inkMat; renderer.compile(scene, cam); MESH.material = MESH.userData.lit; STR.visible = false; }
     // 预热：实景 / 墨线两条管线在“施工中（塔吊、履带吊、运输车、钢绞线在场）”与“竣工”各画一帧，着色器与阴影深度材质在加载时编译（Mac 实测：首次在施工中切实景卡 2.6 s）
