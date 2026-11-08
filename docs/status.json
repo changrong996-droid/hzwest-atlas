@@ -1,14 +1,14 @@
 {
- "generated_at": "2026-11-08T15:47:00+08:00",
+ "generated_at": "2026-11-08T15:48:00+08:00",
  "headline": {
-  "commits_total": 220,
-  "commits_today": 192,
+  "commits_total": 221,
+  "commits_today": 193,
   "files": 128,
-  "items_done": 21,
+  "items_done": 24,
   "items_total": 39,
-  "workflows_running": 20,
-  "dispatch_open": 11,
-  "live_claims": 9,
+  "workflows_running": 15,
+  "dispatch_open": 9,
+  "live_claims": 6,
   "pending_review": 0,
   "blockers": 13,
   "waiting_on_owner": 5
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 106,
-   "today": 106
+   "total": 107,
+   "today": 107
   },
   {
    "agent": "hark-cs",
@@ -72,6 +72,12 @@
  ],
  "recent_commits": [
   {
+   "sha": "8de357f",
+   "at": "2026-11-08T07:48:17Z",
+   "subj": "[claims] D-14/D-18 关单；字幕改写、S-001、S-002 记完成待接线；卡点更新；重生成 status.json",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "f714e44",
    "at": "2026-11-08T07:46:46Z",
    "subj": "[宿主] 修 hzview.js lead()：let pos 被并进行尾注释导致引线标注 ReferenceError（hark-fangyi 缺陷报告 #7",
@@ -112,12 +118,6 @@
    "at": "2026-11-08T07:45:02Z",
    "subj": "Merge agent/hark-liuzhijie/precheck",
    "agent": "hark-cr"
-  },
-  {
-   "sha": "1d1a9ff",
-   "at": "2026-11-08T07:45:01Z",
-   "subj": "Merge agent/hark-fangyi/sat-proposal",
-   "agent": "hark-cr"
   }
  ],
  "dispatches_open": [
@@ -134,21 +134,9 @@
    "state": "待做"
   },
   {
-   "id": "D-14",
-   "agent": "hark-fangyi",
-   "item": "S-201",
-   "state": "待做"
-  },
-  {
    "id": "D-17",
    "agent": "hark-cs",
    "item": "宣传页提案",
-   "state": "待做"
-  },
-  {
-   "id": "D-18",
-   "agent": "hark-darrio",
-   "item": "履带吊臂长规则",
    "state": "待做"
   },
   {
@@ -188,7 +176,7 @@
    "state": "待做（D-23 之后或并行）"
   }
  ],
- "dispatches_done": 13,
+ "dispatches_done": 15,
  "live_claims": [
   {
    "item": "实物层记录库",
@@ -207,24 +195,12 @@
    "agent": "pi-t3"
   },
   {
-   "item": "S-001 总进度（提议）",
-   "agent": "hark-cs"
-  },
-  {
    "item": "Blender 终版精修",
    "agent": "traycer-cs"
   },
   {
    "item": "GPU 审计",
    "agent": "traycer-cs"
-  },
-  {
-   "item": "难懂字幕改写",
-   "agent": "hark-darrio"
-  },
-  {
-   "item": "吊装资源图（提议）",
-   "agent": "hark-darrio"
   }
  ],
  "claimed_items": [
@@ -247,11 +223,6 @@
    "item": "小屏可读性检查",
    "agent": "pi-t3",
    "state": "认领"
-  },
-  {
-   "item": "难懂字幕改写",
-   "agent": "—",
-   "state": "空"
   },
   {
    "item": "Windows 真机审查",
@@ -307,23 +278,16 @@
    "item": "S-252 屋盖提升（提议）",
    "agent": "—",
    "state": "提议"
-  },
-  {
-   "item": "S-001 总进度（提议）",
-   "agent": "hark-cs",
-   "state": "认领"
-  },
-  {
-   "item": "吊装资源图（提议）",
-   "agent": "—",
-   "state": "提议"
   }
  ],
  "free_items": [],
  "pending_review": [],
  "stale_locks": [
   "图册接新图",
-  "Blender 参考渲染"
+  "Blender 参考渲染",
+  "S-001 总进度（提议）",
+  "难懂字幕改写",
+  "吊装资源图（提议）"
  ],
  "blockers": [
   {
