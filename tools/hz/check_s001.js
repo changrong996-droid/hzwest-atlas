@@ -60,4 +60,38 @@ const tp = K.clad.start + 5, a0 = pl.big(tp).num, i0 = JSON.stringify(pl.parts(t
 K.clad.start += 20; K.clad.end += 20; const a1 = pl.big(tp).num, i1 = JSON.stringify(pl.parts(tp).find(q => q.id === 'K-clad').info); K.clad.start -= 20; K.clad.end -= 20;
 if (a1 !== a0 - 1) fail(`改 HZ.K.clad 后在施工序数未变 ${a0} → ${a1}`);
 if (i0 === i1) fail('改 HZ.K.clad 后 parts 工期未变');
+// 7 屋面工序 3D 盒子独立性与点选规则断言
+const roofKeys = ['merge', 'lift1', 'lift2', 'lift3', 'wlift', 'head', 'holes', 'sky', 'clad', 'pv'];
+const ps0 = pl.parts(w0), byId0 = new Map(ps0.map(q => [q.id, q]));
+for (let i = 0; i < roofKeys.length; i++) {
+  const pa = byId0.get('K-' + roofKeys[i]); if (!pa) fail('缺屋面工序 K-' + roofKeys[i]);
+  for (let j = i + 1; j < roofKeys.length; j++) {
+    const pb = byId0.get('K-' + roofKeys[j]); if (!pb) fail('缺屋面工序 K-' + roofKeys[j]);
+    if (pa.box.every((v, k) => Math.abs(v - pb.box[k]) < 1e-6)) fail(`屋面工序 K-${roofKeys[i]} 与 K-${roofKeys[j]} 盒子完全相同`);
+  }
+}
+for (const q of ps0.filter(x => x.id === 'K-merge' || x.id.startsWith('K-merge-'))) {
+  const dz = q.box[5] - q.box[2]; if (!(dz > 0 && dz <= 30)) fail(`${q.id} 盒子 z 向宽度 ${dz} > 30 m`);
+}
+const pickBox = (parts, x, y, z, m = 1.5) => {
+  let best = null, bv = Infinity;
+  for (const p of parts) {
+    const b = p.box;
+    if (x >= b[0] - m && x <= b[3] + m && y >= b[1] - m && y <= b[4] + m && z >= b[2] - m && z <= b[5] + m) {
+      const v = Math.abs((b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]));
+      if (v < bv) { bv = v; best = p; }
+    }
+  }
+  return best;
+};
+const psClad = pl.parts(K.clad.start + 10);
+for (const [x, z] of [[60, 100], [-60, -100]]) {
+  const hit = pickBox(psClad, x, HZ.Hc(x, z) + 0.5, z);
+  if (!hit || hit.id.startsWith('K-merge')) fail(`t=clad+10 点(${x},${z}) 误选 ${hit && hit.id}`);
+}
+const psMerge = pl.parts(K.merge.start + 3);
+for (const z of [40, -40]) {
+  const hit = pickBox(psMerge, 0, 50, z);
+  if (!hit || !hit.id.startsWith('K-merge')) fail(`t=merge+3 点(0,50,${z}) 未选中 K-merge，实得 ${hit && hit.id}`);
+}
 console.log(`OK check_s001 runs=${runs} parts=${nParts} chain=${ch.length} live@700=${pl.big(700).num}`);
