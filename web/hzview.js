@@ -45,7 +45,9 @@
     // hash：读 sheet / focus；写 focus 时保留其它参数（hzatlas 的 sub 等）
     function parseHash(h) { const q = new URLSearchParams(String(h || '').replace(/^#/, '')); return { sheet: (q.get('sheet') || '').toUpperCase() || null, focus: q.get('focus') || null }; }
     function hashWith(h, focus) { const q = new URLSearchParams(String(h || '').replace(/^#/, '')); if (focus) q.set('focus', focus); else q.delete('focus'); return q.toString().replace(/%2C/g, ',').replace(/%3A/g, ':'); }
-    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith };
+    // HZ_MODS 可选钩子（pick / unpick 等）：逐个调 m[name](...args)，没有该方法跳过；抛错只 warn 一次（每模块每钩子），不停用、不连坐；返回实际调用数
+    function modsCall(list, name, args, warn) { let n = 0; for (const m of list || []) { if (!m || typeof m[name] !== 'function') continue; try { m[name](...(args || [])); n++; } catch (e) { const w = m.__plWarn || (m.__plWarn = {}); if (warn && !w[name]) { w[name] = 1; warn('[hzview] HZ_MODS ' + m.id + '.' + name + '() 抛异常，已忽略：' + (e && e.message || e)); } } } return n; }
+    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith, modsCall };
   })();
   // </plugLink>
   S.plugLink = PL;
@@ -490,7 +492,7 @@
         prev = f; s += Math.max(0.6, s * 0.004); }
       return { none: true }; }
     S.pick3D = pick3D; S.selectZone = selectZone; S.selectLifter3D = selectLifter3D;
-    function onPick(cx, cy) { if (PLUG[SHEET]) { const q = plugPick3D(cx, cy); if (!q) return; S.lastPick = q; if (q.part != null) plugSelect(q.part, '3d'); else if (PV.focus) { plugClear(); hashSync(); } return; } const h = pick3D(cx, cy); if (!h) return; S.lastPick = h; if (h.lifter >= 0) selectLifter3D(h.lifter); else if (h.zone) selectZone(h.zone); else clearSel(); }
+    function onPick(cx, cy) { if (PLUG[SHEET]) { const q = plugPick3D(cx, cy); if (!q) return; S.lastPick = q; if (q.part != null) { const R = v3.getBoundingClientRect(); plugSelect(q.part, '3d', { x: cx - R.left, y: cy - R.top }); } else if (PV.focus) { plugClear(); hashSync(); } return; } const h = pick3D(cx, cy); if (!h) return; S.lastPick = h; if (h.lifter >= 0) selectLifter3D(h.lifter); else if (h.zone) selectZone(h.zone); else clearSel(); }
     { let pd = null, np = 0; view.addEventListener('pointerdown', e => { np++; if (np > 1 || e.button !== 0) { pd = null; return; } pd = { x: e.clientX, y: e.clientY, moved: false }; }, true);
       view.addEventListener('pointermove', e => { if (pd && Math.hypot(e.clientX - pd.x, e.clientY - pd.y) >= 5) pd.moved = true; }, true);
       const up = e => { np = Math.max(0, np - 1); const d = pd; pd = null; if (!d || e.type !== 'pointerup' || d.moved || Math.hypot(e.clientX - d.x, e.clientY - d.y) >= 5) return; S.clicks3D = (S.clicks3D || 0) + 1; onPick(e.clientX, e.clientY); };
@@ -675,13 +677,19 @@
       return { tgt, pos: best.pos, az: best.az, el: best.el, d: +best.d.toFixed(1), occluded: best.oc, roofOcc: best.ro, tried, pts }; }
     S.shotForBox = shotForBox;
     // src：'sheet' 图纸点击（镜头飞，图纸不动）/ '3d' 3D 点击（镜头轻对准，图纸居中 ×3）/ 'url' #focus=（两者都做）
-    function plugSelect(id, src) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { PV.pend = String(id); hashSync(); return false; } PV.pend = null;   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
+    function plugSelect(id, src, xy) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { PV.pend = String(id); hashSync(); return false; } PV.pend = null;   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
       PV.focus = String(p.id); PV.label = p.label || String(p.id); PV.box = PL.okBox(p) ? p.box.slice() : null; PFOL = null; dynKey = ''; leadKey = ''; sheetInv();
       if (src !== 'sheet' && PL.okHit(p) && PLUG[SHEET].focusZoom !== false) { const [hx, hy, hw, hh] = p.hit;   /* 插件 focusZoom:false（如 S-001 横道图）：选中只高亮不放大图纸 */ plugSheetAnim(3, hx + hw / 2, hy + hh / 2); }
       if (PV.box) { const b = PV.box; if (src === '3d') { const tg = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2), p1 = cam.position.clone().sub(ctl.target).multiplyScalar(0.92).add(tg); flyTo(tg, p1, 600); }
         else { const k = shotForBox(b, S.st.t); S.plugShot = k; flyTo(k.tgt, k.pos, 1000); } }
-      S.plugSel = (S.plugSel || 0) + 1; hashSync(); return true; }
-    function plugClear() { const had = PV.focus || PV.pend; PV.focus = null; PV.box = null; PV.label = ''; PV.pend = null; PFOL = null; if (had) { dynKey = ''; leadKey = ''; sheetInv(); } }
+      S.plugSel = (S.plugSel || 0) + 1; hashSync(); modsPick(p, src, xy); return true; }
+    function plugClear() { const had = PV.focus || PV.pend; PV.focus = null; PV.box = null; PV.label = ''; PV.pend = null; PFOL = null; if (had) { dynKey = ''; leadKey = ''; sheetInv(); } modsUnpick(); }
+    // HZ_MODS 选中钩子（docs/hz-atlas-check.md 第三节 12）：选中插件 part → 各模块可选 pick(part, {x,y}, ctx)；取消 → unpick()。
+    // {x,y} = 相对 #v3（亦即 #mod-ui）左上角的 CSS px：3D 点击取点击处，其余（图纸点击 / #focus=）取 part.box 中心投影。模块 DOM 只挂 #mod-ui。
+    let MPICK = null;
+    function modsPick(p, src, xy) { const L = S.modsList; if (!L || !L.length) return; if (!xy) { xy = { x: NaN, y: NaN }; if (PL.okBox(p)) { const b = p.box, R = v3.getBoundingClientRect(), q = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2); cam.updateMatrixWorld(); q.project(cam); if (q.z < 1) xy = { x: (q.x + 1) / 2 * R.width, y: (1 - q.y) / 2 * R.height }; } }
+      MPICK = String(p.id); S.modPicks = (S.modPicks || 0) + 1; PL.modsCall(L, 'pick', [p, xy, { sheet: SHEET, t: S.st.t, src, root: $('mod-ui'), pv: S, set: S.set, select: S.plugSelect, clear: S.plugClear }], pwarn); }
+    function modsUnpick() { if (MPICK == null) return; MPICK = null; S.modUnpicks = (S.modUnpicks || 0) + 1; PL.modsCall(S.modsList, 'unpick', [], pwarn); }
     S.plugSelect = plugSelect; S.plugClear = () => { plugClear(); hashSync(); };
     // 时间跟随：时间一变重取 parts(t)；同 id 仍在 → 黄框换到新 box、镜头（目标与机位一起）按盒中心位移平滑跟随（0.25 s）；不在 → 保持最后位置
     function plugFollow(dt) { if (!PLUG[SHEET]) { PFOL = null; return; } const t = plugT();
@@ -1006,7 +1014,7 @@
     // 3D 模块钩子（近景人员 actors、S-101 地下体量等）：window.HZ_MODS 逐个 build(scene, HZ, THREE, { clip:[CUTP] })，每次渲染前 update(t, cam)；单个模块抛错只 warn 一次并停用，不连坐
     const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (m && typeof m.build === 'function') { m.build(scene, HZ, THREE, { clip: [CUTP] }); MODS.push(m); } } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }
     function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; try { m.update(t, cam); } catch (e) { console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e); MODS.splice(i, 1); } } }
-    S.mods = MODS.map(m => m.id);
+    S.mods = MODS.map(m => m.id); S.modsList = MODS;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）
     tabs(); applyLook(); layout();
     { STR.visible = true; renderer.compile(scene, cam); MESH.material = inkMat; renderer.compile(scene, cam); MESH.material = MESH.userData.lit; STR.visible = false; }
     // 预热：实景 / 墨线两条管线在“施工中（塔吊、履带吊、运输车、钢绞线在场）”与“竣工”各画一帧，着色器与阴影深度材质在加载时编译（Mac 实测：首次在施工中切实景卡 2.6 s）

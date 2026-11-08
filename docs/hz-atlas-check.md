@@ -88,6 +88,15 @@ node tools/hz/check_real.js
 9. **hash 的 `focus` 参数与 `hashchange` 监听**：宿主在 hashchange 时调 `applyFocusHash()` 识别 `J<n> / ZN / ZM / ZS / CUT / GAP` 并飞行镜头。hzatlas 的「点图飞镜头」靠给 `location.hash` 赋值（保留其它参数）触发它；若宿主改掉这套参数或监听，外挂点击将静默失效（检查查不出来，须浏览器实测）。
 10. **平面图布局常数与镜头状态（小地图依赖）**：hzatlas 的平面图标记按 plan 的布局公式（frame 内框、z ±172 / x ±130、边距 8/16/4/14）复算坐标映射，并读宿主镜头状态：自动模式用 `S.camKey(t)`，飞镜头后用 `S.focusShot / S.cutShot`（或 `S.shotFor` 现算），以 `S.focusHash` 与 `S.st.auto` 判断当前处于哪种状态。若宿主改平面图布局常数、相机模型或这些状态字段，标记会偏位或消失，检查只能保证我方公式自洽，位置正确性须浏览器实测。
 11. **插件图纸注册表 `window.HZ_SHEET_PLUGINS` 与宿主 `sh-plug` 槽位**：图册登记表引用插件图号（宿主页 `hzwest.html` 已按 `s001 / s002 / s101 / s201 / s401 / s501 / s251` 顺序加载 `web/sheets/*.js` 并推入 `window.HZ_SHEET_PLUGINS`）；插件图纸由宿主 `sh-plug` 槽位原生显示，图册不自建插件画布（避免同页双绘）；插件缺失时 `console.warn`、宿主槽位为空、图册不崩页。
+12. **3D 模块钩子 `window.HZ_MODS`（接口，11-08 起）**：页面在 `hzview.js` 之前加载的模块往 `window.HZ_MODS` 推一个对象 `{ id, build?, update?, pick?, unpick? }`，四个方法都可选：
+    - `build(scene, HZ, THREE, { clip: [CUTP] })`：场景建好后调一次；抛错只 warn，该模块不进列表。
+    - `update(t, cam)`：每次渲染前调；抛错 warn 一次并停用该模块。
+    - `pick(part, {x, y}, ctx)`：用户选中插件图纸的 part（3D 点击、图纸点击、`#focus=` 深链、挂起后时间走到）时调。`part` 即插件 `parts(t)` 返回的那一项（含 `id / label / box / hit / info` 等）；`{x, y}` 是相对 `#v3`（= `#mod-ui`）左上角的 CSS 像素：3D 点击取点击处，其余取 `part.box` 中心投影（在相机背后或无 box 时为 `NaN`）；`ctx = { sheet, t, src: '3d'|'sheet'|'url', root: #mod-ui 元素, pv: window.__pv, set(t), select(id), clear() }`。换选另一个 part 直接再调 `pick`，不先调 `unpick`。
+    - `unpick()`：选中被取消（⌂、Esc、点空白、切图）时调一次。
+    - `pick / unpick` 抛错只 warn 一次（每模块每钩子），**不停用**、不影响其它模块。只对插件图纸（S-001…S-501 等走 `HZ_SHEET_PLUGINS` 的图）生效；S-301 的提升器 / 分区选择不走此钩子。
+    - 宿主状态：`__pv.mods`（已启用模块 id）、`__pv.modsList`、`__pv.modPicks / modUnpicks`（调用计数，供检查与真机复测）。
+13. **模块 DOM 容器 `#mod-ui`**：`hzwest.html` 在 `#v3` 末尾放一个空的 `<div id="mod-ui"></div>`（`position:absolute; inset:0; z-index:3; pointer-events:none`，其直接子元素 `pointer-events:auto`）。宿主永远不往里放东西；模块的卡片、图钉等 DOM 只挂这里，自行绝对定位，不要铺满整个容器（会挡住 3D 拖拽）。id 不改。
+    检查：`check_linkage` 在 vm 里测 `PL.modsCall`（跳过无方法的模块、抛错只 warn 一次、顺序与参数），并对源码断言 pick / unpick 接线、`#mod-ui` 容器与 `hzview.js?v` ≥ 17。
 
 ## 四、图号规则与映射表
 

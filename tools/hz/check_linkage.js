@@ -16,7 +16,7 @@ if (!m) fail('hzview.js 缺少 // <plugLink> … // </plugLink> 段');
 const ctx = vm.createContext({ URLSearchParams, console });
 let PL;
 try { PL = vm.runInContext('(() => {\n' + m[1] + '\nreturn PL; })()', ctx, { filename: 'hzview.js#plugLink' }); } catch (e) { fail('plugLink 段求值失败 ' + (e && e.message)); }
-for (const k of ['apply', 'fwd', 'inv', 'clamp', 'zoomAt', 'centerOn', 'center', 'hitPart', 'pickBox', 'safeParts', 'byId', 'parseHash', 'hashWith']) if (typeof PL[k] !== 'function') fail('PL.' + k + ' 不是函数');
+for (const k of ['apply', 'fwd', 'inv', 'clamp', 'zoomAt', 'centerOn', 'center', 'hitPart', 'pickBox', 'safeParts', 'byId', 'parseHash', 'hashWith', 'modsCall']) if (typeof PL[k] !== 'function') fail('PL.' + k + ' 不是函数');
 
 // 假插件：两个 part（一小一大，小的压在大的上面），parts 返回两个盒
 const W = 560, H = 420;
@@ -101,4 +101,22 @@ if (!/if \(w < 20 \|\| h < 20\) (return;|\{[^}]*return; \})/.test(src)) fail('dr
 { const fv = /tz: HZ\.tracks\(HZ\.YARDS\.S\)\[0\], te: (-?[\d.]+), tw: 1/.exec(src); if (!fv) fail('FV 默认 tz 应取湖杭场股道 HZ.tracks(HZ.YARDS.S)[0]、tw 1');
   const te = +fv[1], L = 8 * (25.5 + 0.8), head = te + 12, tail = te - L; if (Math.abs(head) > 225 || Math.abs(tail) > 225) fail(`首趟列车 头 ${head} 尾 ${tail} 应都在站台 ±225 内`); runs++; }
 
+// HZ_MODS pick / unpick 钩子（11-08）：modsCall 跳过没有该方法的模块、抛错只 warn 一次且不连坐；宿主接线与 #mod-ui 容器
+{ const log = [], warns = []; const A = { id: 'a', pick: (p, xy, c) => log.push('a:' + p.id + ':' + xy.x + ':' + c.sheet), unpick: () => log.push('a:un') }, B = { id: 'b', update() { } }, C = { id: 'c', pick() { throw new Error('boom'); } };
+  const n1 = PL.modsCall([A, B, C, null], 'pick', [{ id: 'K-1' }, { x: 5, y: 6 }, { sheet: 'S-999' }], w => warns.push(w));
+  const n2 = PL.modsCall([A, B, C], 'pick', [{ id: 'K-2' }, { x: 7, y: 8 }, { sheet: 'S-999' }], w => warns.push(w));
+  const n3 = PL.modsCall([A, B, C], 'unpick', [], w => warns.push(w));
+  if (n1 !== 1 || n2 !== 1 || n3 !== 1) fail('modsCall 调用数应为 1/1/1，实得 ' + [n1, n2, n3]);
+  if (log.join(',') !== 'a:K-1:5:S-999,a:K-2:7:S-999,a:un') fail('modsCall 调用顺序/参数不对 ' + log.join(','));
+  if (warns.length !== 1 || !/c\.pick/.test(warns[0])) fail('模块 pick 抛错应只 warn 一次 ' + JSON.stringify(warns));
+  if (PL.modsCall(undefined, 'pick', []) !== 0) fail('modsCall(undefined) 应返回 0'); runs++; }
+has('S.plugSel = (S.plugSel || 0) + 1; hashSync(); modsPick(p, src, xy); return true; }', '选中 part 后调 HZ_MODS pick');
+has("if (had) { dynKey = ''; leadKey = ''; sheetInv(); } modsUnpick(); }", 'plugClear 调 HZ_MODS unpick');
+has("PL.modsCall(L, 'pick', [p, xy, { sheet: SHEET, t: S.st.t, src, root: $('mod-ui')", 'pick(part, {x,y}, ctx) 带 #mod-ui');
+has("PL.modsCall(S.modsList, 'unpick', [], pwarn)", 'unpick()');
+has("plugSelect(q.part, '3d', { x: cx - R.left, y: cy - R.top })", '3D 点击把点击位置传给 pick');
+has('S.modsList = MODS;', 'S.modsList');
+if (!/<div id="mod-ui"><\/div>\s*<\/div>\s*<div id="col"/.test(html)) fail('hzwest.html 应在 #v3 末尾放空容器 <div id="mod-ui"></div>');
+if (!/#mod-ui\{position:absolute;inset:0;[^}]*pointer-events:none\}/.test(html)) fail('#mod-ui 应绝对定位铺满 #v3 且 pointer-events:none');
+if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 17) fail('hzview.js 加 pick 钩子后版本号应 ≥ 17');
 console.log('OK check_linkage runs=' + runs);
