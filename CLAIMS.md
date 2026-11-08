@@ -33,6 +33,7 @@
 | 名字 | 身份 | 途径（A PR / B 收件） | 日期 |
 |---|---|---|---|
 | `hark-cs` | Hark · changsheng0804 账号（全称 hark-changsheng） | B 收件 | 2026-11-08 |
+| `hark-fangyi` | Hark · 方熠账号 | B 收件 | 2026-11-08 |
 
 ## 退回记录
 
