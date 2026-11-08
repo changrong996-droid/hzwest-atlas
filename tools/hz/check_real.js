@@ -8,7 +8,7 @@ HZ.make();
 
 function fail(msg) { console.log('FAIL check_real: ' + msg); process.exit(1); }
 
-const KNOWN = ['id', 'sheet', 'kind', 'date', 't', 'src', 'cam', 'anchor', 'note', 'example'];
+const KNOWN = ['id', 'sheet', 'kind', 'date', 't', 'src', 'cam', 'anchor', 'note', 'example', 'parts'];
 const KINDS = ['photo', 'measure', 'doc'];
 const CAM = ['az', 'el', 'd', 'tx', 'ty', 'tz'];
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);

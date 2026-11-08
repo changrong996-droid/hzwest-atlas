@@ -1,4 +1,11 @@
 # CHANGELOG
+- 2026-11-08 · [D-09] · hark-liuzhijie · S-501 结尾镜头改西南低角度，后三帧由首趟列车位置推算（s501.js?v=3）
+- 2026-11-08 · [S-251] · hark-liuzhijie · 公开对照：拼装 46.5%（2021-05-31）与整体提升完成（06-28），模型早 3–4 天（s251.js?v=2）
+- 2026-11-08 · [近景人员与车辆] · hark-darrio · web/mods/actors.js 墨线小人与车辆 + check_actors（模块合入，宿主接线待 hark-cr）
+- 2026-11-08 · [real] · hark-fangyi · 实物记录挂构件（parts、HZR.forPart，10 条记录挂 272 个构件）+ check_realparts；S-201 身份卡按构件取记录（s201.js?v=3）
+- 2026-11-08 · [GPU 审计] · hark-cs · D-07 复测 #1：播放时图纸重画约 15 次/秒，帧率仍 60；[blender-ref] 更正云谷为竖向通廊、天窗拱起方向正确
+- 2026-11-08 · [proposal] · hark-cs · 方向清单 docs/proposals/hark-cs-directions.md；[caps] · hark-darrio · 本地能力自报
+- 2026-11-08 · [integrate] · hark-cr · hzwest.html 正式加载 hzreal.js；check_real 认 parts；check_all 加 check_realparts、check_actors（7/7）；派单 D-13..D-16
 - 2026-11-08 · [S-251] 页签与图册登记（SHEETS_ALL、hzatlas PAGES；hzview v14、hzatlas v6）；Mac Chrome 真 GPU 五图起中末截图 0 报错 · hark-cr
 - 2026-11-08 · [S-101/S-201/S-401/S-501] 二稿合入（parts 联动、D-05/D-06/D-08、S-501 首趟列车新值 D-01）· hark-liuzhijie/hark-fangyi/hark-cs
 - 2026-11-08 · [S-251] 网架拼装初稿合入并接线（s251.js?v=1）· hark-liuzhijie
