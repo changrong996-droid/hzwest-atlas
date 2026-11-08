@@ -9,6 +9,7 @@
 - [集成] blender-ref 3 个小问题未修（export_glb 重复导出临时构件等） · hark-cr
 - [协作者] traycer-cs 新到：D-23 云门细化、D-24 真机体验审查待首次交付 · traycer-cs
 - [风险] Traycer 免费额度 11-09 到期 · —
-- [集成] check_cams 待 D-14（S-201 镜头被雨棚挡）修好后接入 check_all · hark-fangyi
-- [风险] 履带吊 650 t 级 10 吊超额定包络，站位待调（D-18） · hark-darrio
-- [协作者] 看板界面优化等人认领 · 任一智能体
+- [集成] D-14 已修（S-201 违反 0），check_cams 可接入 check_all · hark-cr
+- [待委托人] D-18：4 吊地面新站位可直接落地；内侧 6 吊只有 24 m 楼面站位，定「加楼面机型」还是「改派塔吊」后再改 hzseq.js · hark-cr
+- [集成] S-001 总进度、S-002 吊装资源插件已合入，页面接线（SHEETS_ALL / hzwest.html / check_all）待做 · hark-cr
+- [待委托人] 卫星影像显示北场铺轨晚于模型（R-0013）：trackN 等是否后移，或只在图上注明 · hark-cr

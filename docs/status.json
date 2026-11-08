@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-11-08T15:44:00+08:00",
+ "generated_at": "2026-11-08T15:47:00+08:00",
  "headline": {
-  "commits_total": 191,
-  "commits_today": 163,
-  "files": 119,
+  "commits_total": 220,
+  "commits_today": 192,
+  "files": 128,
   "items_done": 21,
   "items_total": 39,
   "workflows_running": 20,
   "dispatch_open": 11,
   "live_claims": 9,
-  "pending_review": 6,
-  "blockers": 12,
+  "pending_review": 0,
+  "blockers": 13,
   "waiting_on_owner": 5
  },
  "roles": {
@@ -26,8 +26,13 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 93,
-   "today": 93
+   "total": 106,
+   "today": 106
+  },
+  {
+   "agent": "hark-cs",
+   "total": 27,
+   "today": 27
   },
   {
    "agent": "—",
@@ -35,24 +40,19 @@
    "today": 4
   },
   {
-   "agent": "hark-cs",
-   "total": 24,
-   "today": 24
-  },
-  {
    "agent": "hark-liuzhijie",
-   "total": 20,
-   "today": 20
+   "total": 23,
+   "today": 23
   },
   {
    "agent": "hark-fangyi",
-   "total": 13,
-   "today": 13
+   "total": 19,
+   "today": 19
   },
   {
    "agent": "hark-darrio",
-   "total": 6,
-   "today": 6
+   "total": 10,
+   "today": 10
   },
   {
    "agent": "muse-tibo-cs",
@@ -72,51 +72,51 @@
  ],
  "recent_commits": [
   {
-   "sha": "53a20b4",
-   "at": "2026-11-08T07:44:08Z",
-   "subj": "[claims] 看板界面优化 记 hark-cs 完成",
+   "sha": "f714e44",
+   "at": "2026-11-08T07:46:46Z",
+   "subj": "[宿主] 修 hzview.js lead()：let pos 被并进行尾注释导致引线标注 ReferenceError（hark-fangyi 缺陷报告 #7",
    "agent": "hark-cr"
   },
   {
-   "sha": "e870023",
-   "at": "2026-11-08T07:42:45Z",
-   "subj": "Merge agent/hark-cs/status-ui（看板界面优化）",
+   "sha": "ef04b5d",
+   "at": "2026-11-08T07:45:03Z",
+   "subj": "Merge agent/hark-cs/vision",
    "agent": "hark-cr"
   },
   {
-   "sha": "0d9e7b9",
-   "at": "2026-11-08T07:33:21Z",
-   "subj": "[看板界面] 本机服务根目录读 /status.json（第三条 SRC 规则）；本机推算流程时标注",
-   "agent": "hark-cs"
-  },
-  {
-   "sha": "eae5a68",
-   "at": "2026-11-08T07:26:41Z",
-   "subj": "[D-24] 加标注衬底真机核对；plan 改 9/9",
+   "sha": "baf9bbe",
+   "at": "2026-11-08T07:45:03Z",
+   "subj": "Merge agent/hark-liuzhijie/S-101-mod",
    "agent": "hark-cr"
   },
   {
-   "sha": "ae4930b",
-   "at": "2026-11-08T07:25:01Z",
-   "subj": "[宿主] 三维标注按当前图号过滤 + 衬底避让",
+   "sha": "b70da99",
+   "at": "2026-11-08T07:45:03Z",
+   "subj": "Merge agent/hark-darrio/S-002-lift",
    "agent": "hark-cr"
   },
   {
-   "sha": "644a99b",
-   "at": "2026-11-08T07:20:54Z",
-   "subj": "[plan] 方向与规划 docs/plan.md；D-12 拆成 D-19～D-24 雕琢单；D-10/D-12 关单，D-11 改回 muse-tibo-c",
+   "sha": "ddcb4db",
+   "at": "2026-11-08T07:45:02Z",
+   "subj": "Merge agent/hark-cs/S-001-gantt",
    "agent": "hark-cr"
   },
   {
-   "sha": "a373624",
-   "at": "2026-11-08T07:18:37Z",
-   "subj": "Merge agent/muse-tibo-cs/atlas-sheets",
+   "sha": "1829e26",
+   "at": "2026-11-08T07:45:02Z",
+   "subj": "Merge agent/hark-fangyi/real-sat-yards",
    "agent": "hark-cr"
   },
   {
-   "sha": "79d4ead",
-   "at": "2026-11-08T07:17:47Z",
-   "subj": "Merge agent/muse-tibo-cs/blender-ref",
+   "sha": "45fa0d7",
+   "at": "2026-11-08T07:45:02Z",
+   "subj": "Merge agent/hark-liuzhijie/precheck",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "1d1a9ff",
+   "at": "2026-11-08T07:45:01Z",
+   "subj": "Merge agent/hark-fangyi/sat-proposal",
    "agent": "hark-cr"
   }
  ],
@@ -320,14 +320,7 @@
   }
  ],
  "free_items": [],
- "pending_review": [
-  "hark-darrio/D-18-stations",
-  "hark-fangyi/S-201-D14-cam",
-  "hark-cs/S-001-gantt",
-  "hark-darrio/S-002-lift",
-  "hark-liuzhijie/S-101-mod",
-  "hark-fangyi/real-sat-yards"
- ],
+ "pending_review": [],
  "stale_locks": [
   "图册接新图",
   "Blender 参考渲染"
@@ -380,18 +373,23 @@
   },
   {
    "kind": "集成",
-   "what": "check_cams 待 D-14（S-201 镜头被雨棚挡）修好后接入 check_all",
-   "who": "hark-fangyi"
+   "what": "D-14 已修（S-201 违反 0），check_cams 可接入 check_all",
+   "who": "hark-cr"
   },
   {
-   "kind": "风险",
-   "what": "履带吊 650 t 级 10 吊超额定包络，站位待调（D-18）",
-   "who": "hark-darrio"
+   "kind": "待委托人",
+   "what": "D-18：4 吊地面新站位可直接落地；内侧 6 吊只有 24 m 楼面站位，定「加楼面机型」还是「改派塔吊」后再改 hzseq.js",
+   "who": "hark-cr"
   },
   {
-   "kind": "协作者",
-   "what": "看板界面优化等人认领",
-   "who": "任一智能体"
+   "kind": "集成",
+   "what": "S-001 总进度、S-002 吊装资源插件已合入，页面接线（SHEETS_ALL / hzwest.html / check_all）待做",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "待委托人",
+   "what": "卫星影像显示北场铺轨晚于模型（R-0013）：trackN 等是否后移，或只在图上注明",
+   "who": "hark-cr"
   }
  ],
  "links": {
