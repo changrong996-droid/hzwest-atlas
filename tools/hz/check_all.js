@@ -11,7 +11,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js'];
+const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js'];
 const CAMS = ['S-001', 'S-002', 'S-101', 'S-251', 'S-401', 'S-501'];
 // 只报告、不判失败的图号（有遗留违反时临时放这里，并在 CLAIMS 记明）。
 // S-201：11-08 屋盖排程校准（胎架后移 4 天）后 t=636 拼好的南区屋盖仍在胎架上，挡住末条视线（违反 1）；修法已写进派单 D-26（s201.js 加一帧），合入后移回 CAMS

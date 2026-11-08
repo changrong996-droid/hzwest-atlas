@@ -112,14 +112,34 @@ if (!/if \(w < 20 \|\| h < 20\) (return;|\{[^}]*return; \})/.test(src)) fail('dr
   if (PL.modsCall(undefined, 'pick', []) !== 0) fail('modsCall(undefined) 应返回 0'); runs++; }
 has('S.plugSel = (S.plugSel || 0) + 1; hashSync(); modsPick(p, src, xy); return true; }', '选中 part 后调 HZ_MODS pick');
 has("if (had) { dynKey = ''; leadKey = ''; sheetInv(); } modsUnpick(); }", 'plugClear 调 HZ_MODS unpick');
-has("PL.modsCall(L, 'pick', [p, xy, { sheet: SHEET, t: S.st.t, src, root: $('mod-ui')", 'pick(part, {x,y}, ctx) 带 #mod-ui');
-has("PL.modsCall(S.modsList, 'unpick', [], pwarn)", 'unpick()');
+has("const cx = { sheet: SHEET, t: S.st.t, src, root: $('mod-ui')", 'pick(part, {x,y}, ctx) 带 #mod-ui');
+has("PL.modsCall([m], 'pick', [p, xy, cx], pwarn); modOwn(m);", 'pick 逐模块调用并记 #mod-ui 归属');
+has("PL.modsCall([m], 'unpick', [], pwarn); modOwn(m);", 'unpick()');
+// 11-08：模块停用清理（调 unpick、隐藏 3D 节点、移除 #mod-ui 元素）、挂起另一个 part 先 unpick、投影排除 z<-1
+has("for (const o of (m.__nodes || [])) o.visible = false; modOwn(m); for (const n of (m.__dom || [])) if (n.parentNode) n.parentNode.removeChild(n);", '模块停用后隐藏 3D 节点并移除 #mod-ui 元素');
+has("catch (e) { modOff(m, e); }", 'update 抛错走 modOff');
+has("if (!p) { if (PV.focus) { PV.focus = null; PV.box = null; PV.label = ''; PFOL = null; dynKey = ''; leadKey = ''; sheetInv(); modsUnpick(); }", '挂起另一个 part 时先清选中并 unpick');
+has("if (q.z > -1 && q.z < 1) xy =", 'pick 投影排除相机背后');
+// 11-08：云门模块接线（web/mods/yunmen.js 生效时墨线模式隐去旧 ymf/ym/ymc 体块）、actors 加载、three 本地 vendor 优先
+for (const f of ['mods/yunmen.js']) { if (!new RegExp('<script src="' + f.replace(/[./]/g, '\\$&') + '\\?v=\\d+"></script>').test(html)) fail('hzwest.html 未加载 ' + f); if (html.indexOf(f) > html.indexOf('hzview.js')) fail(f + ' 须在 hzview.js 之前加载'); }
+has("const YMK = new Set(['ymf', 'ym', 'ymc']);", '旧云门体块标记');
+has("MF[iv] = it.ym ? 3 : it.temp;", '云门顶点 aF = 3');
+has("if (aF > 2.5 && uYm > 0.5) hzP = vec3(0.0, -1e5, 0.0);", '墨线填充按 uYm 隐去旧云门');
+has("if (aF > 2.5) { vF = 0.0; if (uYm > 0.5) vS = -3.0; }", '墨线线条按 uYm 隐去旧云门');
+has("U.uYm.value = YMON ? 1 : 0;", 'renderInk 置 uYm');
+has("const YMM = MODS.find(m => m.id === 'yunmen')", '云门模块识别');
+has("let loc = hp.get('three') !== 'cdn';", 'three 默认本地 vendor');
+has("THREE_BASE + 'build/three.module.js'", 'three CDN 兜底');
+// 屋面掠射光与光伏硬边（11-08）
+has('float hzPVA(vec2 p) { float m = hzPVMask(p), fw = max(fwidth(m), 1e-4); return smoothstep(0.5 - fw, 0.5 + fw, m); }', '光伏遮罩 0.5 等值线硬边');
+if ((src.match(/hzPV = hzPVA\(vWq\.xz\)/g) || []).length !== 2) fail('实景 / 墨线两处光伏都应走 hzPVA');
+has("f = mix(f, clamp(1.03 + uRakeK * (dot(n, uRakeDir) - uRakeDir.y), 0.6, 1.2), uRake);", '屋面掠射光');
 has("plugSelect(q.part, '3d', { x: cx - R.left, y: cy - R.top })", '3D 点击把点击位置传给 pick');
 has('S.modsList = MODS;', 'S.modsList');
 has("['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')", '只有 pick / unpick 的模块也进列表（build 可选）');
 if (!/<div id="mod-ui"><\/div>\s*<\/div>\s*<div id="col"/.test(html)) fail('hzwest.html 应在 #v3 末尾放空容器 <div id="mod-ui"></div>');
 if (!/#mod-ui\{position:absolute;inset:0;[^}]*pointer-events:none\}/.test(html)) fail('#mod-ui 应绝对定位铺满 #v3 且 pointer-events:none');
-if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 17) fail('hzview.js 加 pick 钩子后版本号应 ≥ 17');
+if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 21) fail('hzview.js 接云门 / three 本地 / 掠射光后版本号应 ≥ 21');
 has("ug: 0 }, JSON.parse(hp.get('camcfg') || '{}'))", '镜头参数默认 ug 0（不进地铁层）');
 has('CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;', '地铁层镜头入口只在 #camcfg 显式 ug 1 时开（委托人 11-08 定默认关）');
 console.log('OK check_linkage runs=' + runs);

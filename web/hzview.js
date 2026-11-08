@@ -76,8 +76,12 @@
 
   async function main() {
     const im = document.createElement('script'); im.type = 'importmap';
-    const loc = hp.get('three') === 'local';
-    im.textContent = JSON.stringify({ imports: loc ? { three: new URL('vendor/three.module.js', document.baseURI).href } : { three: THREE_BASE + 'build/three.module.js', 'three/addons/': THREE_BASE + 'examples/jsm/' } });
+    // GPU 审计 #9：three.js 默认用仓库本地 web/vendor（r160，与 CDN 同版），本地取不到（4 s 内 HEAD 失败）才回退 unpkg；#three=cdn 强制走 CDN
+    const VEN = new URL('vendor/three.module.js', document.baseURI).href;
+    let loc = hp.get('three') !== 'cdn';
+    if (loc) { try { const ac = typeof AbortController === 'function' ? new AbortController() : null, tm = ac && setTimeout(() => ac.abort(), 4000); const r = await fetch(VEN, { method: 'HEAD', cache: 'force-cache', signal: ac && ac.signal }); clearTimeout(tm); loc = r.ok; } catch (e) { loc = false; } if (!loc) console.warn('[hzview] 本地 vendor/three.module.js 取不到，回退 unpkg'); }
+    S.threeSrc = loc ? 'vendor' : 'cdn';
+    im.textContent = JSON.stringify({ imports: loc ? { three: VEN } : { three: THREE_BASE + 'build/three.module.js', 'three/addons/': THREE_BASE + 'examples/jsm/' } });
     document.head.appendChild(im);
     const [THREE, { OrbitControls }] = await Promise.all([import('three'), import(loc ? new URL('vendor/OrbitControls.js', document.baseURI).href : 'three/addons/controls/OrbitControls.js')]);
     run(THREE, OrbitControls);
@@ -124,7 +128,8 @@
 
     // ---------------- 构件：1 个网格（实景 / 墨线两套材质）+ 1 组墨线 ----------------
     const U = { uT: { value: 0 }, uG: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Matrix4()) }, uGlowDays: { value: 6 }, uGlowCol: { value: new THREE.Vector3(1.0, 0.58, 0.26).multiplyScalar(0.6) }, uLights: { value: 0 }, uPV: { value: 0 }, uPVs: { value: 0 }, uRoofLift: { value: 0 }, uWave: { value: 0 }, uLightCol: { value: new THREE.Vector3(1.0, 0.78, 0.5) },
-      uPaper: { value: new THREE.Color('#efe9dd') }, uRed: { value: new THREE.Color('#b3202a') }, uInk: { value: new THREE.Color('#1d1a17') }, uTemp: { value: new THREE.Color('#c46a12') }, uSun2: { value: new THREE.Vector3(-0.45, 0.8, 0.4).normalize() }, uLA: { value: 1 }, uGhost: { value: 1 }, uMv: { value: [0, 0, 0, 0, 0, 0] }, uCam: { value: new THREE.Vector3() }, uCut: { value: -1e9 } };
+      uPaper: { value: new THREE.Color('#efe9dd') }, uRed: { value: new THREE.Color('#b3202a') }, uInk: { value: new THREE.Color('#1d1a17') }, uTemp: { value: new THREE.Color('#c46a12') }, uSun2: { value: new THREE.Vector3(-0.45, 0.8, 0.4).normalize() }, uLA: { value: 1 }, uGhost: { value: 1 }, uMv: { value: [0, 0, 0, 0, 0, 0] }, uCam: { value: new THREE.Vector3() }, uCut: { value: -1e9 },
+      uYm: { value: 0 }, uRake: { value: 0 }, uRakeDir: { value: new THREE.Vector3() }, uRakeK: { value: 1.5 } };   // uYm：云门模块 web/mods/yunmen.js 生效时墨线模式隐去旧云门体块（aF = 3）；uRake：屋面低角度掠射光（四朵云读得出）
     // set2c：统一剖切平面 x = 39 m（切掉 x < 39）。自定义着色器用 uCut（-1e9 = 不切）；内置材质常驻 clippingPlanes=[CUTP]，关闭时把平面推到 1e7 外 → 切换不重新编译
     const CUTP = new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e7); renderer.localClippingEnabled = true; S.CUTP = CUTP;
     const VDEF = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute vec4 aM;
@@ -141,31 +146,32 @@
       float hzPVMask(vec2 p) { float th = atan(p.y, p.x), c = abs(cos(th)) / ${PP.roofA.toFixed(2)}, s = abs(sin(th)) / ${PP.roofB.toFixed(2)};
         float R = pow(pow(c, 4.0) + pow(s, 4.0), -0.25) * (1.0 + 0.022 * sin(8.0 * th + 0.6) + 0.012 * sin(13.0 * th)), r = length(p) / R, u = abs(p.x) / ${PP.roofA.toFixed(2)}, v = abs(p.y) / ${PP.roofB.toFixed(2)};
         return hzSm(${PK[0].toFixed(3)}, ${(PK[0] + 0.04).toFixed(3)}, r) * (1.0 - hzSm(${(PK[1] - 0.04).toFixed(3)}, ${PK[1].toFixed(3)}, r)) * hzSm(${PK[2].toFixed(3)}, ${(PK[2] + 0.04).toFixed(3)}, u) * hzSm(${PK[2].toFixed(3)}, ${(PK[2] + 0.04).toFixed(3)}, v); }
+      float hzPVA(vec2 p) { float m = hzPVMask(p), fw = max(fwidth(m), 1e-4); return smoothstep(0.5 - fw, 0.5 + fw, m); }   /* 11-08：光伏边界取遮罩 0.5 等值线（= hzseq.js isPV 与实物照片遮罩），按像素抗锯齿成硬边；原直接用遮罩值，边缘 0.04·R ≈ 5 m 渐变 → 真机发虚 */
 `;
     function patchStd(mat) {
       mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, U);
         sh.vertexShader = VDEF + sh.vertexShader.replace('#include <beginnormal_vertex>', 'hzCalc();\nvec3 objectNormal = mat3(hzM) * normal;').replace('#include <begin_vertex>', 'vec3 transformed = hzP;');
         sh.fragmentShader = PVGLSL + sh.fragmentShader
-          .replace('#include <color_fragment>', '#include <color_fragment>\nfloat hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVMask(vWq.xz) * step(vWq.z, mix(-170.0, 175.0, uPV)); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 1.2; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } vec2 sd = abs(fract(vWq.xz / vec2(3.5, 1.75)) - 0.5); float ln = 1.0 - smoothstep(0.0, fwidth(vWq.x / 3.5) * 1.5, 0.5 - sd.x); diffuseColor.rgb *= 1.0 - 0.06 * ln; vec2 pc = abs(fract(vWq.xz / vec2(2.0, 1.0)) - 0.5); float pl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.0) * 1.2, 0.5 - pc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z) * 1.2, 0.5 - pc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, uPVs > 0.5 ? vec3(0.07, 0.12, 0.26) * (1.0 - 0.3 * pl) + vec3(0.30) * pl : vec3(0.16, 0.26, 0.48) * (1.0 - 0.35 * pl) + vec3(0.12) * pl, hzPV); }\nif (vM.w > 1.5) { vec2 gc = abs(fract(vWq.xz / vec2(2.4, 2.4)) - 0.5); float gl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.4) * 1.3, 0.5 - gc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z / 2.4) * 1.3, 0.5 - gc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.75), gl * 0.6); }')
+          .replace('#include <color_fragment>', '#include <color_fragment>\nfloat hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVA(vWq.xz) * step(vWq.z, mix(-170.0, 175.0, uPV)); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 0.75; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } vec2 sd = abs(fract(vWq.xz / vec2(3.5, 1.75)) - 0.5); float ln = 1.0 - smoothstep(0.0, fwidth(vWq.x / 3.5) * 1.5, 0.5 - sd.x); diffuseColor.rgb *= 1.0 - 0.06 * ln; vec2 pc = abs(fract(vWq.xz / vec2(2.0, 1.0)) - 0.5); float pl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.0) * 1.2, 0.5 - pc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z) * 1.2, 0.5 - pc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, uPVs > 0.5 ? vec3(0.07, 0.12, 0.26) * (1.0 - 0.3 * pl) + vec3(0.30) * pl : vec3(0.16, 0.26, 0.48) * (1.0 - 0.35 * pl) + vec3(0.12) * pl, hzPV); }\nif (vM.w > 1.5) { vec2 gc = abs(fract(vWq.xz / vec2(2.4, 2.4)) - 0.5); float gl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.4) * 1.3, 0.5 - gc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z / 2.4) * 1.3, 0.5 - gc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.75), gl * 0.6); }')
           .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = mix(vM.x, 0.18, hzPV);').replace('#include <metalnessmap_fragment>', 'float metalnessFactor = mix(vM.y, 0.6, hzPV);')
           .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nfloat hzWv = uWave > 0.0 ? hzSm(0.0, 30.0, uWave - length(vWq.xz)) : 1.0; totalEmissiveRadiance += uGlowCol * vGlow * (0.35 + 0.65 * vGlow) + diffuseColor.rgb * uLightCol * vM.z * uLights * hzWv; if (vM.w > 0.5 && vM.w < 1.5) totalEmissiveRadiance += diffuseColor.rgb * uRoofLift * (1.0 - hzPV);'); };
       mat.customProgramCacheKey = () => 'hz-std'; return mat; }
     function patchDepth(mat) { mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, U); sh.vertexShader = VDEF + sh.vertexShader.replace('#include <begin_vertex>', 'hzCalc();\nvec3 transformed = hzP;'); }; mat.customProgramCacheKey = () => 'hz-depth'; return mat; }
     // 墨线·淡彩填充：纸色 + 三档明暗；当前构件红
-    const PVINK = 'float hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVMask(vWq.xz) * step(vWq.z, mix(-170.0, 175.0, uPV)); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 1.2; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } }';   // 与实景同一光伏遮罩（GPU 审计 #8）
+    const PVINK = 'float hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVA(vWq.xz) * step(vWq.z, mix(-170.0, 175.0, uPV)); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 0.75; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } }';   // 与实景同一光伏遮罩（GPU 审计 #8）
     const inkMat = new THREE.ShaderMaterial({ uniforms: U, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
-      vertexShader: VDEF + `attribute vec3 color; attribute float aF; uniform float uMv[6]; varying vec3 vN; varying vec3 vC; varying float vCur; varying float vTmp; varying float vMv; varying float vWx; void main() { hzCalc(); vWx = hzP.x; vMv = uMv[int(aG + 0.5)]; vN = mat3(hzM) * normal; vC = color; vTmp = aF; vCur = vGlow > 0.0 && uT < aK.x + aK.y + 2.0 ? 1.0 : 0.0; gl_Position = projectionMatrix * viewMatrix * vec4(hzP, 1.0); }`,
-      fragmentShader: PVGLSL + `uniform vec3 uPaper, uRed, uSun2, uTemp; uniform float uCut; varying vec3 vN; varying vec3 vC; varying float vCur; varying float vTmp; varying float vMv; varying float vWx;
+      vertexShader: VDEF + `attribute vec3 color; attribute float aF; uniform float uMv[6], uYm; varying vec3 vN; varying vec3 vC; varying float vCur; varying float vTmp; varying float vMv; varying float vWx; void main() { hzCalc(); if (aF > 2.5 && uYm > 0.5) hzP = vec3(0.0, -1e5, 0.0); vWx = hzP.x; vMv = uMv[int(aG + 0.5)]; vN = mat3(hzM) * normal; vC = color; vTmp = aF > 2.5 ? 0.0 : aF; vCur = vGlow > 0.0 && uT < aK.x + aK.y + 2.0 ? 1.0 : 0.0; gl_Position = projectionMatrix * viewMatrix * vec4(hzP, 1.0); }`,
+      fragmentShader: PVGLSL + `uniform vec3 uPaper, uRed, uSun2, uTemp, uRakeDir; uniform float uCut, uRake, uRakeK; varying vec3 vN; varying vec3 vC; varying float vCur; varying float vTmp; varying float vMv; varying float vWx;
         void main() { if (vWx < uCut) discard; vec3 n = normalize(vN); if (!gl_FrontFacing) n = -n; float l = dot(n, uSun2); vec3 c = pow(vC, vec3(1.0 / 2.2)); vec3 base = vTmp > 0.5 ? mix(uPaper, uTemp, 0.55) : mix(uPaper, c, 0.34);
-          float f = l > 0.5 ? 1.0 : (l > 0.08 ? 0.9 : 0.8); if (n.y > 0.8) f = 1.03; vec3 col = base * f;
+          float f = l > 0.5 ? 1.0 : (l > 0.08 ? 0.9 : 0.8); if (n.y > 0.8) f = 1.03; if (uRake > 0.0 && vM.w > 0.5 && vM.w < 1.5 && n.y > 0.5) f = mix(f, clamp(1.03 + uRakeK * (dot(n, uRakeDir) - uRakeDir.y), 0.6, 1.2), uRake);   /* 屋面掠射光：太阳高 12°，平面 = 1.03，迎光坡亮、背光坡暗 → 3.5 m 四朵云成明暗 */ vec3 col = base * f;
           if (l < 0.08 && n.y < 0.5) col *= 1.0 - 0.07 * step(0.75, fract((gl_FragCoord.x - gl_FragCoord.y) / 4.0));
           if (vCur > 0.5 && vTmp < 0.5) col = mix(col, uRed, 0.5); if (vMv > 1.5 && vTmp < 0.5) col = mix(col, uRed, 0.5); else if (vMv > 0.5 && vTmp < 0.5) col = mix(col, uRed, 0.28); { ` + PVINK + ` col = mix(col, vec3(0.27, 0.33, 0.45), 0.6 * hzPV); } /* GPU 审计 #8：墨线也画光伏条带，与 S-401 图纸对上 */ gl_FragColor = vec4(col, 1.0); }` });
     // 墨线：未建 = 设计位幽灵（淡红）/ 在建 = 红 / 已建 = 墨 / 临时 = 橙；随姿态矩阵移动
-    const LVS = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute float aF; uniform float uT, uGlowDays; uniform mat4 uG[6]; uniform float uMv[6]; uniform vec3 uCam; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
+    const LVS = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute float aF; uniform float uT, uGlowDays; uniform mat4 uG[6]; uniform float uMv[6], uYm; uniform vec3 uCam; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
       void main() { vMv = uMv[int(aG + 0.5)]; float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0; if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
         float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; mat4 M = uG[int(aG + 0.5)];
         if (uT < s) { vS = -1.0; M = mat4(1.0); } else { q.y = aY.x + (q.y - aY.x) * k; vS = uT < s + d + 2.0 ? 0.5 : 2.0; if (k < 1e-4) vS = -3.0; }
-        vec4 w = M * vec4(q, 1.0); vWx = w.x; vF = aF; vD = distance(w.xyz, uCam); gl_Position = projectionMatrix * viewMatrix * w; }`;
+        vec4 w = M * vec4(q, 1.0); vWx = w.x; vF = aF; if (aF > 2.5) { vF = 0.0; if (uYm > 0.5) vS = -3.0; } vD = distance(w.xyz, uCam); gl_Position = projectionMatrix * viewMatrix * w; }`;
     const LFS = `uniform vec3 uInk, uRed, uTemp; uniform float uLA, uGhost, uCut; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
       void main() { if (vS < -2.0 || vWx < uCut) discard; float fade = 1.0 - 0.55 * smoothstep(900.0, 3000.0, vD);
         if (vS < 0.0) { if (uGhost < 0.5 || vF > 0.5) discard; gl_FragColor = vec4(uRed, 0.085 * uLA * fade); return; }
@@ -179,20 +185,25 @@
     // r3：车窗带 + 头灯单独一个材质（开通点亮时发光，列车在黄昏里可读）
     HZ.MAT.trainW = { c: [0.16, 0.17, 0.2], r: 0.2, m: 0.3, e: FV.tl };
     const trainWGeo = (() => { const g = new HZ.GB('trainW'), cars = 8, L = 25.5; for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); g.box(x0 + 0.6, 2.45, -1.645, x0 + L - 0.6, 3.45, 1.645, null, false); } g.box(-11.6, 1.25, -1.0, -11.2, 1.65, 1.0, [0.9, 0.9, 0.85], false); return g; })();
+    const YMK = new Set(['ymf', 'ym', 'ymc']);   // 旧云门体块（hzseq.js 第 11 节）：顶点 / 线 aF 记 3，uYm = 1 时墨线模式塌缩（实景照旧用体块）
     function compile() {
-      const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0 }); }
+      const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0, ym: YMK.has(a.key) }); }
       items.push({ p: { geo: trainGeo, mat: 'train', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
       items.push({ p: { geo: trainWGeo, mat: 'trainW', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
       let nv = 0, nl = 0; for (const it of items) { nv += it.p.geo.P.length / 3; nl += it.p.geo.L.length / 3; }
       const MF = new Float32Array(nv), Pp = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3), Kk = new Float32Array(nv * 4), R = new Float32Array(nv * 2), Y = new Float32Array(nv * 2), Gp = new Float32Array(nv), M = new Float32Array(nv * 4);
       const LP = new Float32Array(nl * 3), LK = new Float32Array(nl * 4), LR = new Float32Array(nl * 2), LY = new Float32Array(nl * 2), LG = new Float32Array(nl), LF = new Float32Array(nl);
       const col = new THREE.Color(); let iv = 0, il = 0;
-      for (const it of items) { const g = it.p.geo, mt = HZ.MAT[it.p.mat], y0 = g.min[1], gg = it.p.grp || 0;
+      const SMV = [];   // 金属屋面顶面顶点（下面按位置平均法线 → 掠射光下四朵云是连续明暗而不是 3.5 m 三角碎面）
+      for (const it of items) { const g = it.p.geo, mt = HZ.MAT[it.p.mat], y0 = g.min[1], gg = it.p.grp || 0; if (it.p.mat === 'clad') SMV.push([iv, iv + g.P.length / 3]);
         for (let i = 0; i < g.P.length / 3; i++, iv++) { for (let k = 0; k < 3; k++) { Pp[iv * 3 + k] = g.P[i * 3 + k]; N[iv * 3 + k] = g.N[i * 3 + k]; }
           col.setRGB(g.C[i * 3], g.C[i * 3 + 1], g.C[i * 3 + 2], THREE.SRGBColorSpace); C[iv * 3] = col.r; C[iv * 3 + 1] = col.g; C[iv * 3 + 2] = col.b;
-          Kk[iv * 4] = it.st; Kk[iv * 4 + 1] = it.du; R[iv * 2] = it.rm[0]; R[iv * 2 + 1] = it.rm[1]; Y[iv * 2] = y0; Y[iv * 2 + 1] = g.max[1]; Gp[iv] = gg; M[iv * 4] = mt.r; M[iv * 4 + 1] = mt.m; M[iv * 4 + 2] = mt.e || 0; M[iv * 4 + 3] = mt.k || 0; MF[iv] = it.temp; }
-        const fl = it.temp ? 1 : (it.p.mat === 'soffit' || it.p.mat === 'clad' ? 2 : 0);
+          Kk[iv * 4] = it.st; Kk[iv * 4 + 1] = it.du; R[iv * 2] = it.rm[0]; R[iv * 2 + 1] = it.rm[1]; Y[iv * 2] = y0; Y[iv * 2 + 1] = g.max[1]; Gp[iv] = gg; M[iv * 4] = mt.r; M[iv * 4 + 1] = mt.m; M[iv * 4 + 2] = mt.e || 0; M[iv * 4 + 3] = mt.k || 0; MF[iv] = it.ym ? 3 : it.temp; }
+        const fl = it.ym ? 3 : it.temp ? 1 : (it.p.mat === 'soffit' || it.p.mat === 'clad' ? 2 : 0);
         for (let i = 0; i < g.L.length / 3; i++, il++) { for (let k = 0; k < 3; k++) LP[il * 3 + k] = g.L[i * 3 + k]; LK[il * 4] = it.st; LK[il * 4 + 1] = it.du; LR[il * 2] = it.rm[0]; LR[il * 2 + 1] = it.rm[1]; LY[il * 2] = y0; LY[il * 2 + 1] = g.max[1]; LG[il] = gg; LF[il] = fl; } }
+      { const acc = new Map(), key = i => Math.round(Pp[i * 3] * 20) + ',' + Math.round(Pp[i * 3 + 2] * 20) + ',' + Math.round(Pp[i * 3 + 1] * 2);
+        for (const [a, b] of SMV) for (let i = a; i < b; i++) { if (N[i * 3 + 1] < 0.5) continue; const k = key(i); let v = acc.get(k); if (!v) acc.set(k, v = [0, 0, 0]); v[0] += N[i * 3]; v[1] += N[i * 3 + 1]; v[2] += N[i * 3 + 2]; }
+        for (const [a, b] of SMV) for (let i = a; i < b; i++) { if (N[i * 3 + 1] < 0.5) continue; const v = acc.get(key(i)), l = Math.hypot(v[0], v[1], v[2]) || 1; N[i * 3] = v[0] / l; N[i * 3 + 1] = v[1] / l; N[i * 3 + 2] = v[2] / l; } S.roofSmooth = acc.size; }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(Pp, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
       geo.setAttribute('aK', new THREE.BufferAttribute(Kk, 4)); geo.setAttribute('aR', new THREE.BufferAttribute(R, 2)); geo.setAttribute('aY', new THREE.BufferAttribute(Y, 2)); geo.setAttribute('aG', new THREE.BufferAttribute(Gp, 1)); geo.setAttribute('aM', new THREE.BufferAttribute(M, 4)); geo.setAttribute('aF', new THREE.BufferAttribute(MF, 1));
@@ -214,7 +225,7 @@
         for (let i = 0; i < 3; i++) { const th = i / 3 * Math.PI * 2, c = Math.cos(th) * r, sn = Math.sin(th) * r, o = [e1[0] * c + e2[0] * sn, e1[1] * c + e2[1] * sn, e1[2] * c + e2[2] * sn], f = (SX - a[0] - o[0]) / dx;
           Pp.push(XC, a[1] + o[1] + ax[1] * f, a[2] + o[2] + ax[2] * f); Kk.push(it.st, it.du, 0, 0); Rr.push(it.rm[0], it.rm[1]); Yy.push(y0p, 0); Ff.push(it.temp); Ee.push(...NOE); Gg.push(it.g || 0); } return 1; };
       let nRod = 0;
-      for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!p.geo) continue; const it = { st: p.st, du: p.du, rm: p.rm || [-1, 0], temp: a.kind === 'temp' ? 1 : 0, g: p.grp || 0 }, y0p = p.geo.min[1];
+      for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!p.geo) continue; const it = { st: p.st, du: p.du, rm: p.rm || [-1, 0], temp: YMK.has(a.key) ? 3 : a.kind === 'temp' ? 1 : 0, g: p.grp || 0 }, y0p = p.geo.min[1];
         if (p.cells) { for (const c of p.cells) for (const [ra, rb, rr] of (c.rods || [])) nRod += rodTri(it, y0p, ra, rb, rr); continue; }
         if (!p.geo.boxes) continue;
         for (const b of p.geo.boxes) { if (!(b.min[0] < SX - 0.02 && b.max[0] > SX + 0.02) || b.max[1] - b.min[1] < 0.05) continue;
@@ -222,12 +233,12 @@
           let z0 = b.min[2], z1 = b.max[2]; if (b.cyl) { const [cx, cz, r] = b.cyl, h = Math.sqrt(Math.max(0, r * r - (SX - cx) ** 2)); if (h < 0.01) continue; z0 = cz - h; z1 = cz + h; }
           quad(it, y0p, z0, z1, b.min[1], b.max[1], z0, z1, z0, z1, [z0, z1, b.min[1], b.max[1]]); } } }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3)); g.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 4)); g.setAttribute('aR', new THREE.Float32BufferAttribute(Rr, 2)); g.setAttribute('aY', new THREE.Float32BufferAttribute(Yy, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(Ff, 1)); g.setAttribute('aE', new THREE.Float32BufferAttribute(Ee, 4)); g.setAttribute('aG', new THREE.Float32BufferAttribute(Gg, 1));
-      const CU = { uT: U.uT, uG: U.uG, uCut: U.uCut, uPaper: U.uPaper, uRed: U.uRed, uInk: U.uInk, uTemp: U.uTemp, uLitCap: { value: 0 }, uDpr: { value: 1 } };
+      const CU = { uT: U.uT, uG: U.uG, uCut: U.uCut, uYm: U.uYm, uPaper: U.uPaper, uRed: U.uRed, uInk: U.uInk, uTemp: U.uTemp, uLitCap: { value: 0 }, uDpr: { value: 1 } };
       const m = new THREE.ShaderMaterial({ uniforms: CU, side: THREE.DoubleSide,
-        vertexShader: `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aF; attribute vec4 aE; attribute float aG; uniform float uT, uCut; uniform mat4 uG[6]; varying vec2 vP; varying vec4 vE; varying float vF;
+        vertexShader: `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aF; attribute vec4 aE; attribute float aG; uniform float uT, uCut, uYm; uniform mat4 uG[6]; varying vec2 vP; varying vec4 vE; varying float vF;
           void main() { float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0; if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
-            float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; q.y = aY.x + (q.y - aY.x) * k; vE = vec4(aE.xy, aY.x + (aE.zw - aY.x) * k); vP = q.zy; vF = aF; q = (uG[int(aG + 0.5)] * vec4(q, 1.0)).xyz;
-            if (uT < s || k < 1e-4 || uCut < -1e8) q = vec3(0.0, -1e5, 0.0); gl_Position = projectionMatrix * viewMatrix * vec4(q, 1.0); }`,
+            float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; q.y = aY.x + (q.y - aY.x) * k; vE = vec4(aE.xy, aY.x + (aE.zw - aY.x) * k); vP = q.zy; vF = aF > 2.5 ? 0.0 : aF; q = (uG[int(aG + 0.5)] * vec4(q, 1.0)).xyz;
+            if (uT < s || k < 1e-4 || uCut < -1e8) q = vec3(0.0, -1e5, 0.0); if (aF > 2.5 && uYm > 0.5) q = vec3(0.0, -1e5, 0.0); gl_Position = projectionMatrix * viewMatrix * vec4(q, 1.0); }`,
         fragmentShader: `uniform vec3 uPaper, uRed, uInk, uTemp; uniform float uLitCap, uDpr; varying vec2 vP; varying vec4 vE; varying float vF;
           void main() { vec2 fw = max(fwidth(vP), vec2(1e-5)); float ez = min(vP.x - vE.x, vE.y - vP.x) / fw.x, ey = min(vP.y - vE.z, vE.w - vP.y) / fw.y, edge = 1.0 - smoothstep(0.6 * uDpr, 1.6 * uDpr, min(ez, ey));
             if (uLitCap > 0.5) { vec3 c = vec3(0.50) * (1.0 - 0.35 * edge); gl_FragColor = vec4(c, 1.0); return; }
@@ -686,7 +697,7 @@
       return { tgt, pos: best.pos, az: best.az, el: best.el, d: +best.d.toFixed(1), occluded: best.oc, roofOcc: best.ro, tried, pts }; }
     S.shotForBox = shotForBox;
     // src：'sheet' 图纸点击（镜头飞，图纸不动）/ '3d' 3D 点击（镜头轻对准，图纸居中 ×3）/ 'url' #focus=（两者都做）
-    function plugSelect(id, src, xy) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { PV.pend = String(id); hashSync(); return false; } PV.pend = null;   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
+    function plugSelect(id, src, xy) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { if (PV.focus) { PV.focus = null; PV.box = null; PV.label = ''; PFOL = null; dynKey = ''; leadKey = ''; sheetInv(); modsUnpick(); } PV.pend = String(id); hashSync(); return false; } PV.pend = null;   /* 挂起另一个 part 时先清掉旧选中并 unpick（Traycer 审查 #3） */   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
       PV.focus = String(p.id); PV.label = p.label || String(p.id); PV.box = PL.okBox(p) ? p.box.slice() : null; PFOL = null; dynKey = ''; leadKey = ''; sheetInv();
       if (src !== 'sheet' && PL.okHit(p) && PLUG[SHEET].focusZoom !== false) { const [hx, hy, hw, hh] = p.hit;   /* 插件 focusZoom:false（如 S-001 横道图）：选中只高亮不放大图纸 */ plugSheetAnim(3, hx + hw / 2, hy + hh / 2); }
       if (PV.box) { const b = PV.box; if (src === '3d') { const tg = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2), p1 = cam.position.clone().sub(ctl.target).multiplyScalar(0.92).add(tg); flyTo(tg, p1, 600); }
@@ -696,9 +707,9 @@
     // HZ_MODS 选中钩子（docs/hz-atlas-check.md 第三节 12）：选中插件 part → 各模块可选 pick(part, {x,y}, ctx)；取消 → unpick()。
     // {x,y} = 相对 #v3（亦即 #mod-ui）左上角的 CSS px：3D 点击取点击处，其余（图纸点击 / #focus=）取 part.box 中心投影。模块 DOM 只挂 #mod-ui。
     let MPICK = null;
-    function modsPick(p, src, xy) { const L = S.modsList; if (!L || !L.length) return; if (!xy) { xy = { x: NaN, y: NaN }; if (PL.okBox(p)) { const b = p.box, R = v3.getBoundingClientRect(), q = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2); cam.updateMatrixWorld(); q.project(cam); if (q.z < 1) xy = { x: (q.x + 1) / 2 * R.width, y: (1 - q.y) / 2 * R.height }; } }
-      MPICK = String(p.id); S.modPicks = (S.modPicks || 0) + 1; PL.modsCall(L, 'pick', [p, xy, { sheet: SHEET, t: S.st.t, src, root: $('mod-ui'), pv: S, set: S.set, select: S.plugSelect, clear: S.plugClear }], pwarn); }
-    function modsUnpick() { if (MPICK == null) return; MPICK = null; S.modUnpicks = (S.modUnpicks || 0) + 1; PL.modsCall(S.modsList, 'unpick', [], pwarn); }
+    function modsPick(p, src, xy) { const L = S.modsList; if (!L || !L.length) return; if (!xy) { xy = { x: NaN, y: NaN }; if (PL.okBox(p)) { const b = p.box, R = v3.getBoundingClientRect(), q = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2); cam.updateMatrixWorld(); q.project(cam); if (q.z > -1 && q.z < 1) xy = { x: (q.x + 1) / 2 * R.width, y: (1 - q.y) / 2 * R.height }; } }
+      MPICK = String(p.id); S.modPicks = (S.modPicks || 0) + 1; const cx = { sheet: SHEET, t: S.st.t, src, root: $('mod-ui'), pv: S, set: S.set, select: S.plugSelect, clear: S.plugClear }; for (const m of L.slice()) { if (MOB) MOB.takeRecords(); PL.modsCall([m], 'pick', [p, xy, cx], pwarn); modOwn(m); } }
+    function modsUnpick() { if (MPICK == null) return; MPICK = null; S.modUnpicks = (S.modUnpicks || 0) + 1; for (const m of (S.modsList || []).slice()) { if (MOB) MOB.takeRecords(); PL.modsCall([m], 'unpick', [], pwarn); modOwn(m); } }
     S.plugSelect = plugSelect; S.plugClear = () => { plugClear(); hashSync(); };
     // 时间跟随：时间一变重取 parts(t)；同 id 仍在 → 黄框换到新 box、镜头（目标与机位一起）按盒中心位移平滑跟随（0.25 s）；不在 → 保持最后位置
     function plugFollow(dt) { if (!PLUG[SHEET]) { PFOL = null; return; } const t = plugT();
@@ -947,9 +958,10 @@
     const postOpts = () => { const Pp = Object.assign({}, T.post); return Object.assign(Pp, { sd: sunDir, sunC: T.sun, interior: false, exp: Pp.exp * look.exp, sat: Pp.sat * look.sat, warm: Pp.warm.map(v => 1 + (v - 1) * look.warm), ao: true, vol: 0, dust: 0, fogA: 0.00012, fogH: 140, mistA: 0, god: Pp.god * 0.7, bloom: Pp.bloom * 1.1 }); };
     let lastNow = performance.now();
     const GL2 = (() => { const g = renderer.getContext(); return typeof WebGL2RenderingContext !== 'undefined' && g instanceof WebGL2RenderingContext && !hp.has('nofence') ? g : null; })(), FEN = [];
-    function renderInk(la) { CAP.CU.uLitCap.value = 0; ENDW.visible = false; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
+    { const az = THREE.MathUtils.degToRad(232), el = THREE.MathUtils.degToRad(12); U.uRakeDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); }   // 掠射光方向：与实景太阳同方位（西南 232°），高 12°
+    function renderInk(la) { CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
       U.uLA.value = la; renderer.setRenderTarget(null); renderer.setClearColor(0xefe9dd, 1); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); }
-    function renderLit() { CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
+    function renderLit() { CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 1);
       shadowAge++; if (shadowWant && (!S.st.play || shadowAge >= (S.pose && S.pose.lifting ? SPL : SP))) { renderer.shadowMap.needsUpdate = true; shadowWant = false; shadowAge = 0; lastShadowT = S.st.t; }
       if (POST.level > 0) POST.render(scene, cam, postOpts()); else { renderer.setRenderTarget(null); renderer.render(scene, cam); } }
@@ -968,7 +980,7 @@
       renderer.info.reset(); const b = S.blend; document.body.classList.toggle('lit', b > 0.5);
       if (b <= 0.001) renderInk(1);
       else { renderLit(); if (b < 0.999) { renderer.autoClear = false; paperQuad.m.uniforms.uA.value = Math.max(0, (0.85 - b) / 0.85) * 0.9; renderer.render(paperQuad.sc, cam);
-          const vis = scene.children.map(o => o.visible); for (const o of scene.children) o.visible = (o === LINES || o === CTX.lines || o === DYN.lines || o === MESH); MESH.material = inkMat; inkMat.colorWrite = false; renderer.clearDepth(); U.uLA.value = Math.max(1 - FV.ik, 1 - b); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); scene.children.forEach((o, i) => o.visible = vis[i]); inkMat.colorWrite = true; MESH.material = MESH.userData.lit; renderer.autoClear = true; } }
+          const vis = scene.children.map(o => o.visible); for (const o of scene.children) o.visible = (o === LINES || o === CTX.lines || o === DYN.lines || o === MESH || YMO.includes(o)); MESH.material = inkMat; inkMat.colorWrite = false; renderer.clearDepth(); U.uLA.value = Math.max(1 - FV.ik, 1 - b); U.uYm.value = YMON ? 1 : 0; for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * U.uLA.value; } renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); scene.children.forEach((o, i) => o.visible = vis[i]); for (const o of YMO) if (o.material && o.userData.op != null) o.material.opacity = o.userData.op; U.uYm.value = 0; inkMat.colorWrite = true; MESH.material = MESH.userData.lit; renderer.autoClear = true; } }
       if (GL2) { FEN.push(GL2.fenceSync(GL2.SYNC_GPU_COMMANDS_COMPLETE, 0)); GL2.flush(); } const pf2 = performance.now(); S.frames++; S.calls = renderer.info.render.calls; lead(); const pf3 = performance.now(); if (S.pf) { const q = S.pf; q.n++; q.dyn = Math.max(q.dyn, pf1 - pf0); q.rnd = Math.max(q.rnd, pf2 - pf1); q.lead = Math.max(q.lead, pf3 - pf2); q.pre = Math.max(q.pre, pf0 - now); } }
     // ---------------- 3D 引线标注：旋转提升时标转轴，其余时刻标当前工作面 ----------------
     const LEAD = $('lead'), MC = document.createElement('canvas').getContext('2d'), v3v = new THREE.Vector3(); let leadKey = '';
@@ -1021,9 +1033,16 @@
         o += `<polyline points="${x},${y} ${ux},${yb}" fill="none" stroke="#b3202a" stroke-width=".9"/><rect class="lb" x="${lx}" y="${ly}" width="${w}" height="${h}" rx="3"/><line x1="${lx}" y1="${yb}" x2="${lx + w}" y2="${yb}" stroke="#b3202a" stroke-width=".9"/><text class="lt" x="${lx + 6}" y="${ly + F1 + 1}" font-size="${F1}" font-weight="700">${esc(t1)}</text><text class="ls" x="${lx + 6}" y="${ly + F1 + F2 + 7}" font-size="${F2}">${esc(t2)}</text>`; }
       LEAD.innerHTML = o; S.leadPlaced = !!pos; S.leadText = t1; }
     // 3D 模块钩子（近景人员 actors、S-101 地下体量等）：window.HZ_MODS 逐个 build(scene, HZ, THREE, { clip:[CUTP] })，每次渲染前 update(t, cam)；单个模块抛错只 warn 一次并停用，不连坐
-    const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (!m || !['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')) continue; if (typeof m.build === 'function') m.build(scene, HZ, THREE, { clip: [CUTP] }); MODS.push(m); } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }   // 四个方法都可选（只有 pick / unpick 的界面模块也收）
-    function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; try { m.update(t, cam); } catch (e) { console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e); MODS.splice(i, 1); } } }
-    S.mods = MODS.map(m => m.id); S.modsList = MODS;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）
+    // 归属记账（11-08，Traycer 审查 #3/#5）：build 前后比对 scene.children → m.__nodes；#mod-ui 子元素经 MutationObserver.takeRecords() 同步记到当次调用的模块 → m.__dom。模块被停用时调一次 unpick、隐藏其 3D 节点、移除其 #mod-ui 元素
+    const MUI = $('mod-ui'), MOB = MUI && typeof MutationObserver === 'function' ? new MutationObserver(() => { }) : null; if (MOB) MOB.observe(MUI, { childList: true });
+    const modOwn = m => { if (!MOB) return; for (const r of MOB.takeRecords()) for (const n of r.addedNodes) (m.__dom || (m.__dom = new Set())).add(n); };
+    const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (!m || !['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')) continue; const before = new Set(scene.children); if (MOB) MOB.takeRecords(); if (typeof m.build === 'function') m.build(scene, HZ, THREE, { clip: [CUTP] }); m.__nodes = scene.children.filter(o => !before.has(o)); modOwn(m); MODS.push(m); } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }   // 四个方法都可选（只有 pick / unpick 的界面模块也收）
+    function modOff(m, e) { const i = MODS.indexOf(m); if (i < 0) return; MODS.splice(i, 1); S.mods = MODS.map(q => q.id); console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e);
+      if (MPICK != null && typeof m.unpick === 'function') { try { m.unpick(); } catch (e2) { } } for (const o of (m.__nodes || [])) o.visible = false; modOwn(m); for (const n of (m.__dom || [])) if (n.parentNode) n.parentNode.removeChild(n); m.__dom = null; dirty = true; }
+    function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; if (MOB) MOB.takeRecords(); try { m.update(t, cam); modOwn(m); } catch (e) { modOff(m, e); } } }
+    S.mods = MODS.map(m => m.id); S.modsList = MODS; S.modOff = modOff;
+    // 云门：web/mods/yunmen.js 生效 → 墨线模式隐去旧体块（uYm），模块墨线只在墨线模式显示；实景 / 结尾仍用体块
+    const YMM = MODS.find(m => m.id === 'yunmen'), YMON = !!YMM, YMO = YMM ? YMM.__nodes : []; S.yunmen = YMON;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）
     tabs(); applyLook(); layout();
     { STR.visible = true; renderer.compile(scene, cam); MESH.material = inkMat; renderer.compile(scene, cam); MESH.material = MESH.userData.lit; STR.visible = false; }
     // 预热：实景 / 墨线两条管线在“施工中（塔吊、履带吊、运输车、钢绞线在场）”与“竣工”各画一帧，着色器与阴影深度材质在加载时编译（Mac 实测：首次在施工中切实景卡 2.6 s）
