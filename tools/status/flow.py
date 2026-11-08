@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """推导「每件活走到哪一站」：派出 → 开工 → 交付 → 合入 → 关单，外加退回、等谁、等了多久。
 只读 git 与 CLAIMS.md，不联网。输出 JSON（给 web/status.html 的 flow 字段用）。
-用法：python3 flow.py [仓库路径] [--ref origin/main] > flow.json
-提案：建议 hark-cr 在 tools/status/gen.py 里调用，把结果放进 docs/status.json 的 "flow" 字段。"""
+用法：python3 tools/status/flow.py [仓库路径] [--ref origin/main] > flow.json
+作者 hark-cs（提案 docs/proposals/hark-cs-status-ui-notes.md）；11-08 由 hark-cr 移到 tools/status/，tools/status/gen.py 调用它，结果放进 docs/status.json 的 "flow" 字段。"""
 import json, re, subprocess, sys, time, os, datetime
 
 R = next((a for a in sys.argv[1:] if not a.startswith('--') and os.path.isdir(a)), '.')

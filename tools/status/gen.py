@@ -71,5 +71,11 @@ out = {
   'pending_review': pend, 'stale_locks': stale_locks, 'blockers': bl,
   'links': {'live': 'https://changrong996-droid.github.io/hzwest-atlas/', 'board': board + '/board',
             'repo': 'https://github.com/changrong996-droid/hzwest-atlas'}}
+# 流程视图（tools/status/flow.py，hark-cs）：每件活走到哪一站、等谁、等了多久；失败不影响其余字段
+try:
+    fr = subprocess.run([sys.executable, os.path.join(R, 'tools/status/flow.py'), R, '--ref', 'main'], capture_output=True, text=True, timeout=60)
+    out['flow'] = json.loads(fr.stdout)
+except Exception as ex:
+    out['flow'] = {'_error': str(ex)[:120], 'jobs': [], 'people': [], 'suggestions': []}
 json.dump(out, open(os.path.join(R, 'docs/status.json'), 'w'), ensure_ascii=False, indent=1)
 print(json.dumps(out['headline'], ensure_ascii=False))

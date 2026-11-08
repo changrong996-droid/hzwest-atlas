@@ -11,7 +11,7 @@ Agent: hark-cs
 ## 接口请求：加 `flow` 字段（新界面的「流程视图」靠它）
 
 委托人要看「每件活走到哪一站、谁停了、谁活太多、哪里要卡」。现在的 status.json 只有派单状态文字，推不出流程。
-脚本已写好：`docs/proposals/status-flow/flow.py`（只读 git 和 CLAIMS.md，不联网，约 2 秒）。
+脚本已写好：`docs/proposals/status-flow/flow.py`（11-08 已移到 `tools/status/flow.py`，gen.py 调用；只读 git 和 CLAIMS.md，不联网，约 2 秒）。
 请在 `tools/status/gen.py` 里调用它，把输出放进 `docs/status.json` 的 `"flow"` 字段：
 
 - `flow.jobs[]`：`{id, title, who[], stage(0–4), stages{派出,开工,交付,合入,关单: 时间戳}, returned, wait{who, what, since, age_min, level(ok/amber/red)}, branches, commits, done}`

@@ -1,13 +1,13 @@
 {
- "generated_at": "2026-11-08T15:48:00+08:00",
+ "generated_at": "2026-11-08T16:10:00+08:00",
  "headline": {
-  "commits_total": 221,
-  "commits_today": 193,
+  "commits_total": 225,
+  "commits_today": 197,
   "files": 128,
   "items_done": 24,
   "items_total": 39,
-  "workflows_running": 15,
-  "dispatch_open": 9,
+  "workflows_running": 16,
+  "dispatch_open": 10,
   "live_claims": 6,
   "pending_review": 0,
   "blockers": 13,
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 107,
-   "today": 107
+   "total": 111,
+   "today": 111
   },
   {
    "agent": "hark-cs",
@@ -72,6 +72,30 @@
  ],
  "recent_commits": [
   {
+   "sha": "84ad4c0",
+   "at": "2026-11-08T08:09:48Z",
+   "subj": "[宿主] S-001 总进度、S-002 吊装资源上线；HZ_MODS 钩子 + 加载 mods/s101.js；focusZoom:false",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "d9ae60d",
+   "at": "2026-11-08T08:04:39Z",
+   "subj": "[D-18] hzseq.js 落地面 4 吊新站位（超650 10→6）；派 D-25 内侧 6 吊改塔吊",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "598d4e7",
+   "at": "2026-11-08T08:01:30Z",
+   "subj": "[check] check_cams 逐图接入 check_all（违反即失败）；check_all 并行 + --shard",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "cb53c30",
+   "at": "2026-11-08T07:48:31Z",
+   "subj": "[status] 重新生成 docs/status.json",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "8de357f",
    "at": "2026-11-08T07:48:17Z",
    "subj": "[claims] D-14/D-18 关单；字幕改写、S-001、S-002 记完成待接线；卡点更新；重生成 status.json",
@@ -93,30 +117,6 @@
    "sha": "baf9bbe",
    "at": "2026-11-08T07:45:03Z",
    "subj": "Merge agent/hark-liuzhijie/S-101-mod",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "b70da99",
-   "at": "2026-11-08T07:45:03Z",
-   "subj": "Merge agent/hark-darrio/S-002-lift",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "ddcb4db",
-   "at": "2026-11-08T07:45:02Z",
-   "subj": "Merge agent/hark-cs/S-001-gantt",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "1829e26",
-   "at": "2026-11-08T07:45:02Z",
-   "subj": "Merge agent/hark-fangyi/real-sat-yards",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "45fa0d7",
-   "at": "2026-11-08T07:45:02Z",
-   "subj": "Merge agent/hark-liuzhijie/precheck",
    "agent": "hark-cr"
   }
  ],
@@ -174,6 +174,12 @@
    "agent": "traycer-cs",
    "item": "真机体验审查与方向",
    "state": "待做（D-23 之后或并行）"
+  },
+  {
+   "id": "D-25",
+   "agent": "hark-darrio",
+   "item": "履带吊臂长规则",
+   "state": "待做"
   }
  ],
  "dispatches_done": 15,
@@ -360,5 +366,1113 @@
   "live": "https://changrong996-droid.github.io/hzwest-atlas/",
   "board": "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board",
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
+ },
+ "flow": {
+  "generated_at": "2026-11-08T16:10:32+08:00",
+  "people": [
+   {
+    "name": "hark-cr",
+    "active": [],
+    "done_today": 0,
+    "last_at": 1794125388,
+    "state": "idle",
+    "idle_min": 0
+   },
+   {
+    "name": "hark-cs",
+    "active": [
+     "D-17",
+     "D-22"
+    ],
+    "done_today": 8,
+    "last_at": 1794123675,
+    "state": "working",
+    "idle_min": 28
+   },
+   {
+    "name": "hark-darrio",
+    "active": [
+     "D-25"
+    ],
+    "done_today": 4,
+    "last_at": 1794123723,
+    "state": "working",
+    "idle_min": 28
+   },
+   {
+    "name": "hark-fangyi",
+    "active": [
+     "D-19",
+     "实物层记录库"
+    ],
+    "done_today": 6,
+    "last_at": 1794123184,
+    "state": "working",
+    "idle_min": 37
+   },
+   {
+    "name": "hark-liuzhijie",
+    "active": [
+     "D-20",
+     "D-21"
+    ],
+    "done_today": 10,
+    "last_at": 1794123198,
+    "state": "working",
+    "idle_min": 36
+   },
+   {
+    "name": "marvis",
+    "active": [
+     "D-13"
+    ],
+    "done_today": 1,
+    "last_at": 1794114056,
+    "state": "stopped",
+    "idle_min": 189
+   },
+   {
+    "name": "muse-tibo-cs",
+    "active": [
+     "D-11"
+    ],
+    "done_today": 4,
+    "last_at": 1794121839,
+    "state": "working",
+    "idle_min": 59
+   },
+   {
+    "name": "pi-t2",
+    "active": [
+     "公开数据核对"
+    ],
+    "done_today": 0,
+    "last_at": null,
+    "state": "stopped",
+    "idle_min": null
+   },
+   {
+    "name": "pi-t3",
+    "active": [
+     "小屏可读性检查"
+    ],
+    "done_today": 0,
+    "last_at": null,
+    "state": "stopped",
+    "idle_min": null
+   },
+   {
+    "name": "traycer-cs",
+    "active": [
+     "D-23",
+     "D-24"
+    ],
+    "done_today": 0,
+    "last_at": 1794120893,
+    "state": "working",
+    "idle_min": 75
+   }
+  ],
+  "jobs": [
+   {
+    "id": "D-01",
+    "title": "S-501",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112517,
+     "关单": 1794116034
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-02",
+    "title": "二稿",
+    "who": [
+     "hark-liuzhijie",
+     "hark-fangyi",
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（五张插件都有 parts，check_linkage 通过）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112517,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-05",
+    "title": "S-101",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08",
+    "stage": 4,
+    "stages": {
+     "派出": 1794113125,
+     "开工": 1794114201,
+     "交付": 1794114201,
+     "合入": 1794115861,
+     "关单": 1794116034
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-101-draft2"
+    ],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-06",
+    "title": "S-201",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08",
+    "stage": 4,
+    "stages": {
+     "派出": 1794113125,
+     "开工": 1794114407,
+     "交付": 1794114407,
+     "合入": 1794115860,
+     "关单": 1794116034
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/S-201-d06-d08"
+    ],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-07",
+    "title": "GPU 审计",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（#1 播放重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏复测均已修好）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794113125,
+     "开工": 1794116515,
+     "交付": 1794120181,
+     "合入": 1794120585,
+     "关单": 1794120694
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/D-07-retest",
+     "agent/hark-cs/D-07-retest2"
+    ],
+    "commits": 2,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-08",
+    "title": "二稿",
+    "who": [
+     "hark-cs",
+     "hark-liuzhijie",
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（S-101/201/251/401/501 均有竖长条版面）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794113125,
+     "开工": 1794114201,
+     "交付": 1794114755,
+     "合入": 1794115931,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/S-201-d06-d08",
+     "agent/hark-liuzhijie/S-101-draft2",
+     "agent/hark-liuzhijie/S-501-draft2"
+    ],
+    "commits": 5,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-09",
+    "title": "S-501",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（镜头由列车位置推算；截图验收待 D-12 视觉审查一并看）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794114481,
+     "开工": 1794117800,
+     "交付": 1794117800,
+     "合入": 1794118174,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-501-D09"
+    ],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-10",
+    "title": "Blender 参考渲染",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（muse-tibo-cs 在旧 fork 已完成，15:15 经 B 收件补投；对照图 docs/audit/img/2026-11-08-blender/，报告 docs/audit/2026-11-08-blender-tibo.md）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794114696,
+     "开工": 1794121839,
+     "交付": 1794121839,
+     "合入": 1794122267,
+     "关单": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-11",
+    "title": "Blender 终版精修",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "派单",
+    "status": "待做（15:30 改回 muse-tibo-cs：D-10 已由其完成）",
+    "stage": 0,
+    "stages": {
+     "派出": 1794114696
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "muse-tibo-cs",
+     "what": "还没开工",
+     "since": 1794114696,
+     "age_min": 178,
+     "level": "amber"
+    },
+    "done": false
+   },
+   {
+    "id": "D-12",
+    "title": "视觉审查",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（30 余条，已拆成 D-19～D-22 与宿主自做项，见 docs/plan.md）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794114696,
+     "开工": 1794120725,
+     "交付": 1794120725,
+     "合入": 1794122217,
+     "关单": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-03",
+    "title": "Windows 真机审查",
+    "who": [
+     "marvis"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（问题单已合入；CLAIMS 关单由集成人做）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112517,
+     "开工": 1794114040,
+     "交付": 1794114056,
+     "合入": 1794116579,
+     "关单": 1794116578
+    },
+    "returned": false,
+    "branches": [
+     "agent/marvis/D-03-windows-s501"
+    ],
+    "commits": 2,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-13",
+    "title": "Windows 真机审查",
+    "who": [
+     "marvis"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794118391
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "marvis",
+     "what": "还没开工",
+     "since": 1794118391,
+     "age_min": 116,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-14",
+    "title": "S-201",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（后两帧 el 4°，check_cams S-201 违反 13→0）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794118391,
+     "开工": 1794121206,
+     "交付": 1794121206,
+     "合入": 1794123900,
+     "关单": 1794124097
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-15",
+    "title": "插件镜头扫描",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08",
+    "stage": 4,
+    "stages": {
+     "派出": 1794118391,
+     "开工": 1794119548,
+     "交付": 1794119548,
+     "合入": 1794120585,
+     "关单": 1794120694
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/D-15-check-cams"
+    ],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-16",
+    "title": "近景人员与车辆",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08",
+    "stage": 4,
+    "stages": {
+     "派出": 1794118391,
+     "开工": 1794120233,
+     "交付": 1794120233,
+     "合入": 1794120585,
+     "关单": 1794120694
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-darrio/D-16-clip"
+    ],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-17",
+    "title": "宣传页提案",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794119698
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-cs",
+     "what": "还没开工",
+     "since": 1794119698,
+     "age_min": 95,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-18",
+    "title": "履带吊臂长规则",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "完成 11-08（站位表 + check_crane --relocate 复算超650=0；6 吊楼面站位待定机型；11-08 hark-cr 已把地面 4 吊新站位落到 hzseq.js，超650 10→6，内侧 6 吊见 D-25）",
+    "stage": 4,
+    "stages": {
+     "派出": 1794120694,
+     "开工": 1794121097,
+     "交付": 1794121097,
+     "合入": 1794123901,
+     "关单": 1794124097
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "D-19",
+    "title": "S-201 雕琢",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-fangyi",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-20",
+    "title": "S-101 雕琢",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-liuzhijie",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-21",
+    "title": "S-501 雕琢",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-liuzhijie",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-22",
+    "title": "S-401 雕琢",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-cs",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-23",
+    "title": "云门细化",
+    "who": [
+     "traycer-cs"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "traycer-cs",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-24",
+    "title": "真机体验审查与方向",
+    "who": [
+     "traycer-cs"
+    ],
+    "kind": "派单",
+    "status": "待做（D-23 之后或并行）",
+    "stage": 0,
+    "stages": {
+     "派出": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "traycer-cs",
+     "what": "还没开工",
+     "since": 1794122454,
+     "age_min": 49,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-25",
+    "title": "履带吊臂长规则",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794125079
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-darrio",
+     "what": "还没开工",
+     "since": 1794125079,
+     "age_min": 5,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "S-301 子图 2–4",
+    "title": "S-301 子图 2–4",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794105383,
+     "关单": 1794105383
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-101 地下",
+    "title": "S-101 地下",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794105383,
+     "开工": 1794107769,
+     "交付": 1794123198,
+     "合入": 1794123903,
+     "关单": 1794109194
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-101-draft2",
+     "agent/hark-liuzhijie/S-101-underground"
+    ],
+    "commits": 7,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-201 承轨层",
+    "title": "S-201 承轨层",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794105383,
+     "开工": 1794107679,
+     "交付": 1794121206,
+     "合入": 1794123900,
+     "关单": 1794109194
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/S-201-track-rule",
+     "agent/hark-fangyi/S-201-v2",
+     "agent/hark-fangyi/S-201-v2-req"
+    ],
+    "commits": 9,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-401 屋面",
+    "title": "S-401 屋面",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794105383,
+     "开工": 1794107129,
+     "交付": 1794114755,
+     "合入": 1794115931,
+     "关单": 1794109194
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/S-401-parts",
+     "agent/hark-cs/S-401-roof-plan",
+     "agent/hark-cs/claim"
+    ],
+    "commits": 7,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-501 开通",
+    "title": "S-501 开通",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794105383,
+     "开工": 1794109143,
+     "交付": 1794117800,
+     "合入": 1794118174,
+     "关单": 1794110640
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-501-D09",
+     "agent/hark-liuzhijie/S-501-draft2"
+    ],
+    "commits": 5,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-251 网架拼装",
+    "title": "S-251 网架拼装",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112344,
+     "开工": 1794107769,
+     "交付": 1794123198,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-501-draft2",
+     "agent/hark-liuzhijie/cam-sweep2",
+     "agent/hark-liuzhijie/proposals"
+    ],
+    "commits": 19,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-101 二稿",
+    "title": "S-101 二稿",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794110640,
+     "开工": 1794107769,
+     "交付": 1794123198,
+     "合入": 1794123903,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/S-101-draft2",
+     "agent/hark-liuzhijie/S-101-underground"
+    ],
+    "commits": 7,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-201 二稿",
+    "title": "S-201 二稿",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794110640,
+     "开工": 1794107679,
+     "交付": 1794121206,
+     "合入": 1794123900,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/S-201-track-rule",
+     "agent/hark-fangyi/S-201-v2",
+     "agent/hark-fangyi/S-201-v2-req"
+    ],
+    "commits": 9,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "S-401 二稿",
+    "title": "S-401 二稿",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794110640,
+     "开工": 1794107129,
+     "交付": 1794114755,
+     "合入": 1794115931,
+     "关单": 1794118391
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/S-401-parts",
+     "agent/hark-cs/S-401-roof-plan",
+     "agent/hark-cs/claim"
+    ],
+    "commits": 7,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "图册接新图",
+    "title": "图册接新图",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794110640,
+     "开工": 1794121745,
+     "交付": 1794121745,
+     "合入": 1794122317,
+     "关单": 1794122454
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "屋面云纹提案",
+    "title": "屋面云纹提案",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112344,
+     "开工": 1794107823,
+     "交付": 1794118349,
+     "合入": 1794118666,
+     "关单": 1794118666
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/S-401-roof-plan",
+     "agent/hark-cs/roof-waves"
+    ],
+    "commits": 2,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "公开数据核对",
+    "title": "公开数据核对",
+    "who": [
+     "pi-t2"
+    ],
+    "kind": "认领",
+    "status": "认领",
+    "stage": 0,
+    "stages": {
+     "派出": 1794112344
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "pi-t2",
+     "what": "还没开工",
+     "since": 1794112344,
+     "age_min": 217,
+     "level": "amber"
+    },
+    "done": false
+   },
+   {
+    "id": "小屏可读性检查",
+    "title": "小屏可读性检查",
+    "who": [
+     "pi-t3"
+    ],
+    "kind": "认领",
+    "status": "认领",
+    "stage": 0,
+    "stages": {
+     "派出": 1794112344
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "pi-t3",
+     "what": "还没开工",
+     "since": 1794112344,
+     "age_min": 217,
+     "level": "amber"
+    },
+    "done": false
+   },
+   {
+    "id": "难懂字幕改写",
+    "title": "难懂字幕改写",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794112344,
+     "开工": 1794122022,
+     "交付": 1794122022,
+     "合入": 1794123901,
+     "关单": 1794124097
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 1,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "实物层记录库",
+    "title": "实物层记录库",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "认领",
+    "status": "认领",
+    "stage": 3,
+    "stages": {
+     "派出": 1794105383,
+     "开工": 1794110089,
+     "交付": 1794116281,
+     "合入": 1794118175
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/real-milestones",
+     "agent/hark-fangyi/real-parts"
+    ],
+    "commits": 2,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794118175,
+     "age_min": 120,
+     "level": "amber"
+    },
+    "done": false
+   },
+   {
+    "id": "S-001 总进度（提议）",
+    "title": "S-001 总进度（提议）",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794114613,
+     "开工": 1794120661,
+     "交付": 1794120661,
+     "合入": 1794123902,
+     "关单": 1794124097
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 2,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "吊装资源图（提议）",
+    "title": "吊装资源图（提议）",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794114613,
+     "开工": 1794123155,
+     "交付": 1794123723,
+     "合入": 1794123903,
+     "关单": 1794124097
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 2,
+    "wait": null,
+    "done": true
+   },
+   {
+    "id": "看板界面优化",
+    "title": "看板界面优化",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "认领",
+    "status": "完成",
+    "stage": 4,
+    "stages": {
+     "派出": 1794120694,
+     "关单": 1794123848
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": null,
+    "done": true
+   }
+  ],
+  "suggestions": []
  }
 }

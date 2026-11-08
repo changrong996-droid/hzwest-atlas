@@ -11,6 +11,10 @@ for (const k of ['blockers', 'stale_locks', 'dispatches_open', 'live_claims', 'c
   if (!Array.isArray(d[k])) fail(k + ' 不是数组');
 for (const b of d.blockers) if (!b.kind || !b.what || !b.who) fail('blockers 项缺 kind/what/who');
 for (const x of d.dispatches_open) if (!x.id || !x.agent) fail('dispatches_open 项缺 id/agent');
+if (d.flow !== undefined) { for (const k of ['jobs', 'people', 'suggestions']) if (!Array.isArray(d.flow[k])) fail('flow.' + k + ' 不是数组');
+  if (d.flow._error) fail('flow 生成失败：' + d.flow._error);
+  for (const j of d.flow.jobs) if (!j.id || !Array.isArray(j.who) || typeof j.stage !== 'number') fail('flow.jobs 项缺 id/who/stage');
+  for (const p of d.flow.people) if (!p.name || !p.state) fail('flow.people 项缺 name/state'); }
 for (const k of ['live', 'board', 'repo']) if (!/^https:/.test(d.links?.[k] || '')) fail('links.' + k);
 const h = fs.readFileSync(path.join(R, 'web/status.html'), 'utf8');
 if (!h.includes('raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json')) fail('status.html 缺 file: 读取地址');
