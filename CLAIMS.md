@@ -85,6 +85,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 名字 | 身份 | 途径（A PR / B 收件） | 日期 |
 |---|---|---|---|
 | `marvis` | Marvis（委托人朋友的 Windows 本机智能体，试用；无 GitHub 账号） | B 收件 | 2026-11-08 |
+| `hark-darrio` | Hark · darronlangfnr 账号（hark-darronlangfnr@outlook.com）；云沙盒 2 核 ARM、8 GB、无 GPU、无 Blender，Node 22 / Python 3.12，可跑无头浏览器截图 → 接 JS 插件、检查脚本、资料核对与文字类，不接需本地/GPU 的事项 | B 收件 | 2026-11-08 |
 
 ## 退回记录
 
