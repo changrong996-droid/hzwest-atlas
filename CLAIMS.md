@@ -53,11 +53,11 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 
 | 单号 | 给谁 | 事项 | 内容 | 状态 | 下发 |
 |---|---|---|---|---|---|
-| D-01 | hark-liuzhijie | S-501 | `web/sheets/s501.js` 的 `FV0` 与 `tools/hz/check_s501.js` 改成首趟列车新值（股道 `HZ.tracks(HZ.YARDS.S)[0]`、`te=99`），Node 跑 check_s501 不再 WARN head_x | 待做 | 11-08 hark-cr |
+| D-01 | hark-liuzhijie | S-501 | `web/sheets/s501.js` 的 `FV0` 与 `tools/hz/check_s501.js` 改成首趟列车新值（股道 `HZ.tracks(HZ.YARDS.S)[0]`、`te=99`），Node 跑 check_s501 不再 WARN head_x | 完成 11-08 | 11-08 hark-cr |
 | D-02 | hark-liuzhijie、hark-fangyi、hark-cs | 二稿 | 各自插件实现 `parts(t,ctx)`（docs/tasks/linkage-v2.md），本地 `node tools/hz/check_linkage.js` 通过；四张图目前都没有，联动只靠假数据测过 | 待做 | 11-08 hark-cr |
 | D-04 | 全体 | 本地能力 | 在 AGENTS.md 1.1 表填你那边实际能跑的：本地机器、Blender（版本）、视觉模型 CLI（如 Gemini 4）；提交写 `[caps]` | 待做 | 11-08 hark-cr |
-| D-05 | hark-liuzhijie | S-101 | GPU 审计 #3–#5（docs/audit/2026-11-08-gpu.md）：t=0、91.3 镜头对准已建实体（不再满屏幽灵线）；副标题「已完成层数」；开挖 1 m 时副标题点明在做地连墙/桩或核对开挖规则。验收：check_all + 镜头扫描 0 违规 | 待做 | 11-08 hark-cr |
-| D-06 | hark-fangyi | S-201 | GPU 审计 #6：一张图一个大数字（或换量时加过渡说明），去掉「0万 m²」。验收：check_all | 待做 | 11-08 hark-cr |
+| D-05 | hark-liuzhijie | S-101 | GPU 审计 #3–#5（docs/audit/2026-11-08-gpu.md）：t=0、91.3 镜头对准已建实体（不再满屏幽灵线）；副标题「已完成层数」；开挖 1 m 时副标题点明在做地连墙/桩或核对开挖规则。验收：check_all + 镜头扫描 0 违规 | 完成 11-08 | 11-08 hark-cr |
+| D-06 | hark-fangyi | S-201 | GPU 审计 #6：一张图一个大数字（或换量时加过渡说明），去掉「0万 m²」。验收：check_all | 完成 11-08 | 11-08 hark-cr |
 | D-07 | hark-cs | GPU 审计 | 复测 #1、#2、#8（hzview.js?v=13：播放重画、手机竖屏上下排、墨线光伏）：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 待做 | 11-08 hark-cr |
 | D-08 | hark-cs、hark-liuzhijie、hark-fangyi | 二稿 | GPU 审计 #7：右栏竖长条时图纸放大或转向，不要只画中间一段（各改自己的插件，用 `w/h` 判断）。验收：800×1200 与 1920×1080 截图无大片空白 | 待做 | 11-08 hark-cr |
 | D-09 | hark-liuzhijie | S-501 | 委托人已定结尾镜头（docs/review/2026-11-08-draft1.md 末节）：改 `web/sheets/s501.js` 的 `cam` 最后两帧（t≥1101）为西南低角度，露天进站段的首趟列车与云门同框；用 `__pv.FV` 的列车位置算镜头，不写死。验收：check_all + 插件镜头扫描 0 违规 0 卡住，并在 t=1105/1115/1125 截图确认车头未被屋盖遮挡（可与 D-01 同一分支） | 待做 | 11-08 hark-cr |

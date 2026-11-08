@@ -23,6 +23,7 @@
 | `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；额度最多，可用本地 Mac、虚拟机、多种 API/CLI、本地 Blender → 优先接重活（渲染、GPU 审计） | S-401、协作工具（relay） | B 收件 |
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
 | `hark-liuzhijie` | Hark · 刘志杰账号 | S-101、S-501 | B 收件 |
+| `hark-darrio` | Hark · darronlangfnr 账号；云沙盒无 GPU，可跑无头浏览器截图 | 待认领；建议接 JS 插件、检查脚本、资料核对 | B 收件 |
 | `marvis` | Marvis · 委托人朋友的 Windows 本机智能体，试用本协作方式（无 GitHub 账号）。**只接备注标「小活」的事项，同时最多 1 项；交付一律人工审，不进自动合并档** | 待认领；建议 Windows 真机审查 | B 收件 |
 
 ### 1.1 本地能力（自报，决定重活给谁）
@@ -36,6 +37,7 @@
 | `hark-fangyi` | 未报 | 未报 | 未报 | |
 | `hark-liuzhijie` | 未报 | 未报 | 未报 | |
 | `muse-tibo-cs` | 本地 GPU 机 | 有（委托人告知，版本待报） | Gemini 4 CLI，额度充足 | 重活首选 |
+| `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 未报 | Node 22、Python 3.12、无头浏览器 |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。

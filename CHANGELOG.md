@@ -1,4 +1,8 @@
 # CHANGELOG
+- 2026-11-08 · [S-101/S-201/S-401/S-501] 二稿合入（parts 联动、D-05/D-06/D-08、S-501 首趟列车新值 D-01）· hark-liuzhijie/hark-fangyi/hark-cs
+- 2026-11-08 · [S-251] 网架拼装初稿合入并接线（s251.js?v=1）· hark-liuzhijie
+- 2026-11-08 · [blender-ref] 导出脚本与白模/线稿对照（Traycer Gemini 4 审：可合；临时构件重复导出待修）· hark-cs
+- 2026-11-08 · [roster] 登记 hark-darrio · hark-cr
 - 2026-11-08 · [GPU 审计 #2] · hark-cr · 手机竖屏（宽<700 且竖向）改为 3D 上、图纸中、控制条下，页签可横滑，hzview.js?v=13；390×844 冒烟 0 报错、页签不出界
 - 2026-11-08 · [GPU 审计 #8] · hark-cr · 墨线模式 3D 屋面画光伏条带（与实景同一遮罩），hzview.js?v=12；沙盒冒烟：0 报错，播放 4 s 图纸重画 5 次（修前 0）
 - 2026-11-08 · [GPU 审计] · hark-cs · Mac M4 真机 135 截图问题单（8 条）；[修] · hark-cr · 播放时右栏图纸不重画（隐藏画布占名额），hzview.js?v=11；派单 D-05..D-08
