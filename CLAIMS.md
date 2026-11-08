@@ -41,6 +41,16 @@
 | 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 保留 | | 需要共用文件接口 |
 | 剖切封面补斜杆 | 剖切面覆盖网架斜杆与吊具杆件 | hark-cr | 保留 | | |
 
+## 派单
+
+hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，不占认领名额；提交写 `[D-xx]`。状态：待做 / 在做 / 完成 / 撤回。
+
+| 单号 | 给谁 | 事项 | 内容 | 状态 | 下发 |
+|---|---|---|---|---|---|
+| D-01 | hark-liuzhijie | S-501 | `web/sheets/s501.js` 的 `FV0` 与 `tools/hz/check_s501.js` 改成首趟列车新值（股道 `HZ.tracks(HZ.YARDS.S)[0]`、`te=99`），Node 跑 check_s501 不再 WARN head_x | 待做 | 11-08 hark-cr |
+| D-02 | hark-liuzhijie、hark-fangyi、hark-cs | 二稿 | 各自插件实现 `parts(t,ctx)`（docs/tasks/linkage-v2.md），本地 `node tools/hz/check_linkage.js` 通过；四张图目前都没有，联动只靠假数据测过 | 待做 | 11-08 hark-cr |
+| D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 待做 | 11-08 hark-cr |
+
 ## 接口请求
 
 | 日期 | 提出人 | 需要的接口 / 要改的合同条款 | 理由 | hark-cr 回复 |
