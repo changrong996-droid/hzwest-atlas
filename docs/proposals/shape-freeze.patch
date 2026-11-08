@@ -1,0 +1,164 @@
+diff --git a/tools/hz/check_make.js b/tools/hz/check_make.js
+index 5efc5d1..b705843 100644
+--- a/tools/hz/check_make.js
++++ b/tools/hz/check_make.js
+@@ -42,5 +42,8 @@ const vsrc = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8'
+   for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const w = HZ.Wv(sx * 0.5 * P.roofA, sz * 0.5 * P.roofB); if (!(w > 3.0 && w < 4.2)) bad('云心鼓起 ' + w.toFixed(2) + ' m 不在 3.0–4.2'); }
+   for (const [x, z] of [[0, 60], [80, 0], [P.skyW, 100]]) if (Math.abs(HZ.Wv(x, z)) > 1e-9) bad('天窗缝 (' + x + ',' + z + ') 应为 0');
+   let mx = -1e9, at = null; for (let x = -P.roofA; x <= P.roofA; x += 2) for (let z = -P.roofB; z <= P.roofB; z += 2) { if (HZ.rho(x, z) > 1) continue; const y = HZ.Hc(x, z); if (y > mx) { mx = y; at = [x, z]; } if (HZ.Hc(x, z) - HZ.Ht(x, z) < -0.5) bad('覆面低于结构顶 (' + x + ',' + z + ')'); }
+-  if (Math.abs(at[0]) > 4 || Math.abs(at[1]) > 4) bad('屋面最高点不在天窗中心 ' + at); }
++  if (Math.abs(at[0]) > 4 || Math.abs(at[1]) > 4) bad('屋面最高点不在天窗中心 ' + at);
++  if (P.skinTop != null && Math.abs(mx - P.skinTop) > 0.05) bad('屋面最高点 ' + mx.toFixed(2) + ' m ≠ 公开 ' + P.skinTop + ' m');
++  if (Math.abs(HZ.Ht(0, 0) - 55.2) > 0.05) bad('钢结构最高点应仍为 55.2 m（公开 55.237 m）'); }
++{ const T = HZ.makeTrain && HZ.makeTrain().T; if (!T || Math.abs(T.nose + T.len - 209.55) > 0.01 || T.W !== 3.36 || T.H !== 4.05) { console.log('FAIL check_make: 首趟列车尺寸不是复兴号 8 编组（209.55 m / 3.36 / 4.05）'); process.exit(1); } }
+ console.log('OK check_make acts=55 cells=1432 lifters=32 D=5.8 zero=true');
+diff --git a/web/hzseq.js b/web/hzseq.js
+index a36c0ff..e2ed647 100644
+--- a/web/hzseq.js
++++ b/web/hzseq.js
+@@ -57,6 +57,8 @@ const P = HZ.P = {
+   T0: Date.UTC(2019, 8, 17), OPEN: 1101,
+   // 屋面云纹（委托人 11-08 定 C 版「四朵云」，docs/proposals/roof-waves.md · hark-cs）：A1 云高 m、A2 外圈波纹 m、lob 云宽（u/v）、per 波纹周期（rho）、gap 天窗两侧渐变宽 m；A1 = A2 = 0 即回到旧光滑屋面
+   wv: { A1: 3.5, A2: 0.5, lob: 0.32, per: 0.18, gap: 14 },
++  // 定型（docs/proposals/shape-freeze.md · hark-cs）：屋面最高点公开口径不一（57 m：中新网 2022-09-22 等；60.75 m：中国日报 2021-08-31，可能为另一高程基准）。null = 维持现状 57.3 m；设 60.75 即启用方案 B：钢结构 Ht 不动，差值只做成覆面 Hc 的整体穹起（中心最大、外缘 0），提升高度 D 不变
++  skinTop: null,
+ };
+ HZ.dayDate = d => { const t = new Date(P.T0 + Math.round(d) * 864e5); return t.getUTCFullYear() + '-' + String(t.getUTCMonth() + 1).padStart(2, '0') + '-' + String(t.getUTCDate()).padStart(2, '0'); };
+ 
+@@ -85,7 +87,9 @@ const Wv = (x, z) => { const W = P.wv; if (!W || !(W.A1 || W.A2)) return 0; cons
+   const rip = W.A2 * Math.sin(2 * Math.PI * r / W.per) * sm(0.55, 0.7, r) * (1 - sm(0.84, 0.96, r));
+   return g * (lobe + rip); };
+ HZ.Wv = Wv;
+-const Hc = (x, z) => Wv(x, z) + Ht(x, z) + 0.5 - 0.8 * sm(0.85, 1.0, rho(x, z)) + (inSky(x, z) ? 1.6 * (1 - sm(P.skyW - 3, P.skyW, Math.min(Math.abs(x), Math.abs(z)))) : 0);
++const skinDome = (x, z) => { if (P.skinTop == null) return 0; const u = Math.min(1, Math.abs(x) / P.roofA), v = Math.min(1, Math.abs(z) / P.roofB); return (P.skinTop - (P.roofHi + 0.5 + 1.6)) * (1 - u * u) * (1 - v * v); };   // 1.6 = 天窗拱高（见下）
++HZ.skinDome = skinDome;
++const Hc = (x, z) => skinDome(x, z) + Wv(x, z) + Ht(x, z) + 0.5 - 0.8 * sm(0.85, 1.0, rho(x, z)) + (inSky(x, z) ? 1.6 * (1 - sm(P.skyW - 3, P.skyW, Math.min(Math.abs(x), Math.abs(z)))) : 0);
+ const Hs = (x, z) => Ht(x, z) - depthAt(x, z) - 0.4 - (P.edgeDrop != null ? P.edgeDrop : 0.8) * sm(0.78, 1.0, rho(x, z));   // r3：挑檐厚度参数化（P.edgeDrop）   // 边缘加厚：云的厚边   // 吊顶（下表面），边缘向上收
+ HZ.Hc = Hc; HZ.Hs = Hs;
+ // 光伏：屋面四个角瓣（与着色器同一公式；面积按覆面网格积分 ≈ 1.5 万 m²）
+@@ -100,7 +104,7 @@ const MAT = HZ.MAT = {
+   rail: { c: [0.30, 0.29, 0.28], r: 0.45, m: 0.7 }, slab: { c: [0.58, 0.57, 0.55], r: 0.9, m: 0 }, plat: { c: [0.82, 0.80, 0.76], r: 0.8, m: 0, e: 0.25 },
+   red: { c: [0.78, 0.14, 0.08], r: 0.5, m: 0.2 }, yellow: { c: [0.96, 0.70, 0.12], r: 0.5, m: 0.2 }, jig: { c: [0.85, 0.55, 0.15], r: 0.6, m: 0.1 },
+   todG: { c: [0.33, 0.43, 0.50], r: 0.08, m: 0.85, e: 0.8 }, todB: { c: [0.88, 0.87, 0.84], r: 0.7, m: 0 }, ym: { c: [0.86, 0.84, 0.79], r: 0.55, m: 0.05 }, ymG: { c: [0.30, 0.38, 0.45], r: 0.08, m: 0.85, e: 1.0 },
+-  metro: { c: [0.62, 0.62, 0.64], r: 0.6, m: 0, e: 0.6 }, train: { c: [0.95, 0.96, 0.97], r: 0.25, m: 0.4 },
++  metro: { c: [0.62, 0.62, 0.64], r: 0.6, m: 0, e: 0.6 }, train: { c: [0.80, 0.82, 0.84], r: 0.3, m: 0.55 },   // 复兴号银灰车体
+ };
+ HZ.MATK = Object.keys(MAT);
+ 
+@@ -128,6 +132,61 @@ class GB extends SEQ.Geo {
+ }
+ HZ.GB = GB;
+ 
++// ---------------- 首趟列车：复兴号 8 编组流线车头（定型提案 shape-freeze · hark-cs）----------------
++// 局部坐标：x 顺车长（车头鼻尖 = -T.nose，朝 -x 行驶），y = 轨面以上高度，z = 横向。与旧 trainGeo 同一约定（tx = 头车鼻根）。
++// 尺寸：头车 27.5 m（鼻部流线 10.5 m + 车身 17 m）、中间车 25 m、车钩间隙 0.65 m → 全长 209.55 m；车宽 3.36 m、车高 4.05 m（轨面起）。
++HZ.makeTrain = function () { const V = SEQ.v; if (!MAT.trainW) MAT.trainW = { c: [0.16, 0.17, 0.2], r: 0.2, m: 0.3, e: 1 };   // hzview.js 先按 FV.tl 设好发光；无头检查时给默认
++  const T = HZ.TRAIN = { cars: 8, L: 25, gap: 0.65, nose: 10.5, head: 17, W: 3.36, H: 4.05, yb: 0.35 };
++  T.len = 2 * T.head + (T.cars - 2) * T.L + (T.cars - 1) * T.gap + T.nose;   // 鼻根 → 尾车鼻尖 = 199.05
++  const SIL = [0.80, 0.82, 0.84], RED = [0.80, 0.12, 0.10], BLK = [0.10, 0.11, 0.13], SK = [0.30, 0.31, 0.33];
++  const g = new HZ.GB('train'), gw = new HZ.GB('trainW'), N = 16, hw0 = T.W / 2;
++  // 截面：上半超椭圆（n）、下半更平（n=8，裙板）；f = 0 鼻尖 … 1 鼻根
++  const sec = f => { const k = 1 - f;
++    const ss = f * f * (3 - 2 * f);
++    return { hw: 0.85 + (hw0 - 0.85) * (1 - Math.pow(k, 2.2)), yb: T.yb + 0.35 * k * k * k, yt: 1.40 + (T.H - 1.40) * Math.pow(0.5 * f + 0.5 * ss, 0.8), n: 2.0 + 2.0 * f }; };   // 鼻锥钝圆（鼻尖截面 1.7 × 0.7 m）、中段饱满、前窗陡、车顶平   // 顶线 S 形：鼻锥缓、前窗陡、车顶平
++  const ring = (x, s) => { const yc = (s.yt + s.yb) / 2, hh = (s.yt - s.yb) / 2, out = [];
++    for (let i = 0; i < N; i++) { const t = (i + 0.5) / N * Math.PI * 2, c = Math.cos(t), sn = Math.sin(t), n = sn < 0 ? 8 : s.n;
++      out.push([x, yc + hh * Math.sign(sn) * Math.pow(Math.abs(sn), 2 / n), s.hw * Math.sign(c) * Math.pow(Math.abs(c), 2 / n)]); } return out; };
++  const sideZ = (s, y) => { const yc = (s.yt + s.yb) / 2, hh = (s.yt - s.yb) / 2, q = Math.min(1, Math.abs((y - yc) / hh)), n = y < yc ? 8 : s.n; return s.hw * Math.pow(1 - Math.pow(q, n), 1 / n); };
++  // 定向四边形 / 三角形：法线背离车轴（x 轴上 y = 2.2 的线）
++  const out = (pts, col, G) => { const c = V.avg(pts), ax = [c[0], 2.2, 0], n = V.cross(V.sub(pts[1], pts[0]), V.sub(pts[2], pts[0]));
++    const flip = V.dot(n, V.sub(c, ax)) < 0, p = flip ? pts.slice().reverse() : pts; if (p.length === 4) (G || g).quad(p[0], p[1], p[2], p[3], col); else (G || g).tri(p[0], p[1], p[2], col); };
++  // 鼻部：x0 = 鼻根，dir = -1 鼻尖朝 -x（头车）/ +1（尾车）
++  function nose(x0, dir) {
++    const S = 12, fs = []; for (let i = 0; i <= S; i++) fs.push(Math.pow(i / S, 1.25));
++    const Ln = T.nose - 0.25, R = fs.map(f => ring(x0 + dir * Ln * (1 - f), sec(f))), tip = [x0 + dir * T.nose, 1.05, 0];   // 鼻尖 0.25 m 钝圆封口
++    for (let i = 0; i < N; i++) out([tip, R[0][i], R[0][(i + 1) % N]], SIL);
++    for (let k = 0; k < S; k++) for (let i = 0; i < N; i++) { const j = (i + 1) % N, a = R[k][i], b = R[k][j], c = R[k + 1][j], d = R[k + 1][i], ym = (a[1] + b[1] + c[1] + d[1]) / 4;
++      out([a, b, c, d], ym < 0.75 ? SK : SIL); }
++    // 前窗（f 0.50–0.80，上半截面）：沿外法线 2 cm 贴片
++    const off = (p, f, e) => { const s = sec(f), yc = (s.yt + s.yb) / 2; const v = [0, p[1] - yc, p[2]], l = Math.hypot(v[1], v[2]) || 1; return [p[0], p[1] + v[1] / l * e, p[2] + v[2] / l * e]; };
++    const kw = fs.map((f, k) => k).filter(k => fs[k] >= 0.50 && fs[k] <= 0.76);
++    for (let m = 0; m < kw.length - 1; m++) { const k = kw[m], k2 = kw[m + 1]; for (let i = 0; i < N; i++) { const j = (i + 1) % N, a = R[k][i], b = R[k][j];
++      if (a[1] < sec(fs[k]).yt - 0.42 * (sec(fs[k]).yt - sec(fs[k]).yb) || b[1] < sec(fs[k]).yt - 0.42 * (sec(fs[k]).yt - sec(fs[k]).yb)) continue;
++      out([off(a, fs[k], 0.02), off(b, fs[k], 0.02), off(R[k2][j], fs[k2], 0.02), off(R[k2][i], fs[k2], 0.02)], BLK); } }
++    // 红色飘带：腰线 y 1.80–2.00 在鼻部向前下收成箭头（鼻尖处 y≈1.25、宽 0.05）
++    for (const sz of [-1, 1]) { const rib = fs.map(f => { const x = x0 + dir * Ln * (1 - f), s = sec(f), yc = 1.15 + (1.90 - 1.15) * Math.pow(f, 0.7), w = 0.03 + 0.07 * f;
++        return [[x, yc - w, sz * (sideZ(s, yc - w) + 0.02)], [x, yc + w, sz * (sideZ(s, yc + w) + 0.02)]]; });
++      for (let k = 1; k < S; k++) out([rib[k][0], rib[k][1], rib[k + 1][1], rib[k + 1][0]], RED);
++      for (let k = 2; k < S; k++) g.line(rib[k][1], rib[k + 1][1]); }
++    // 墨线：截面 3 圈 + 顶脊 + 两条肩棱 + 底边
++    for (const k of [0, 6, S]) for (let i = 0; i < N; i++) g.line(R[k][i], R[k][(i + 1) % N]);
++    for (const i of [3, 4, 1, 6, 12, 9]) { g.line(tip, R[0][i]); for (let k = 0; k < S; k++) g.line(R[k][i], R[k + 1][i]); }
++    // 头灯（trainW 发光）
++    for (const sz of [-1, 1]) { const f = 0.16, s = sec(f), x = x0 + dir * Ln * (1 - f), zz = sideZ(s, 1.15); gw.box(Math.min(x, x + dir * 0.5), 1.05, sz > 0 ? zz - 0.40 : -zz + 0.02, Math.max(x, x + dir * 0.5), 1.30, sz > 0 ? zz - 0.02 : -zz + 0.40, [0.95, 0.95, 0.88], false); }
++  }
++  // 车身：截面沿 x 拉伸（凸多边形，extrude 自动定向）+ 黑色车窗带 + 红色腰线
++  const body = ring(0, sec(1)), carAt = []; let x = 0;
++  for (let k = 0; k < T.cars; k++) { const L = k === 0 || k === T.cars - 1 ? T.head : T.L; carAt.push([x, x + L]); x += L + T.gap; }
++  for (const [a, b] of carAt) { g.extrude(body.map(p => [a, p[1], p[2]]), [b - a, 0, 0], SIL, false);
++    g.box(a, 2.15, -hw0 - 0.012, b, 2.85, hw0 + 0.012, BLK, false); g.box(a, 1.80, -hw0 - 0.016, b, 2.00, hw0 + 0.016, RED, false);
++    gw.box(a + 0.8, 2.25, -hw0 - 0.02, b - 0.8, 2.75, hw0 + 0.02, null, false);
++    for (const i of [1, 6, 9, 14]) g.line([a, body[i][1], body[i][2]], [b, body[i][1], body[i][2]]);
++    for (const xx of [a, b]) for (let i = 0; i < N; i++) g.line([xx, body[i][1], body[i][2]], [xx, body[(i + 1) % N][1], body[(i + 1) % N][2]]); }
++  nose(0, -1); nose(carAt[T.cars - 1][1], 1);
++  return { g, gw, T };
++};
++
+ // ---------------- 构件 → 活动 ----------------
+ // part = {geo:GB, grp:0 静止 | 1 南区 | 2 中区 | 3 北区 | 4 嵌补（只随整体提升）, sweep:数（施工推进顺序）, host:[part 名], strands:[[a,b,ga,gb]]}
+ function part(geo, o) { return Object.assign({ geo, mat: geo.mat, grp: 0, sweep: 0 }, o || {}); }
+diff --git a/web/hzview.js b/web/hzview.js
+index 1949608..3fa5435 100644
+--- a/web/hzview.js
++++ b/web/hzview.js
+@@ -173,12 +173,9 @@
+         if (vMv > 1.5 && vF < 0.5) { gl_FragColor = vec4(uRed, uLA); return; } if (vMv > 0.5 && vF < 0.5) { gl_FragColor = vec4(mix(uInk, uRed, 0.8), 0.85 * uLA); return; } gl_FragColor = vec4(vF > 0.5 ? uTemp : uInk, (vF > 1.5 ? 0.55 : 0.72) * uLA * fade); }`;
+     const lineMat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: LVS, fragmentShader: LFS, transparent: true, depthWrite: false });
+ 
+-    const trainGeo = (() => { const g = new HZ.GB('train'), cars = 8, L = 25.5; for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); g.box(x0, 0.6, -1.6, x0 + L, 4.1, 1.6, HZ.MAT.train.c, false); g.box(x0, 1.9, -1.62, x0 + L, 2.25, 1.62, [0.85, 0.15, 0.12], false); g.box(x0 + 0.5, 2.6, -1.63, x0 + L - 0.5, 3.3, 1.63, [0.12, 0.14, 0.18], false); }
+-      g.hexa([[-12, 0.6, -1.6], [0, 0.6, -1.6], [0, 0.6, 1.6], [-12, 0.6, 1.6], [-12, 1.2, -0.6], [0, 4.1, -1.6], [0, 4.1, 1.6], [-12, 1.2, 0.6]], HZ.MAT.train.c, false);
+-      for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); for (const [a, b] of [[[x0, 4.1, -1.6], [x0 + L, 4.1, -1.6]], [[x0, 4.1, 1.6], [x0 + L, 4.1, 1.6]], [[x0, 0.6, 1.6], [x0 + L, 0.6, 1.6]], [[x0, 0.6, -1.6], [x0 + L, 0.6, -1.6]]]) g.line(a, b); } return g; })();
+-    // r3：车窗带 + 头灯单独一个材质（开通点亮时发光，列车在黄昏里可读）
++    // 定型提案：复兴号流线车头（HZ.makeTrain，hzseq.js）；trainW = 车窗带 + 头灯，开通点亮时发光
+     HZ.MAT.trainW = { c: [0.16, 0.17, 0.2], r: 0.2, m: 0.3, e: FV.tl };
+-    const trainWGeo = (() => { const g = new HZ.GB('trainW'), cars = 8, L = 25.5; for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); g.box(x0 + 0.6, 2.45, -1.645, x0 + L - 0.6, 3.45, 1.645, null, false); } g.box(-11.6, 1.25, -1.0, -11.2, 1.65, 1.0, [0.9, 0.9, 0.85], false); return g; })();
++    const { g: trainGeo, gw: trainWGeo } = HZ.makeTrain();
+     function compile() {
+       const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0 }); }
+       items.push({ p: { geo: trainGeo, mat: 'train', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
+diff --git a/web/sheets/s001.js b/web/sheets/s001.js
+index 0263d63..cdcc224 100644
+--- a/web/sheets/s001.js
++++ b/web/sheets/s001.js
+@@ -179,7 +179,8 @@
+       { t: 365, target: [0, 10, 0], az: 240, el: 42, dist: 860 },
+       { t: 632, target: [0, 30, 0], az: 300, el: 40, dist: 820 },
+       { t: 781, target: [0, 35, 0], az: 340, el: 38, dist: 800 },
+-      { t: 1101, target: [0, 25, 0], az: 30, el: 30, dist: 850 },
++      { t: 990, target: [0, 62, 0], az: 12, el: 34, dist: 820 },   // 定型提案：屋面最高点 60.75 m 后，覆面开始前把目标抬到屋面之上，视线不再穿过屋面
++      { t: 1101, target: [0, 62, 0], az: 30, el: 30, dist: 850 },
+     ],
+   };
+   (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push(plugin);
+diff --git a/web/sheets/s501.js b/web/sheets/s501.js
+index da1acc3..a8e5efc 100644
+--- a/web/sheets/s501.js
++++ b/web/sheets/s501.js
+@@ -21,7 +21,7 @@
+   // = hzview.js FV 默认：股道从 HZ 读（湖杭场靠云谷第 1 股道），停位 te = 99（车头 x = 111，整列在站台 ±stX 内）
+   const FV0 = HZ => ({ tz: HZ.tracks && HZ.YARDS ? HZ.tracks(HZ.YARDS.S)[0] : 16.5, te: 99, tw: 1, lt: 4.5 });
+   const FIRST = { no: 'G9528', time: '09:52', dir: '开通当天发车（向湖州方向）', src: '新华网 2022-09-22' };
+-  const TRAIN = { cars: 8, L: 25.5, gap: 0.8, nose: 12 };                                                  // = hzview.js trainGeo
++  const TRAIN = { cars: 8, L: 25, gap: 0.65, nose: 10.5, len: 199.05 };                                     // = HZ.makeTrain（hzseq.js）：鼻根 → 尾车鼻尖 len
+ 
+   // 构件状态：-1 未建 / 0..1 在建 / 2 已建 / 3 已拆（同 hzsheet.js stOf）
+   const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
+@@ -42,7 +42,7 @@
+   // 亮灯波：返回 { on: 0..1 亮度, r: 波前半径 m（0 = 全亮或未亮）}
+   function lightAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), lw = sm(O - 1, O + 5, t); const on = FV.lt > 1.7 ? lw : sm(O - 6, O + 4, t); return { on, lw, r: FV.lt > 1.7 ? (lw >= 1 ? 0 : 20 + 420 * lw) : 0 }; }
+   // 列车：车头 x、车尾 x、股道 z、是否可见（与 hzview.js 同式）
+-  function trainAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), f = sm(O + 1, O + 24, t), tv = t > O + 0.5, len = TRAIN.cars * (TRAIN.L + TRAIN.gap);
++  function trainAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), f = sm(O + 1, O + 24, t), tv = t > O + 0.5, len = TRAIN.len || TRAIN.cars * (TRAIN.L + TRAIN.gap);
+     const tx = !tv ? 9000 : FV.tw ? -1500 + (1500 + FV.te) * (1 - Math.pow(1 - f, 2.2)) : 1500 - (1500 - FV.te) * (1 - Math.pow(1 - f, 2.2));
+     // tw = 1：车体绕 Y 转 180°，车厢在 tx 西侧、车头鼻在 tx..tx+12 → 车头朝东
+     const head = FV.tw ? tx + TRAIN.nose : tx - TRAIN.nose, tail = FV.tw ? tx - len : tx + len;
