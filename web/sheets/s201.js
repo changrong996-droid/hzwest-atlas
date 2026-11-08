@@ -250,8 +250,8 @@
     { t: 365, target: [0, 5, 10], az: 62, el: 24, dist: 520 },
     { t: 420, target: [40, 10, 20], az: 70, el: 14, dist: 380 },
     { t: 580, target: [90, 13, 70], az: 84, el: 7, dist: 300 },
-    { t: 740, target: [90, 13, -60], az: 96, el: 7, dist: 300 },
-    { t: 900, target: [60, 13, 0], az: 88, el: 9, dist: 360 },
+    { t: 790, target: [90, 15, -60], az: 96, el: 4, dist: 300 },   // D-14：压低到雨棚 canopyN 下沿以下，避开 t 798–822 遮挡
+    { t: 900, target: [60, 15, 0], az: 88, el: 4, dist: 360 },
   ];
 
   // 实物层记录（web/hzreal.js）若页面未加载，则按需补载一次（只读；已在 CLAIMS 请 hark-cr 在 hzwest.html 正式引入）
