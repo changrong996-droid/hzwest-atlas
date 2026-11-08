@@ -51,11 +51,26 @@ for (let t = W0; t <= W1 + 1e-9; t += 0.1) {
   if (T.vis) { if (lastHead != null && (T.head - lastHead) * T.dir < -1e-6) fail(`t=${t} 列车倒退`); lastHead = T.head; }
 }
 const Te = P.trainAt(W1), apX = HZ.P.apX;
-// 整列须在线路（引桥 ±apX）上；车头是否进到站台（±stX）由 hzview 的 FV.te 决定，只提示不判错（已在 CLAIMS 接口请求区反馈）
-if (!Te.vis || Math.max(Math.abs(Te.head), Math.abs(Te.tail)) > apX) fail(`结尾列车 ${Te.tail && Te.tail.toFixed(1)}..${Te.head && Te.head.toFixed(1)} 超出线路 ±${apX}`);
-if (Math.abs(Te.head) > stX) console.log(`WARN check_s501: 结尾车头 x=${Te.head.toFixed(1)} 在站台 ±${stX} 之外（随 hzview FV.te）`);
+// 联动 v2：首趟列车走湖杭场靠云谷第 1 股道（HZ.tracks(HZ.YARDS.S)[0]），停稳时整列在站台 ±stX 内
+if (!Te.vis || Math.max(Math.abs(Te.head), Math.abs(Te.tail)) > stX) fail(`结尾列车 ${Te.tail && Te.tail.toFixed(1)}..${Te.head && Te.head.toFixed(1)} 不在站台 ±${stX} 内`);
+if (Math.abs(Te.z - HZ.tracks(HZ.YARDS.S)[0]) > 1e-6) fail(`首趟列车股道 z=${Te.z} 不是湖杭场第 1 股道 ${HZ.tracks(HZ.YARDS.S)[0]}`);
 const zTr = P.model().tracks.map(q => (q.b.min[2] + q.b.max[2]) / 2);
 if (!zTr.some(z => Math.abs(z - Te.z) < 2.5)) fail(`列车股道 z=${Te.z} 附近没有铺轨构件`);
 const trk = P.model().tracks.find(q => Math.abs((q.b.min[2] + q.b.max[2]) / 2 - Te.z) < 2.5);
 if (P.stOf(trk.p, OPEN) !== 2) fail('开通时列车所在股道还没铺完');
-console.log(`OK check_s501 runs=${runs} cam=${P.cam.length} train_z=${Te.z} head_x=${Te.head.toFixed(1)}`);
+// 5. 联动 v2：parts() 每个采样时刻 ≥ 1 项、id 唯一、hit 在画布内、box 有限非零体积；开通后有 TRAIN；focus 绘制
+let nParts = 0;
+for (const [w, h] of [[760, 420], [1258, 540], [300, 160]]) for (let t = W0; t <= W1 + 1e-9; t += 5) {
+  const c = makeCtx(); P.draw(c.g, w, h, t, sheetCtx()); const ps = P.parts(t, sheetCtx());
+  if (!Array.isArray(ps) || !ps.length) fail(`parts(${t}) ${w}x${h} 为空`); const ids = new Set();
+  for (const q of ps) { if (!q.id || ids.has(q.id)) fail(`parts(${t}) id 重复或为空：${q.id}`); ids.add(q.id);
+    const [x, y, ww, hh] = q.hit; if (!(x >= 0 && y >= 0 && ww > 0 && hh > 0 && x + ww <= w + 1e-6 && y + hh <= h + 1e-6)) fail(`parts(${t}) ${q.id} hit 越出画布`);
+    const b = q.box; if (b.length !== 6 || !b.every(Number.isFinite) || !(b[3] > b[0] && b[4] > b[1] && b[5] > b[2])) fail(`parts(${t}) ${q.id} box 无效 ${b}`); nParts++; }
+  if (w === 760) { const c2 = makeCtx(), cx2 = sheetCtx(); cx2.focus = ps[ps.length - 1].id; P.draw(c2.g, w, h, t, cx2); }
+}
+if (!P.parts(W1, sheetCtx()).some(q => q.id === 'TRAIN')) fail('开通后 parts 没有首趟列车');
+// 6. 改 HZ，图跟着变：开通日 +10 → 倒计时与亮灯跟着移；云门构件工期 → 时间窗外的 model 重算；改完复原
+{ const O0 = HZ.P.OPEN, tq = O0 - 20, b0 = P.big(tq).num; HZ.P.OPEN = O0 + 10; const b1 = P.big(tq).num, L1 = P.lightAt(O0 + 2).on; HZ.P.OPEN = O0; P.model();
+  if (b1 !== b0 + 10) fail(`改开通日后倒计时没跟着变（${b0}→${b1}）`); if (L1 !== 0) fail('改开通日后亮灯没跟着推迟'); }
+
+console.log(`OK check_s501 parts=${nParts}  runs=${runs} cam=${P.cam.length} train_z=${Te.z} head_x=${Te.head.toFixed(1)}`);
