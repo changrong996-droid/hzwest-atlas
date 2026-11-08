@@ -11,7 +11,7 @@ for (const k of ['draw', 'big']) if (typeof PL[k] !== 'function') fail(k + ' 不
 const [T0, T1] = PL.window; if (!(T0 === 365 && T1 === 900)) fail('时间窗应为 365–900，实得 ' + PL.window);
 const K = HZ.K;
 const times = [T0, K.frameS.start + 20, K.deckS.start + 22, K.platS.start + 10, K.trackS.start + 80, K.trackN.start + 80, T1];
-const sizes = [[560, 420], [300, 160]];
+const sizes = [[560, 420], [300, 160], [584, 950], [800, 1200]];
 let runs = 0;
 for (const t of times) for (const [w, h] of sizes) {
   const c = makeCtx(), ctx = sheetCtx();
@@ -28,7 +28,9 @@ for (let t = T0; t <= T1; t += 1) {
   if (prev && prev.unit === b.unit && b.num < prev.num - 1e-9) fail(`big 在 t=${t} 回落 ${prev.num} → ${b.num}`);
   prev = b;
 }
-if (units.join('|') !== '万 m²|km') fail('大数字单位顺序 ' + units.join('|'));
+if (units.join('|') !== '%') fail('大数字应只有一个量（%），实得 ' + units.join('|'));
+if (PL.big(T0).num !== 0 || PL.big(T1).num !== 100) fail(`完成度 起 ${PL.big(T0).num} 终 ${PL.big(T1).num}`);
+for (let t = T0; t <= T1; t += 5) if (/(^|[^\d.])0 ?万 ?m²/.test(PL.big(t).label + PL.big(t).num + PL.big(t).unit) ) fail('出现「0 万 m²」 t=' + t);
 const S = PL.stats(T1); if (Math.abs(S.km - S.kmTot) > 1e-6 || S.done !== S.lines || S.lines !== 20) fail(`终态 铺轨 ${S.km}/${S.kmTot} km 贯通 ${S.done}/${S.lines}`);
 const S0 = PL.stats(T0); if (S0.km !== 0 || S0.area !== 0) fail('起点应为 0');
 // 镜头：机位在地上、不在任何该时刻已开工构件的包围盒内（含 1 m 余量）
@@ -43,7 +45,7 @@ for (const k of PL.cam) {
 if (camBad) fail('镜头违反 ' + camBad);
 // ---- 联动接口 v2：parts ----
 let pRuns = 0, pMin = Infinity;
-for (const [w, h] of [[560, 420], [1258, 540], [300, 160]]) { const ctx0 = sheetCtx(); PL.draw(makeCtx().g, w, h, T0, ctx0);
+for (const [w, h] of [[560, 420], [1258, 540], [300, 160], [584, 950], [390, 700]]) { const ctx0 = sheetCtx(); PL.draw(makeCtx().g, w, h, T0, ctx0);
   for (let t = T0; t <= T1; t += 25) { const ps = PL.parts(t, {}); if (!Array.isArray(ps) || ps.length < 1) fail(`parts(${t}) 为空`); pMin = Math.min(pMin, ps.length);
     const ids = new Set(); for (const q of ps) { if (!q.id || ids.has(q.id)) fail('part id 缺失或重复 ' + q.id); ids.add(q.id);
       const [x, y, hw, hh] = q.hit; if (![x, y, hw, hh].every(isFinite) || hw <= 0 || hh <= 0 || x < 0 || y < 0 || x + hw > w + 0.5 || y + hh > h + 0.5) fail(`${q.id} hit 出界 ${q.hit} @${w}x${h}`);
@@ -52,7 +54,7 @@ for (const [w, h] of [[560, 420], [1258, 540], [300, 160]]) { const ctx0 = sheet
     pRuns++; } }
 // 选中绘制 + 身份卡（含实物记录与偏差）
 for (const id of ['G-S03', 'G-N09', 'P-S2', 'D-S05', 'B-N03']) { const ctx = sheetCtx(); ctx.focus = id; ctx.zoom = 3; try { PL.draw(makeCtx().g, 560, 420, 760, ctx); } catch (e) { fail('focus ' + id + ' ' + e.stack); } const I = PL.info(id, 760); if (!I || !I.lines.length) fail('info ' + id); }
-{ const I = PL.info('G-N09', 760), r = I.lines.find(l => l[0] === '实物'); if (!r || !/R-0009/.test(r[1]) || !/早 19 天/.test(r[1])) fail('G-N09 实物行 ' + JSON.stringify(r)); }
+{ const I = PL.info('G-N09', 760), r = I.lines.find(l => l[0] === '实物'); if (!r || !/R-0009/.test(r[1]) || !/全部铺完 2022-03-05（早 19 天）/.test(r[1])) fail('G-N09 实物行 ' + JSON.stringify(r)); }
 // ---- 「改 HZ，图跟着变」：挪一座站台、推迟一条股道，parts 与身份卡随之变化 ----
 { const hitOf = id => PL.parts(760, {}).find(q => q.id === id), a0 = hitOf('P-S2'), i0 = PL.info('G-S01', 760).lines.find(l => l[0] === '工期')[1];
   const Y = HZ.YARDS.S, z0 = Y.islands[1]; Y.islands[1] = z0 + 4; HZ.make();
@@ -62,5 +64,10 @@ for (const id of ['G-S03', 'G-N09', 'P-S2', 'D-S05', 'B-N03']) { const ctx = she
   const segs = HZ.K.trackS.parts.filter(p => Math.abs((p.geo.min[2] + p.geo.max[2]) / 2 - 16.5) < 0.01); for (const p of segs) p.st += 30;
   const i1 = PL.info('G-S01', 760).lines.find(l => l[0] === '工期')[1]; if (i1 === i0) fail('改股道工期后身份卡未变');
   for (const p of segs) p.st -= 30; HZ.make(); }
+// 竖长条（审计 #7）：转向后平面沿轨方向占满高度的 80% 以上
+{ for (const [w, h] of [[584, 950], [800, 1200]]) { PL.draw(makeCtx().g, w, h, 700, sheetCtx()); const ps = PL.parts(700, {}); let y0 = Infinity, y1 = -Infinity, x0 = Infinity, x1 = -Infinity;
+    for (const q of ps) { y0 = Math.min(y0, q.hit[1]); y1 = Math.max(y1, q.hit[1] + q.hit[3]); x0 = Math.min(x0, q.hit[0]); x1 = Math.max(x1, q.hit[0] + q.hit[2]); }
+    if ((y1 - y0) < 0.8 * (h - 40)) fail(`${w}x${h} 平面只占高度 ${(y1 - y0).toFixed(0)} px`);
+    const g = ps.find(q => q.id === 'G-S01'); if (!(g.hit[3] > g.hit[2])) fail(`${w}x${h} 转向后股道应为竖向`); } }
 console.log(`OK check_s201 parts_runs=${pRuns} parts_min=${pMin} hz_follow=ok`);
-console.log(`OK check_s201 times=7 sizes=2 runs=${runs} cams=${PL.cam.length} cam_bad=0 track=${S.kmTot.toFixed(1)}km lines=${S.lines}`);
+console.log(`OK check_s201 times=7 sizes=4 runs=${runs} cams=${PL.cam.length} cam_bad=0 track=${S.kmTot.toFixed(1)}km lines=${S.lines}`);
