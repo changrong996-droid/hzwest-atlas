@@ -89,8 +89,12 @@
       labels.push([lx - 1, ly, lx + tw + 1, ly + th]); g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = o.halo || C.paper; g.strokeText(txt, lx, y); g.fillStyle = col || C.ink; g.fillText(txt, lx, y); return true; };
 
     const bw = box.x1 - box.x0, bh = box.y1 - box.y0, small = bh < 220 || bw < 380;
-    const gut = small ? 0 : clamp(bw * 0.2, 96, 150);
-    const pa = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 28 : 6), x1: box.x1 - 4, y1: box.y1 - 4 };
+    // 竖长条（D-08：右栏约 600×980、800×1200）：大数字改顶部横带（两列），总平面满宽，云门立面从角上小样放大成底部满宽
+    const tall = !small && bh > bw * 1.15 && bh >= 460;
+    const topH = tall ? Math.round(clamp(bh * 0.14, 110, 160)) : 0;
+    const botH = tall ? Math.round(clamp(bh - topH - (bw - 10) - 10, 140, bh * 0.32)) : 0;
+    const gut = small || tall ? 0 : clamp(bw * 0.2, 96, 150);
+    const pa = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 28 : tall ? topH : 6), x1: box.x1 - 4, y1: box.y1 - 4 - botH };
     // 视窗：z ∈ [−300, 300]（围挡 ±280–300、云门南缘 240、塔吊 263），x 半宽按画幅比例，至少 ±300
     const pw = pa.x1 - pa.x0, ph = pa.y1 - pa.y0, zH = 300, xH = Math.max(300, zH * pw / ph), s = Math.min(pw / (2 * xH), ph / (2 * zH));
     const cx = (pa.x0 + pa.x1) / 2, cy = (pa.y0 + pa.y1) / 2, X = x => cx + x * s, Y = z => cy + z * s;   // 北上（z<0 在上）、东右
@@ -156,7 +160,7 @@
       label('北 ↑', pa.x1 - 6, pa.y0 + 8, C.ink3, { al: 'r' });
     }
     // 云门立面小样（右下角，向北看）：两腿 → 横梁到 80 m，在建段红；亮灯后暖色
-    if (!small) { const iw = clamp(pw * 0.2, 70, 120), ih = iw * 0.62, ix = pa.x1 - iw - 6, iy = pa.y1 - ih - 6, k = iw / 200, base = iy + ih - 6, lx = v => ix + iw / 2 + v * k, ly = v => base - v * k * 0.9;
+    if (!small) { const iw = tall ? bw - 30 : clamp(pw * 0.2, 70, 120), ih = tall ? botH - 22 : iw * 0.62, ix = tall ? box.x0 + 15 : pa.x1 - iw - 6, iy = tall ? box.y1 - botH + 16 : pa.y1 - ih - 6, k = tall ? Math.min(iw / 200, (ih - 10) / 80) : iw / 200, base = iy + ih - 6, lx = v => ix + iw / 2 + v * k, ly = v => base - v * k * 0.9;
       g.fillStyle = C.paper; g.fillRect(ix - 3, iy - 12, iw + 6, ih + 15); g.strokeStyle = C.ink3; g.lineWidth = 0.6; g.strokeRect(ix - 3, iy - 12, iw + 6, ih + 15);
       label('云门立面', ix, iy - 5, C.ink3, { fs: 8 });
       g.strokeStyle = C.ink2; g.lineWidth = 0.8; g.beginPath(); g.moveTo(ix, base); g.lineTo(ix + iw, base); g.stroke();
@@ -171,13 +175,14 @@
     const cur = []; for (const k of ['ymf', 'ym', 'ymc', 'tod', 'ycrane']) { const A = HZ.K[k]; if (A && t >= A.start && t < A.end) cur.push(A.name); }
     if (t >= m.OPEN - 1 && t < m.OPEN + 5) cur.unshift('亮灯：由中心向外'); if (T.vis && T.f < 1) cur.unshift('首趟列车进站');
     if (!small) {
-      const x0 = box.x0 + 8, num = String(B.num), FS = clamp(Math.round(gut / (num.length > 3 ? 3.9 : 3.0)), 24, 48);
+      const colW = tall ? Math.round(bw * 0.48) : gut; let x0 = box.x0 + 8; const num = String(B.num), FS = tall ? clamp(Math.round(bw / 14), 30, 52) : clamp(Math.round(gut / (num.length > 3 ? 3.9 : 3.0)), 24, 48);
       g.textBaseline = 'alphabetic'; g.fillStyle = t >= m.OPEN ? C.temp : C.ink; g.font = `600 ${FS}px ${MONO}`; g.fillText(num, x0, box.y0 + 12 + FS);
       const nw = g.measureText(num).width; g.font = `600 ${Math.round(FS * 0.36)}px ${t >= m.OPEN ? MONO : SANS}`; g.fillStyle = C.ink2;
-      if (nw + 4 + g.measureText(B.unit).width < gut) g.fillText(B.unit, x0 + nw + 4, box.y0 + 12 + FS); else g.fillText(B.unit, x0, box.y0 + 28 + FS);
-      let ly = box.y0 + (nw + 4 + g.measureText(B.unit).width < gut ? 30 : 46) + FS;
-      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let l0 = ''; for (const ch of txt) { if (g.measureText(l0 + ch).width > gut - 6) { g.fillText(l0, x0, ly); ly += (fsz || 10) + 4; l0 = ch; } else l0 += ch; } if (l0) { g.fillText(l0, x0, ly); ly += (fsz || 10) + 6; } };
+      if (nw + 4 + g.measureText(B.unit).width < colW) g.fillText(B.unit, x0 + nw + 4, box.y0 + 12 + FS); else g.fillText(B.unit, x0, box.y0 + 28 + FS);
+      let ly = box.y0 + (nw + 4 + g.measureText(B.unit).width < colW ? 30 : 46) + FS;
+      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let l0 = ''; for (const ch of txt) { if (g.measureText(l0 + ch).width > colW - 6) { g.fillText(l0, x0, ly); ly += (fsz || 10) + 4; l0 = ch; } else l0 += ch; } if (l0) { g.fillText(l0, x0, ly); ly += (fsz || 10) + 6; } };
       wrap(B.label, C.ink2); if (t >= m.OPEN) wrap('来源：' + FIRST.src, C.ink3, 8); wrap(dayTxt, C.ink3, 9); ly += 4;
+      if (tall) { x0 = box.x0 + 8 + colW + 12; ly = box.y0 + 22; }
       for (const n of cur.slice(0, 3)) wrap('▸ ' + n, C.red, 10);
     } else {
       label(B.num + ' ' + B.unit, box.x0 + 6, box.y0 + 9, t >= m.OPEN ? C.temp : C.ink, { b: true, fs: 12 });
