@@ -492,6 +492,11 @@ HZ.assignCranes = function () { const K = HZ.K, out = { tower: 0, crawler: 0, no
   for (const a of HZ.acts) for (const p of a.parts) { if (p.crane !== -1) continue; let best = null, bd = 1e9; const t0 = p.st - 0.5, t1 = p.st + p.du + 0.5;
     for (let dz = -150; dz <= 150; dz += 6) for (let dx = -60; dx <= 60; dx += 10) { const x = p.c[0] + dx, z = p.c[2] + dz, d = Math.hypot(dx, dz); if (d >= bd || d < 6) continue; if (!clashAt(x, z, t0, t1)) { bd = d; best = [x, z]; } }
     if (best) { p.crawl = best; p.crawlY = 0; } else bad++; }
+  // D-18（hark-darrio，docs/rules/crane-stations.json）：650 t 级超限的地面 4 吊改站位（格点外的近处站位，吊距进 R 上限）；
+  // 新站位同样过 clashAt 净空才用。内侧 6 吊（楼面站位）待塔吊方案（D-25），此处不动。
+  for (const [k, cx, cz, x, z] of [['mast', -77, 46.5, -99, 141], ['mast', 77, 46.5, 99, 141], ['rig', -77, 24.5, -99, 141], ['rig', 77, 24.5, 99, 141]]) {
+    const p = K[k] && K[k].parts.find(q => q.crane === -1 && Math.abs(q.c[0] - cx) < 0.2 && Math.abs(q.c[2] - cz) < 0.2);
+    if (p && !clashAt(x, z, p.st - 0.5, p.st + p.du + 0.5)) { p.crawl = [x, z]; p.crawlY = 0; } }
   HZ.crawlHits = bad; out.crawlBad = bad;
   HZ.lift = out; return out; };
 
