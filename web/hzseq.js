@@ -255,7 +255,7 @@ function build() {
   const crew = { asm: 1 };
   for (const z of [1, 2, 3]) A({ key: 'jig' + z, name: zoneName[z] + '拼装胎架', stage: 'jig', kind: 'temp', zone: z, dur: 10, parts: jig[z], res: { jig: 1 }, temp: { serves: ['asm', 'lift'], removeStage: 'unjig', removeName: zoneName[z] + '胎架拆除', removeDur: 6 }, scope: 'z' + z, cap: '屋盖楼面拼装（南 / 中 / 北三区）' });
   for (const z of [1, 2, 3]) A({ key: 'asm' + z, name: '屋盖网架楼面拼装 · ' + zoneName[z], stage: 'asm', zone: z, dur: z === 2 ? 24 : 32, parts: zoneParts[z], res: crew, scope: 'z' + z, need: 'jig', cap: '屋盖楼面拼装（南 / 中 / 北三区）' });
-  A({ key: 'rig', name: '提升架 / 提升塔 + 液压提升器', stage: 'rig', kind: 'temp', dur: 15, parts: [...rigFor[1], ...rigFor[2], ...rigFor[3]], res: { steel: 1 }, temp: { serves: ['lift', 'merge', 'wlift', 'head'], removeStage: 'unrig', removeName: '提升架 / 提升塔拆除', removeDur: 12 }, scope: 'rig', strands, cap: '提升架就位' });
+  A({ key: 'rig', name: '提升架 / 提升塔 + 液压提升器', stage: 'rig', kind: 'temp', dur: 15, parts: [...rigFor[1], ...rigFor[2], ...rigFor[3]], res: { steel: 1 }, temp: { serves: ['lift', 'merge', 'wlift', 'head'], removeStage: 'unrig', removeName: '提升架 / 提升塔拆除', removeCap: '屋顶已升到位，拆提升架', removeDur: 12 }, scope: 'rig', strands, cap: '提升架就位' });
   const lift = (z, d, nm) => A({ key: 'lift' + z, name: nm, stage: 'lift', zone: z, dur: d, parts: [], res: { lifters: 1 }, scope: 'z' + z, cap: nm, liftZone: z });
   lift(1, 5, '南区旋转提升：先顶起 0.6 m 离开胎架，再绕外缘转 4°'); lift(2, 3, '中区提升：脱胎 0.6 m'); lift(3, 5, '北区旋转提升：先顶起 0.6 m 离开胎架，再绕外缘转 4°');
   A({ key: 'merge', name: '嵌补合龙（两条分区缝）', stage: 'merge', dur: 10, parts: zoneParts[4], res: crew, scope: 'rig', cap: '嵌补合龙：补上分区之间的缝，屋盖连成一整块' });
@@ -292,14 +292,14 @@ function build() {
   { const parts = [];
     for (const s of [-1, 1]) for (const yk of ['S', 'N']) { const Y = HZ.YARDS[yk], g = new GB('conc'), xx = s * 129; g.B(xx - 3, P.ringY, Y.z0 + 2, xx + 3, P.ringY + 1.0, Y.z1 - 2); for (let z = Y.z0 + 8; z < Y.z1 - 4; z += 20) g.cyl(xx, z, P.floorTop, P.ringY, 0.5, 8); const gl = new GB('glass'); gl.B(xx - 3, P.ringY + 1.0, Y.z0 + 2, xx - 2.9, P.ringY + 2.1, Y.z1 - 2); gl.B(xx + 2.9, P.ringY + 1.0, Y.z0 + 2, xx + 3, P.ringY + 2.1, Y.z1 - 2); parts.push(part(g, { sweep: 0 }), part(gl, { sweep: 1 })); }
     for (const s of [-1, 1]) { const g = new GB('conc'), zz = s * 143; g.B(-92, P.ringY, zz - 3, 92, P.ringY + 1.0, zz + 3); for (let x = -86; x <= 86; x += 21.5) g.cyl(x, zz, P.floorTop, P.ringY, 0.5, 8); parts.push(part(g, { sweep: 2 })); }
-    A({ key: 'ring', name: '5F 空中花园连廊（31 m）', stage: 'ring', dur: 40, parts, res: { frame: 1 }, cap: '5F 空中连廊' }); }
+    A({ key: 'ring', name: '5F 空中花园连廊（31 m）', stage: 'ring', dur: 40, parts, res: { frame: 1 }, cap: '5 层修空中走廊，环通各区' }); }
   // ===== 10. 上盖开发（四角）=====
   { const parts = [];
     for (const sx of [-1, 1]) for (const yk of ['S', 'N']) { const z0 = yk === 'S' ? 66 : -112, z1 = yk === 'S' ? 132 : -54, x0 = 152, x1 = 214, fl = 4.6, n = 5;
       for (let k = 0; k < n; k++) { const y0 = P.floorTop + k * fl, g = new GB('todG'), b = new GB('todB'); const a = sx > 0 ? [x0, x1] : [-x1, -x0], ins = k === n - 1 ? 0 : 0.6;
         b.B(a[0], y0, z0, a[1], y0 + 0.8, z1); g.B(a[0] + ins, y0 + 0.8, z0 + ins, a[1] - ins, y0 + fl, z1 - ins); parts.push(part(b, { sweep: k * 2 }), part(g, { sweep: k * 2 + 1 })); }
       const r = new GB('todB'), a = sx > 0 ? [x0, x1] : [-x1, -x0]; r.B(a[0] - 0.5, P.floorTop + n * fl, z0 - 0.5, a[1] + 0.5, P.floorTop + n * fl + 1.2, z1 + 0.5); parts.push(part(r, { sweep: 20 })); }
-    A({ key: 'tod', name: '雨棚上盖开发（四角，~5 万 m²）', stage: 'tod', dur: 260, release: 790, parts, res: { tod: 1 }, cap: '上盖开发（四角）' }); }
+    A({ key: 'tod', name: '雨棚上盖开发（四角，~5 万 m²）', stage: 'tod', dur: 260, release: 790, parts, res: { tod: 1 }, cap: '站台雨棚上方加盖综合楼' }); }
   // ===== 11. 云门（站房南侧 15 m；180 × 60 × 80 m，中间“门洞”）=====
   { const zA = 178, zB = 238, fp = [], fr = [], fc = [];
     { const g = new GB('found'); g.B(-92, -1.5, zA - 2, 92, 0, zB + 2); fp.push(part(g)); }
@@ -318,7 +318,7 @@ function build() {
     const cr1 = [mk(-170, -150, 68, Math.PI / 2 * 0.85, 'crane'), mk(170, -150, 68, Math.PI / 2 * 1.15, 'crane'), mk(-170, 160, 68, -Math.PI / 2 * 0.9, 'crane'), mk(170, 160, 68, -Math.PI / 2 * 1.1, 'crane'), mk(-260, 0, 40, 0.1, 'crane'), mk(260, 0, 40, Math.PI - 0.1, 'crane')];
     A({ key: 'crane', name: '塔吊', stage: 'crane', kind: 'temp', dur: 10, release: 300, parts: cr1.map(g => part(g)), res: {}, temp: { serves: ['frame', 'mezz', 'deck', 'plat', 'col24', 'floor', 'canopy', 'mast', 'tod'], removeStage: 'uncrane', removeName: '塔吊拆除', removeDur: 10 }, cap: '塔吊进场' });
     const cr2 = [mk(-60, 262, 96, -Math.PI / 2, 'ycrane'), mk(60, 262, 96, -Math.PI / 2 * 1.2, 'ycrane')];
-    A({ key: 'ycrane', name: '云门塔吊', stage: 'crane', kind: 'temp', dur: 10, release: 705, parts: cr2.map(g => part(g)), res: {}, temp: { serves: ['ym', 'ymc'], removeStage: 'uncrane', removeName: '云门塔吊拆除', removeDur: 10 }, scope: 'ym', cap: '云门塔吊' }); }
+    A({ key: 'ycrane', name: '云门塔吊', stage: 'crane', kind: 'temp', dur: 10, release: 705, parts: cr2.map(g => part(g)), res: {}, temp: { serves: ['ym', 'ymc'], removeStage: 'uncrane', removeName: '云门塔吊拆除', removeDur: 10 }, scope: 'ym', cap: '立两台塔吊，准备盖云门' }); }
   // ===== 13. 开通 =====
   A({ key: 'open', name: '开通运营 · 首趟列车', stage: 'open', kind: 'milestone', dur: 0, release: P.OPEN, parts: [], cap: '2022-09-22 开通，首趟列车进站' });
 
@@ -572,7 +572,9 @@ HZ.PRI = { open: 100, wlift: 95, lift: 90, merge: 85, head: 80, asm: 70, rig: 68
 HZ.caption = function (t) { let best = null, bp = -1; for (const a of HZ.acts) { if (a.kind === 'milestone') continue; if (t >= a.start && t < a.end) { const p = HZ.PRI[a.stage] || 1; if (p > bp) { bp = p; best = a; } } }
   if (t >= HZ.K.open.start) return { text: HZ.K.open.cap, act: HZ.K.open };
   if (!best) { let last = null; for (const a of HZ.acts) if (a.end <= t && (!last || a.end > last.end) && a.kind !== 'milestone') last = a; best = last; }
-  return { text: best ? (best.cap || best.name) : '', act: best }; };
+  // 拆除工序（untemp）没有自己的 cap：取搭设工序 temp.removeCap（字幕用的白话），没有再用 name（甘特等处仍显示 name）
+  const rc = best && best.kind === 'untemp' && HZ.K[String(best.key).replace(/~rm$/, '')], rcap = rc && rc.temp && rc.temp.removeCap;
+  return { text: best ? (best.cap || rcap || best.name) : '', act: best }; };
 
 G.HZ = HZ;
 if (typeof module !== 'undefined') module.exports = HZ;
