@@ -54,7 +54,8 @@ for (const [w, h] of [[560, 420], [1258, 540], [300, 160], [584, 950], [390, 700
     pRuns++; } }
 // 选中绘制 + 身份卡（含实物记录与偏差）
 for (const id of ['G-S03', 'G-N09', 'P-S2', 'D-S05', 'B-N03']) { const ctx = sheetCtx(); ctx.focus = id; ctx.zoom = 3; try { PL.draw(makeCtx().g, 560, 420, 760, ctx); } catch (e) { fail('focus ' + id + ' ' + e.stack); } const I = PL.info(id, 760); if (!I || !I.lines.length) fail('info ' + id); }
-{ const I = PL.info('G-N09', 760), r = I.lines.find(l => l[0] === '实物'); if (!r || !/R-0009/.test(r[1]) || !/全部铺完 2022-03-05（早 19 天）/.test(r[1])) fail('G-N09 实物行 ' + JSON.stringify(r)); }
+{ const I = PL.info('G-N09', 760), r = I.lines.filter(l => l[0] === '实物').map(l => l[1]).join(' | '); if (!/R-0013 卫星 2022-03-24：北场无轨道/.test(r) || !/至少晚 19 天/.test(r) || /R-0009/.test(r)) fail('G-N09 实物行 ' + r); }
+{ const I = PL.info('G-S03', 760), r = I.lines.filter(l => l[0] === '实物').map(l => l[1]).join(' | '); if (!/R-0009 .*湖杭场正线铺完；模型该场铺完 2021-09-26/.test(r) || /R-0013/.test(r)) fail('G-S03 实物行 ' + r); }
 // ---- 「改 HZ，图跟着变」：挪一座站台、推迟一条股道，parts 与身份卡随之变化 ----
 { const hitOf = id => PL.parts(760, {}).find(q => q.id === id), a0 = hitOf('P-S2'), i0 = PL.info('G-S01', 760).lines.find(l => l[0] === '工期')[1];
   const Y = HZ.YARDS.S, z0 = Y.islands[1]; Y.islands[1] = z0 + 4; HZ.make();
