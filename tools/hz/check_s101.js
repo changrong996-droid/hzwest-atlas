@@ -22,16 +22,19 @@ for (const t of times) for (const [w, h] of sizes) {
   runs++;
 }
 
-// 2. 大数字：挖土段（m）单调不减、≤ 25.2；回筑段（层）单调不减、0..4、收尾 = 4
-let lastM = -1, lastL = -1, seenL = false;
+// 2. 大数字：全场已挖土方（万 m³）单调不减、≤ 120，收尾 = 120 且标签报 4 / 4 层；比例与分坑状态一致
+let lastV = -1;
 for (let t = W0; t <= W1 + 1e-9; t += 0.5) {
   const b = P.big(t);
-  if (!b || typeof b.num !== 'number' || !isFinite(b.num) || !b.unit || !b.label) fail(`big(${t}) 格式不对`);
-  if (b.unit === 'm') { if (seenL) fail(`t=${t} 回筑后又回到挖深`); if (b.num < lastM - 1e-9) fail(`t=${t} 挖深回退 ${lastM}→${b.num}`); if (b.num > 25.2 + 1e-9) fail(`挖深 ${b.num} 超过坑底`); lastM = b.num; }
-  else { seenL = true; if (b.num < lastL || b.num < 0 || b.num > 4) fail(`t=${t} 层数 ${b.num} 不合理`); lastL = b.num; }
+  if (!b || typeof b.num !== 'number' || !isFinite(b.num) || b.unit !== '万 m³' || !b.label) fail(`big(${t}) 格式不对`);
+  if (b.num < lastV - 1e-9) fail(`t=${t} 土方回退 ${lastV}→${b.num}`); if (b.num > 120 + 1e-9) fail(`土方 ${b.num} 超过 120 万 m³`); lastV = b.num;
 }
-if (lastM < 25.2 - 1e-6) fail('挖深没有到设计坑底 25.2 m');
-if (lastL !== 4) fail('时间窗结束时地下层数不是 4');
+if (Math.abs(lastV - 120) > 1e-6) fail('时间窗结束时土方不是 120 万 m³');
+if (!/4 \/ 4 层/.test(P.big(W1).label)) fail('收尾标签没有报 4 / 4 层');
+{ const M0 = P.model(); for (let t = W0; t <= W1; t += 1) { const s = P.stateAt(t);
+  for (const o of s.tiles) { if (o.base > 0 && o.dig > o.q.depth + 1e-9) fail(`t=${t} 分坑 x=${o.q.x0} 未挖到底就浇底板`); if (o.roof > 0 && o.base < 1) fail(`t=${t} 分坑 x=${o.q.x0} 顶板早于底板`); }
+  const tl = s.tiles.find(o => o.q.x0 <= 39 && o.q.x1 > 39 && o.q.z0 > 0), W = s.wings[0]; if (tl && (Math.abs(tl.dig - W.dig) > 1e-6 || Math.abs(tl.roof - W.roof) > 1e-6)) fail(`t=${t} 斜俯图与剖面的 x=39 南翼分坑状态不一致`); }
+  if (!(M0.Vtot > 1e5)) fail('几何土方总量异常'); }
 
 // 3. 镜头：相机在地面以上，关键帧时间在窗内且递增
 let lt = -1;
