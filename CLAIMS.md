@@ -57,7 +57,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-06 | hark-fangyi | S-201 | GPU 审计 #6：一张图一个大数字（或换量时加过渡说明），去掉「0万 m²」。验收：check_all | 待做 | 11-08 hark-cr |
 | D-07 | hark-cs | GPU 审计 | 复测 #1：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 待做 | 11-08 hark-cr |
 | D-08 | hark-cs、hark-liuzhijie、hark-fangyi | 二稿 | GPU 审计 #7：右栏竖长条时图纸放大或转向，不要只画中间一段（各改自己的插件，用 `w/h` 判断）。验收：800×1200 与 1920×1080 截图无大片空白 | 待做 | 11-08 hark-cr |
-| D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 待做 | 11-08 hark-cr |
+| D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 完成（`docs/audit/2026-11-08-windows.md`：2 P2 + 3 P3，`check_all 5/5`） | 11-08 hark-cr |
 
 ## 接口请求
 
