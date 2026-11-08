@@ -30,7 +30,9 @@ for (let t = W0; t <= W1 + 1e-9; t += 0.5) {
   if (b.num < lastV - 1e-9) fail(`t=${t} 土方回退 ${lastV}→${b.num}`); if (b.num > 120 + 1e-9) fail(`土方 ${b.num} 超过 120 万 m³`); lastV = b.num;
 }
 if (Math.abs(lastV - 120) > 1e-6) fail('时间窗结束时土方不是 120 万 m³');
-if (!/4 \/ 4 层/.test(P.big(W1).label)) fail('收尾标签没有报 4 / 4 层');
+if (!/已完成层数 4 \/ 4/.test(P.big(W1).label)) fail('收尾标签没有报 已完成层数 4 / 4');
+for (const tt of [91.3, 182.5]) if (/地下结构已完成/.test(P.big(tt).label)) fail('t=' + tt + ' 副标题读起来像全部完成（GPU 审计 #4）');
+if (P.stateAt(91.3).dig > -1.5 && !/中央坑/.test(P.big(91.3).label)) fail('t=91.3 中央坑只挖 1 m，副标题没点明在做什么（GPU 审计 #5）');
 // 土方车流：累计车次单调、收尾 = 120 万 m³ ÷ 每车方量（约 8 万）；挖土期间每天有车，日车次之和 ≈ 总车次
 { let lc = -1, sum = 0; for (let t = W0; t <= W1; t += 1) { const k = P.trucks(t); if (k.cum < lc) fail(`t=${t} 累计车次倒退`); lc = k.cum; sum += k.day; }
   const kE = P.trucks(W1); if (kE.cum !== kE.total || kE.total < 7e4 || kE.total > 9e4) fail(`收尾累计车次 ${kE.cum} / ${kE.total}`);
