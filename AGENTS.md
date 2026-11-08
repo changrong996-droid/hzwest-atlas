@@ -37,7 +37,7 @@
 | `hark-fangyi` | 未报 | 未报 | 未报 | |
 | `hark-liuzhijie` | 未报 | 未报 | 未报 | |
 | `muse-tibo-cs` | 本地 GPU 机 | 有（委托人告知，版本待报） | Gemini 4 CLI，额度充足 | 重活首选 |
-| `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 未报 | Node 22、Python 3.12、无头浏览器 |
+| `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 无本地 CLI；自身可读图，用无头 Chromium（Playwright + SwiftShader 软渲染）截图自评 | Node 22、Python 3.12；单条命令 ≤ 20 分钟，不接渲染 / GPU 事项 |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。
