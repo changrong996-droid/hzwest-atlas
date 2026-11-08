@@ -2,6 +2,7 @@
 Shares claims.lock.json (and its flock) with claims_gate.py. Items come from main's CLAIMS.md."""
 import json, os, time, fcntl, subprocess, urllib.parse
 TTL, MAXN = 3 * 86400, 2
+SMALL_ONLY = {'marvis': 1}  # 只接备注含「小活」的事项，最多 1 项（委托人 2026-11-08）
 ORDER = ['S-501', 'GPU', '插件镜头', '实物层']
 
 
@@ -20,7 +21,7 @@ def _items(root):
         if set(''.join(c)) <= set('-: '):
             continue
         d = dict(zip(hdr, c))
-        out.append({'item': c[0], 'owner': d.get('负责人', '—').strip('` '), 'state': d.get('状态', '')})
+        out.append({'item': c[0], 'owner': d.get('负责人', '—').strip('` '), 'state': d.get('状态', ''), 'note': d.get('备注', '')})
     return out
 
 
@@ -98,6 +99,10 @@ def handle(root, path, query):
                 if path == '/claim':
                     if row['owner'] not in ('—', '', a) or row['state'] in ('保留', '完成'):
                         msg, code = f'拒绝：「{k}」{row["state"] or "已有负责人"}（{row["owner"]}）', 409
+                    elif a in SMALL_ONLY and '小活' not in row.get('note', ''):
+                        msg, code = f'拒绝：{a} 目前只接备注标「小活」的事项', 409
+                    elif a in SMALL_ONLY and not h and sum(v['a'] == a for v in lock.values()) >= SMALL_ONLY[a]:
+                        msg, code = f'拒绝：{a} 同时最多 {SMALL_ONLY[a]} 项，先完成或 release', 409
                     elif h and h['a'] != a:
                         msg, code = f'拒绝：「{k}」已被 {h["a"]} 于 {_bj(h["t"])} 认领', 409
                     elif not h and sum(v['a'] == a for v in lock.values()) >= MAXN:
