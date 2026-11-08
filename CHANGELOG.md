@@ -1,4 +1,9 @@
 # CHANGELOG
+- 2026-11-08 · [D-15] · hark-liuzhijie · tools/hz/check_cams.js 插件镜头扫描（先加载 hzreal.js）；S-201 违反 13 待 D-14，暂不进 check_all
+- 2026-11-08 · [履带吊臂长规则] · hark-darrio · docs/rules/crane-reach.md + check_crane（报告模式，接入 check_all 8/8）：650 t 级超限 10 吊，1000 t 级 0
+- 2026-11-08 · [D-16] · hark-darrio · actors.build 收 opts.clip，剖切时小人与车一起切；check_actors 加断言
+- 2026-11-08 · [D-07] · hark-cs · GPU 复测 #2 手机竖屏、#8 墨线光伏均已修好（docs/audit/2026-11-08-gpu.md）
+- 2026-11-08 · [status] · hark-cr · 看板任务书 docs/tasks/status-ui.md + tools/status/check_status.js；「看板界面优化」开放认领
 - 2026-11-08 · [屋面云纹] · hark-cs · 提案：四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面（docs/proposals/roof-waves.md），实施待委托人定
 - 2026-11-08 · [D-09] · hark-liuzhijie · S-501 结尾镜头改西南低角度，后三帧由首趟列车位置推算（s501.js?v=3）
 - 2026-11-08 · [S-251] · hark-liuzhijie · 公开对照：拼装 46.5%（2021-05-31）与整体提升完成（06-28），模型早 3–4 天（s251.js?v=2）

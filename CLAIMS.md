@@ -31,26 +31,27 @@
 | Blender 终版精修 | 结尾与三个关键镜头的海报级渲染，视觉模型自评迭代（docs/tasks/blender-final.md） | — | 空 |  | 大活；需本地 |
 | 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 完成 | 2026-11-08 | 大活；提案 docs/proposals/roof-waves.md 已合入 |
 | 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 保留 |  | 共用文件；待委托人点头 |
-| 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | hark-darrio | 认领 | 2026-11-08 | 中活 |
+| 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | hark-darrio | 完成 | 2026-11-08 | 中活；docs/rules/crane-reach.md + check_crane 已合入并进 check_all（报告模式）；超限站位见 D-18 |
 | 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | pi-t2 | 认领 | 2026-11-08 | 小活 |
 | 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | pi-t3 | 认领 | 2026-11-08 | 小活 |
 | 难懂字幕改写 | 4 条字幕各给 2 个改写（docs/tasks/captions.md） | — | 空 |  | 小活 |
 | Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | marvis | 认领 | 2026-11-08 | 小活；适合 marvis |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 |  | 需本地 GPU |
-| 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | — | 空 |  |  |
+| 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | hark-liuzhijie | 完成 | 2026-11-08 | tools/hz/check_cams.js 已合入（D-15）；S-201 违反 13 待 D-14，之后 hark-cr 接入 check_all |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 |  | 镜头改动需扫描 0 违反 0 卡住 |
 | 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | hark-fangyi | 认领 | 2026-11-08 | 小活；只用公开来源，写清许可 |
 | 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 保留 |  | 需要共用文件接口 |
 | 手机竖屏布局 | GPU 审计 #2：390×844 下 3D 被挤、页签出界 | hark-cr | 完成 |  | 共用文件 |
 | 墨线光伏 | GPU 审计 #8：墨线模式 3D 屋面也画光伏条带 | hark-cr | 完成 |  | 共用文件 |
 | 剖切封面补斜杆 | 剖切面覆盖网架斜杆与吊具杆件 | hark-cr | 保留 |  |  |
-| 近景人员接线 | hzwest.html 加载 mods/actors.js；hzview 对 window.HZ_MODS 调 build(scene,HZ,THREE)/update(t,cam)（S-101 地下体量也走此钩子） | hark-cr | 保留 |  | 共用文件 |
+| 近景人员接线 | hzwest.html 加载 mods/actors.js；hzview 对 window.HZ_MODS 调 build(scene,HZ,THREE,{clip:[CUTP]})/update(t,cam)（S-101 地下体量也走此钩子；actors 已支持 opts.clip，D-16） | hark-cr | 保留 |  | 共用文件 |
 | 构件信息卡 | 选中构件弹卡显示 part.info + 看建成后/看开工时（hark-cs、hark-fangyi 提案） | hark-cr | 保留 |  | 共用文件 |
 | 实物图钉 | HZR.forPart 非空的构件在 3D 打小图钉，点开列记录与原链接 | hark-cr | 保留 |  | 共用文件 |
 | 屋盖排程校准 | hzseq.js：asm/jig/lift 后移约 4 天，对齐 2021-05-31 / 06-28 公开节点（hark-liuzhijie 请求） | hark-cr | 保留 |  | 共用文件 |
 | S-252 屋盖提升（提议） | 接 S-251：lift1..3（第 632–645 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议，S-251 做完后可接；待 hark-cr 拆任务书 |
-| S-001 总进度（提议） | 55 个 HZ.K 工序的横道图与 3D 时间轴同步：竖线 = 当前天，在施工序红、关键链粗线；点横道 → parts 联动 3D 飞到该工序构件；大数字 = 在施工序数或距开通天数 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议；给四张分图一个总入口 |
+| S-001 总进度（提议） | 55 个 HZ.K 工序的横道图与 3D 时间轴同步：竖线 = 当前天，在施工序红、关键链粗线；点横道 → parts 联动 3D 飞到该工序构件；大数字 = 在施工序数或距开通天数 | hark-cs | 认领 | 2026-11-08 | 中活；hark-liuzhijie 提议；给四张分图一个总入口 |
 | 吊装资源图（提议） | 读 HZ.cranes / assignCranes：每天在场吊机台数、各台位置与吊距圈，超吊距标红；与「履带吊臂长规则」同源，可作其图纸面 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议；适合接履带吊规则的人一起做 |
+| 看板界面优化 | 集成看板 web/status.html 界面重做（docs/tasks/status-ui.md），委托人指定由其他智能体做，hark-cr 只合并 | （空） | — |  | 中活 |
 
 ## 派单
 
@@ -63,7 +64,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-04 | 全体 | 本地能力 | 在 AGENTS.md 1.1 表填你那边实际能跑的：本地机器、Blender（版本）、视觉模型 CLI（如 Gemini 4）；提交写 `[caps]` | 完成 11-08（hark-cs、hark-fangyi、hark-liuzhijie、hark-darrio 已报；muse-tibo-cs 版本随 D-10 报，marvis 选报） | 11-08 hark-cr |
 | D-05 | hark-liuzhijie | S-101 | GPU 审计 #3–#5（docs/audit/2026-11-08-gpu.md）：t=0、91.3 镜头对准已建实体（不再满屏幽灵线）；副标题「已完成层数」；开挖 1 m 时副标题点明在做地连墙/桩或核对开挖规则。验收：check_all + 镜头扫描 0 违规 | 完成 11-08 | 11-08 hark-cr |
 | D-06 | hark-fangyi | S-201 | GPU 审计 #6：一张图一个大数字（或换量时加过渡说明），去掉「0万 m²」。验收：check_all | 完成 11-08 | 11-08 hark-cr |
-| D-07 | hark-cs | GPU 审计 | 复测 #1、#2、#8（hzview.js?v=13：播放重画、手机竖屏上下排、墨线光伏）：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 在做（#1 已交 11-08：重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏待测） | 11-08 hark-cr |
+| D-07 | hark-cs | GPU 审计 | 复测 #1、#2、#8（hzview.js?v=13：播放重画、手机竖屏上下排、墨线光伏）：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 完成 11-08（#1 播放重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏复测均已修好） | 11-08 hark-cr |
 | D-08 | hark-cs、hark-liuzhijie、hark-fangyi | 二稿 | GPU 审计 #7：右栏竖长条时图纸放大或转向，不要只画中间一段（各改自己的插件，用 `w/h` 判断）。验收：800×1200 与 1920×1080 截图无大片空白 | 完成 11-08（S-101/201/251/401/501 均有竖长条版面） | 11-08 hark-cr |
 | D-09 | hark-liuzhijie | S-501 | 委托人已定结尾镜头（docs/review/2026-11-08-draft1.md 末节）：改 `web/sheets/s501.js` 的 `cam` 最后两帧（t≥1101）为西南低角度，露天进站段的首趟列车与云门同框；用 `__pv.FV` 的列车位置算镜头，不写死。验收：check_all + 插件镜头扫描 0 违规 0 卡住，并在 t=1105/1115/1125 截图确认车头未被屋盖遮挡（可与 D-01 同一分支） | 完成 11-08（镜头由列车位置推算；截图验收待 D-12 视觉审查一并看） | 11-08 hark-cr |
 | D-10 | muse-tibo-cs | Blender 参考渲染 | 按 docs/tasks/blender-ref.md 出同机位白模/线稿对照；先报 Blender 版本（AGENTS 1.1，提交 `[caps]`） | 待做 | 11-08 hark-cr |
@@ -72,9 +73,10 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 完成 11-08（问题单已合入；CLAIMS 关单由集成人做） | 11-08 hark-cr |
 | D-13 | marvis | Windows 真机审查 | 只看新图 S-251（`#sheet=S-251`）起、中、末三个时刻，问题追加到 `docs/audit/2026-11-08-windows.md` 新一节，不改代码。验收：文件里有 S-251 一节，每条写时刻、视口、现象 | 待做 | 11-08 hark-cr |
 | D-14 | hark-fangyi | S-201 | 镜头扫描发现 t 798–822 视线被北场雨棚 canopyN 挡住：改 `web/sheets/s201.js` 的 cam 后两帧（可用接口请求「镜头扫描」行给的两帧或另定）。验收：check_all + check_s201，t=800、815 无头截图承轨层可见 | 待做 | 11-08 hark-cr |
-| D-15 | hark-liuzhijie | 插件镜头扫描 | 按退回记录修 `tools/hz/check_cams.js`（先加载 web/hzreal.js、删未用变量），基于最新 main 重推，提交写 [D-15]。验收：`node tools/hz/check_cams.js` 对 5 张插件不崩并打印各图违规数；合入后 hark-cr 接进 check_all | 待做 | 11-08 hark-cr |
-| D-16 | hark-darrio | 近景人员与车辆 | `web/mods/actors.js` 的 build 收可选第 4 参数 opts.clip（THREE.Plane[]），有就给线材质加 clippingPlanes，剖切时小人与车一起切。验收：check_actors 加一条断言并通过、check_all 通过 | 待做 | 11-08 hark-cr |
+| D-15 | hark-liuzhijie | 插件镜头扫描 | 按退回记录修 `tools/hz/check_cams.js`（先加载 web/hzreal.js、删未用变量），基于最新 main 重推，提交写 [D-15]。验收：`node tools/hz/check_cams.js` 对 5 张插件不崩并打印各图违规数；合入后 hark-cr 接进 check_all | 完成 11-08 | 11-08 hark-cr |
+| D-16 | hark-darrio | 近景人员与车辆 | `web/mods/actors.js` 的 build 收可选第 4 参数 opts.clip（THREE.Plane[]），有就给线材质加 clippingPlanes，剖切时小人与车一起切。验收：check_actors 加一条断言并通过、check_all 通过 | 完成 11-08 | 11-08 hark-cr |
 | D-17 | hark-cs | 宣传页提案 | 委托人 14:34 同意：AI 效果图只做**单独宣传页**，与图纸、3D、联动、照片页、`HZR` 完全分开。写 `docs/proposals/promo-page.md`（页面结构、每张图标「AI 生成 · 非实拍」），附 S-101/201/301/401/501 各 1 张样图外链（图不进仓库）。不改任何 web/ 文件。验收：提案合入后由委托人看样图再定是否做页 | 待做 | 11-08 hark-cr |
+| D-18 | hark-darrio | 履带吊臂长规则 | check_crane 报 650 t 级超限 10 吊（mast 6、rig 4）：在 `docs/rules/crane-reach.md` 新增一节「站位调整建议」，逐吊给新站位 `crawl=[x,z]`（落在可行车区域、不压在建构件），并用 check_crane 同算法离线验证。不改 web/hzseq.js（共用文件，hark-cr 按你的表改）。验收：表里每吊写旧/新站位、R、额定与需求，附「按新站位超650=0」的复算输出 | 待做 | 11-08 hark-cr |
 
 ## 接口请求
 

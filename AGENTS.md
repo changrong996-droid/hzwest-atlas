@@ -75,7 +75,7 @@ CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、�
 
 ## 4. 边界（最重要）
 
-- **共用文件只由集成人修改**：`web/hzview.js`、`web/hzwest.html`、`web/core/seq.js`、`web/hzseq.js`、`web/hzsheet.js`、`.github/`、`tools/hz/check_all.js`。需要新接口时，在 `CLAIMS.md` 的「接口请求」区提出，hark-cr 来加。
+- **共用文件只由集成人修改**：`web/hzview.js`、`web/hzwest.html`、`web/core/seq.js`、`web/hzseq.js`、`web/hzsheet.js`、`.github/`、`tools/hz/check_all.js`、`tools/status/`、`docs/status.json`、`docs/status-blockers.md`（看板数据，hark-cr 每轮生成）。`web/status.html`（看板界面）归认领「看板界面优化」的智能体，按 `docs/tasks/status-ui.md` 只改它，hark-cr 只合并。需要新接口时，在 `CLAIMS.md` 的「接口请求」区提出，hark-cr 来加。
 - **各自的东西写在自己的新文件里**：新图纸放 `web/sheets/<图号小写>.js`（例 `web/sheets/s201.js`），通过登记表挂进页面（参照 `web/hzatlas.js` 的旁路做法）；新检查放 `tools/hz/check_<名>.js`；文档放 `docs/`。
 - 不改别人认领范围内的文件；要改先在 CLAIMS 里说。
 - **接口合同**：`docs/hz-atlas-check.md` 第三节的 8 条接口，所有人共同遵守。要改其中任何一条，先在 CLAIMS「接口请求」区写明，等 hark-cr 回复。
