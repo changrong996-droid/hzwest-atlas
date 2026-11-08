@@ -198,6 +198,37 @@
   }
   function nullCtx() { const noop = () => {}; return new Proxy({ measureText: s => ({ width: String(s).length * 6 }), setLineDash: noop }, { get: (o, k) => (k in o ? o[k] : noop), set: () => true }); }
 
+  // 镜头（米、度；az −40 = 西北、120 = 东南，同 hzview placeCam）：先从南看云门长高（目标放在云门南面外侧，幕墙封上后不被挡），
+  // 再升高俯看屋盖与四角上盖。开通段（D-09，委托人 2026-11-08 定）：西南低角度看站房西端与露天进站段，云门在画面右侧；
+  // 后三帧不写死——由首趟列车位置（trainAt，读 __pv.FV）、屋盖西缘与股道 z 推出：
+  //   tA = 车头驶上模型西端股道，tIn = 车头进屋盖，tStop = 车头停稳（距停位 < 1 m）。
+  // 验收（evalend 抽样）：开通段 1099–1131 列车可见 20 天 ≥ 一半，其间云门同框；插件镜头扫描 0 违规。
+  const CAM0 = [
+    { t: 700, target: [0, 20, 248], az: 160, el: 14, dist: 480 },
+    { t: 865, target: [0, 40, 248], az: 150, el: 10, dist: 380 },
+    { t: 1015, target: [0, 40, 248], az: 150, el: 14, dist: 460 },
+    { t: 1050, target: [0, 58, 40], az: 135, el: 22, dist: 800 },
+    { t: 1099, target: [0, 40, 20], az: -130, el: 16, dist: 700 },
+  ];
+  let CK = null;
+  function camKeys(HZ) {
+    if (!HZ || !HZ.K || !HZ.K.ring || !HZ.K.ring.parts.some(p => p.geo)) return CAM0;
+    const m = model(HZ), FV = FVof(), sig = m.sig + '|' + [FV.tz, FV.te, FV.tw].join(',');
+    if (CK && CK.sig === sig) return CK.keys;
+    const O = m.OPEN, dy = HZ.P.deckTop, rx = m.roofBox.min[0], tx0 = Math.min(...m.tracks.map(q => q.b.min[0]));
+    const when = f => { for (let t = O + 0.5; t <= O + 30; t += 0.25) { const q = trainAt(HZ, t); if (q.vis && f(q)) return t; } return O + 24; };
+    const z = trainAt(HZ, O + 30).z, r1 = v => Math.round(v * 10) / 10;
+    const tA = when(q => q.head >= tx0), tIn = Math.max(tA + 2, when(q => q.head >= rx)), tStop = Math.max(tIn + 3, when(q => Math.abs(q.head - (q.stop + TRAIN.nose)) < 1));
+    const keys = CAM0.concat([
+      { t: O, target: [r1(rx - 60), 30, r1(z + 74)], az: -125, el: 8, dist: 560 },                // 亮灯：站房西端 + 云门
+      { t: tA, target: [r1(rx - 200), r1(dy + 4.5), r1(z + 40)], az: -112, el: 4, dist: 440 },  // 列车驶上露天进站段
+      { t: tIn, target: [r1(rx - 70), r1(dy + 3.5), r1(z + 20)], az: -100, el: 2, dist: 420 },  // 车头进屋盖
+      { t: tStop, target: [r1(rx - 28), r1(dy + 7.5), r1(z + 28.5)], az: -95, el: 1, dist: 380 }, // 停稳：雨棚下看整列
+      { t: O + 30, target: [r1(rx - 28), r1(dy + 7.5), r1(z + 28.5)], az: -95, el: 1, dist: 360 }, // 缓推到站房西端
+    ].map(k => Object.assign(k, { t: r1(k.t) })));
+    CK = { sig, keys }; return keys;
+  }
+
   const plugin = {
     id: 'S-501', name: '开通',
     window: [700, 1131],                 // = [K.ymf.start, OPEN + 30]（check_s501 断言）
@@ -206,17 +237,9 @@
     big: t => big(G.HZ, t),
     draw, parts,
     // 镜头主体（tools/hz/check_cams.js 读）：开通前两周以前用默认；开通时刻的主体是整座车站与首趟列车所在股道
-    subject: t => t < (G.HZ ? G.HZ.P.OPEN : 1101) - 14 ? null : ['ym', 'ymc', 'tod', 'clad', 'sky', 'ring', 'platS', 'platN', 'trackS', 'trackN'],
-    // 镜头（米、度；az −40 = 西北、120 = 东南，同 hzview placeCam）：先从南看云门长高（目标放在云门南面外侧，幕墙封上后不被挡），
-    // 再升高俯看屋盖与四角上盖；开通时转到西南低处，顺着湖杭场股道看首趟列车自西进站、车头停进站台。
-    cam: [
-      { t: 700, target: [0, 20, 248], az: 160, el: 14, dist: 480 },
-      { t: 865, target: [0, 40, 248], az: 150, el: 10, dist: 380 },
-      { t: 1015, target: [0, 40, 248], az: 150, el: 14, dist: 460 },
-      { t: 1050, target: [0, 58, 40], az: 135, el: 22, dist: 800 },
-      { t: 1099, target: [0, 40, 20], az: -130, el: 16, dist: 700 },
-      { t: 1131, target: [0, 30, 20], az: -120, el: 14, dist: 640 },
-    ],
+    subject: t => t < (G.HZ ? G.HZ.P.OPEN : 1101) - 14 ? null : ['ym', 'ymc', 'tod', 'clad', 'sky', 'ring', 'platS', 'platN', 'canopyS', 'canopyN', 'trackS', 'trackN'],
+    // 镜头：见上方 camKeys（开通段由首趟列车位置推算）
+    get cam() { return camKeys(G.HZ); },
 
     model: () => model(G.HZ), lightAt: t => lightAt(G.HZ, t), trainAt: t => trainAt(G.HZ, t), stOf, FIRST,
   };
