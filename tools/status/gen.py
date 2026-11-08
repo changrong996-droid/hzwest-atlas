@@ -50,7 +50,7 @@ for ln in open(os.path.join(R, 'docs/status-blockers.md'), encoding='utf-8'):
 pend = [x for x in args.get('--pending', '').split(',') if x]
 open_d = [d for d in disp if not d['state'].startswith(('完成', '取消'))]
 out = {
-  'generated_at': now.isoformat(timespec='minutes'),
+  'generated_at': now.strftime('%Y-%m-%dT%H:%M:00+08:00'),
   'headline': {'commits_total': len(commits), 'commits_today': sum(c['at'].startswith(today) for c in commits),
                'files': files, 'items_done': len(done), 'items_total': len(items),
                'workflows_running': len(open_d) + len(live_rows), 'dispatch_open': len(open_d),

@@ -1,0 +1,52 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hzwest 集成看板</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f2ec;color:#1d1d1b;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:baseline;gap:16px;padding:12px 20px 6px}h1{font-size:18px;margin:0}#ts{color:#888;font-size:12px}#ts.old{color:#c0392b;font-weight:600}
+header a{font-size:12px;color:#555;margin-left:auto}header a+a{margin-left:12px}
+#kpi{display:flex;gap:10px;padding:6px 20px 10px}.k{flex:1;background:#fff;border-radius:10px;padding:10px 14px}.k b{display:block;font-size:30px;line-height:1.1}.k span{color:#777;font-size:12px}.k.warn b{color:#c0392b}
+main{flex:1;display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:10px;padding:0 20px 10px;min-height:0}
+section{background:#fff;border-radius:10px;padding:12px 14px;overflow:auto;min-height:0}h2{font-size:13px;margin:0 0 8px;color:#555;letter-spacing:.05em}
+.bl{padding:7px 0;border-bottom:1px solid #eee;display:flex;gap:8px}.tag{flex:none;font-size:11px;padding:1px 6px;border-radius:4px;background:#eee;height:18px}.tag.o{background:#c0392b;color:#fff}.tag.i{background:#2c3e50;color:#fff}.tag.c{background:#e67e22;color:#fff}
+.who{color:#999;font-size:12px;margin-left:auto;flex:none}
+#wf{columns:2;column-gap:16px}.ag{margin-bottom:10px;break-inside:avoid}.ag h3{font-size:13px;margin:0 0 4px}.ag h3 small{color:#999;font-weight:400}.w{font-size:13px;padding:2px 0 2px 10px;border-left:3px solid #ddd;margin:2px 0}.w.d{border-color:#2c7be5}.w.c{border-color:#27ae60}.w em{color:#999;font-style:normal;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:5px 4px;border-bottom:1px solid #eee;vertical-align:top}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}td.r{color:#777;font-size:12px}
+footer{padding:0 20px 12px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}footer code{background:#fff;padding:1px 5px;border-radius:4px;margin-right:4px}
+.legend{font-size:11px;color:#999;margin-bottom:6px}.legend i{display:inline-block;width:10px;height:3px;margin:0 3px 2px 8px;vertical-align:middle}
+</style></head><body>
+<header><h1>hzwest 集成看板</h1><span id="ts"></span><a id="lk-live" target="_blank">线上图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></header>
+<div id="kpi"></div>
+<main>
+<section><h2>卡点 · 等谁</h2><div id="bl"></div></section>
+<section><h2>进行中 · 谁在做什么</h2><div class="legend"><i style="background:#2c7be5"></i>派单（我下发）<i style="background:#27ae60"></i>认领（他们自取）</div><div id="wf"></div></section>
+<section><h2>协作者 · 提交 · 职责</h2><table id="ag"></table></section>
+</main>
+<footer id="rc"></footer>
+<script>
+const SRC = location.protocol === 'file:' ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json' : '../docs/status.json';
+const E = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const short = s => E(s).replace(/（.*$/, '');
+async function load() {
+  const d = await (await fetch(SRC + '?t=' + Date.now(), {cache: 'no-store'})).json(), h = d.headline;
+  const t = new Date(d.generated_at);
+  const age = Math.round((Date.now() - t) / 60000), ts = document.getElementById('ts');
+  ts.textContent = isNaN(age) ? '数据时间 ' + d.generated_at : `数据 ${age} 分钟前（集成任务每 20 分钟更新）`; ts.className = age > 60 ? 'old' : '';
+  for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = d.links[k];
+  const K = [[h.workflows_running, '进行中工作流', `派单 ${h.dispatch_open} · 认领 ${h.live_claims}`], [h.waiting_on_owner, '等你决定', '', 1], [h.blockers, '卡点总数', h.pending_review ? `待审分支 ${h.pending_review}` : '待审分支 0'], [`${h.items_done}/${h.items_total}`, '事项完成', ''], [h.commits_today, '今日提交', `累计 ${h.commits_total} · 文件 ${h.files}`]];
+  document.getElementById('kpi').innerHTML = K.map(([v, a, b, w]) => `<div class="k${w && v ? ' warn' : ''}"><b>${E(v)}</b><span>${a}${b ? ' · ' + E(b) : ''}</span></div>`).join('');
+  const cls = {'待委托人': 'o', '集成': 'i', '协作者': 'c'};
+  const bl = [...d.blockers].sort((a, b) => (b.who == '委托人') - (a.who == '委托人'));
+  document.getElementById('bl').innerHTML = bl.map(b => `<div class="bl"><span class="tag ${cls[b.kind] || ''}">${E(b.kind)}</span><span>${E(b.what)}</span><span class="who">${E(b.who)}</span></div>`).join('') +
+    (d.stale_locks?.length ? `<div class="bl"><span class="tag i">集成</span><span>已完成但认领锁未释放：${d.stale_locks.map(E).join('、')}</span><span class="who">hark-cr</span></div>` : '') || '<p>没有卡点</p>';
+  const by = {};
+  for (const x of d.dispatches_open) for (const a of x.agent.split(/[、,]/)) (by[a.trim()] ||= []).push(`<div class="w d">${E(x.id)} ${E(x.item)} <em>${short(x.state)}</em></div>`);
+  for (const x of d.live_claims) (by[x.agent] ||= []).push(`<div class="w c">${E(x.item)}</div>`);
+  document.getElementById('wf').innerHTML = Object.entries(by).sort((a, b) => b[1].length - a[1].length).map(([a, l]) => `<div class="ag"><h3>${E(a)} <small>${l.length} 项</small></h3>${l.join('')}</div>`).join('');
+  const role = Object.fromEntries(Object.entries(d.roles).flatMap(([k, v]) => k.split(' / ').map(x => [x, v])));
+  const seen = new Set(d.by_agent.map(x => x.agent));
+  const rows = d.by_agent.map(x => [x.agent == '—' ? '无署名（早期/PR #1）' : x.agent, x.today, x.total, role[x.agent] || '']).concat(Object.keys(role).filter(k => !seen.has(k)).map(k => [k, 0, 0, role[k]]));
+  document.getElementById('ag').innerHTML = '<tr><td></td><td class="n r">今日</td><td class="n r">累计</td><td class="r">职责</td></tr>' + rows.map(r => `<tr><td>${E(r[0])}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="r">${E(r[3])}</td></tr>`).join('');
+  document.getElementById('rc').innerHTML = '最近提交：' + d.recent_commits.slice(0, 6).map(c => `<code>${E(c.agent)}</code>${E(c.subj)}`).join('　');
+}
+load().catch(e => document.getElementById('ts').textContent = '读取失败：' + e); setInterval(() => load().catch(() => {}), 60000);
+</script></body></html>

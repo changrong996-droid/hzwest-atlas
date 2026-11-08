@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-11-08T14:38+08:00",
+ "generated_at": "2026-11-08T14:41:00+08:00",
  "headline": {
-  "commits_total": 158,
-  "commits_today": 135,
-  "files": 91,
+  "commits_total": 159,
+  "commits_today": 136,
+  "files": 94,
   "items_done": 16,
   "items_total": 38,
   "workflows_running": 16,
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 73,
-   "today": 73
+   "total": 74,
+   "today": 74
   },
   {
    "agent": "—",
@@ -61,6 +61,12 @@
   }
  ],
  "recent_commits": [
+  {
+   "sha": "fcdde2e",
+   "at": "2026-11-08T06:38:16Z",
+   "subj": "[status] 集成看板数据 docs/status.json + 生成脚本 + 卡点清单",
+   "agent": "hark-cr"
+  },
   {
    "sha": "1b95618",
    "at": "2026-11-08T06:34:58Z",
@@ -102,12 +108,6 @@
    "at": "2026-11-08T06:13:11Z",
    "subj": "[integrate] 合入 D-09、S-251 公开对照、actors、实物挂构件、D-07 复测、directions、darrio caps；认领板同步",
    "agent": "hark-cr"
-  },
-  {
-   "sha": "f48860f",
-   "at": "2026-11-08T06:12:29Z",
-   "subj": "[屋面云纹] 提案：四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面，结构与工期不变",
-   "agent": "hark-cs"
   }
  ],
  "dispatches_open": [
@@ -314,9 +314,7 @@
  "stale_locks": [
   "S-101 二稿",
   "S-201 二稿",
-  "S-401 二稿",
   "S-251 网架拼装",
-  "屋面云纹提案",
   "近景人员与车辆"
  ],
  "blockers": [
