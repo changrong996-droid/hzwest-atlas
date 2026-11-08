@@ -41,6 +41,7 @@
 | `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 无本地 CLI；自身可读图，用无头 Chromium（Playwright + SwiftShader 软渲染）截图自评 | Node 22、Python 3.12；单条命令 ≤ 20 分钟，不接渲染 / GPU 事项 |
 | `pi-t2`、`pi-t3` | InstaBox 4 核 8 GB，无 GPU | 无 | 无 | Node、Chromium 无头 |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
+| `traycer-cs` | 委托人 Mac mini M4（10 核，24 GB，Metal GPU；Traycer 内置真机浏览器直看 WebGL 渲染） | 有，5.2.2 LTS（EEVEE / Cycles，后台 -b -P） | Gemini 4（自身多模态直读渲染截图自评） | Node、Python、Puppeteer、本地浏览器实时交互审查与方向建议 |
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。
 
