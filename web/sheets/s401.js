@@ -134,17 +134,23 @@
     return rows;
   }
   let LAY = null;   // 最近一次绘制的版面（hit 用同一坐标系）
+  // 竖长画布（如右栏 600×984、手机 800×1200）：平面顺时针转 90°，北在上、东在右，图放大约 1.6 倍（GPU 审计 #7 / D-08）。
+  // X(z)、Y(x) 给的是「绘图坐标」，rot 时由 g 的旋转变换到画面；Ly.tf(px, py) 把绘图坐标换成画面坐标（hit、文字用）。
   function layout(w, h, tb) {
     const box = { x0: 8, y0: 8, x1: w - 8, y1: h - 6.5 - (tb || 20) - 2 };
-    const z0 = -172, z1 = 172, x0 = -130, x1 = 130, dw = box.x1 - box.x0 - 8, dh = box.y1 - box.y0 - 30;
-    const s = Math.max(0.05, Math.min(dw / (z1 - z0), dh / (x1 - x0)));
-    const ox = box.x0 + 4 + (dw - (z1 - z0) * s) / 2, oy = box.y0 + 16 + (dh - (x1 - x0) * s) / 2;
-    return { w, h, box, s, X: z => ox + (z - z0) * s, Y: x => oy + (x1 - x) * s };
+    const z0 = -172, z1 = 172, x0 = -130, x1 = 130, dw = box.x1 - box.x0 - 8, dh = box.y1 - box.y0 - 30, ax = box.x0 + 4, ay = box.y0 + 16;
+    const sL = Math.min(dw / (z1 - z0), dh / (x1 - x0)), sP = Math.min(dh / (z1 - z0), dw / (x1 - x0)), rot = sP > sL * 1.15;
+    if (!rot) { const s = Math.max(0.05, sL), ox = ax + (dw - (z1 - z0) * s) / 2, oy = ay + (dh - (x1 - x0) * s) / 2;
+      return { w, h, box, s, rot: false, X: z => ox + (z - z0) * s, Y: x => oy + (x1 - x) * s, tf: (u, v) => [u, v], apply() { } }; }
+    const s = Math.max(0.05, sP), ou = (dh - (z1 - z0) * s) / 2, ov = (dw - (x1 - x0) * s) / 2;
+    return { w, h, box, s, rot: true, X: z => ou + (z - z0) * s, Y: x => ov + (x1 - x) * s, tf: (u, v) => [ax + dw - v, ay + u], apply(g) { g.translate(ax + dw, ay); g.rotate(Math.PI / 2); } };
   }
   function hitOf(p, Ly) {
-    if (p.kind === 'hole') { const r = Math.max(4, 2.5 * Ly.s); return [Ly.X(p.hole.z) - r, Ly.Y(p.hole.x) - r, 2 * r, 2 * r]; }
-    const a = Ly.X(p.box[2]), b = Ly.X(p.box[5]), c = Ly.Y(p.box[3]), e = Ly.Y(p.box[0]);
-    return [Math.min(a, b), Math.min(c, e), Math.abs(b - a), Math.abs(e - c)];
+    let u0, v0, u1, v1;
+    if (p.kind === 'hole') { const r = Math.max(4, 2.5 * Ly.s), u = Ly.X(p.hole.z), v = Ly.Y(p.hole.x); u0 = u - r; u1 = u + r; v0 = v - r; v1 = v + r; }
+    else { u0 = Ly.X(p.box[2]); u1 = Ly.X(p.box[5]); v0 = Ly.Y(p.box[3]); v1 = Ly.Y(p.box[0]); }
+    const [ax, ay] = Ly.tf(u0, v0), [bx, by] = Ly.tf(u1, v1);
+    return [Math.min(ax, bx), Math.min(ay, by), Math.abs(bx - ax), Math.abs(by - ay)];
   }
   function parts(t, ctx) {
     const Ly = (ctx && ctx.w && ctx.h) ? layout(ctx.w, ctx.h, LAY && LAY.w === ctx.w && LAY.h === ctx.h ? LAY.tb : 20) : LAY || layout(600, 420, 20);
@@ -184,10 +190,11 @@
     const box = frame(g, w, h, tbo), Ly = layout(w, h, tbo.tb || 20); Ly.tb = tbo.tb || 20; LAY = Ly;
     const s = Ly.s;
     if (typeof ctx.setScale === 'function') ctx.setScale(s);
-    const X = Ly.X, Y = Ly.Y;   // 北在左、东在上
+    const X = Ly.X, Y = Ly.Y;   // 横栏：北在左、东在上；竖栏（rot）：北在上、东在右
     const st = stats(t), front = pvFront(K, t);
 
     const rimPath = () => { g.beginPath(); d.rim.forEach(([x, z], k) => (k ? g.lineTo(X(z), Y(x)) : g.moveTo(X(z), Y(x)))); g.closePath(); };
+    g.save(); Ly.apply(g);   // 竖栏：以下平面图形整体旋转（文字在旋转外另画，保持正向）
     g.save(); rimPath(); g.clip();
     // 1 屋面块：未铺 = 不填（只留淡红幽灵等高线），在铺 = 浅红，已铺 = 纸白 / 采光顶浅蓝灰
     let curZ = null;
@@ -233,13 +240,14 @@
       g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke();
     }
     // 6 金属屋面施工前沿（红点划线 + 方向）
-    if (curZ != null) { const zz = curZ + S / 2; g.strokeStyle = C.red; g.lineWidth = 1; g.setLineDash([6, 2, 1, 2]); g.beginPath(); g.moveTo(X(zz), Y(128)); g.lineTo(X(zz), Y(-128)); g.stroke(); g.setLineDash([]);
-      label(g, '铺设 →南', X(zz) + 4, Y(126) + 2, C.red, box, { fs: 8.5, sans: true, b: true }); }
-
+    let frontAt = null;
+    if (curZ != null) { const zz = curZ + S / 2; g.strokeStyle = C.red; g.lineWidth = 1; g.setLineDash([6, 2, 1, 2]); g.beginPath(); g.moveTo(X(zz), Y(128)); g.lineTo(X(zz), Y(-128)); g.stroke(); g.setLineDash([]); frontAt = Ly.tf(X(zz), Y(Ly.rot ? -122 : 126)); }
     // 7 选中构件（ctx.focus）：所含屋面块描黄、外框加粗，旁注名称——与 3D 黄框是同一个构件
     const fp = ctx.focus ? partsData().byId.get(ctx.focus) : null;
+    if (fp && fp.tiles) { g.save(); rimPath(); g.clip(); g.fillStyle = 'rgba(240,190,20,.32)'; for (const q of fp.tiles) g.fillRect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.restore(); }
+    g.restore();   // 结束旋转：以下用画面坐标
+    if (frontAt) label(g, Ly.rot ? '铺设 ↓南' : '铺设 →南', frontAt[0] + (Ly.rot ? 4 : 4), frontAt[1] + (Ly.rot ? 10 : 2), C.red, box, { fs: 8.5, sans: true, b: true });
     if (fp) { const YEL = '#e0a800', hb = hitOf(fp, Ly);
-      if (fp.tiles) { g.save(); rimPath(); g.clip(); g.fillStyle = 'rgba(240,190,20,.32)'; for (const q of fp.tiles) g.fillRect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.restore(); }
       g.strokeStyle = YEL; g.lineWidth = 2; g.strokeRect(hb[0] - 1, hb[1] - 1, hb[2] + 2, hb[3] + 2);
       const ly2 = hb[1] - 7 > box.y0 + 16 ? hb[1] - 7 : hb[1] + hb[3] + 8;
       label(g, labelOf(fp), Math.max(box.x0 + 4, Math.min(hb[0], box.x1 - 120)), ly2, '#8a6400', box, { fs: 9, sans: true, b: true }); }
@@ -247,7 +255,7 @@
     // 文字：一行现状 + 方位 + 等高距；图例
     const now = t < K.holes.start ? '提升到位，等待补孔' : t < K.holes.end ? `补提升孔 ${st.holesTot - st.holesOpen} / ${st.holesTot}` : t < K.pv.start ? `屋面封闭 ${st.close.toFixed(0)}%` : t < K.pv.end ? `光伏 ${fmt(st.pv)} / ${fmt(st.pvTot)} m²` : `屋面完成 · 光伏 ${fmt(st.pvTot)} m²`;
     label(g, now, box.x0 + 4, box.y0 + 7, C.ink, box, { b: true, fs: 9.5, sans: true });
-    label(g, '↑东  ←北  等高距 2 m', box.x1 - 4, box.y0 + 7, C.ink2, box, { al: 'r', fs: 8.5, sans: true });
+    label(g, Ly.rot ? '↑北  →东  等高距 2 m' : '↑东  ←北  等高距 2 m', box.x1 - 4, box.y0 + 7, C.ink2, box, { al: 'r', fs: 8.5, sans: true });
     const lg = [['补孔', 'hole'], ['采光顶', C.sky], ['金属屋面', C.clad], ['光伏', C.pv], ['在铺', C.red2]];
     g.font = `8.5px ${SANS}`; let lx = box.x0 + 4; const ly = box.y1 - 7;
     for (const [n, c] of lg) { const tw = g.measureText(n).width; if (lx + 12 + tw > box.x1 - 4) break;
