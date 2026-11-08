@@ -3,6 +3,7 @@
 // 读 HZ.assignCranes() 派给履带吊的每次吊装（p.crane === -1，站位 p.crawl = [x, z]，构件中心 p.c），
 // 吊距 R = 站位到构件中心的水平距离；单吊重量 W 按 docs/rules/crane-reach.md 表 2 取（推算）。
 // 规则：W × 1.1（吊钩、索具） ≤ 机型在 R 处的额定起重量，否则换站位或换机型。
+// --relocate：按 docs/rules/crane-stations.json（D-18 站位调整建议）替换超限吊次的站位，先独立验站位可行，再复算；仍有超 650 t 级即失败。
 // 默认只报告不判失败；加 --strict 时，有 1000 t 级也够不着的吊次就退出码 1（规则落地到 hzseq.js 后再接入 check_all）。
 const { load } = require('./harness');
 const { HZ } = load();
@@ -25,6 +26,21 @@ const KIND = { conc: '现浇（吊斗/钢筋/模板）', plat: '现浇（吊斗/
 const pick = p => (p.tons ? { w: p.tons, src: 'p.tons' } : { w: PICK[p.mat] != null ? PICK[p.mat] : 10, src: 'class' });
 const HOOK = 1.1;
 
+const relocate = process.argv.includes('--relocate');
+if (relocate) {   // D-18：替换站位前先验可行：ground = HZ.crawlClash 无冲突（地面、上空 200 m 净空）；floor = 站在已建成楼面顶 y，3.6×2.8 半宽整块落在楼面盒内，上空到 200 m 无在场构件
+  const S = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../../docs/rules/crane-stations.json'), 'utf8')).rows;
+  const ALL = []; for (const a of HZ.acts) if (a.kind !== 'untemp') for (const p of a.parts) if (!p.grp) for (const b of p.geo.boxes) ALL.push({ a, p, b });
+  const live = (e, t0, t1) => { const a0 = e.p.st != null ? e.p.st : e.a.start, a1 = e.a.kind === 'temp' && e.a.rm ? e.a.rm.end : 1e9; return !(a0 >= t1 || a1 <= t0); };
+  const floorOk = (x, z, y, t0, t1) => ALL.some(e => { const b = e.b; return e.p.st != null && e.p.st + e.p.du <= t0 && !(e.a.kind === 'temp') && Math.abs(b.max[1] - y) < 0.05 && x - 3.6 >= b.min[0] && x + 3.6 <= b.max[0] && z - 2.8 >= b.min[2] && z + 2.8 <= b.max[2]; })
+    && !ALL.some(e => { const b = e.b; return live(e, t0, t1) && b.max[0] > x - 3.6 && b.min[0] < x + 3.6 && b.max[1] > y + 0.02 && b.min[1] < 200 && b.max[2] > z - 2.8 && b.min[2] < z + 2.8; });
+  let moved = 0;
+  for (const r of S) { const p = HZ.K[r.act].parts.find(q => q.crane === -1 && Math.abs(q.c[0] - r.c[0]) < 0.2 && Math.abs(q.c[2] - r.c[1]) < 0.2);
+    if (!p) { console.log(`FAIL check_crane: 站位表 ${r.act} @(${r.c}) 在 HZ 里找不到`); process.exit(1); }
+    const [x, z] = r.neu, t0 = p.st - 0.5, t1 = p.st + p.du + 0.5, ok = r.on === 'ground' ? !HZ.crawlClash(x, z, t0, t1) : floorOk(x, z, r.y, t0, t1);
+    if (!ok) { console.log(`FAIL check_crane: 新站位 ${r.act} (${x},${z}) ${r.on} 不可行`); process.exit(1); }
+    p.crawl = [x, z]; p.crawlY = r.y; moved++; }
+  console.log(`按 docs/rules/crane-stations.json 替换站位 ${moved} 吊（均已验可行）`);
+}
 const seen = new Set(), rows = [];
 for (const a of HZ.acts) for (const p of a.parts) {
   if (p.crane !== -1 || seen.has(p)) continue; seen.add(p);   // 拆除工序（xx~rm）与安装共用同一构件与站位，按一次计
@@ -50,5 +66,6 @@ const over = Object.entries(by).filter(([, b]) => b.超650 || b.超1000);
 if (over.length) { console.log('超限工序（R 上限 = 该工序最重一吊在表 1 中还能吊的最远吊距）：'); console.table(Object.fromEntries(over)); }
 for (const r of none.slice(0, 8)) console.log(`  超 1000 t 级：${r.a.key} @(${r.p.c[0].toFixed(0)},${r.p.c[2].toFixed(0)}) 站位(${r.p.crawl[0].toFixed(0)},${r.p.crawl[1].toFixed(0)}) R=${r.R.toFixed(0)} m W=${r.W.toFixed(0)} t 需 ${r.need.toFixed(1)} t > ${r.c1000} t`);
 const strict = process.argv.includes('--strict');
+if (relocate && n - ok650 - noSt) { console.log(`FAIL check_crane: 按新站位仍超 650 t 级 ${n - ok650 - noSt} 吊`); process.exit(1); }
 if (strict && (none.length || noSt)) { console.log(`FAIL check_crane: ${none.length} 吊超出 1000 t 级包络，${noSt} 吊无站位`); process.exit(1); }
 console.log(`OK check_crane 吊次=${n} 超650=${n - ok650 - noSt} 超1000=${none.length} 需超起=${noSuper}${strict ? '' : '（报告模式）'}`);
