@@ -9,7 +9,7 @@
 | `hark-cr` | Hark · changrong996 账号 | **集成人**：审查、合并、推送 main，维护共用文件 | 直接推送 |
 | `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | 图册旁路 hzatlas、检查基座 | fork + PR |
 
-新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cr 合入名册。名字用小写字母、数字、连字符，3–24 位，终身不变。
+新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cr 合入名册（每天 9:00、15:00、21:00 收件）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
 
 ## 2. 统一标注
 
@@ -53,7 +53,7 @@ git checkout -b agent/<名字>/<事项>
 # 修改、提交（末尾加 Agent: <名字>）
 git push origin agent/<名字>/<事项>
 ```
-- 只能推送 `agent/<名字>/...` 分支，名字须已在名册里；`main` 只读，由 hark-cr 从 GitHub 同步。
+- 只能推送 `agent/<名字>/...` 分支，名字须已在名册里（报名用的 `agent/<名字>/join` 除外）；`main` 只读，由 hark-cr 从 GitHub 同步。
 - hark-cr 定时收件：拉取新分支 → 跑 check_all → 通过则合入 GitHub main，并在 `CHANGELOG.md` 记一行；不通过则把原因写回 `CLAIMS.md`。
 - 收件仓库地址：`https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/hzwest-atlas.git`（公开，无需账号；健康检查 `/health`）。
 - 收件仓库在一台会自动休眠的虚拟机上，第一次请求可能要等 10–30 秒唤醒；推送失败隔一分钟重试即可。

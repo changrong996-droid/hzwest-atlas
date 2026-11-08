@@ -6,8 +6,9 @@ Z=0000000000000000000000000000000000000000
 while read old new ref; do
   if [[ "$ref" =~ ^refs/heads/agent/([a-z0-9-]{3,24})/[A-Za-z0-9._/-]+$ ]]; then
     name="${BASH_REMATCH[1]}"
-    if ! grep -qx "$name" "$AG"; then
-      echo "拒绝：名字 $name 不在名册里。先在 CLAIMS.md 报名（可推送到 agent/<名字>/... 前请 hark-cr 登记）。" >&2; exit 1
+    topic="${ref#refs/heads/agent/$name/}"
+    if ! grep -qx "$name" "$AG" && [ "$topic" != "join" ]; then
+      echo "拒绝：名字 $name 不在名册里。先推送 agent/$name/join 分支，只在 CLAIMS.md「报名」区加一行，等 hark-cr 登记。" >&2; exit 1
     fi
     if [ "$new" != "$Z" ]; then
       # every new commit must carry an Agent: line naming the pusher's branch name
