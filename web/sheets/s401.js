@@ -270,7 +270,7 @@
 
   const plugin = {
     id: 'S-401', name: '屋面', sheet: 'S-401-1', title: '屋面铺设平面', owner: 'hark-cs',
-    window: [679, 781],
+    window: [683, 785],
     // 大数字：屋面封闭率（采光顶 + 金属屋面按块面积，只算铺完的块）；补孔阶段说明为何还是 0（D-22 ③）
     big: t => { const st = stats(t), K = data().K; return { num: Math.round(st.close), unit: '%', label: t < K.sky.start ? `屋面封闭 · 先补提升孔 ${st.holesTot - st.holesOpen}/${st.holesTot}` : '屋面封闭（按面积）' }; },
     draw,
@@ -287,10 +287,10 @@
     // 一套镜头同时满足横屏与竖屏：方位取 150°–170°（屋面短边 249 m 横在画面里），竖长视口也不裁边。
     // 数值由屋面外缘投影拟合（28° 视场，含宿主竖屏拉远系数 aspK）：1288×982 视口外缘约占横 −0.7…0.64、纵 −0.9…0.72（上方让出信息卡）；468×1102 视口横向约 ±0.9。
     cam: [
-      { t: 679, target: [-6, 40, 6], az: 150, el: 62, dist: 675 },
-      { t: 729, target: [6, 40, 6], az: 155, el: 56, dist: 630 },
-      { t: 751, target: [6, 40, 12], az: 160, el: 52, dist: 595 },
-      { t: 781, target: [0, 40, 24], az: 170, el: 45, dist: 520 },
+      { t: 683, target: [-6, 40, 6], az: 150, el: 62, dist: 675 },
+      { t: 733, target: [6, 40, 6], az: 155, el: 56, dist: 630 },
+      { t: 755, target: [6, 40, 12], az: 160, el: 52, dist: 595 },
+      { t: 785, target: [0, 40, 24], az: 170, el: 45, dist: 520 },
     ],
   };
   (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push(plugin);
