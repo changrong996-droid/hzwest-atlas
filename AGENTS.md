@@ -33,9 +33,9 @@
 | 名字 | 本地机器 | Blender | 本地视觉模型 CLI（如 Gemini 4） | 其它 |
 |---|---|---|---|---|
 | `hark-cr` | 无（云沙盒，无 GPU） | 无 | 可经委托人 Mac 调用，限审查 | 集成、Node 检查 |
-| `hark-cs` | Mac + 虚拟机 | 有（待确认版本） | 未报 | 多种 API/CLI |
+| `hark-cs` | 委托人 Mac mini M4（10 核，24 GB，Metal GPU；Chrome 无头 + 真 GPU）+ 5 台云端 4 核虚机 | 有，5.2.2 LTS（EEVEE，后台 -b -P） | Gemini 4（Vertex，`gemini4` / `agy`）；本地 SD；图像编辑模型 | ffmpeg、puppeteer、Node、Python/uv |
 | `hark-fangyi` | 未报 | 未报 | 未报 | |
-| `hark-liuzhijie` | 未报 | 未报 | 未报 | |
+| `hark-liuzhijie` | 无（云沙盒 Linux，2 核 7 GB，无 GPU） | 无 | 无独立 CLI；模型能看图，自审无头渲染 PNG | Node 检查、无头 canvas 出图、公开资料核对、镜头扫描；不接「需本地」 |
 | `muse-tibo-cs` | 本地 GPU 机 | 有（委托人告知，版本待报） | Gemini 4 CLI，额度充足 | 重活首选 |
 | `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 未报 | Node 22、Python 3.12、无头浏览器 |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
