@@ -182,15 +182,18 @@
     return HITS.map(o => ({ id: o.id, label: o.label, hit: o.hit.slice(), box: o.box.slice() }));
   }
 
-  // 镜头：每 20 天一帧，目标 = 当天在吊构件中心的平均（没有就全场中心），从东南高处俯看，距离随在吊范围放大
+  // 镜头主体：这张图是全场资源图，主体 = 当天已开工的全部构筑工序（在建 + 已完工；吊机服务的就是它们）
+  function subjKeys(HZ, t) { const ks = []; for (const a of HZ.acts) if (a.kind !== 'milestone' && a.kind !== 'untemp' && a.kind !== 'temp' && t >= a.start) ks.push(a.key); return ks; }
+  // 镜头：每 10 天一帧，框住主体工序的构件外包（目标 = 外包中心，距离按 28° 视场让外包对角线约占画面），从东南高处俯看
   let CAM = null;
   function cams(HZ) {
     const m = model(HZ); if (CAM && CAM.sig === m.sig) return CAM.k;
     const out = [], [W0, W1] = m.win;
-    for (let t = W0; t <= W1 + 1e-9; t += 20) { const s = stateAt(HZ, t + 0.5, m), L = s.live;
-      const tx = L.length ? L.reduce((a, l) => a + l.cx, 0) / L.length : 0, tz = L.length ? L.reduce((a, l) => a + l.cz, 0) / L.length : 0;
-      const spread = L.length ? Math.max(120, ...L.map(l => Math.hypot(l.x - tx, l.z - tz) * 2)) : 500;
-      out.push({ t, target: [Math.round(tx * 0.7), 20, Math.round(tz * 0.7)], az: 135, el: 38, dist: Math.round(clamp(spread * 1.6, 320, 900)) }); }
+    for (let t = W0; t <= W1 + 1e-9; t += 10) { const ks = new Set(subjKeys(HZ, t + 0.5)), mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+      for (const a of HZ.acts) if (ks.has(a.key)) for (const p of a.parts) if (p.geo && p.geo.min) for (let i = 0; i < 3; i++) { mn[i] = Math.min(mn[i], p.geo.min[i]); mx[i] = Math.max(mx[i], p.geo.max[i]); }
+      if (mn[0] > mx[0]) { mn[0] = mn[2] = -200; mx[0] = mx[2] = 200; mn[1] = 0; mx[1] = 40; }
+      const tg = [(mn[0] + mx[0]) / 2, Math.max(2, (Math.max(0, mn[1]) + mx[1]) / 2), (mn[2] + mx[2]) / 2], dg = Math.hypot(mx[0] - mn[0], mx[2] - mn[2], Math.max(0, mx[1] - Math.max(0, mn[1])));
+      out.push({ t, target: tg.map(v => Math.round(v)), az: 150, el: 50, dist: Math.round(clamp(dg * 0.45 / Math.tan(14 * Math.PI / 180) / 2, 120, 1100)) }); }
     CAM = { sig: m.sig, k: out }; return out;
   }
 
@@ -200,7 +203,7 @@
     big: t => big(G.HZ, t),
     draw, parts,
     get cam() { return cams(G.HZ); },
-    subject: () => ['crane', 'ycrane'],
+    subject: t => subjKeys(G.HZ, t),
     model: () => model(G.HZ), stateAt: t => stateAt(G.HZ, t),
   };
   (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push(plugin);
