@@ -25,6 +25,7 @@
   const SANS = '"PingFang SC","Noto Sans CJK SC","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, k) => a + (b - a) * k;
   const VPUB = 120e4;   // 站房地下土方 120 万 m³（科极网 2020-09-16）
+  const TRUCK = 15;     // 一车出土约 15 m³（常见重型自卸车的松方装载量，按此折算车次；不是公开数字，是换算假设）
   const prog = (t, a, b) => (b <= a ? (t >= b ? 1 : 0) : clamp((t - a) / (b - a), 0, 1));
 
   // ---- 几何（米；z 向南为正，y 向上）----
@@ -135,6 +136,12 @@
     s.vFrac = clamp(vd / m.Vtot, 0, 1); s.vol = s.vFrac * VPUB;
     s.layers = (s.base >= 1 ? 1 : 0) + (rb.B3 >= 1 ? 1 : 0) + (rb.B2 >= 1 ? 1 : 0) + (rb.B1 >= 1 ? 1 : 0);
     return s;
+  }
+
+  // 土方车流：车次全部由开挖进度换算（不手排）——今天出土车次 = 前后半天已挖方量之差 ÷ 每车方量；累计 = 已挖 ÷ 每车方量
+  function trucks(HZ, t) {
+    const v0 = stateAt(HZ, t - 0.5).vol, v1 = stateAt(HZ, t + 0.5).vol, s = stateAt(HZ, t);
+    return { day: Math.max(0, Math.round((v1 - v0) / TRUCK)), cum: Math.round(s.vol / TRUCK), total: Math.round(VPUB / TRUCK) };
   }
 
   // 大数字：全场已挖土方（万 m³）——4 层地下真正的工程量；挖完后标签改报地下结构层数
@@ -310,6 +317,13 @@
       const items = s.tiles.map(o => ({ q: o.q, d: o.dig, base: o.base, roof: o.roof, live: o.dig < 0 && o.dig > o.q.depth + 1e-6 }));
       items.push({ q: m.core, d: s.coreDig, base: s.base, roof: s.lv[2] >= 1 ? 0 : 0, live: s.coreDig < 0 && s.base < 1 });
       items.sort((a, b) => a.q.z0 - b.q.z0 || a.q.x0 - b.q.x0).forEach(o => pit(o.q, o.d, o.base, o.roof, o.live));
+      // 土方车：正在出土的坑往近的场地边（北 z = −135 / 南 z = 150）发车；小车数 = 该坑今天出土车次 ÷ 40（1–12 辆），虚线为出土道路，由前后半天的开挖深度差换算
+      { const vs = VPUB / m.Vtot, sa = stateAt(HZ, t - 0.5), sb = stateAt(HZ, t + 0.5); g.fillStyle = C.temp;
+        const runs = m.tiles.map((q, i) => [q, q.area * (sa.tiles[i].dig - sb.tiles[i].dig)]).concat([[m.core, m.core.area * (sa.coreDig - sb.coreDig)]]);
+        for (const [q, dv] of runs) { const day = dv * vs / TRUCK; if (!(day > 1)) continue;
+          const n = clamp(Math.round(day / 40), 1, 12), xc = (q.x0 + q.x1) / 2, south = q.z0 + q.z1 >= 0, za = south ? q.z1 : q.z0, zb = south ? 150 : -135;
+          const pa2 = P2(xc, 0, za), pb2 = P2(xc, 0, zb); g.strokeStyle = C.temp; g.lineWidth = 0.8; g.setLineDash([3, 2]); g.beginPath(); g.moveTo(pa2[0], pa2[1]); g.lineTo(pb2[0], pb2[1]); g.stroke(); g.setLineDash([]);
+          for (let i = 0; i < n; i++) { const f = ((t * 3 + i / n) % 1 + 1) % 1, pp = P2(xc, 0, za + (zb - za) * f); g.fillRect(pp[0] - 3.5, pp[1] - 1.8, 7, 3.6); } } }
       for (const o of items) { if (!(o.d < -0.05 || o.roof > 0)) continue; const q = o.q, c = [[q.x0, 0, q.z0], [q.x1, 0, q.z0], [q.x1, o.d, q.z1], [q.x0, o.d, q.z1], [q.x0, 0, q.z1], [q.x1, 0, q.z1]].map(v => P2(v[0], v[1], v[2]));
         const xs2 = c.map(v => v[0]), ys2 = c.map(v => v[1]), r = [Math.min(...xs2), Math.min(...ys2), Math.max(...xs2) - Math.min(...xs2), Math.max(...ys2) - Math.min(...ys2)];
         const r2 = [Math.max(r[0], aa.x0), Math.max(r[1], aa.y0), 0, 0]; r2[2] = Math.min(r[0] + r[2], aa.x1) - r2[0]; r2[3] = Math.min(r[1] + r[3], aa.y1) - r2[1];
@@ -340,7 +354,9 @@
       const nw = g.measureText(nt).width; g.font = `600 ${Math.round(FS * 0.32)}px ${SANS}`; g.fillStyle = C.ink2; g.fillText(B.unit, cx + nw + 4, box.y0 + 14 + FS);
       g.font = `${10}px ${SANS}`; g.fillStyle = C.ink2; let ly = box.y0 + 32 + FS;
       const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > gut - 6) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 6; } };
-      wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9); ly += 4;
+      wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9);
+      { const tk = trucks(HZ, t); if (tk.cum > 0) wrap(tk.day > 0 ? '今天约 ' + tk.day + ' 车出土 · 累计 ' + (tk.cum / 1e4).toFixed(1) + ' 万车' : '出土共 ' + (tk.cum / 1e4).toFixed(1) + ' 万车（每车约 ' + TRUCK + ' m³）', C.temp, 9); }
+      ly += 4;
       for (const n of s.cur.slice(0, 3)) wrap('▸ ' + n, C.red, 10);
       if (!s.cur.length && t >= m.win[1]) wrap('地下结构封顶，转入地上', '#2f7a3a', 10);
       // 工序条：本剖面全部工序在时间窗内的位置，当前时刻一根红竖线
@@ -368,6 +384,7 @@
     id: 'S-101', name: '地下',
     window: [0, 365],
     big: t => big(G.HZ, t),
+    trucks: t => trucks(G.HZ, t),
     draw, parts,
     // 镜头关键帧（米、度）：model().cam 从分坑节拍推导（见 model）；HZ 未就绪时退回一帧全景。相机高度 = dist·sin(el) > 0，不进地下
     get cam() { return G.HZ && G.HZ.K && G.HZ.K.found ? model(G.HZ).cam : [{ t: 0, target: [0, 0, 0], az: -112, el: 30, dist: 540 }]; },

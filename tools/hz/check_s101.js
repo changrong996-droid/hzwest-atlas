@@ -31,6 +31,10 @@ for (let t = W0; t <= W1 + 1e-9; t += 0.5) {
 }
 if (Math.abs(lastV - 120) > 1e-6) fail('时间窗结束时土方不是 120 万 m³');
 if (!/4 \/ 4 层/.test(P.big(W1).label)) fail('收尾标签没有报 4 / 4 层');
+// 土方车流：累计车次单调、收尾 = 120 万 m³ ÷ 每车方量（约 8 万）；挖土期间每天有车，日车次之和 ≈ 总车次
+{ let lc = -1, sum = 0; for (let t = W0; t <= W1; t += 1) { const k = P.trucks(t); if (k.cum < lc) fail(`t=${t} 累计车次倒退`); lc = k.cum; sum += k.day; }
+  const kE = P.trucks(W1); if (kE.cum !== kE.total || kE.total < 7e4 || kE.total > 9e4) fail(`收尾累计车次 ${kE.cum} / ${kE.total}`);
+  if (Math.abs(sum - kE.total) / kE.total > 0.05) fail(`日车次之和 ${sum} 与总车次 ${kE.total} 差太多`); }
 { const M0 = P.model(); for (let t = W0; t <= W1; t += 1) { const s = P.stateAt(t);
   for (const o of s.tiles) { if (o.base > 0 && o.dig > o.q.depth + 1e-9) fail(`t=${t} 分坑 x=${o.q.x0} 未挖到底就浇底板`); if (o.roof > 0 && o.base < 1) fail(`t=${t} 分坑 x=${o.q.x0} 顶板早于底板`); }
   const tl = s.tiles.find(o => o.q.x0 <= 39 && o.q.x1 > 39 && o.q.z0 > 0), W = s.wings[0]; if (tl && (Math.abs(tl.dig - W.dig) > 1e-6 || Math.abs(tl.roof - W.roof) > 1e-6)) fail(`t=${t} 斜俯图与剖面的 x=39 南翼分坑状态不一致`); }
