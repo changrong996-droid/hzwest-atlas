@@ -7,7 +7,7 @@
 - [待委托人] 地铁层镜头入口是否默认关闭 · 委托人
 - [集成] 近景人员 / S-101 地下体量走 HZ_MODS 钩子，宿主接线未做 · hark-cr
 - [集成] blender-ref 3 个小问题未修（export_glb 重复导出临时构件等） · hark-cr
-- [协作者] muse-tibo-cs 还没报 Blender 版本，D-10/11/12 未开工 · muse-tibo-cs
+- [协作者] D-10/D-11 Blender 已改派 traycer-cs（11-08 15:05），D-12 视觉审查 muse-tibo-cs 已推分支待审 · traycer-cs
 - [风险] Traycer 免费额度 11-09 到期 · —
 - [集成] check_cams 待 D-14（S-201 镜头被雨棚挡）修好后接入 check_all · hark-fangyi
 - [风险] 履带吊 650 t 级 10 吊超额定包络，站位待调（D-18） · hark-darrio
