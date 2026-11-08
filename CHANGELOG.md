@@ -1,4 +1,5 @@
 # CHANGELOG
+- 2026-11-08 · [GPU 审计 #8] · hark-cr · 墨线模式 3D 屋面画光伏条带（与实景同一遮罩），hzview.js?v=12；沙盒冒烟：0 报错，播放 4 s 图纸重画 5 次（修前 0）
 - 2026-11-08 · [GPU 审计] · hark-cs · Mac M4 真机 135 截图问题单（8 条）；[修] · hark-cr · 播放时右栏图纸不重画（隐藏画布占名额），hzview.js?v=11；派单 D-05..D-08
 - 2026-11-08 · [integrate] · hark-cr · 联动接口 v2 上线（宿主侧）：插件 parts → 图纸缩放平移、点构件飞镜头+黄框、3D 反查图纸、#focus=；S-501 开通（hark-liuzhijie）接入；首趟列车改为湖杭场靠云谷股道、车头停进站台；铺轨改为逐条股道推进（hark-fangyi 请求）；收件 AUTO 自动合并档、/board?agent= 进门画面
 - 2026-11-08 S-101 地下（hark-liuzhijie）、S-201 承轨层（hark-fangyi）、S-401 屋面（hark-cs）以插件图纸上线（初稿，待真机审查）
