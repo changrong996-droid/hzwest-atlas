@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { load, makeCtx, sheetCtx } = require('./harness');
-const { G, HZ, HZS } = load({ extra: ['web/hzatlas.js'] });
+const { G, HZ, HZS } = load({ extra: ['web/hzreal.js', 'web/sheets/s101.js', 'web/sheets/s201.js', 'web/sheets/s251.js', 'web/sheets/s401.js', 'web/sheets/s501.js', 'web/hzatlas.js'] });
 const HZA = G.HZA;
 HZ.make();
 const SH = HZS.make(HZ);
@@ -25,7 +25,15 @@ check('页序/on 与 hzview.js SHEETS_ALL 不一致', () => {
 
 const keys = Object.keys(HZA.SHEETS);
 // 2
-for (const k of keys) if (typeof SH[HZA.SHEETS[k].fn] !== 'function') fail(k + ' 的 fn 在 SH 中不存在或非函数');
+for (const k of keys) {
+  const s = HZA.SHEETS[k];
+  if (s.plugin) {
+    const pl = (G.HZ_SHEET_PLUGINS || []).find((p) => p.id === s.plugin);
+    if (!pl || typeof pl.draw !== 'function') fail(k + ' 的 plugin ' + s.plugin + ' 在 HZ_SHEET_PLUGINS 中不存在或 draw 非函数');
+  } else if (typeof SH[s.fn] !== 'function') {
+    fail(k + ' 的 fn 在 SH 中不存在或非函数');
+  }
+}
 // 3
 const canv = new Set();
 for (const k of keys) {
@@ -156,5 +164,20 @@ for (const s of ['HZA.planMap', 'HZA.planCamPose']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
 if (!atlasHtml.includes('hzatlas.js?v=6')) fail('hzatlas.html 缺少 hzatlas.js?v=6');
+
+// 13 接新图断言
+check('接新图断言', () => {
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-101').map((s) => s.id)), JSON.stringify(['S-101-1']));
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-201').map((s) => s.id)), JSON.stringify(['S-201-1']));
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-401').map((s) => s.id)), JSON.stringify(['S-401-1']));
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-501').map((s) => s.id)), JSON.stringify(['S-501-1']));
+  assert.strictEqual(HZA.resolve('HZW-S-101-1'), 'S-101-1');
+  assert.strictEqual(HZA.resolve('S-501-1'), 'S-501-1');
+  assert.strictEqual(JSON.stringify(HZA.sheetsOf('S-251').map((s) => s.id)), JSON.stringify(['S-251-1']));
+  assert.strictEqual(HZA.resolve('HZW-S-251-1'), 'S-251-1');
+  assert.strictEqual(HZA.FORMS['S-251'].sheet.status, '有');
+  assert.strictEqual(HZA.FORMS['S-501'].sheet.status, '有');
+  assert.strictEqual(HZA.FORMS['S-101'].sheet.status, '有');
+});
 
 console.log('OK check_atlas pages=' + Object.keys(HZA.PAGES).length + ' sheets=' + keys.length + ' aliases=' + nal);
