@@ -95,6 +95,7 @@ aside .x{position:absolute;top:12px;right:14px;border:0;background:none;font-siz
 <script>
 const SRC = location.protocol === 'file:'
   ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json'
+  : location.pathname.split('/').length === 2 ? '/status.json'   // 本机看板服务（端口 8820）根目录
   : '../docs/status.json';
 const URL_ = new URLSearchParams(location.search).get('src') || SRC; // ?src= 只给本地截图测试用
 const E = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -144,7 +145,7 @@ const lvl = j => j.returned ? 'amber' : j.wait?.level === 'red' ? 'red' : j.wait
 function render() {
   const d = D, t = parseT(d.generated_at), age = (Date.now() - t) / 60000;
   const fr = document.getElementById('fresh'); fr.className = 'fresh' + (age > 60 ? ' old' : '');
-  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : (age > 60 ? `数据过期：${dur(Math.round(age))}前（集成任务可能停了）` : `${dur(Math.round(age))}前更新 · 北京 ${bj(t)}`) + (F.rough ? ' · 粗略模式（数据还没有 flow 字段）' : '');
+  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : (age > 60 ? `数据过期：${dur(Math.round(age))}前（集成任务可能停了）` : `${dur(Math.round(age))}前更新 · 北京 ${bj(t)}`) + (F.rough ? ' · 粗略模式（数据还没有 flow 字段）' : d.flow_source === 'local' ? ' · 流程由本机推算' : '');
   for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = (d.links || {})[k] || '#';
   const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
   const J = Object.fromEntries(F.jobs.map(j => [j.id, j]));
