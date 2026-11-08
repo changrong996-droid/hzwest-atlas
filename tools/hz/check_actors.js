@@ -9,6 +9,13 @@ const fail = m => { console.log('FAIL check_actors: ' + m); process.exit(1); };
 const M = (G.HZ_MODS || []).find(m => m.id === 'actors');
 if (!M || typeof M.build !== 'function' || typeof M.update !== 'function') fail('未登记 HZ_MODS actors（build / update）');
 M.build(null, HZ);
+// D-16：opts.clip 传给线材质 clippingPlanes（用桩 THREE 验证；不传时材质无 clippingPlanes）
+{ const mk = () => { const made = {}; const T = { BufferGeometry: function () { this.setAttribute = () => {}; this.setDrawRange = () => {}; }, BufferAttribute: function () {}, DynamicDrawUsage: 1,
+    LineBasicMaterial: function (o) { Object.assign(this, o); made.mat = this; }, LineSegments: function (g, m) { this.geometry = g; this.material = m; } }; return { T, made }; };
+  const sc = { add: () => {} }, plane = { normal: [1, 0, 0], constant: -39 };
+  let k = mk(); M.build(sc, HZ, k.T, { clip: [plane] }); if (!k.made.mat || !Array.isArray(k.made.mat.clippingPlanes) || k.made.mat.clippingPlanes[0] !== plane) fail('D-16 opts.clip 未传到线材质 clippingPlanes');
+  k = mk(); M.build(sc, HZ, k.T); if (k.made.mat.clippingPlanes) fail('D-16 没传 clip 时不应有 clippingPlanes');
+  M.build(null, HZ); }
 const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
 const ALL = []; for (const a of HZ.acts) for (const p of a.parts) { if (p.grp || p.cells || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) ALL.push({ p, a, b }); }
 const live = t => ALL.filter(e => { const s = stOf(e.p, t); return s >= 0 && s !== 3; });

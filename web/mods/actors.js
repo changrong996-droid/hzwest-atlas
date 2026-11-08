@@ -2,7 +2,8 @@
 // 按 HZ.acts 当前在做的工序，在作业面生成墨线小人（站 / 推 / 焊 / 指挥 4 种姿态）与车辆（混凝土罐车、平板车、履带吊）。
 // 规则：只在镜头 < 120 m 时出现；数量随工序强度（在建构件数 × 工种班组系数）变；落在在场构件的顶面上（不穿模、不悬空），
 // 地面 = y 0（基础底板顶面同高）。位置每小时按工序重排，确定性（同一时刻任何机器结果相同）。
-// 接口：window.HZ_MODS.push({ id:'actors', build(scene, HZ, THREE), update(t, cam) })；THREE 由宿主传第 3 个参数（hzview 里 THREE 是模块，不在 window 上）。
+// 接口：window.HZ_MODS.push({ id:'actors', build(scene, HZ, THREE, opts), update(t, cam) })；THREE 由宿主传第 3 个参数（hzview 里 THREE 是模块，不在 window 上）；
+// opts.clip（THREE.Plane[]，可选）：给线材质加 clippingPlanes，剖切时小人与车一起切（D-16）。
 // 不传 THREE（Node 检查）时只算布置与线段缓冲，不建 three.js 对象。
 (function () {
   'use strict';
@@ -160,10 +161,10 @@
 
   const MOD = { id: 'actors', R_SHOW, FIG, VEH, TRADE, stOf, plan, _clear: clear, _supported: supported, _index: index,
     stats: { figs: 0, vehs: 0, cranes: 0, shown: 0, segs: 0 },
-    build(scene, HZ, THREE) { this.HZ = HZ; this.I = index(HZ); this.buf = new Float32Array(MAXSEG * 6); this.n = 0; this.key = null; this.P = null; this.lastCam = null;
+    build(scene, HZ, THREE, opts) { opts = opts || {}; this.clip = Array.isArray(opts.clip) && opts.clip.length ? opts.clip : null; this.HZ = HZ; this.I = index(HZ); this.buf = new Float32Array(MAXSEG * 6); this.n = 0; this.key = null; this.P = null; this.lastCam = null;
       THREE = THREE || ROOT.THREE;
       if (THREE && scene) { const g = new THREE.BufferGeometry(); this.attr = new THREE.BufferAttribute(this.buf, 3); this.attr.setUsage && this.attr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('position', this.attr); g.setDrawRange(0, 0);
-        this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x1c1a17, transparent: true, opacity: 0.92 })); this.obj.frustumCulled = false; this.obj.renderOrder = 5; this.obj.name = 'hz-actors'; scene.add(this.obj); }
+        this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial(Object.assign({ color: 0x1c1a17, transparent: true, opacity: 0.92 }, this.clip ? { clippingPlanes: this.clip } : {}))); this.obj.frustumCulled = false; this.obj.renderOrder = 5; this.obj.name = 'hz-actors'; scene.add(this.obj); }
       return this; },
     update(t, cam) { if (!this.I) return 0; const key = Math.floor(t * 24); let dirty = false; this.calls = (this.calls || 0) + 1;
       // 播放时每帧都可能跨小时：重排最多每 6 帧一次（时间跳变 > 0.5 天时立即重排），把 2–3 ms 的布置摊到多帧
