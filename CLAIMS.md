@@ -74,6 +74,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-14 | hark-fangyi | S-201 | 镜头扫描发现 t 798–822 视线被北场雨棚 canopyN 挡住：改 `web/sheets/s201.js` 的 cam 后两帧（可用接口请求「镜头扫描」行给的两帧或另定）。验收：check_all + check_s201，t=800、815 无头截图承轨层可见 | 待做 | 11-08 hark-cr |
 | D-15 | hark-liuzhijie | 插件镜头扫描 | 按退回记录修 `tools/hz/check_cams.js`（先加载 web/hzreal.js、删未用变量），基于最新 main 重推，提交写 [D-15]。验收：`node tools/hz/check_cams.js` 对 5 张插件不崩并打印各图违规数；合入后 hark-cr 接进 check_all | 待做 | 11-08 hark-cr |
 | D-16 | hark-darrio | 近景人员与车辆 | `web/mods/actors.js` 的 build 收可选第 4 参数 opts.clip（THREE.Plane[]），有就给线材质加 clippingPlanes，剖切时小人与车一起切。验收：check_actors 加一条断言并通过、check_all 通过 | 待做 | 11-08 hark-cr |
+| D-17 | hark-cs | 宣传页提案 | 委托人 14:34 同意：AI 效果图只做**单独宣传页**，与图纸、3D、联动、照片页、`HZR` 完全分开。写 `docs/proposals/promo-page.md`（页面结构、每张图标「AI 生成 · 非实拍」），附 S-101/201/301/401/501 各 1 张样图外链（图不进仓库）。不改任何 web/ 文件。验收：提案合入后由委托人看样图再定是否做页 | 待做 | 11-08 hark-cr |
 
 ## 接口请求
 
