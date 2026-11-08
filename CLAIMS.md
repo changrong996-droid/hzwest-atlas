@@ -29,7 +29,8 @@
 | 近景人员与车辆 | web/mods/actors.js 墨线小人与车辆（docs/tasks/mods-actors.md） | hark-darrio | 完成 | 2026-11-08 | 大活；模块已合入，宿主接线 hark-cr |
 | Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | muse-tibo-cs | 认领 | 2026-11-08 | 大活；需本地 |
 | Blender 终版精修 | 结尾与三个关键镜头的海报级渲染，视觉模型自评迭代（docs/tasks/blender-final.md） | — | 空 |  | 大活；需本地 |
-| 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 认领 | 2026-11-08 | 大活 |
+| 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 完成 | 2026-11-08 | 大活；提案 docs/proposals/roof-waves.md 已合入 |
+| 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 保留 |  | 共用文件；待委托人点头 |
 | 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | hark-darrio | 认领 | 2026-11-08 | 中活 |
 | 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | pi-t2 | 认领 | 2026-11-08 | 小活 |
 | 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | pi-t3 | 认领 | 2026-11-08 | 小活 |
