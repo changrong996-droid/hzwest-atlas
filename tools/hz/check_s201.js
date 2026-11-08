@@ -70,5 +70,9 @@ for (const id of ['G-S03', 'G-N09', 'P-S2', 'D-S05', 'B-N03']) { const ctx = she
     for (const q of ps) { y0 = Math.min(y0, q.hit[1]); y1 = Math.max(y1, q.hit[1] + q.hit[3]); x0 = Math.min(x0, q.hit[0]); x1 = Math.max(x1, q.hit[0] + q.hit[2]); }
     if ((y1 - y0) < 0.8 * (h - 40)) fail(`${w}x${h} 平面只占高度 ${(y1 - y0).toFixed(0)} px`);
     const g = ps.find(q => q.id === 'G-S01'); if (!(g.hit[3] > g.hit[2])) fail(`${w}x${h} 转向后股道应为竖向`); } }
+// D-26：北场铺轨开始后（如 t=760、850）图上有 R-0013 注记，之前没有；四档画布都要写得下
+for (const [w, h] of sizes) for (const [t, want] of [[K.trackN.start - 20, false], [760, true], [850, true]]) {
+  const c = makeCtx(); PL.draw(c.g, w, h, t, sheetCtx()); const has = c.texts.some(s => /R-0013/.test(String(s)));
+  if (has !== want) fail(`D-26 北场注记 t=${t} ${w}x${h} ${want ? '缺' : '不应出现'}`); }
 console.log(`OK check_s201 parts_runs=${pRuns} parts_min=${pMin} hz_follow=ok`);
 console.log(`OK check_s201 times=7 sizes=4 runs=${runs} cams=${PL.cam.length} cam_bad=0 track=${S.kmTot.toFixed(1)}km lines=${S.lines}`);

@@ -172,6 +172,9 @@
       label(g, cur ? '在做：' + cur : (t < d.keys[0].start ? '承轨层尚未开工' : t >= T1 ? '股道全部贯通' : '等待下一道工序'), L.B.x0 + 4, L.B.y0 + 7, cur ? C.red : C.ink2, L.B, { b: true, fs: 9, sans: true });
       label(g, L.rot ? '↑东  北←' : '↑北  东→', L.B.x1 - 4, L.B.y0 + 7, C.ink2, box, { al: 'r', fs: 8.5, sans: true });
       label(g, '三维自东向西看：南场在左', L.B.x1 - 4, L.B.y0 + 19, C.ink3, box, { al: 'r', fs: 8, sans: true });   // D-19 ②：图纸与三维方位不同，标明免误读（三维 cam az 62°–96°，机位都在东侧）
+      // D-26：北场铺轨开始后加小注（排程不动，只说明模型与卫星影像的差）；放屏幕固定层左上、「在做」下一行，与右侧方位注互相避让，放不下逐级缩短
+      if (t >= G.HZ.K.trackN.start) { const nt = ['北场铺轨按设计工期示意，卫星影像显示实际晚于模型（R-0013）', '北场铺轨按设计工期示意，实际偏晚（R-0013）', '北场实际铺轨偏晚（R-0013）'];
+        nt.some(s => label(g, s, L.B.x0 + 4, L.B.y0 + 19, YK.N.ink, L.B, { fs: 8, sans: true, bg: true })) || nt.some(s => label(g, s, L.B.x0 + 4, L.B.y0 + 31, YK.N.ink, L.B, { fs: 8, sans: true, bg: true })); }
       if (F) card(g, F, t, L.B, L.band); else if (L.band) roster(g, t, L.B, L.band);
       frame(g, w, h, Object.assign({ noFill: true }, tbo)); });
     return S;
@@ -255,6 +258,7 @@
     { t: 365, target: [0, 5, 10], az: 62, el: 24, dist: 520 },
     { t: 420, target: [40, 10, 20], az: 70, el: 14, dist: 380 },
     { t: 580, target: [90, 13, 70], az: 84, el: 7, dist: 300 },
+    { t: 636, target: [90, 13, 47], az: 86, el: 6, dist: 280 },    // D-26：南区屋盖拼好仍在胎架上，挡最后一条视线；hark-cr 以 --cam= 试过违反 0
     { t: 790, target: [90, 15, -60], az: 96, el: 4, dist: 300 },   // D-14：压低到雨棚 canopyN 下沿以下，避开 t 798–822 遮挡
     { t: 900, target: [60, 15, 0], az: 88, el: 4, dist: 360 },
   ];
