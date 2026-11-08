@@ -2,7 +2,7 @@
 // 无头检查 S-201 承轨层插件：时间窗内 7 个时刻 × 2 档画布绘制不抛错、标题栏图号正确、大数字合理；镜头关键帧不进实体、不入地下。
 const path = require('path');
 const { load, sheetCtx } = require('./harness');
-const { G, HZ, makeCtx } = load({ extra: ['web/sheets/s201.js'] });
+const { G, HZ, makeCtx } = load({ extra: ['web/hzreal.js', 'web/sheets/s201.js'] });
 HZ.make();
 const fail = m => { console.log('FAIL check_s201: ' + m); process.exit(1); };
 const PL = (G.HZ_SHEET_PLUGINS || []).find(p => p.id === 'S-201');
@@ -41,4 +41,26 @@ for (const k of PL.cam) {
     if (p[0] > b.min[0] - 1 && p[0] < b.max[0] + 1 && p[1] > b.min[1] - 1 && p[1] < b.max[1] + 1 && p[2] > b.min[2] - 1 && p[2] < b.max[2] + 1) { camBad++; console.log(`  cam t=${k.t} 机位在 ${a.key} 内`); } }
 }
 if (camBad) fail('镜头违反 ' + camBad);
+// ---- 联动接口 v2：parts ----
+let pRuns = 0, pMin = Infinity;
+for (const [w, h] of [[560, 420], [1258, 540], [300, 160]]) { const ctx0 = sheetCtx(); PL.draw(makeCtx().g, w, h, T0, ctx0);
+  for (let t = T0; t <= T1; t += 25) { const ps = PL.parts(t, {}); if (!Array.isArray(ps) || ps.length < 1) fail(`parts(${t}) 为空`); pMin = Math.min(pMin, ps.length);
+    const ids = new Set(); for (const q of ps) { if (!q.id || ids.has(q.id)) fail('part id 缺失或重复 ' + q.id); ids.add(q.id);
+      const [x, y, hw, hh] = q.hit; if (![x, y, hw, hh].every(isFinite) || hw <= 0 || hh <= 0 || x < 0 || y < 0 || x + hw > w + 0.5 || y + hh > h + 0.5) fail(`${q.id} hit 出界 ${q.hit} @${w}x${h}`);
+      const b = q.box; if (!b || b.length !== 6 || !b.every(isFinite) || !(b[3] > b[0] && b[4] > b[1] && b[5] > b[2])) fail(`${q.id} box 无效 ${b}`); }
+    for (const k of ['G-S01', 'G-N09', 'P-S6', 'P-N5', 'D-S01', 'B-N26']) if (!ids.has(k)) fail('缺 part ' + k);
+    pRuns++; } }
+// 选中绘制 + 身份卡（含实物记录与偏差）
+for (const id of ['G-S03', 'G-N09', 'P-S2', 'D-S05', 'B-N03']) { const ctx = sheetCtx(); ctx.focus = id; ctx.zoom = 3; try { PL.draw(makeCtx().g, 560, 420, 760, ctx); } catch (e) { fail('focus ' + id + ' ' + e.stack); } const I = PL.info(id, 760); if (!I || !I.lines.length) fail('info ' + id); }
+{ const I = PL.info('G-N09', 760), r = I.lines.find(l => l[0] === '实物'); if (!r || !/R-0009/.test(r[1]) || !/早 19 天/.test(r[1])) fail('G-N09 实物行 ' + JSON.stringify(r)); }
+// ---- 「改 HZ，图跟着变」：挪一座站台、推迟一条股道，parts 与身份卡随之变化 ----
+{ const hitOf = id => PL.parts(760, {}).find(q => q.id === id), a0 = hitOf('P-S2'), i0 = PL.info('G-S01', 760).lines.find(l => l[0] === '工期')[1];
+  const Y = HZ.YARDS.S, z0 = Y.islands[1]; Y.islands[1] = z0 + 4; HZ.make();
+  const a1 = hitOf('P-S2'); if (!(Math.abs((a1.box[2] + a1.box[5]) / 2 - (a0.box[2] + a0.box[5]) / 2 - 4) < 1e-6)) fail('改 HZ.YARDS 后 P-S2 的 3D 盒没跟着移 4 m');
+  if (!(a1.hit[1] > a0.hit[1])) fail('改 HZ.YARDS 后 P-S2 的图上位置没跟着移');
+  Y.islands[1] = z0; HZ.make();
+  const segs = HZ.K.trackS.parts.filter(p => Math.abs((p.geo.min[2] + p.geo.max[2]) / 2 - 16.5) < 0.01); for (const p of segs) p.st += 30;
+  const i1 = PL.info('G-S01', 760).lines.find(l => l[0] === '工期')[1]; if (i1 === i0) fail('改股道工期后身份卡未变');
+  for (const p of segs) p.st -= 30; HZ.make(); }
+console.log(`OK check_s201 parts_runs=${pRuns} parts_min=${pMin} hz_follow=ok`);
 console.log(`OK check_s201 times=7 sizes=2 runs=${runs} cams=${PL.cam.length} cam_bad=0 track=${S.kmTot.toFixed(1)}km lines=${S.lines}`);
