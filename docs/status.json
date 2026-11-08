@@ -1,13 +1,13 @@
 {
- "generated_at": "2026-11-08T16:10:00+08:00",
+ "generated_at": "2026-11-08T16:15:00+08:00",
  "headline": {
-  "commits_total": 225,
-  "commits_today": 197,
-  "files": 128,
+  "commits_total": 228,
+  "commits_today": 200,
+  "files": 129,
   "items_done": 24,
   "items_total": 39,
-  "workflows_running": 16,
-  "dispatch_open": 10,
+  "workflows_running": 18,
+  "dispatch_open": 12,
   "live_claims": 6,
   "pending_review": 0,
   "blockers": 13,
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 111,
-   "today": 111
+   "total": 114,
+   "today": 114
   },
   {
    "agent": "hark-cs",
@@ -72,6 +72,24 @@
  ],
  "recent_commits": [
   {
+   "sha": "8896771",
+   "at": "2026-11-08T08:15:16Z",
+   "subj": "[claims] 派 D-26（S-201 北场注记，排程不动）、D-27（手机适配，web/hzmobile.css 空壳已接）；卡点、plan 更新",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "27d6dd2",
+   "at": "2026-11-08T08:14:30Z",
+   "subj": "[字幕] 4 条难懂字幕改白话（hark-darrio 改写选定）；拆除工序字幕取 temp.removeCap",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "b1ce2e9",
+   "at": "2026-11-08T08:10:41Z",
+   "subj": "[status] flow.py 移到 tools/status/，gen.py 写入 flow 字段；check_status 验 flow；重生成 stat",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "84ad4c0",
    "at": "2026-11-08T08:09:48Z",
    "subj": "[宿主] S-001 总进度、S-002 吊装资源上线；HZ_MODS 钩子 + 加载 mods/s101.js；focusZoom:false",
@@ -99,24 +117,6 @@
    "sha": "8de357f",
    "at": "2026-11-08T07:48:17Z",
    "subj": "[claims] D-14/D-18 关单；字幕改写、S-001、S-002 记完成待接线；卡点更新；重生成 status.json",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "f714e44",
-   "at": "2026-11-08T07:46:46Z",
-   "subj": "[宿主] 修 hzview.js lead()：let pos 被并进行尾注释导致引线标注 ReferenceError（hark-fangyi 缺陷报告 #7",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "ef04b5d",
-   "at": "2026-11-08T07:45:03Z",
-   "subj": "Merge agent/hark-cs/vision",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "baf9bbe",
-   "at": "2026-11-08T07:45:03Z",
-   "subj": "Merge agent/hark-liuzhijie/S-101-mod",
    "agent": "hark-cr"
   }
  ],
@@ -180,6 +180,18 @@
    "agent": "hark-darrio",
    "item": "履带吊臂长规则",
    "state": "待做"
+  },
+  {
+   "id": "D-26",
+   "agent": "hark-fangyi",
+   "item": "S-201 北场注记",
+   "state": "待做"
+  },
+  {
+   "id": "D-27",
+   "agent": "hark-darrio",
+   "item": "手机适配",
+   "state": "待做（hzmobile.css 空文件与 link 已由 hark-cr 加好）"
   }
  ],
  "dispatches_done": 15,
@@ -323,11 +335,6 @@
   },
   {
    "kind": "集成",
-   "what": "近景人员 / S-101 地下体量走 HZ_MODS 钩子，宿主接线未做",
-   "who": "hark-cr"
-  },
-  {
-   "kind": "集成",
    "what": "blender-ref 3 个小问题未修（export_glb 重复导出临时构件等）",
    "who": "hark-cr"
   },
@@ -343,22 +350,27 @@
   },
   {
    "kind": "集成",
-   "what": "D-14 已修（S-201 违反 0），check_cams 可接入 check_all",
+   "what": "近景人员 actors.js 未加载（HZ_MODS 钩子与 S-101 地下体量已上线），待真机帧率复核后加 script 标签",
    "who": "hark-cr"
   },
   {
-   "kind": "待委托人",
-   "what": "D-18：4 吊地面新站位可直接落地；内侧 6 吊只有 24 m 楼面站位，定「加楼面机型」还是「改派塔吊」后再改 hzseq.js",
-   "who": "hark-cr"
+   "kind": "协作者",
+   "what": "D-25 内侧 6 吊改塔吊方案（超650 仍 6 吊，check_crane 报告模式）",
+   "who": "hark-darrio"
+  },
+  {
+   "kind": "协作者",
+   "what": "D-26 S-201 北场铺轨注记（排程不动）",
+   "who": "hark-fangyi"
+  },
+  {
+   "kind": "协作者",
+   "what": "D-27 手机布局收紧（web/hzmobile.css）",
+   "who": "hark-darrio"
   },
   {
    "kind": "集成",
-   "what": "S-001 总进度、S-002 吊装资源插件已合入，页面接线（SHEETS_ALL / hzwest.html / check_all）待做",
-   "who": "hark-cr"
-  },
-  {
-   "kind": "待委托人",
-   "what": "卫星影像显示北场铺轨晚于模型（R-0013）：trackN 等是否后移，或只在图上注明",
+   "what": "S-001/S-002/HZ_MODS 接线只过了无头检查，未经真机浏览器看过（本沙盒无浏览器）",
    "who": "hark-cr"
   }
  ],
@@ -368,13 +380,13 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-08T16:10:32+08:00",
+  "generated_at": "2026-11-08T16:15:35+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794125388,
+    "last_at": 1794125716,
     "state": "idle",
     "idle_min": 0
    },
@@ -387,28 +399,30 @@
     "done_today": 8,
     "last_at": 1794123675,
     "state": "working",
-    "idle_min": 28
+    "idle_min": 34
    },
    {
     "name": "hark-darrio",
     "active": [
-     "D-25"
+     "D-25",
+     "D-27"
     ],
     "done_today": 4,
     "last_at": 1794123723,
     "state": "working",
-    "idle_min": 28
+    "idle_min": 33
    },
    {
     "name": "hark-fangyi",
     "active": [
      "D-19",
+     "D-26",
      "实物层记录库"
     ],
     "done_today": 6,
     "last_at": 1794123184,
-    "state": "working",
-    "idle_min": 37
+    "state": "overload",
+    "idle_min": 42
    },
    {
     "name": "hark-liuzhijie",
@@ -419,7 +433,7 @@
     "done_today": 10,
     "last_at": 1794123198,
     "state": "working",
-    "idle_min": 36
+    "idle_min": 41
    },
    {
     "name": "marvis",
@@ -429,7 +443,7 @@
     "done_today": 1,
     "last_at": 1794114056,
     "state": "stopped",
-    "idle_min": 189
+    "idle_min": 194
    },
    {
     "name": "muse-tibo-cs",
@@ -439,7 +453,7 @@
     "done_today": 4,
     "last_at": 1794121839,
     "state": "working",
-    "idle_min": 59
+    "idle_min": 64
    },
    {
     "name": "pi-t2",
@@ -470,7 +484,7 @@
     "done_today": 0,
     "last_at": 1794120893,
     "state": "working",
-    "idle_min": 75
+    "idle_min": 80
    }
   ],
   "jobs": [
@@ -680,7 +694,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794114696,
-     "age_min": 178,
+     "age_min": 183,
      "level": "amber"
     },
     "done": false
@@ -750,8 +764,8 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 116,
-     "level": "ok"
+     "age_min": 122,
+     "level": "amber"
     },
     "done": false
    },
@@ -844,7 +858,7 @@
      "who": "hark-cs",
      "what": "还没开工",
      "since": 1794119698,
-     "age_min": 95,
+     "age_min": 100,
      "level": "ok"
     },
     "done": false
@@ -890,7 +904,7 @@
      "who": "hark-fangyi",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -914,7 +928,7 @@
      "who": "hark-liuzhijie",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -938,7 +952,7 @@
      "who": "hark-liuzhijie",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -962,7 +976,7 @@
      "who": "hark-cs",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -986,7 +1000,7 @@
      "who": "traycer-cs",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -1010,7 +1024,7 @@
      "who": "traycer-cs",
      "what": "还没开工",
      "since": 1794122454,
-     "age_min": 49,
+     "age_min": 54,
      "level": "ok"
     },
     "done": false
@@ -1034,7 +1048,55 @@
      "who": "hark-darrio",
      "what": "还没开工",
      "since": 1794125079,
-     "age_min": 5,
+     "age_min": 10,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-26",
+    "title": "S-201 北场注记",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794125716
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-fangyi",
+     "what": "还没开工",
+     "since": 1794125716,
+     "age_min": 0,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-27",
+    "title": "手机适配",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "待做（hzmobile.css 空文件与 link 已由 hark-cr 加好）",
+    "stage": 0,
+    "stages": {
+     "派出": 1794125716
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-darrio",
+     "what": "还没开工",
+     "since": 1794125716,
+     "age_min": 0,
      "level": "ok"
     },
     "done": false
@@ -1328,7 +1390,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 217,
+     "age_min": 222,
      "level": "amber"
     },
     "done": false
@@ -1352,7 +1414,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 217,
+     "age_min": 222,
      "level": "amber"
     },
     "done": false
@@ -1404,7 +1466,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794118175,
-     "age_min": 120,
+     "age_min": 125,
      "level": "amber"
     },
     "done": false
@@ -1473,6 +1535,13 @@
     "done": true
    }
   ],
-  "suggestions": []
+  "suggestions": [
+   {
+    "job": "D-26",
+    "from": "hark-fangyi",
+    "to": [],
+    "why": "hark-fangyi 手上 3 件，这件还没开工"
+   }
+  ]
  }
 }
