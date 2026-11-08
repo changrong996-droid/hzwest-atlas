@@ -120,4 +120,6 @@ has("['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')
 if (!/<div id="mod-ui"><\/div>\s*<\/div>\s*<div id="col"/.test(html)) fail('hzwest.html 应在 #v3 末尾放空容器 <div id="mod-ui"></div>');
 if (!/#mod-ui\{position:absolute;inset:0;[^}]*pointer-events:none\}/.test(html)) fail('#mod-ui 应绝对定位铺满 #v3 且 pointer-events:none');
 if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 17) fail('hzview.js 加 pick 钩子后版本号应 ≥ 17');
+has("ug: 0 }, JSON.parse(hp.get('camcfg') || '{}'))", '镜头参数默认 ug 0（不进地铁层）');
+has('CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;', '地铁层镜头入口只在 #camcfg 显式 ug 1 时开（委托人 11-08 定默认关）');
 console.log('OK check_linkage runs=' + runs);

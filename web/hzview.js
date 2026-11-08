@@ -536,6 +536,7 @@
     // ④ 碰撞：外拉被身后实体挡住 → 穿到实体另一侧（滚轮外拉永远有效）；地面挡住 → 贴地滑（保持距离、视线抬起）；其余 → 沿视线推到实体外。
     const CBOX = [], CG = new Map(), CCS = 16, CM = 0.6, UG = { x: 199.2 - CM, z: P.gap - 0.8 - CM, y0: -9.2 + CM }, TY0 = -10, TY1 = HZ.Ht(0, 0) + HZ.D + 4;
     const CC = S.camCfg = Object.assign({ polar: 0.6, polarUp: 0.75, tyMin: -5, minD: 9, ug: 0 }, JSON.parse(hp.get('camcfg') || '{}'));   // set2e 扫描选定（work/hzwest-set2/cam_sweep.md）：ug 0 = 不进地下（tyMin 只在 ug 1 时起作用）
+    CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;   // 地铁层镜头入口默认关闭（委托人 11-08 定）：只有 hash 里显式写 #camcfg={"ug":1} 才开；其它值一律关
     for (const a of HZ.acts) { if (a.kind === 'untemp') continue; for (const p of a.parts) { if (p.cells || p.grp || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) { if (b.max[1] - b.min[1] < 0.05) continue; const e = { p, b, y0: p.geo.min[1], tall: /crane|mast|tower|red/.test(a.stage + ' ' + a.key + ' ' + (p.geo.mat || '')) }, k = CBOX.push(e) - 1;   // tall：塔吊 / 提升塔架 —— 不算「已有构件高度」
       for (let i = Math.floor((b.min[0] - CM) / CCS); i <= Math.floor((b.max[0] + CM) / CCS); i++) for (let j = Math.floor((b.min[2] - CM) / CCS); j <= Math.floor((b.max[2] + CM) / CCS); j++) { const kk = i * 4096 + j; if (!CG.has(kk)) CG.set(kk, []); CG.get(kk).push(k); } } } }
     const kOf = (p, t) => { const sp = Math.max(0, Math.min(1, (t - p.st) / Math.max(1e-3, p.du))); let r = 1; if (p.rm && p.rm[0] >= 0) r = 1 - Math.max(0, Math.min(1, (t - p.rm[0]) / Math.max(1e-3, p.rm[1]))); if (t < p.st) return 0; const k = sp * r; return k * k * (3 - 2 * k); };

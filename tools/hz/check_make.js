@@ -36,4 +36,11 @@ const vsrc = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8'
   if (!(n > 0 && dg > 0)) bad('穿过剖切面的网架杆件 ' + n + '、斜杆 ' + dg);
   for (const t of [HZ.K.lift1.start + 1, HZ.K.lift3.start + 2, HZ.K.wlift.start + 1]) { const ps = HZ.pose(t); for (const g of [1, 2, 3, 4]) { const M = HZ.mat(ps, g); if (Math.abs(M[0] - 1) > 1e-12 || M[1] || M[2] || M[4] || M[8] || M[12]) bad('分区 ' + g + ' 矩阵改了 x（封面会离开剖切面）'); } }
   if (!/const rodTri = \(it, y0p, a, b, r\)/.test(vsrc) || !/g\.setAttribute\('aG', new THREE\.Float32BufferAttribute\(Gg, 1\)\)/.test(vsrc) || !/q = \(uG\[int\(aG \+ 0\.5\)\] \* vec4\(q, 1\.0\)\)\.xyz;\n\s*if \(uT < s \|\| k < 1e-4 \|\| uCut < -1e8\)/.test(vsrc)) bad('hzview.js CAP 未接杆件三角形 / aG / uG'); }
+// 屋面云纹（11-08 委托人定 C 版「四朵云」，docs/proposals/roof-waves.md）：只叠在覆面 Hc；四块屋面中心各鼓起 ≈3.5 m、天窗两侧归零、最高点仍是天窗中心、钢结构 Ht / 吊顶 Hs 不受影响
+{ const P = HZ.P, W = P.wv, bad = m => { console.log('FAIL check_make: 屋面云纹 ' + m); process.exit(1); };
+  if (typeof HZ.Wv !== 'function' || !W || W.A1 !== 3.5 || W.A2 !== 0.5) bad('HZ.Wv / P.wv 缺失或参数不是 C 版（A1 3.5、A2 0.5）');
+  for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const w = HZ.Wv(sx * 0.5 * P.roofA, sz * 0.5 * P.roofB); if (!(w > 3.0 && w < 4.2)) bad('云心鼓起 ' + w.toFixed(2) + ' m 不在 3.0–4.2'); }
+  for (const [x, z] of [[0, 60], [80, 0], [P.skyW, 100]]) if (Math.abs(HZ.Wv(x, z)) > 1e-9) bad('天窗缝 (' + x + ',' + z + ') 应为 0');
+  let mx = -1e9, at = null; for (let x = -P.roofA; x <= P.roofA; x += 2) for (let z = -P.roofB; z <= P.roofB; z += 2) { if (HZ.rho(x, z) > 1) continue; const y = HZ.Hc(x, z); if (y > mx) { mx = y; at = [x, z]; } if (HZ.Hc(x, z) - HZ.Ht(x, z) < -0.5) bad('覆面低于结构顶 (' + x + ',' + z + ')'); }
+  if (Math.abs(at[0]) > 4 || Math.abs(at[1]) > 4) bad('屋面最高点不在天窗中心 ' + at); }
 console.log('OK check_make acts=55 cells=1432 lifters=32 D=5.8 zero=true');

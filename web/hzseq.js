@@ -55,6 +55,8 @@ const P = HZ.P = {
   midZ: 38.5, hole: 3.3, alpha: 4 * Math.PI / 180, jigMin: 1.2,
   floorX: 95, floorZ: 150, voidX: 95,
   T0: Date.UTC(2019, 8, 17), OPEN: 1101,
+  // 屋面云纹（委托人 11-08 定 C 版「四朵云」，docs/proposals/roof-waves.md · hark-cs）：A1 云高 m、A2 外圈波纹 m、lob 云宽（u/v）、per 波纹周期（rho）、gap 天窗两侧渐变宽 m；A1 = A2 = 0 即回到旧光滑屋面
+  wv: { A1: 3.5, A2: 0.5, lob: 0.32, per: 0.18, gap: 14 },
 };
 HZ.dayDate = d => { const t = new Date(P.T0 + Math.round(d) * 864e5); return t.getUTCFullYear() + '-' + String(t.getUTCMonth() + 1).padStart(2, '0') + '-' + String(t.getUTCDate()).padStart(2, '0'); };
 
@@ -74,9 +76,16 @@ const Ht = (x, z) => { const u = Math.min(1, Math.abs(x) / P.roofA), v = Math.mi
 const inSky = (x, z) => Math.abs(x) < P.skyW || Math.abs(z) < P.skyW;
 const depthAt = (x, z) => inSky(x, z) ? P.depthSky : P.depth;
 HZ.Ht = Ht; HZ.rho = rho; HZ.inSky = inSky;
-// 覆面（金属屋面）面：结构顶 + 0.5，边缘 15% 向下收 1.8 m（云的软边）
+// 覆面（金属屋面）面：结构顶 + 0.5 + 云纹 Wv，边缘 15% 向下收 1.8 m（云的软边）
 const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-const Hc = (x, z) => Ht(x, z) + 0.5 - 0.8 * sm(0.85, 1.0, rho(x, z)) + (inSky(x, z) ? 1.6 * (1 - sm(P.skyW - 3, P.skyW, Math.min(Math.abs(x), Math.abs(z)))) : 0);
+// 四朵云 + 外圈软波纹：只叠在覆面 Hc 上（钢结构 Ht、吊顶 Hs、提升高度 D 不变）；十字天窗两侧 gap 内归零 = 云的缝；边缘 15% 不动
+const Wv = (x, z) => { const W = P.wv; if (!W || !(W.A1 || W.A2)) return 0; const u = Math.abs(x) / P.roofA, v = Math.abs(z) / P.roofB, r = rho(x, z);
+  const g = sm(P.skyW, P.skyW + W.gap, Math.min(Math.abs(x), Math.abs(z)));
+  const lobe = W.A1 * Math.exp(-(((u - 0.5) / W.lob) ** 2 + ((v - 0.5) / W.lob) ** 2));
+  const rip = W.A2 * Math.sin(2 * Math.PI * r / W.per) * sm(0.55, 0.7, r) * (1 - sm(0.84, 0.96, r));
+  return g * (lobe + rip); };
+HZ.Wv = Wv;
+const Hc = (x, z) => Wv(x, z) + Ht(x, z) + 0.5 - 0.8 * sm(0.85, 1.0, rho(x, z)) + (inSky(x, z) ? 1.6 * (1 - sm(P.skyW - 3, P.skyW, Math.min(Math.abs(x), Math.abs(z)))) : 0);
 const Hs = (x, z) => Ht(x, z) - depthAt(x, z) - 0.4 - (P.edgeDrop != null ? P.edgeDrop : 0.8) * sm(0.78, 1.0, rho(x, z));   // r3：挑檐厚度参数化（P.edgeDrop）   // 边缘加厚：云的厚边   // 吊顶（下表面），边缘向上收
 HZ.Hc = Hc; HZ.Hs = Hs;
 // 光伏：屋面四个角瓣（与着色器同一公式；面积按覆面网格积分 ≈ 1.5 万 m²）
