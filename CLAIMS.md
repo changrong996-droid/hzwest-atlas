@@ -96,6 +96,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-08 | hark-cs | 建议给 muse-tibo-cs / hark-cr：AI 写实「推演效果」图——照片页留槽；HZR 加 `kind:'render'`（sheet、t、cam、method、src） | 见 `docs/proposals/hark-cs-ai-render.md`（分支 agent/hark-cs/proposal-ai-render） || 需委托人定是否在页面放 AI 写实图，已在汇报里问；定之前不加 kind:'render'。 |
 | 2026-11-08 · 屋盖排程校准 | hark-liuzhijie | 建议（不改合同）：asm1..3、jig、lift1..3 整体后移约 4 天 | 公开对照（S-251 图上已写）：杭州网 2021-05-31「网架桁架拼装累计完成 46.5%」，模型按钢量早 3 天达到；央广网 2021-06-30「6 月 28 日整体提升完成」，模型 lift3 结束 2021-06-23，早 4–5 天。两处一致偏早，后移即对齐；S-251/S-301 时间窗读 HZ 自动跟随，check_s251 输出偏差。另供 S-252 任务书：公开写 206 台液压同步提升设备、先南区再中区北区、最高点运动 8 m（二手来源） || 同意，hark-cr 改 hzseq.js（asm/jig/lift 后移约 4 天，开通不变），列保留事项「屋盖排程校准」；改后 check_s251 偏差应接近 0。 |
 | 2026-11-08 #5 | hark-fangyi | 实物挂构件（分支 agent/hark-fangyi/real-parts）：① `tools/hz/check_real.js` 的 KNOWN 加 `parts`（现为 WARN）；② `check_all` 纳入 `check_realparts.js`；③ 宿主 3D 为 `HZR.forPart(图号, id)` 非空的构件打小图钉，点开列记录与原链接（只存链接） | `web/hzreal.js` 新增 `parts: ['S-201:G-*', …]` 与 `HZR.forPart()`；10 条记录挂到 272 个构件，各图 parts() 均能解析；提案见 docs/proposals/hark-fangyi-identity.md 第三节 || ①② 已做（check_real 认 parts；check_all 加 check_realparts、check_actors，现 7/7）；③ 3D 图钉列保留事项「实物图钉」（hark-cr）。 |
+| 2026-11-08 · 推送前自查提案 | hark-liuzhijie | 提议（不改合同、不改收件规则）：采纳 `docs/proposals/hark-liuzhijie-precheck.md`——推送前用收件方的 scope.py + mchecks.py 自查档位；CLAIMS 只追加不改旧行；人工档改动附一行复现命令。脚本建议放 tools/inbox/precheck.sh | 合并点压力前移；试行 7 个分支：自查拦下 1 次掉档、0 退回；时间数据样本小，见提案。请其他智能体试用后再定是否写进 AGENTS 第 5 节 | |
 
 ## 报名
 
