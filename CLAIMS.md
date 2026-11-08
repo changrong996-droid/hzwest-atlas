@@ -24,10 +24,10 @@
 
 | 事项 | 说明 | 负责人 | 状态 | 认领日期 | 备注 |
 |---|---|---|---|---|---|
-| 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 认领 | 2026-11-08 | 委托人指派 |
+| 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 完成 | 2026-11-08 | 委托人指派 |
 | 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cr | 完成 | 2026-11-08 | tools/inbox/scope.py（hark-cs 已满 2 项，由 hark-cr 做） |
 | 近景人员与车辆 | web/mods/actors.js 墨线小人与车辆（docs/tasks/mods-actors.md） | hark-darrio | 完成 | 2026-11-08 | 大活；模块已合入，宿主接线 hark-cr |
-| Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | muse-tibo-cs | 认领 | 2026-11-08 | 大活；需本地 |
+| Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | muse-tibo-cs | 完成 | 2026-11-08 | 大活；需本地 |
 | Blender 终版精修 | 结尾与三个关键镜头的海报级渲染，视觉模型自评迭代（docs/tasks/blender-final.md） | — | 空 |  | 大活；需本地 |
 | 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 完成 | 2026-11-08 | 大活；提案 docs/proposals/roof-waves.md 已合入 |
 | 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 保留 |  | 共用文件；待委托人点头 |
@@ -67,9 +67,9 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-07 | hark-cs | GPU 审计 | 复测 #1、#2、#8（hzview.js?v=13：播放重画、手机竖屏上下排、墨线光伏）：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 完成 11-08（#1 播放重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏复测均已修好） | 11-08 hark-cr |
 | D-08 | hark-cs、hark-liuzhijie、hark-fangyi | 二稿 | GPU 审计 #7：右栏竖长条时图纸放大或转向，不要只画中间一段（各改自己的插件，用 `w/h` 判断）。验收：800×1200 与 1920×1080 截图无大片空白 | 完成 11-08（S-101/201/251/401/501 均有竖长条版面） | 11-08 hark-cr |
 | D-09 | hark-liuzhijie | S-501 | 委托人已定结尾镜头（docs/review/2026-11-08-draft1.md 末节）：改 `web/sheets/s501.js` 的 `cam` 最后两帧（t≥1101）为西南低角度，露天进站段的首趟列车与云门同框；用 `__pv.FV` 的列车位置算镜头，不写死。验收：check_all + 插件镜头扫描 0 违规 0 卡住，并在 t=1105/1115/1125 截图确认车头未被屋盖遮挡（可与 D-01 同一分支） | 完成 11-08（镜头由列车位置推算；截图验收待 D-12 视觉审查一并看） | 11-08 hark-cr |
-| D-10 | traycer-cs | Blender 参考渲染 | 按 docs/tasks/blender-ref.md 出同机位白模/线稿对照（Blender 5.2.2 后台 `-b -P`）。顺手修集成卡点里的 3 个小问题：`tools/hz/export_glb.js:16` 跳过 `kind==='untemp'`（避免重复导出）、第 25 行去掉 `mtllib none`、`docs/audit/2026-11-08-blender.md` 第 20 行笔误与第 34 行把提交尾注写进正文。验收：check_all 通过；对照图外链（图不进仓库）+ Gemini 4 自评写进 docs/audit/2026-11-08-blender.md | 待做（11-08 15:05 由 muse-tibo-cs 改派：其未报版本、未开工） | 11-08 hark-cr |
-| D-11 | traycer-cs | Blender 终版精修 | 按 docs/tasks/blender-final.md：结尾与三个关键镜头海报级渲染，用 Gemini 4 自评迭代；结尾镜头以 D-09 新机位为准 | 待做（先做 D-10；11-08 15:05 由 muse-tibo-cs 改派，muse-tibo-cs 专做 D-12） | 11-08 hark-cr |
-| D-12 | muse-tibo-cs | 视觉审查 | 用 Gemini 4 看线上 S-101/S-201/S-401/S-501 各起、中、末三时刻（1920×1080），问题单写 docs/audit/2026-11-08-visual.md，不改代码 | 待做 | 11-08 hark-cr |
+| D-10 | muse-tibo-cs | Blender 参考渲染 | 按 docs/tasks/blender-ref.md 出同机位白模/线稿对照 | 完成 11-08（muse-tibo-cs 在旧 fork 已完成，15:15 经 B 收件补投；对照图 docs/audit/img/2026-11-08-blender/，报告 docs/audit/2026-11-08-blender-tibo.md） | 11-08 hark-cr |
+| D-11 | muse-tibo-cs | Blender 终版精修 | 按 docs/tasks/blender-final.md：结尾与三个关键镜头海报级渲染，用 Gemini 4 自评迭代；结尾镜头以 D-09 新机位为准；沿用 D-10 的 blender/ 管线 | 待做（15:30 改回 muse-tibo-cs：D-10 已由其完成） | 11-08 hark-cr |
+| D-12 | muse-tibo-cs | 视觉审查 | 用 Gemini 4 看线上 S-101/S-201/S-401/S-501 各起、中、末三时刻，问题单 docs/audit/2026-11-08-visual.md | 完成 11-08（30 余条，已拆成 D-19～D-22 与宿主自做项，见 docs/plan.md） | 11-08 hark-cr |
 | D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 完成 11-08（问题单已合入；CLAIMS 关单由集成人做） | 11-08 hark-cr |
 | D-13 | marvis | Windows 真机审查 | 只看新图 S-251（`#sheet=S-251`）起、中、末三个时刻，问题追加到 `docs/audit/2026-11-08-windows.md` 新一节，不改代码。验收：文件里有 S-251 一节，每条写时刻、视口、现象 | 待做 | 11-08 hark-cr |
 | D-14 | hark-fangyi | S-201 | 镜头扫描发现 t 798–822 视线被北场雨棚 canopyN 挡住：改 `web/sheets/s201.js` 的 cam 后两帧（可用接口请求「镜头扫描」行给的两帧或另定）。验收：check_all + check_s201，t=800、815 无头截图承轨层可见 | 待做 | 11-08 hark-cr |
@@ -77,6 +77,12 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-16 | hark-darrio | 近景人员与车辆 | `web/mods/actors.js` 的 build 收可选第 4 参数 opts.clip（THREE.Plane[]），有就给线材质加 clippingPlanes，剖切时小人与车一起切。验收：check_actors 加一条断言并通过、check_all 通过 | 完成 11-08 | 11-08 hark-cr |
 | D-17 | hark-cs | 宣传页提案 | 委托人 14:34 同意：AI 效果图只做**单独宣传页**，与图纸、3D、联动、照片页、`HZR` 完全分开。写 `docs/proposals/promo-page.md`（页面结构、每张图标「AI 生成 · 非实拍」），附 S-101/201/301/401/501 各 1 张样图外链（图不进仓库）。不改任何 web/ 文件。验收：提案合入后由委托人看样图再定是否做页 | 待做 | 11-08 hark-cr |
 | D-18 | hark-darrio | 履带吊臂长规则 | check_crane 报 650 t 级超限 10 吊（mast 6、rig 4）：在 `docs/rules/crane-reach.md` 新增一节「站位调整建议」，逐吊给新站位 `crawl=[x,z]`（落在可行车区域、不压在建构件），并用 check_crane 同算法离线验证。不改 web/hzseq.js（共用文件，hark-cr 按你的表改）。验收：表里每吊写旧/新站位、R、额定与需求，附「按新站位超650=0」的复算输出 | 待做 | 11-08 hark-cr |
+| D-19 | hark-fangyi | S-201 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-201」节：①上部「北·杭临绩场 / 南·湖杭场 n/m 线贯通」两段文字三个时刻都叠字，改为分列或上下错开并加纸色衬底，不压引桥墨线；②核对左右场区指代（方向标「↑东 北←」与三维「线下框架柱·湖杭场」红圈位置是否一致，错则改标注）；③t=890 无本图工序标注，补铺轨标注。只改 web/sheets/s201.js。验收：check_all + check_s201；t=375、632、890 截图文字无重叠 | 待做 | 11-08 hark-cr |
+| D-20 | hark-liuzhijie | S-101 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-101」节：①右侧剖面加标高数字（至少 ±0、-15.4、坑底）与层名 B1–B4（地铁层标明）、构件名、简短图例；②三维与剖面完成度一致：t=182「回筑 B2 板、拆第 3 道撑」时三维要看得到中央深坑、内支撑与分层回筑（用 parts/焦点或局部剖切，不用改共用文件则在插件内完成；需宿主接口在 CLAIMS 接口请求提）；③t=355「4/4」时剖面顶板不再是虚线；④信息卡只留一个大数字。只改 web/sheets/s101.js。验收：check_all + check_s101；t=10、182、355 截图 | 待做 | 11-08 hark-cr |
+| D-21 | hark-liuzhijie | S-501 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-501」节：①总平面加指北针、比例尺、图例与站房/四角配楼/云门/股道名称；②填充改为图册纸色体系（去掉高饱和橙黄），列车路径箭头与股道分层不压；③信息卡大数字只留一个（车次或时刻二选一，另一个做副标题）；④结尾深色信息卡上「S-501」红字对比度不足，改色。结尾亮灯实景是 r3 定稿，保留。只改 web/sheets/s501.js。验收：check_all + check_s501；t=710、915、1120 截图（D-20 完成后再做） | 待做 | 11-08 hark-cr |
+| D-22 | hark-cs | S-401 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-401」节：①镜头不裁屋面四边（t=685、730、775 屋面完整入框，余白均匀）；②t=775 三维光伏与图纸四象限一致，光伏条带不发虚、不错位（若是宿主 PV 绘制问题，在 CLAIMS 接口请求写清现象与复现时刻，hark-cr 修）；③「n% 屋面封闭」口径与画面一致（按面积算，或改说「北半区封闭」等）；④t=730 标注红点落到金属屋面板而非采光顶；⑤补孔小方框放大到能看清叉线。只改 web/sheets/s401.js。验收：check_all + check_s401 + 镜头扫描 0 违规；三个时刻 1920×1080 与 800×1200 截图 | 待做 | 11-08 hark-cr |
+| D-23 | traycer-cs | 云门细化 | 云门目前是灰盒子（D-12：门洞被暗红栅栏堵、顶部黄线穿模），是全片最弱处。按公开资料（180×60×80 m，中间门洞，见 web/hzseq.js 第 21、33 行来源）做细化墨线模块 `web/mods/yunmen.js`：`build(THREE, HZ, t, opts)` 返回 Group，含门洞、幕墙分格、主体分层与施工阶段（基础→主体→幕墙，随 t 生长），线材质沿用 web/mods/actors.js 写法并支持 opts.clip；不改 hzseq.js/hzview.js（hark-cr 接线，替换现有云门体块）。附 `tools/hz/check_yunmen.js`（无穿模：门洞内无构件；与现有云门包络一致）。验收：check_all + check_yunmen；本地真机截图 3 张（基础、主体、完成）外链 + Gemini 4 自评 | 待做 | 11-08 hark-cr |
+| D-24 | traycer-cs | 真机体验审查与方向 | 用你的真机浏览器把线上页面当第一次来的观众完整看一遍（默认播放 + 逐图切换 + 手机竖屏），写 `docs/proposals/traycer-direction.md`：①哪 3 个时刻最震撼、哪里无聊或看不懂（带时刻与截图外链）；②节奏与镜头建议（最多 5 条，按收益排序，写清改哪个文件、谁的图）；③与 docs/plan.md 阶段 2 的差距。不改代码。验收：文件合入，每条建议可直接拆成派单 | 待做（D-23 之后或并行） | 11-08 hark-cr |
 
 ## 接口请求
 
