@@ -30,7 +30,7 @@
 | Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | muse-tibo-cs | 完成 | 2026-11-08 | 大活；需本地 |
 | Blender 终版精修 | 结尾与三个关键镜头的海报级渲染，视觉模型自评迭代（docs/tasks/blender-final.md） | — | 空 |  | 大活；需本地 |
 | 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 完成 | 2026-11-08 | 大活；提案 docs/proposals/roof-waves.md 已合入 |
-| 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 保留 |  | 共用文件；待委托人点头 |
+| 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 保留 |  | 共用文件；等委托人 |
 | 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | hark-darrio | 完成 | 2026-11-08 | 中活；docs/rules/crane-reach.md + check_crane 已合入并进 check_all（报告模式）；超限站位见 D-18 |
 | 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | pi-t2 | 认领 | 2026-11-08 | 小活 |
 | 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | pi-t3 | 认领 | 2026-11-08 | 小活 |
@@ -38,17 +38,17 @@
 | Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | marvis | 认领 | 2026-11-08 | 小活；适合 marvis |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 |  | 需本地 GPU |
 | 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | hark-liuzhijie | 完成 | 2026-11-08 | tools/hz/check_cams.js 已合入（D-15）；D-14 后 S-201 违反 0，11-08 已逐图接入 check_all（违反即失败） |
-| 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 |  | 镜头改动需扫描 0 违反 0 卡住 |
+| 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 |  | 等委托人（是否做地铁层入口）；镜头改动需扫描 0 违反 0 卡住 |
 | 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | hark-fangyi | 认领 | 2026-11-08 | 小活；只用公开来源，写清许可 |
-| 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 保留 |  | 需要共用文件接口 |
+| 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 完成 | 2026-11-08 | 11-08 新增 HZ.jackLoad(t)（分区钢重按吊点平均分摊，推算），S-301 提升器标签显示「载荷≈n t」；hzview.js?v=18 |
 | 手机竖屏布局 | GPU 审计 #2：390×844 下 3D 被挤、页签出界 | hark-cr | 完成 |  | 共用文件 |
 | 墨线光伏 | GPU 审计 #8：墨线模式 3D 屋面也画光伏条带 | hark-cr | 完成 |  | 共用文件 |
-| 剖切封面补斜杆 | 剖切面覆盖网架斜杆与吊具杆件 | hark-cr | 保留 |  |  |
-| 近景人员接线 | hzwest.html 加载 mods/actors.js；hzview 对 window.HZ_MODS 调 build(scene,HZ,THREE,{clip:[CUTP]})/update(t,cam)（S-101 地下体量也走此钩子；actors 已支持 opts.clip，D-16） | hark-cr | 保留 |  | 共用文件；11-08 钩子已在 hzview.js?v=16 上线、mods/s101.js 已加载；剩 actors.js 一个 script 标签 + 120 m 内隐藏方块履带吊，待真机帧率复核 |
-| 构件信息卡 | 选中构件弹卡显示 part.info + 看建成后/看开工时（hark-cs、hark-fangyi 提案） | hark-cr | 保留 |  | 共用文件 |
-| 实物图钉 | HZR.forPart 非空的构件在 3D 打小图钉，点开列记录与原链接 | hark-cr | 保留 |  | 共用文件 |
-| 屋盖排程校准 | hzseq.js：asm/jig/lift 后移约 4 天，对齐 2021-05-31 / 06-28 公开节点（hark-liuzhijie 请求） | hark-cr | 保留 |  | 共用文件 |
-| S-252 屋盖提升（提议） | 接 S-251：lift1..3（第 632–645 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议，S-251 做完后可接；待 hark-cr 拆任务书 |
+| 剖切封面补斜杆 | 剖切面覆盖网架斜杆与吊具杆件 | hark-cr | 完成 | 2026-11-08 | 11-08：网架杆件（含斜杆）穿剖切面处补三角形封面、随分区姿态变换（181 根，hzview.js?v=19）；提升架/提升塔杆件本来就是正交盒，已在封面内；无头 Chromium 冒烟无着色器报错，真机外观待 D-24 顺带看 |
+| 近景人员接线 | hzwest.html 加载 mods/actors.js；hzview 对 window.HZ_MODS 调 build(scene,HZ,THREE,{clip:[CUTP]})/update(t,cam)（S-101 地下体量也走此钩子；actors 已支持 opts.clip，D-16） | hark-cr | 保留 |  | 共用文件；11-08 钩子已在 hzview.js?v=16 上线、mods/s101.js 已加载；剩 actors.js 一个 script 标签 + 120 m 内隐藏方块履带吊，等真机帧率复核（已并入 D-24） |
+| 构件信息卡 | 选中构件弹卡显示 part.info + 看建成后/看开工时（hark-cs、hark-fangyi 提案） | hark-cs | 派单 D-28 | 2026-11-08 | 做成模块 web/mods/info.js（HZ_MODS pick/unpick + #mod-ui，11-08 宿主钩子已上线 hzview.js?v=17，接口见 docs/hz-atlas-check.md 第三节 12–13），不改共用文件 |
+| 实物图钉 | HZR.forPart 非空的构件在 3D 打小图钉，点开列记录与原链接 | hark-cs | 派单 D-28 | 2026-11-08 | 与构件信息卡同一模块 web/mods/info.js |
+| 屋盖排程校准 | hzseq.js：asm/jig/lift 后移约 4 天，对齐 2021-05-31 / 06-28 公开节点（hark-liuzhijie 请求） | hark-cr | 完成 | 2026-11-08 | 楼面→胎架加 4 天（JIG_LAG），lift1..3 现为第 636–649 天；check_s251 偏差 +1 / 0 天（原 −3 / −4）。连带：check_callouts 串台时刻 632→636；S-201 镜头 t=636 违反 1（check_cams S-201 临时报告模式，修法并入 D-26）；s401.js 时间窗写死 679–781（现应 683–785，并入 D-22） |
+| S-252 屋盖提升 | 接 S-251：lift1..3（校准后第 636–649 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点（任务书 docs/tasks/S-252.md） | muse-tibo-cs | 认领 | 2026-11-08 | 中活；hark-liuzhijie 提议；认领板已锁给 muse-tibo-cs；见派单 D-29 |
 | S-001 总进度（提议） | 55 个 HZ.K 工序的横道图与 3D 时间轴同步：竖线 = 当前天，在施工序红、关键链粗线；点横道 → parts 联动 3D 飞到该工序构件；大数字 = 在施工序数或距开通天数 | hark-cs | 完成 | 2026-11-08 | 中活；web/sheets/s001.js + check_s001 已合入 11-08；11-08 已上线（SHEETS_ALL、图册登记、check_all）；宿主已支持 focusZoom:false，s001.js 里加上即生效 |
 | 吊装资源图（提议） | 读 HZ.cranes / assignCranes：每天在场吊机台数、各台位置与吊距圈，超吊距标红；与「履带吊臂长规则」同源，可作其图纸面 | hark-darrio | 完成 | 2026-11-08 | 中活；web/sheets/s002.js + check_s002 已合入 11-08；图号定 S-002「吊装资源」，11-08 已上线并进 check_all |
 | 看板界面优化 | 集成看板 web/status.html 界面重做（docs/tasks/status-ui.md），委托人指定由其他智能体做，hark-cr 只合并 | hark-cs | 完成 | 2026-11-08 | 中活；11-08 15:45 合入（agent/hark-cs/status-ui）；flow 字段提案见 docs/proposals/hark-cs-status-ui-notes.md；11-08 已接：flow.py 移到 tools/status/flow.py，gen.py 调用写入 status.json 的 flow，check_status 验字段 |
@@ -80,12 +80,14 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-19 | hark-fangyi | S-201 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-201」节：①上部「北·杭临绩场 / 南·湖杭场 n/m 线贯通」两段文字三个时刻都叠字，改为分列或上下错开并加纸色衬底，不压引桥墨线；②核对左右场区指代（方向标「↑东 北←」与三维「线下框架柱·湖杭场」红圈位置是否一致，错则改标注）；③t=890 无本图工序标注，补铺轨标注。只改 web/sheets/s201.js。验收：check_all + check_s201；t=375、632、890 截图文字无重叠 | 待做 | 11-08 hark-cr |
 | D-20 | hark-liuzhijie | S-101 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-101」节：①右侧剖面加标高数字（至少 ±0、-15.4、坑底）与层名 B1–B4（地铁层标明）、构件名、简短图例；②三维与剖面完成度一致：t=182「回筑 B2 板、拆第 3 道撑」时三维要看得到中央深坑、内支撑与分层回筑（用 parts/焦点或局部剖切，不用改共用文件则在插件内完成；需宿主接口在 CLAIMS 接口请求提）；③t=355「4/4」时剖面顶板不再是虚线；④信息卡只留一个大数字。只改 web/sheets/s101.js。验收：check_all + check_s101；t=10、182、355 截图 | 待做 | 11-08 hark-cr |
 | D-21 | hark-liuzhijie | S-501 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-501」节：①总平面加指北针、比例尺、图例与站房/四角配楼/云门/股道名称；②填充改为图册纸色体系（去掉高饱和橙黄），列车路径箭头与股道分层不压；③信息卡大数字只留一个（车次或时刻二选一，另一个做副标题）；④结尾深色信息卡上「S-501」红字对比度不足，改色。结尾亮灯实景是 r3 定稿，保留。只改 web/sheets/s501.js。验收：check_all + check_s501；t=710、915、1120 截图（D-20 完成后再做） | 待做 | 11-08 hark-cr |
-| D-22 | hark-cs | S-401 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-401」节：①镜头不裁屋面四边（t=685、730、775 屋面完整入框，余白均匀）；②t=775 三维光伏与图纸四象限一致，光伏条带不发虚、不错位（若是宿主 PV 绘制问题，在 CLAIMS 接口请求写清现象与复现时刻，hark-cr 修）；③「n% 屋面封闭」口径与画面一致（按面积算，或改说「北半区封闭」等）；④t=730 标注红点落到金属屋面板而非采光顶；⑤补孔小方框放大到能看清叉线。只改 web/sheets/s401.js。验收：check_all + check_s401 + 镜头扫描 0 违规；三个时刻 1920×1080 与 800×1200 截图 | 待做 | 11-08 hark-cr |
+| D-22 | hark-cs | S-401 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-401」节：①镜头不裁屋面四边（t=685、730、775 屋面完整入框，余白均匀）；②t=775 三维光伏与图纸四象限一致，光伏条带不发虚、不错位（若是宿主 PV 绘制问题，在 CLAIMS 接口请求写清现象与复现时刻，hark-cr 修）；③「n% 屋面封闭」口径与画面一致（按面积算，或改说「北半区封闭」等）；④t=730 标注红点落到金属屋面板而非采光顶；⑤补孔小方框放大到能看清叉线。只改 web/sheets/s401.js。验收：check_all + check_s401 + 镜头扫描 0 违规；三个时刻 1920×1080 与 800×1200 截图。⑥（11-08 补）屋盖排程校准后 holes/pv 后移 4 天，`window` 与 cam 关键帧写死 679–781，`node tools/hz/check_s401.js` 现报「时间窗与 holes.start 683 / pv.end 785 不一致」：window 改为从 `HZ.K.holes.start / HZ.K.pv.end` 读，cam 关键帧 t 同步 +4 或按 window 比例算 | 待做 | 11-08 hark-cr |
 | D-23 | traycer-cs | 云门细化 | 云门目前是灰盒子（D-12：门洞被暗红栅栏堵、顶部黄线穿模），是全片最弱处。按公开资料（180×60×80 m，中间门洞，见 web/hzseq.js 第 21、33 行来源）做细化墨线模块 `web/mods/yunmen.js`：`build(THREE, HZ, t, opts)` 返回 Group，含门洞、幕墙分格、主体分层与施工阶段（基础→主体→幕墙，随 t 生长），线材质沿用 web/mods/actors.js 写法并支持 opts.clip；不改 hzseq.js/hzview.js（hark-cr 接线，替换现有云门体块）。附 `tools/hz/check_yunmen.js`（无穿模：门洞内无构件；与现有云门包络一致）。验收：check_all + check_yunmen；本地真机截图 3 张（基础、主体、完成）外链 + Gemini 4 自评 | 待做 | 11-08 hark-cr |
-| D-24 | traycer-cs | 真机体验审查与方向 | 用你的真机浏览器把线上页面当第一次来的观众完整看一遍（默认播放 + 逐图切换 + 手机竖屏），写 `docs/proposals/traycer-direction.md`：①哪 3 个时刻最震撼、哪里无聊或看不懂（带时刻与截图外链）；②节奏与镜头建议（最多 5 条，按收益排序，写清改哪个文件、谁的图）；③与 docs/plan.md 阶段 2 的差距；④核对 ae4930b 新的三维标注衬底（墨线模式与结尾深色模式各截一张，是否串图、压字、遮信息卡）。不改代码。验收：文件合入，每条建议可直接拆成派单 | 待做（D-23 之后或并行） | 11-08 hark-cr |
+| D-24 | traycer-cs | 真机体验审查与方向 | 用你的真机浏览器把线上页面当第一次来的观众完整看一遍（默认播放 + 逐图切换 + 手机竖屏），写 `docs/proposals/traycer-direction.md`：①哪 3 个时刻最震撼、哪里无聊或看不懂（带时刻与截图外链）；②节奏与镜头建议（最多 5 条，按收益排序，写清改哪个文件、谁的图）；③与 docs/plan.md 阶段 2 的差距；④核对 ae4930b 新的三维标注衬底（墨线模式与结尾深色模式各截一张，是否串图、压字、遮信息卡）。另：真机看 S-001、S-002 新图与 S-101 地下体量模块有无报错、帧率；并试加载 actors.js（URL 参数或本地改一行）测帧率，结论写进同一文件；顺带看 S-301 剖切（`#sheet=S-301&focus=CUT`，t 在提升段）网架杆件新封面是否正常。不改代码。验收：文件合入，每条建议可直接拆成派单 | 待做（D-23 之后或并行） | 11-08 hark-cr |
 | D-25 | hark-darrio | 履带吊臂长规则 | 内侧 6 吊改用塔吊（不站 24 m 楼面，楼面承载未核算）：在 `docs/rules/crane-stations.json` 给 6 吊的塔吊型号、塔位、臂长与额定，check_crane 增塔吊表并复算，超限为 0；不改 hzseq.js（hark-cr 按你的表改）。验收：check_crane 复算输出超限 0、check_all 通过 | 待做 | 11-08 hark-cr |
-| D-26 | hark-fangyi | S-201 北场注记 | R-0013 卫星影像显示北场（杭临绩场）铺轨实际晚于模型；**排程不动**。S-201 插件在北场进入画面/图面时加一条小注「北场铺轨按设计工期示意，卫星影像显示实际晚于模型（R-0013）」，不压引桥墨线与场区文字。只改 web/sheets/s201.js。验收：check_all + check_s201；北场在画面的时刻（如 t=760、850）截图可见注记 | 待做 | 11-08 hark-cr |
+| D-26 | hark-fangyi | S-201 北场注记 | R-0013 卫星影像显示北场（杭临绩场）铺轨实际晚于模型；**排程不动**。S-201 插件在北场进入画面/图面时加一条小注「北场铺轨按设计工期示意，卫星影像显示实际晚于模型（R-0013）」，不压引桥墨线与场区文字。只改 web/sheets/s201.js。验收：check_all + check_s201；北场在画面的时刻（如 t=760、850）截图可见注记。（11-08 补）屋盖排程校准后 t=636 拼好的南区屋盖仍在胎架上，挡住 S-201 镜头最后一条视线（`node tools/hz/check_cams.js S-201` 违反 1，check_all 里暂为报告模式）：cam 在 580 与 790 之间加一帧 `{ t: 636, target: [90, 13, 47], az: 86, el: 6, dist: 280 }`（hark-cr 已用 `--cam=` 试过，违反 0），或另定；合入后 hark-cr 把 S-201 移回 check_all 严格模式 | 待做 | 11-08 hark-cr |
 | D-27 | hark-darrio | 手机适配 | 手机适配：现有手机竖屏/横屏布局浪费空间（委托人 16:13）。只改 web/hzmobile.css（只放 @media (max-width: 820px) 与 (orientation) 规则，可用 !important 覆盖），目标：竖屏 390×844 与 360×780 三维画面占上半屏以上、图纸紧随其下、信息卡与按钮收紧不遮画面、无页面级横向滚动；横屏 844×390 左右分栏。不得改 id、不改 JS。需宿主改 DOM 的在 CLAIMS 接口请求提。验收：check_all 通过；无头 Chromium 移动端模拟 390×844、360×780、844×390 各截 S-000 与一张插件图（前后对比）外链或附在 docs/audit/2026-11-08-mobile.md | 待做（hzmobile.css 空文件与 link 已由 hark-cr 加好） | 11-08 hark-cr |
+| D-28 | hark-cs | 构件信息卡 + 实物图钉 | 构件信息卡 + 实物图钉，做成模块 `web/mods/info.js`（走 HZ_MODS：`pick/unpick` 弹卡显示 `part.info`、「看建成后 / 看开工时」两个按钮调用 `__pv` 现有接口（如 `ctx.set(t)` = `__pv.set`）；`HZR.forPart` 非空的构件在 3D 打小图钉，点开列记录与原链接；DOM 只挂 `#mod-ui`）。接口见 docs/hz-atlas-check.md 第三节 12–13（hzview.js?v=17 起）。不改共用文件，缺接口在 CLAIMS 接口请求提；hzwest.html 加 script 标签由 hark-cr 做。验收：check_all + 新 `tools/hz/check_info.js`；真机截图 2 张 | 待做 | 11-08 hark-cr |
+| D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定 | 待做 | 11-08 hark-cr |
 
 ## 接口请求
 
