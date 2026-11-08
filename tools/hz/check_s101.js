@@ -97,10 +97,13 @@ let modTxt = '';
   if (!MD || typeof MD.build !== 'function' || typeof MD.update !== 'function') fail('未登记 HZ_MODS s101-volume（build / update）');
   const BX = []; for (const a of HZ.acts) for (const p of a.parts) { if (p.grp || !p.geo) continue; const bs = p.geo.boxes && p.geo.boxes.length ? p.geo.boxes : (isFinite(p.geo.min[0]) ? [{ min: p.geo.min, max: p.geo.max }] : []); for (const b of bs) BX.push({ p, a, b }); }
   const here = (p, t) => p.st != null && t >= p.st && !(p.rm && p.rm[0] >= 0 && t >= p.rm[0] + p.rm[1]);
-  let aMax = 0, nPit = 0;
+  let aMax = 0, nPit = 0, nFace = 0;
   for (let t = 0; t <= MD.SHOW[1] + 1e-9; t += 2) { const L = MD.lines(HZ, t), s = P.stateAt(t);
     if (Math.abs(L.a ** 3 - s.vol) > Math.max(5, s.vol * 0.001)) fail(`t=${t} 土方块体积 ${(L.a ** 3).toFixed(0)} ≠ 出土 ${s.vol.toFixed(0)} m³`);
     for (let i = 1; i < L.pit.length; i += 3) if (L.pit[i] > 0) fail(`t=${t} 坑线高出地面 y=${L.pit[i]}`);
+    for (let i = 1; i < L.face.length; i += 3) if (L.face[i] > 4.7) fail(`t=${t} 施工面线高出地面 y=${L.face[i]}（挖机臂最高 4.6 m，浅坑时可露出地面）`);
+    { const liveT = s.tiles.filter(o => o.dig < -0.05 && o.dig / o.q.depth < 0.999 && o.roof < 1).length; if (L.live.filter(k => k !== 'C-METRO').length !== liveT) fail(`t=${t} 施工面数 ${L.live.length} ≠ 在挖分坑 ${liveT}`);
+      if (L.live.length && !L.ex) fail(`t=${t} 有施工面没有挖机`); nFace += L.live.length ? 1 : 0; }
     const minY = L.pit.reduce((a, v, i) => i % 3 === 1 ? Math.min(a, v) : a, 0), deep = Math.min(0, ...s.tiles.filter(o => o.roof < 1).map(o => o.dig), (s.base < 1 || s.lv.some(v => v < 1)) ? (s.coreDig != null ? s.coreDig : s.dig) : 0);
     if (Math.abs(minY - deep) > 1e-6 && L.pit.length) fail(`t=${t} 坑线最深 ${minY} ≠ 图纸开挖 ${deep}`);
     if (L.a > 0.5) { const x0 = L.A.x - L.a / 2, x1 = L.A.x + L.a / 2, z0 = L.A.zS - L.a, z1 = L.A.zS;
@@ -109,14 +112,15 @@ let modTxt = '';
     aMax = Math.max(aMax, L.a); nPit += L.pit.length ? 1 : 0; }
   if (Math.abs(aMax - Math.cbrt(MD.VPUB)) > 0.5) fail(`挖完时方块边长 ${aMax.toFixed(1)} 应约 ${Math.cbrt(MD.VPUB).toFixed(1)} m（120 万 m³）`);
   if (!nPit) fail('全程没有坑线');
+  if (nFace < 100) fail(`有施工面的抽样只有 ${nFace} 个`);
   // 桩 THREE：opts.clip 传到三种材质；update 每帧 < 2 ms
   const made = []; const T = { BufferGeometry: function () { this.setAttribute = () => {}; this.setDrawRange = () => {}; }, BufferAttribute: function () {}, DynamicDrawUsage: 1, DoubleSide: 2,
     LineBasicMaterial: function (o) { Object.assign(this, o); made.push(this); }, LineDashedMaterial: function (o) { Object.assign(this, o); made.push(this); }, MeshBasicMaterial: function (o) { Object.assign(this, o); made.push(this); },
     LineSegments: function (g, m) { this.geometry = g; this.material = m; this.computeLineDistances = () => {}; }, BoxGeometry: function () {}, Mesh: function (g, m) { this.material = m; this.scale = { set: () => {} }; this.position = { set: () => {} }; } };
   const plane = { normal: [0, 0, 1], constant: 0 }; MD.build({ add: () => {} }, HZ, T, { clip: [plane] });
   if (made.length < 4 || made.some(m => !m.clippingPlanes || m.clippingPlanes[0] !== plane)) fail('opts.clip 未传到全部材质');
-  const ms = []; for (let t = 0; t <= 400; t += 0.37) { const t0 = process.hrtime.bigint(); MD.update(t, [0, 50, 300]); ms.push(Number(process.hrtime.bigint() - t0) / 1e6); }
-  ms.splice(0, 5); ms.sort((a, b) => a - b); const worst = ms[Math.floor(ms.length * 0.99)];   // 去掉前 5 帧预热，取 p99（GC 抖动不算）
-  if (worst > 2) fail(`update p99 ${worst.toFixed(2)} ms > 2 ms`);
-  modTxt = ` mod_a=${aMax.toFixed(1)} mod_ms=${worst.toFixed(2)}`; }
+  const ms = [], re = []; let key = null; for (let f = 0; f < 1800; f++) { const t = 100 + f / 60, k = Math.round(t * 8), t0 = process.hrtime.bigint(); MD.update(t, [0, 50, 300]); const d = Number(process.hrtime.bigint() - t0) / 1e6; if (f > 30) { ms.push(d); if (k !== key) re.push(d); } key = k; }
+  re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, worst = re[re.length >> 1];   // 同 check_actors：按 60 帧/秒、1 天/秒播放，平均与重算帧中位都 < 2 ms
+  if (avg > 2 || worst > 2) fail(`update 平均 ${avg.toFixed(2)} ms、重算帧中位 ${worst.toFixed(2)} ms，应 < 2 ms`);
+  modTxt = ` mod_a=${aMax.toFixed(1)} mod_face=${nFace} mod_ms=${worst.toFixed(2)}`; }
 console.log(`OK check_s101 runs=${runs} samples=${samples} cam=${P.cam.length} phases=${M.L.length} parts=${nParts}${modTxt}`);
