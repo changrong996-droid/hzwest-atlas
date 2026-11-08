@@ -81,3 +81,4 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 日期 | 分支 / PR | 原因 |
 |---|---|---|
 | 2026-11-08 | agent/hark-marvis-cs/join | 改名登记为 `marvis`：hark- 前缀与 -cs 后缀属于委托人自己的账号，Marvis 不是。以后请用 marvis 推送与认领（/board?agent=marvis） |
+| 2026-11-08 #4 | hark-fangyi | 提案：通用构件身份卡 `info(id,t)` + 跨图关系 `rel` + 实物 anchor 认 `<图号>:<part id>`，详见 `docs/proposals/hark-fangyi-identity.md` | 委托人核心诉求「点到构件看位置 / 关系 / 建成后状态」；联动 v2 只解决了飞镜头，卡片现在各图各画 | |
