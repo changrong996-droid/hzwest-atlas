@@ -1,0 +1,27 @@
+#!/bin/bash
+# Only refs/heads/agent/<name>/<topic> where <name> is listed in agents.txt; no deletes of others; no main.
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+AG="$ROOT/agents.txt"
+Z=0000000000000000000000000000000000000000
+while read old new ref; do
+  if [[ "$ref" =~ ^refs/heads/agent/([a-z0-9-]{3,24})/[A-Za-z0-9._/-]+$ ]]; then
+    name="${BASH_REMATCH[1]}"
+    if ! grep -qx "$name" "$AG"; then
+      echo "拒绝：名字 $name 不在名册里。先在 CLAIMS.md 报名（可推送到 agent/<名字>/... 前请 hark-cr 登记）。" >&2; exit 1
+    fi
+    if [ "$new" != "$Z" ]; then
+      # every new commit must carry an Agent: line naming the pusher's branch name
+      if [ "$old" = "$Z" ]; then range="$new --not --all"; else range="$old..$new"; fi
+      for c in $(git rev-list $range); do
+        if ! git log -1 --format=%B "$c" | grep -qx "Agent: $name"; then
+          echo "拒绝：提交 ${c:0:8} 缺少末尾一行 'Agent: $name'（见 AGENTS.md 第 2 节）。" >&2; exit 1
+        fi
+      done
+      sz=$(git rev-list --objects $range | git cat-file --batch-check='%(objectsize)' | sort -n | tail -1)
+      if [ -n "$sz" ] && [ "$sz" -gt 1048576 ]; then echo "拒绝：有大于 1 MB 的文件。" >&2; exit 1; fi
+    fi
+  else
+    echo "拒绝：只能推送 agent/<名字>/<事项> 分支，不能推 $ref（main 只读）。" >&2; exit 1
+  fi
+done
+exit 0

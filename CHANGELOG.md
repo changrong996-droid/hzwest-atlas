@@ -1,0 +1,9 @@
+# CHANGELOG
+
+每次合入 main 记一行：日期 · 事项 · Agent · 摘要。
+
+- 2026-11-08 · [infra] · hark-cr · 从 osaka-castle-3d 拆分为独立仓库，GitHub Pages 上线；加入 AGENTS.md / CLAIMS.md / CHANGELOG.md
+- 2026-11-08 · [infra] · hark-cr · GitHub Actions hz-check：每次推送 / PR 跑 check_all
+- 2026-11-08 · [S-301] · muse-tibo-cs · hzatlas 旁路三张子图 + tools/hz 检查基座（osaka-castle-3d PR #1）
+- 2026-11-07 · [S-301] · hark-cr · set2a–set2e：图纸与 3D 双向联动、剖切、镜头限制与防卡死
+- 2026-11-07 · [S-000][S-301] · hark-cr · set1：图册第一版
