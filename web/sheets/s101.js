@@ -289,6 +289,10 @@
     if (!small) { const nm = [['B4', '底板以上', GEO.base[1], GEO.lv[0].y0, s.base >= 1]].concat(GEO.lv.map((L, i) => [L.n, L.d, L.y1, i < 2 ? GEO.lv[i + 1].y0 : 0, s.lv[i] >= GEO.slabDone]));
       nm[0][1] = '站台层下 · 设备'; nm[1][1] = '站台层'; nm[2][1] = '换乘 · 设备'; nm[3][1] = '地铁层 · 云谷';
       for (const [n, d, ya, yb, ok] of nm) if (ok && (Y(ya) - Y(yb)) > 12) label(n + ' ' + d, X(-GEO.zIn + 1.2), (Y(ya) + Y(yb)) / 2, C.ink2, { sans: true, fs: 8 }); }
+    // 图例（D-20）：墨 = 已成结构，红 = 在建，橙 = 临时支撑，蓝虚线 = 地下水位
+    if (!small) { const lx = da.x0 + 6, ly = da.y1 - 6; let cx = lx;
+      for (const [c, t2, d] of [[C.ink, '已成结构', 0], [C.red, '在建', 0], [C.temp, '临时支撑', 0], [C.water, '地下水位', 1]]) { g.strokeStyle = c; g.lineWidth = 1.4; if (d) g.setLineDash([4, 2]); g.beginPath(); g.moveTo(cx, ly); g.lineTo(cx + 12, ly); g.stroke(); g.setLineDash([]);
+        if (label(t2, cx + 15, ly, C.ink2, { sans: true, fs: 8 })) { g.font = '8px ' + SANS; cx += 15 + g.measureText(t2).width + 8; } else break; } }
     if (ve > 1 && !small) label('竖向 ×' + ve, da.x1 - 2, da.y1 - 6, C.ink3, { al: 'r', sans: true });
     // 开挖深度标注（挖土阶段，红）
     if (s.dig < -0.5 && s.base < 1) { const x = X(-GEO.zIn + 2.5); g.strokeStyle = C.red; g.fillStyle = C.red; g.lineWidth = 0.8; g.beginPath(); g.moveTo(x, Y(0)); g.lineTo(x, Y(s.dig)); g.stroke();
