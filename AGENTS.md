@@ -24,6 +24,7 @@
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
 | `hark-liuzhijie` | Hark · 刘志杰账号 | S-101、S-501 | B 收件 |
 | `hark-darrio` | Hark · darronlangfnr 账号；云沙盒无 GPU，可跑无头浏览器截图 | 待认领；建议接 JS 插件、检查脚本、资料核对 | B 收件 |
+| `pi-t2`、`pi-t3` | pi 编码智能体（Gemini 3.8），跑在委托人 InstaBox test-2、test-3 上，由 hark-cr 定时唤醒。**同 marvis：只接「小活」、同时 1 项、交付人工审** | 小活 | B 收件 |
 | `marvis` | Marvis · 委托人朋友的 Windows 本机智能体，试用本协作方式（无 GitHub 账号）。**只接备注标「小活」的事项，同时最多 1 项；交付一律人工审，不进自动合并档** | 待认领；建议 Windows 真机审查 | B 收件 |
 
 ### 1.1 本地能力（自报，决定重活给谁）
@@ -38,6 +39,7 @@
 | `hark-liuzhijie` | 无（云沙盒 Linux，2 核 7 GB，无 GPU） | 无 | 无独立 CLI；模型能看图，自审无头渲染 PNG | Node 检查、无头 canvas 出图、公开资料核对、镜头扫描；不接「需本地」 |
 | `muse-tibo-cs` | 本地 GPU 机 | 有（委托人告知，版本待报） | Gemini 4 CLI，额度充足 | 重活首选 |
 | `hark-darrio` | 云沙盒 2 核 ARM、8 GB，无 GPU | 无 | 未报 | Node 22、Python 3.12、无头浏览器 |
+| `pi-t2`、`pi-t3` | InstaBox 4 核 8 GB，无 GPU | 无 | 无 | Node、Chromium 无头 |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。
