@@ -65,13 +65,30 @@
     });
     // 分区子盒：合龙北缝 + 金属屋面分区薄盒 + 光伏四角瓣，使 3D 点选按位置与时间落到对应屋面工序而非总是 K-merge
     const mergeN = K.merge ? bbOf([K.merge.parts.find(q => q.bb && q.bb.max[2] < 0)]) : null;
-    const cladSubs = [], xs = [-122.5, -60, 0, 60, 122.5], zs = [-163, -108, -54, 0, 54, 108, 166], zL = ['N2', 'N1', 'MN', 'MS', 'S1', 'S2'], xL = ['W2', 'W1', 'E1', 'E2'], zN = ['北外', '北内', '中北', '中南', '南内', '南外'], xN = ['西外', '西内', '东内', '东外'];
+    const cladSubs = [], skySubs = [], xs = [-122.5, -60, 0, 60, 122.5], zs = [-163, -108, -54, 0, 54, 108, 166], zL = ['N2', 'N1', 'MN', 'MS', 'S1', 'S2'], xL = ['W2', 'W1', 'E1', 'E2'], zN = ['北外', '北内', '中北', '中南', '南内', '南外'], xN = ['西外', '西内', '东内', '东外'];
     for (let iz = 0; iz < zs.length - 1; iz++) for (let ix = 0; ix < xs.length - 1; ix++) {
       let x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9, n = 0;
-      for (let z = zs[iz]; z <= zs[iz + 1]; z += 3.5) for (let x = xs[ix]; x <= xs[ix + 1]; x += 3.5) if (HZ.rho(x, z) <= 1) {
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, HZ.Ht(x, z) - 0.2); y1 = Math.max(y1, HZ.Hc(x, z) + 0.2); z0 = Math.min(z0, z); z1 = Math.max(z1, z); n++;
+      for (let z = zs[iz]; z <= zs[iz + 1]; z += 3.5) for (let x = xs[ix]; x <= xs[ix + 1]; x += 3.5) if (HZ.rho(x, z) <= 1 && !HZ.inSky(x, z)) {
+        const h = HZ.Hc(x, z);
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, h - 0.8); y1 = Math.max(y1, h + 0.8); z0 = Math.min(z0, z); z1 = Math.max(z1, z); n++;
       }
       if (n) cladSubs.push({ sfx: zL[iz] + xL[ix], tag: zN[iz] + xN[ix], box: [x0, y0, z0, x1, y1, z1] });
+    }
+    for (let iz = 0; iz < zs.length - 1; iz++) {
+      let x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9, n = 0;
+      for (let z = zs[iz]; z <= zs[iz + 1]; z += 2) for (let x = -14; x <= 14; x += 2) if (HZ.rho(x, z) <= 1 && HZ.inSky(x, z)) {
+        const h = HZ.Hc(x, z);
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, h - 0.8); y1 = Math.max(y1, h + 0.8); z0 = Math.min(z0, z); z1 = Math.max(z1, z); n++;
+      }
+      if (n) skySubs.push({ sfx: 'Z' + zL[iz], tag: '天窗·' + zN[iz], box: [x0, y0, z0, x1, y1, z1] });
+    }
+    for (let ix = 0; ix < xs.length - 1; ix++) {
+      let x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9, n = 0;
+      for (let z = -14; z <= 14; z += 2) for (let x = xs[ix]; x <= xs[ix + 1]; x += 2) if (HZ.rho(x, z) <= 1 && HZ.inSky(x, z)) {
+        const h = HZ.Hc(x, z);
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, h - 0.8); y1 = Math.max(y1, h + 0.8); z0 = Math.min(z0, z); z1 = Math.max(z1, z); n++;
+      }
+      if (n) skySubs.push({ sfx: 'X' + xL[ix], tag: '天窗·' + xN[ix], box: [x0, y0, z0, x1, y1, z1] });
     }
     const pvSubs = [];
     for (const [sfx, tag, sx, sz] of [['NE', '东北瓣', 1, -1], ['NW', '西北瓣', -1, -1], ['SE', '东南瓣', 1, 1], ['SW', '西南瓣', -1, 1]]) {
@@ -90,7 +107,7 @@
     const chain = new Set(best);
     const t0 = Math.min(...all.map(a => a.start)), t1 = Math.max(...all.map(a => a.end));
     const byId = new Map(rows.map(r => [r.id, r]));
-    M = { HZ, sig, rows, chain, t0, t1, byId, mergeN, cladSubs, pvSubs };
+    M = { HZ, sig, rows, chain, t0, t1, byId, mergeN, cladSubs, skySubs, pvSubs };
     return M;
   }
   const live = (r, t) => (t >= r.st && t < r.en) || (r.rm && t >= r.rst && t < r.ren);
@@ -125,13 +142,29 @@
     if (r.borrowed) rows.push(['3D', '本工序无独立实体，镜头对准它所在的构件']);
     return rows;
   }
+  const ROOF_SET = new Set(['lift1', 'lift2', 'lift3', 'merge', 'wlift', 'head', 'holes', 'sky', 'clad', 'pv']);
+  function activeRoofSet(m, t) {
+    const rs = m.rows.filter(r => ROOF_SET.has(r.key));
+    const act = rs.filter(r => live(r, t));
+    if (act.length) return new Set(act.map(r => r.key));
+    const done = rs.filter(r => r.en <= t);
+    if (!done.length) return new Set();
+    const maxEn = Math.max(...done.map(r => r.en));
+    return new Set(done.filter(r => r.en === maxEn).map(r => r.key));
+  }
   function parts(t, ctx) {
     const m = model(), L = (ctx && ctx.w && ctx.h) ? layout(ctx.w, ctx.h, LAY && LAY.w === ctx.w && LAY.h === ctx.h ? LAY.tb : 20) : LAY || layout(600, 420, 20);
+    const curRoof = activeRoofSet(m, t);
     const out = m.rows.filter(r => r.box).map(r => ({ id: r.id, label: r.name, kind: 'act', state: stateOf(r, t), hit: hitOf(r, L), box: r.box.slice(), info: info(r, t) }));
     const rm = m.byId.get('K-merge');
     if (rm && m.mergeN) out.push({ id: 'K-merge-N', label: rm.name + ' · 北缝', kind: 'act', state: stateOf(rm, t), hit: hitOf(rm, L), box: m.mergeN.slice(), info: info(rm, t) });
-    const rc = m.byId.get('K-clad');
-    if (rc && t >= rc.st) for (const s of m.cladSubs) out.push({ id: 'K-clad-' + s.sfx, label: rc.name + ' · ' + s.tag, kind: 'act', state: stateOf(rc, t), hit: hitOf(rc, L), box: s.box.slice(), info: info(rc, t) });
+    for (const k of curRoof) {
+      if (k === 'merge') continue;
+      const r = m.byId.get('K-' + k);
+      if (!r) continue;
+      const tiles = k === 'sky' ? m.skySubs : (k === 'clad' && curRoof.has('sky')) ? m.cladSubs : m.cladSubs.concat(m.skySubs);
+      for (const s of tiles) out.push({ id: 'K-' + k + '-' + s.sfx, label: r.name + ' · ' + s.tag, kind: 'act', state: stateOf(r, t), hit: hitOf(r, L), box: s.box.slice(), info: info(r, t) });
+    }
     const rp = m.byId.get('K-pv');
     if (rp && live(rp, t)) for (const s of m.pvSubs) out.push({ id: 'K-pv-' + s.sfx, label: rp.name + ' · ' + s.tag, kind: 'act', state: stateOf(rp, t), hit: hitOf(rp, L), box: s.box.slice(), info: info(rp, t) });
     return out;
