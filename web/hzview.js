@@ -6,7 +6,7 @@
   const THREE_BASE = 'https://unpkg.com/three@0.160.0/';
   const $ = id => document.getElementById(id), hp = new URLSearchParams(location.hash.slice(1));
   const HZ = window.HZ, SEQ = window.SEQ, S = window.__pv = { ready: false, frames: 0, calls: 0, auditDone: false, sheetDraws: 0, st: { t: 0, u: 0, play: false, auto: true, info: false, pref: hp.get('mode') === 'lit' ? 'lit' : 'ink' } };
-  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 1]];
+  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-251', '网架拼装', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 1]];
   const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' || PLUG[v] ? v : 'S-000'; };
   // 插件图纸（web/sheets/*.js 登记到 window.HZ_SHEET_PLUGINS）：{ id, name, window:[t0,t1], big(t), draw(g,w,h,t,ctx), cam:[{t,target,az,el,dist}] }
   const PLUG = {}; for (const pl of (window.HZ_SHEET_PLUGINS || [])) PLUG[pl.id] = pl;

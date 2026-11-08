@@ -1,4 +1,5 @@
 # CHANGELOG
+- 2026-11-08 · [S-251] 页签与图册登记（SHEETS_ALL、hzatlas PAGES；hzview v14、hzatlas v6）；Mac Chrome 真 GPU 五图起中末截图 0 报错 · hark-cr
 - 2026-11-08 · [S-101/S-201/S-401/S-501] 二稿合入（parts 联动、D-05/D-06/D-08、S-501 首趟列车新值 D-01）· hark-liuzhijie/hark-fangyi/hark-cs
 - 2026-11-08 · [S-251] 网架拼装初稿合入并接线（s251.js?v=1）· hark-liuzhijie
 - 2026-11-08 · [blender-ref] 导出脚本与白模/线稿对照（Traycer Gemini 4 审：可合；临时构件重复导出待修）· hark-cs
