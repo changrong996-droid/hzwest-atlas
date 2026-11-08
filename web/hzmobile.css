@@ -1,2 +1,45 @@
 /* 手机适配样式，归 D-27 负责人；只放 @media 规则 */
 /* 在 hzwest.html 内联 <style> 之后加载，可用 !important 覆盖；不改 id、不改 JS（需宿主改 DOM 的在 CLAIMS 接口请求提）。 */
+
+/* D-27 · hark-darrio：手机竖屏 —— 三维占上半屏以上，图纸紧随，控制条两行收紧（时间轴一行；播放 + 页签 + 按钮一行） */
+@media (max-width: 820px) and (orientation: portrait) {
+  #app { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1.6fr) minmax(0, 1fr) auto !important; gap: 6px !important; padding: 6px !important; }
+  body.s000 #app { grid-template-rows: minmax(0, 1fr) auto !important; }
+  #col, #bar { grid-column: 1 / 2 !important; }
+  #ctrl { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-areas: "tr tr tr tr tr" "pl tb md hm in"; align-items: center; column-gap: 6px; row-gap: 2px; padding: 4px 6px 6px !important; }
+  #track { grid-area: tr; order: 0 !important; height: 40px !important; min-width: 0 !important; }
+  #track .rail, #fill { top: 30px !important; } #knob { top: 24px !important; } #track .tick { top: 34px !important; }
+  .seg { top: 0 !important; height: 24px !important; font-size: 13px !important; }
+  #b-play { grid-area: pl; width: 34px !important; height: 34px !important; }
+  #tabs { grid-area: tb; min-width: 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #tabs::-webkit-scrollbar { display: none; }
+  #tabs .tb { flex: none; min-height: 34px !important; padding: 2px 7px !important; font-size: 11px; }
+  #tabs .tb b { font-size: 12px; } #tabs .tb small { font-size: 10.5px; }
+  #b-mode { grid-area: md; font-size: 0 !important; gap: 0 !important; padding: 0 !important; width: 32px; }
+  #b-home { grid-area: hm; } #b-info { grid-area: in; }
+  #b-mode, #b-home, #b-info { height: 32px !important; min-width: 32px !important; }
+  #big { max-width: 70% !important; padding: 4px 9px 5px 7px !important; }
+  #big .k { font-size: 11px !important; } #big .n { font-size: 30px !important; } #big .n small { font-size: 13px !important; } #big .c { font-size: 13px !important; margin-top: 2px !important; }
+  #info { top: 6px !important; right: 6px !important; bottom: 6px !important; width: calc(100% - 12px) !important; }
+}
+
+/* D-27 · 手机横屏（844×390 宽于 820，按高度判）：三维与图纸左右分栏，控制条一行，页签可横向滑动，按钮不出屏 */
+@media (orientation: landscape) and (max-height: 500px) {
+  #app { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) auto !important; gap: 6px !important; padding: 6px !important; }
+  body.s000 #app { grid-template-columns: minmax(0, 1fr) !important; }
+  #bar { grid-column: 1 / -1 !important; }
+  #ctrl { flex-wrap: nowrap !important; gap: 6px !important; padding: 3px 6px !important; }
+  #track { flex: 1 1 140px !important; min-width: 110px !important; height: 40px !important; order: 0 !important; }
+  #track .rail, #fill { top: 30px !important; } #knob { top: 24px !important; } #track .tick { top: 34px !important; }
+  .seg { top: 0 !important; height: 24px !important; font-size: 13px !important; }
+  #b-play { width: 32px !important; height: 32px !important; }
+  #tabs { flex: 0 1 auto !important; min-width: 0; max-width: 58%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #tabs::-webkit-scrollbar { display: none; }
+  #tabs .tb { flex: none; min-height: 32px !important; padding: 1px 6px !important; font-size: 11px; }
+  #tabs .tb b { font-size: 12px; } #tabs .tb small { font-size: 10.5px; }
+  #b-mode { font-size: 0 !important; gap: 0 !important; padding: 0 !important; width: 30px; }
+  #b-mode, #b-home, #b-info { height: 30px !important; min-width: 30px !important; }
+  #big { padding: 4px 9px 5px 7px !important; }
+  #big .k { font-size: 11px !important; } #big .n { font-size: 30px !important; } #big .n small { font-size: 13px !important; } #big .c { font-size: 13px !important; margin-top: 2px !important; }
+  #info { top: 6px !important; bottom: 6px !important; }
+}
