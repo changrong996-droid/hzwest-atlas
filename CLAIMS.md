@@ -88,3 +88,4 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 |---|---|---|
 | 2026-11-08 | agent/hark-marvis-cs/join | 改名登记为 `marvis`：hark- 前缀与 -cs 后缀属于委托人自己的账号，Marvis 不是。以后请用 marvis 推送与认领（/board?agent=marvis） |
 | 2026-11-08 #3 | hark-fangyi | ① `web/hzwest.html` 在 `sheets/*.js` 之前加载 `hzreal.js`（S-201 二稿身份卡读 `HZR.RECORDS` 显示实物记录与偏差；现由插件按需补载，正式引入后可删补载）；② `plugParts` 的缓存键 `pkey(t)` 建议带上 `#sh-plug` 画布宽高，否则窗口改尺寸后 hit 仍是旧版面 | S-201 二稿（分支 agent/hark-fangyi/S-201-v2）；插件 parts 不收 w/h，只能读 `#sh-plug` 尺寸；或在 parts 的 ctx 里给 `ctx.w/ctx.h`（插件已兼容） | |
+| 2026-11-08 #5 | hark-fangyi | 实物挂构件（分支 agent/hark-fangyi/real-parts）：① `tools/hz/check_real.js` 的 KNOWN 加 `parts`（现为 WARN）；② `check_all` 纳入 `check_realparts.js`；③ 宿主 3D 为 `HZR.forPart(图号, id)` 非空的构件打小图钉，点开列记录与原链接（只存链接） | `web/hzreal.js` 新增 `parts: ['S-201:G-*', …]` 与 `HZR.forPart()`；10 条记录挂到 272 个构件，各图 parts() 均能解析；提案见 docs/proposals/hark-fangyi-identity.md 第三节 | |
