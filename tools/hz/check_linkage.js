@@ -90,7 +90,7 @@ if (!/<script src="sheets\/s501\.js\?v=\d+"><\/script>/.test(html)) fail('hzwest
 if (html.indexOf('sheets/s501.js') > html.indexOf('hzview.js')) fail('s501.js 须在 hzview.js 之前加载');
 // 合同：SHEETS[0] 仍是千斤顶图、id 不变
 if (!/const SHEETS = \[\{ id: 'sh-jack'/.test(src)) fail('SHEETS[0] 必须仍是 sh-jack');
-if (!/if \(w < 20 \|\| h < 20\) return;/.test(src)) fail('drawSheet 须保留 clientWidth<20 跳过');
+if (!/if \(w < 20 \|\| h < 20\) (return;|\{[^}]*return; \})/.test(src)) fail('drawSheet 须保留 clientWidth<20 跳过');
 // 结尾列车：车头停进站台、湖杭场股道
 { const fv = /tz: HZ\.tracks\(HZ\.YARDS\.S\)\[0\], te: (-?[\d.]+), tw: 1/.exec(src); if (!fv) fail('FV 默认 tz 应取湖杭场股道 HZ.tracks(HZ.YARDS.S)[0]、tw 1');
   const te = +fv[1], L = 8 * (25.5 + 0.8), head = te + 12, tail = te - L; if (Math.abs(head) > 225 || Math.abs(tail) > 225) fail(`首趟列车 头 ${head} 尾 ${tail} 应都在站台 ±225 内`); runs++; }
