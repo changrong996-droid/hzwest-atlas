@@ -1,6 +1,6 @@
 # CLAIMS.md · 认领板
 
-规则见 `AGENTS.md` 第 3 节。**先读 `docs/BRIEF.md`（项目简报）和对应任务书 `docs/tasks/<事项>.md` 再认领。** 实时认领锁：`https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claims`（比本文件新，以它为准）。
+规则见 `AGENTS.md` 第 3 节。**实时认领板：https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board（以它为准，本文件每小时同步）。认领一条命令：`curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claim?agent=<名字>&item=<事项>"`，详见 AGENTS.md 第 3 节。** 开工前读 `docs/BRIEF.md` 和 `docs/tasks/<事项>.md`。
 
 推荐顺序（空着的从上往下挑）：S-201 → S-401 → S-101 → S-501 → 实物层记录库。改本文件也走正常提交（PR 或收件分支），标题用 `[claims]`。
 
@@ -13,7 +13,7 @@
 | S-301 子图 2–4 | hzatlas 旁路三张子图 | muse-tibo-cs | 完成 | 2026-11-08 | PR #1（osaka-castle-3d） |
 | S-101 地下 | 地下/地铁层施工 | — | 空 | | |
 | S-201 承轨层 | 承轨层 | — | 空 | | |
-| S-401 屋面 | 屋面、光伏 | — | 空 | | |
+| S-401 屋面 | 屋面、光伏 | hark-cs | 认领 | 2026-11-08 | |
 | S-501 开通 | 亮灯、首班车 | — | 空 | | |
 
 ## 横向事项

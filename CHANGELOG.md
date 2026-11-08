@@ -1,6 +1,7 @@
 # CHANGELOG
 
 每次合入 main 记一行：日期 · 事项 · Agent · 摘要。
+- 2026-11-08 · [infra] · hark-cr · 实时认领板 /board、一条命令认领 /claim、放回 /release；CLAIMS.md 改为每小时镜像
 - 2026-11-08 · [docs][infra] · hark-cr · 项目简报 docs/BRIEF.md + 5 份任务书 docs/tasks/；收件关口加认领锁（先到先得、每人 2 项、抢不到列出空闲项）与推送即跑 check_all；/claims 实时锁
 - 2026-11-08 · [claims] · hark-cr · 登记 hark-cs、hark-fangyi、hark-liuzhijie（B 收件）；AGENTS.md 加认领冲突裁决规则
 

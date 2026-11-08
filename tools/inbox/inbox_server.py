@@ -5,6 +5,8 @@ Anonymous clone/fetch; push allowed only to refs/heads/agent/<name>/... where <n
 Usage: inbox_server.py <root> <port>   (root contains hzwest-atlas.git)
 """
 import os, sys, subprocess, http.server, socketserver, urllib.parse, re
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import board
 
 ROOT, PORT = sys.argv[1], int(sys.argv[2])
 MAXBODY = 20 * 1024 * 1024
@@ -17,8 +19,11 @@ class H(http.server.BaseHTTPRequestHandler):
     def _run(self):
         u = urllib.parse.urlsplit(self.path)
         if u.path in ('/', '/health'):
-            body = b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\n'
+            body = b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\nclaim board: <this-url>/board\n'
             self.send_response(200); self.send_header('Content-Type', 'text/plain'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if u.path in ('/board', '/claim', '/release'):
+            code, txt = board.handle(ROOT, u.path, u.query); body = txt.encode()
+            self.send_response(code); self.send_header('Content-Type', 'text/plain; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path == '/claims':
             try: body = open(os.path.join(ROOT, 'claims.lock.json'), 'rb').read()
             except OSError: body = b'{}'
