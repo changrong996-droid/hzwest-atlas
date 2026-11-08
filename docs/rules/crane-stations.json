@@ -197,7 +197,7 @@
   "name": "Liebherr 1000 EC-B 100 Litronic",
   "jib": 31.5,
   "Lc": 16,
-  "mast": 2.5,
+  "mast": 3.4,
   "minR": 5.4,
   "chart": [
    [
@@ -221,7 +221,8 @@
     25.9
    ]
   ],
-  "src": "Liebherr 1000 EC-B 100 Litronic 数据表（EN 14439）第 3 页「Ausladung und Tragfähigkeit」，31.5 m 臂一行（r=34.6），单位 t；5.4–11.0 m 额定 100 t，表中 10 m 起列。塔身截面 2.5 m 为估计值"
+  "src": "Liebherr 1000 EC-B 100 Litronic 数据表（EN 14439）第 3 页「Ausladung und Tragfähigkeit」，31.5 m 臂一行（r=34.6），单位 t；5.4–11.0 m 额定 100 t，表中 10 m 起列。塔身按 1000 HC 塔节 3.4 m 方形；同表 24 HC（2.4 m）独立高度不够 64 m",
+  "tower": "1000 HC（3.4 m×3.4 m 方形塔节），独立式最大吊钩高 72.2 m（同一数据表「Turmhöhen」页）"
  },
  "towers": [
   {
@@ -260,7 +261,7 @@
   },
   {
    "id": "TC-W南",
-   "x": -43,
+   "x": -45,
    "z": 42,
    "jy": 64,
    "erect": [
@@ -278,7 +279,7 @@
   },
   {
    "id": "TC-E南",
-   "x": 43,
+   "x": 45,
    "z": 42,
    "jy": 64,
    "erect": [
