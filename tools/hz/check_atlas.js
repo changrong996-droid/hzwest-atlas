@@ -91,4 +91,21 @@ for (const s of ["fetch('hzwest.html'", 'hzatlas.js?v=']) {
   if (!atlasHtml.includes(s)) fail('hzatlas.html 缺少 ' + s);
 }
 
+// 11 HZ2-01 点图飞镜头断言
+check('focusFor 用例', () => {
+  assert.strictEqual(typeof HZA.focusFor, 'function');
+  assert.strictEqual(HZA.focusFor('S-301-3', 0.5, 2), 'CUT');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.1, 2), 'ZN');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.5, 2), 'ZM');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.9, 2), 'ZS');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 1), 'ZS');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 2), 'ZM');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 3), 'ZN');
+  assert.strictEqual(HZA.focusFor('X', 0.5, 2), null);
+});
+for (const s of ['HZA.focusFor', 'wireFly', 'location.hash = ', 'hz-hint']) {
+  if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
+}
+if (!atlasHtml.includes('hzatlas.js?v=3')) fail('hzatlas.html 缺少 hzatlas.js?v=3');
+
 console.log('OK check_atlas pages=' + Object.keys(HZA.PAGES).length + ' sheets=' + keys.length + ' aliases=' + nal);

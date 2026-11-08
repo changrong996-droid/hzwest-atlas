@@ -71,6 +71,13 @@
     return (g, w, h, t, ctx) => fn(g, w, h, t, Object.assign({}, ctx, { tb: (w2, h2, _no, name, t2) => ctx.tb(w2, h2, no, name, t2) }));
   };
 
+  HZA.focusFor = function (key, fracY, liftZone) {
+    if (key === 'S-301-3') return 'CUT';
+    if (key === 'S-301-4') return fracY < 1 / 3 ? 'ZN' : (fracY < 2 / 3 ? 'ZM' : 'ZS');
+    if (key === 'S-301-2') return liftZone === 1 ? 'ZS' : (liftZone === 3 ? 'ZN' : 'ZM');
+    return null;
+  };
+
   G.HZA = HZA;
 
   if (typeof document === 'undefined' || !document.getElementById) return;
@@ -101,6 +108,32 @@
     S.layout();
   };
 
+  const TITLES = {
+    'S-301-2': '点击：镜头飞到本图当前分区的视角',
+    'S-301-3': '点击：镜头飞到剖面切口',
+    'S-301-4': '点击：镜头按点击位置飞到北 / 中 / 南区',
+  };
+
+  function wireFly(el, key) {
+    el.style.cursor = 'pointer';
+    if (TITLES[key]) el.title = TITLES[key];
+    el.addEventListener('click', (e) => {
+      if (!el.clientHeight) return;
+      const fracY = e.offsetY / el.clientHeight;
+      const S = window.__pv;
+      let liftZone = 2;
+      if (S && S.st && typeof S.st.t === 'number' && window.HZ && HZ.K) {
+        const t = S.st.t;
+        liftZone = t < HZ.K.lift2.start ? 1 : (t < HZ.K.lift3.start ? 2 : 3);
+      }
+      const f = HZA.focusFor(key, fracY, liftZone);
+      if (!f) return;
+      const q = new URLSearchParams(location.hash.slice(1));
+      q.set('focus', f);
+      location.hash = q.toString();
+    });
+  }
+
   HZA.mount = function () {
     if (mounted) return;
     const S = G.__pv;
@@ -114,7 +147,7 @@
 
     const st = document.createElement('style');
     st.id = 'hzatlas-css';
-    st.textContent = '#col{grid-template-rows:auto minmax(0,1fr)!important;position:relative}#hz-subtabs{display:flex;gap:4px;font-family:var(--mono);font-size:12px}#hz-subtabs .st{padding:3px 8px;border:1px solid var(--line);border-radius:3px;cursor:pointer;background:#fbf9f5}#hz-subtabs .st.on{background:var(--ink);color:#fff}#hz-subtabs .st small{opacity:.55;font-size:10px;font-weight:400;margin-right:5px}#col canvas.sheet.hz-off{visibility:hidden;position:absolute;inset:0;pointer-events:none}';
+    st.textContent = '#col{grid-template-rows:auto minmax(0,1fr)!important;position:relative}#hz-subtabs{display:flex;gap:4px;font-family:var(--mono);font-size:12px}#hz-subtabs .st{padding:3px 8px;border:1px solid var(--line);border-radius:3px;cursor:pointer;background:#fbf9f5}#hz-subtabs .st.on{background:var(--ink);color:#fff}#hz-subtabs .st small{opacity:.55;font-size:10px;font-weight:400;margin-right:5px}#hz-subtabs .hz-hint{color:#8a8175;font-size:11px;margin-left:8px;align-self:center}#col canvas.sheet.hz-off{visibility:hidden;position:absolute;inset:0;pointer-events:none}';
     document.head.appendChild(st);
 
     const list = HZA.sheetsOf('S-301');
@@ -129,6 +162,10 @@
       bar.appendChild(sp);
       return sp;
     });
+    const hint = document.createElement('span');
+    hint.className = 'hz-hint';
+    hint.textContent = '点击图纸 · 镜头飞过去';
+    bar.appendChild(hint);
     col.insertBefore(bar, col.firstChild);
 
     canvases = list.map((item) => {
@@ -139,6 +176,7 @@
       el.setAttribute('aria-label', item.no + ' ' + item.title);
       col.appendChild(el);
       S.SHEETS.push({ id: item.canvas, fn: HZA.wrapFn(S.SH[item.fn], item.no), no: item.no, el, key: '', drawn: 0, n: 0, scale: '' });
+      wireFly(el, item.id);
       return el;
     });
 
