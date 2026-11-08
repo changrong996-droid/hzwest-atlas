@@ -200,8 +200,11 @@
       push('位置', `${YK[F.yk].name} · ${zTxt(F.tz)} · 第 ${F.n} 道（自云谷数）`);
       push('关系', `${nb.length ? '靠站台 ' + nb.map(p => p.id).join('、') + ' · ' : ''}压在承轨层 ${under.filter(e => !e.ap).length} 跨 + 引桥梁 ${under.filter(e => e.ap).length} 跨上，${dd(usp[1])} 全部浇完`);
       push('工期', `铺轨 ${dd(sp[0])} → ${dd(sp[1])} · ${stTxt(stSpan(sp, t))}`);
-      const all = span(d.track.map(q => q.p));   // 报道给的是「两场正线全部铺完」的时点，故与全部股道的完成日比，不与单条比
-      for (const r of (G.HZR ? (G.HZR.forPart ? G.HZR.forPart('S-201', F.id) : G.HZR.RECORDS || []) : [])) if (r.sheet === 'S-201' && r.t != null) { const dv = Math.round(all[1] - dayOfDate(r.date)); push('实物', `${r.id} ${srcName(r)}：${r.date} 前两场正线全部铺完；模型全部铺完 ${dd(all[1])}（${dv > 0 ? '晚 ' + dv : dv < 0 ? '早 ' + (-dv) : '差 0'} 天）`); }
+      // 实物按记录挂的那一场比：报道给的是「某一场正线铺完」的时点，与该场全部股道的完成日比，不与单条比；影像只给判读
+      for (const r of (G.HZR ? (G.HZR.forPart ? G.HZR.forPart('S-201', F.id) : G.HZR.RECORDS || []) : [])) { if (r.sheet !== 'S-201') continue;
+        const yk = r.anchor === 'trackS' ? 'S' : r.anchor === 'trackN' ? 'N' : F.yk, ys = span(d.track.filter(q => q.yk === yk).map(q => q.p));
+        if (r.kind === 'photo') { const sn = (r.note.replace(/^判读[^：]*：/, '').split(/[。；]/).find(c => c.includes(yk === 'N' ? '北场' : '南场')) || '').trim(); push('实物', `${r.id} 卫星 ${r.date}：${sn || '见记录'}${r.t != null && dayOfDate(r.date) > ys[1] && /无轨道|未铺/.test(sn) ? '；模型 ' + dd(ys[1]) + ' 已铺完，实际至少晚 ' + Math.round(dayOfDate(r.date) - ys[1]) + ' 天' : ''}`); }
+        else if (r.t != null) { const dv = Math.round(ys[1] - dayOfDate(r.date)); push('实物', `${r.id} ${srcName(r)}：${r.date} 前${YK[yk].name}正线铺完；模型该场铺完 ${dd(ys[1])}（${dv > 0 ? '晚 ' + dv : dv < 0 ? '早 ' + (-dv) : '差 0'} 天）`); } }
       out.title = `股道 ${F.id}`; }
     else if (F.kind === 'plat') { const sp = span([F.p]), tr = d.lines.filter(Ln => Ln.yk === F.yk && Ln.tz > F.z0 - 4 && Ln.tz < F.z1 + 4), cols = d.cols.filter(c => c.yk === F.yk && c.z0 < F.z1 && c.z1 > F.z0);
       push('位置', `${YK[F.yk].name} · ${zTxt((F.z0 + F.z1) / 2)} · ${Math.round(F.x1 - F.x0)} × ${Math.round(F.z1 - F.z0)} m${F.side ? ' · 侧式' : ' · 岛式'}`);
