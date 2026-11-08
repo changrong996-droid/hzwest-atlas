@@ -906,7 +906,7 @@
     // ---------------- 版式 ----------------
     const root = document.documentElement.style;
     function layout() { const W = innerWidth, H = innerHeight, short = H < 640, narrow = W < 1100;
-      document.body.classList.toggle('short', short); document.body.classList.toggle('narrow', narrow); document.body.classList.toggle('tiny', H < 600); document.body.classList.toggle('tight', W < 1300 && SHEET === 'S-301');
+      document.body.classList.toggle('short', short); document.body.classList.toggle('narrow', narrow); document.body.classList.toggle('tiny', H < 600); document.body.classList.toggle('port', W < 700 && H > W); document.body.classList.toggle('tight', W < 1300 && SHEET === 'S-301');
       document.body.classList.toggle('s000', SHEET === 'S-000'); document.body.classList.toggle('s301', SHEET === 'S-301'); document.body.classList.toggle('splug', !!PLUG[SHEET]);
       const colW = Math.round(Math.max(300, Math.min(600, W * (narrow ? 0.36 : 0.32)))); root.setProperty('--colW', colW + 'px'); S.colLayout = { colW };
       calcN = H < 600 ? 3 : H < 720 ? 4 : 5; logN = H < 600 ? 1 : 2;

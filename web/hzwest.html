@@ -114,6 +114,13 @@ body.short #rd .r{padding:4px 10px 5px}body.short #rd .r .l{font-size:13px}body.
 body.short #track{height:48px}body.short #track .rail,body.short #fill{top:33px}body.short #knob{top:27px}body.short .seg{height:26px}body.short #tabs .tb{min-height:36px;padding:2px 7px}
 body.lit #big,body.lit #rd .r{background:rgba(18,20,26,.62);border-color:rgba(255,255,255,.16)}body.lit #big .k,body.lit #big .n small,body.lit #rd .r .l{color:rgba(244,239,230,.8)}body.lit #big .n,body.lit #big .c,body.lit #rd .r .v{color:#f4efe6}
 #i-calc .r{display:flex;gap:10px;font-family:var(--mono);font-size:12px;line-height:1.6}#i-calc .r b{color:var(--red);min-width:72px;flex:none}
+/* 手机竖屏（GPU 审计 #2）：3D 上、图纸中、控制条下；页签横向滚动 */
+body.port #app{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1.15fr) minmax(0,1fr) auto;gap:6px;padding:6px}
+body.port #col,body.port #bar{grid-column:1/2!important}
+body.port #ctrl{flex-wrap:wrap;row-gap:6px}body.port #track{flex:1 1 100%;order:-1}
+body.port #tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}body.port #tabs .tb{flex:none}
+body.port #big{max-width:78%;padding:5px 10px 6px 8px}body.port #big .k{font-size:12px}body.port #big .n{font-size:34px}body.port #big .n small{font-size:15px}body.port #big .c{font-size:15px}
+body.port #ttl{display:none}
 </style>
 </head>
 <body>
@@ -173,6 +180,6 @@ body.lit #big,body.lit #rd .r{background:rgba(18,20,26,.62);border-color:rgba(25
 <script src="sheets/s201.js?v=1"></script>
 <script src="sheets/s401.js?v=1"></script>
 <script src="sheets/s501.js?v=1"></script>
-<script src="hzview.js?v=12"></script>
+<script src="hzview.js?v=13"></script>
 </body>
 </html>
