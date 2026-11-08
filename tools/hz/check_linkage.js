@@ -121,7 +121,7 @@ has("catch (e) { modOff(m, e); }", 'update 抛错走 modOff');
 has("if (!p) { if (PV.focus) { PV.focus = null; PV.box = null; PV.label = ''; PFOL = null; dynKey = ''; leadKey = ''; sheetInv(); modsUnpick(); }", '挂起另一个 part 时先清选中并 unpick');
 has("if (q.z > -1 && q.z < 1) xy =", 'pick 投影排除相机背后');
 // 11-08：云门模块接线（web/mods/yunmen.js 生效时墨线模式隐去旧 ymf/ym/ymc 体块）、actors 加载、three 本地 vendor 优先
-for (const f of ['mods/yunmen.js']) { if (!new RegExp('<script src="' + f.replace(/[./]/g, '\\$&') + '\\?v=\\d+"></script>').test(html)) fail('hzwest.html 未加载 ' + f); if (html.indexOf(f) > html.indexOf('hzview.js')) fail(f + ' 须在 hzview.js 之前加载'); }
+for (const f of ['mods/yunmen.js', 'mods/actors.js']) { if (!new RegExp('<script src="' + f.replace(/[./]/g, '\\$&') + '\\?v=\\d+"></script>').test(html)) fail('hzwest.html 未加载 ' + f); if (html.indexOf(f) > html.indexOf('hzview.js')) fail(f + ' 须在 hzview.js 之前加载'); }
 has("const YMK = new Set(['ymf', 'ym', 'ymc']);", '旧云门体块标记');
 has("MF[iv] = it.ym ? 3 : it.temp;", '云门顶点 aF = 3');
 has("if (aF > 2.5 && uYm > 0.5) hzP = vec3(0.0, -1e5, 0.0);", '墨线填充按 uYm 隐去旧云门');
