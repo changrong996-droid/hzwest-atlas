@@ -4,14 +4,14 @@
 //   在吊：同一天有吊装、站位相距 ≤ SAME m 的记作同一台（与 S-002 图同一口径）；
 //   在场：一台履带吊吊完后，GAP 天内在 SAME m 内又有吊装，视为没撤场（650 t 级拆装转场要好几天），中间几天也算在场。
 // 输出：两种口径的每天台数峰值、超过上限 CAP 的天数和区段、峰值日的站位分布。
-// 参数：--cap=N（默认 12）、--gap=N（默认 7）、--same=N（默认 30）、--json（输出 JSON 给 S-002 或别的图用）
-// 上限没有公开数字：杭州西站公开报道只说塔吊 20 台，履带吊台数未见。CAP 只用来看排程密度，不是规则。
+// 参数：--cap=N 全场同日上限（默认 14）、--per=N 同一工序同日上限（默认 5）、--gap=N（默认 7）、--same=N（默认 30）、--json、--strict（在吊口径超 CAP 即退出码 1）
+// 上限 14 / 5 由 hark-darrio 拟定（用户 2026-11-08 授权），理由见 docs/rules/crane-count.md；公开报道未见履带吊台数。
 const { load } = require('./harness');
 const { HZ } = load();
 HZ.make();
 
 const arg = (k, d) => { const a = process.argv.find(s => s.startsWith('--' + k + '=')); return a ? Number(a.split('=')[1]) : d; };
-const CAP = arg('cap', 12), GAP = arg('gap', 7), SAME = arg('same', 30), asJson = process.argv.includes('--json');
+const CAP = arg('cap', 14), PER = arg('per', 5), GAP = arg('gap', 7), SAME = arg('same', 30), asJson = process.argv.includes('--json'), strict = process.argv.includes('--strict');
 
 const seen = new Set(), lifts = [];
 for (const a of HZ.acts) for (const p of a.parts) {
@@ -38,6 +38,8 @@ for (const { d, cl } of busy) for (const c of cl) {
 }
 const onsite = []; for (let d = d0; d <= d1; d++) onsite.push({ d, n: fleet.filter(f => f.first <= d && f.last >= d).length });
 
+// 按「同一工序同日 ≤ PER 台」限流后的在吊台数（简化：多出的站位由同工序已在场的吊机当天转站完成，工期不变）
+const perDay = busy.map(({ d }) => { const by = {}; for (const l of lifts) { if (!(l.st < d + 1 && l.en > d)) continue; const c = by[l.key] || (by[l.key] = []); if (!c.some(q => Math.hypot(q.x - l.x, q.z - l.z) <= SAME)) c.push(l); } let n = 0; for (const k in by) n += Math.min(PER, by[k].length); return n; });
 const nb = busy.map(b => b.cl.length), peakB = Math.max(...nb), peakS = Math.max(...onsite.map(o => o.n));
 const runs = arr => { const r = []; let s = null; arr.forEach((o, i) => { if (o.over && s == null) s = i; if ((!o.over || i === arr.length - 1) && s != null) { const e = o.over ? i : i - 1; r.push([arr[s].d, arr[e].d, Math.max(...arr.slice(s, e + 1).map(x => x.n))]); s = null; } }); return r; };
 const overB = busy.map(b => ({ d: b.d, n: b.cl.length, over: b.cl.length > CAP })), overS = onsite.map(o => ({ ...o, over: o.n > CAP }));
@@ -54,4 +56,7 @@ console.log(`在吊超 ${CAP} 台的区段：${fmt(rB)}`);
 console.log(`在场超 ${CAP} 台的区段：${fmt(rS)}`);
 const byKey = {}; for (const c of dayPeak.cl) for (const k of c.keys) byKey[k] = (byKey[k] || 0) + 1;
 console.log(`第 ${dayPeak.d} 天在吊 ${peakB} 台，按工序：` + Object.entries(byKey).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join('、'));
-console.log(`OK check_cranecount 在吊峰值=${peakB} 在场峰值=${peakS} 超${CAP}天数(在吊/在场)=${overB.filter(o => o.over).length}/${overS.filter(o => o.over).length}（报告模式）`);
+console.log(`同工序同日限 ${PER} 台后：在吊峰值 ${Math.max(...perDay)} 台 · 超 ${CAP} 台的天数 ${perDay.filter(n => n > CAP).length}`);
+const nOver = overB.filter(o => o.over).length;
+if (strict && nOver) { console.log(`FAIL check_cranecount 在吊超 ${CAP} 台 ${nOver} 天`); process.exit(1); }
+console.log(`OK check_cranecount 在吊峰值=${peakB} 在场峰值=${peakS} 超${CAP}天数(在吊/在场)=${nOver}/${overS.filter(o => o.over).length} 限流后峰值=${Math.max(...perDay)}${strict ? '' : '（报告模式）'}`);
