@@ -67,6 +67,11 @@ node tools/hz/check_real.js
 - 字段表之外的未知键只警告不报错，不断言字段顺序：防过严而妨碍扩展。
 - 通过时打印 `OK check_real records=<n> examples=<m>`，目前为 `records=1 examples=1`。
 
+### check_callouts（三维引线标注按图号取材）
+
+- 在 vm 里求值 `web/hzview.js` 的 `// <leadPick>` 段；每张插件图在时间窗起 / 中 / 末及逐日采样，选中的标注工序必须属于本图（`LEAD_KEYS` 或插件可选字段 `leadKeys`），宁缺毋串；审计串台时刻 S-201@632、S-401@685、S-501@710 必须落回本图工序。
+- 接线：转轴标注按图号过滤、`rect.lb` 衬底（墨线 / 实景两套样式）、避让障碍含 `#big`、`hzview.js?v` ≥ 15。
+
 ## 三、旁路依赖接口清单
 
 给上游协作者 hark-cr 看：外挂的 hzatlas 依赖原页面以下接口，改版时请勿破坏；如需变更，请先在仓库里打招呼。
