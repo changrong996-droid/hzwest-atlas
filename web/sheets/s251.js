@@ -98,9 +98,12 @@
     const small = h < 260 || w < 420;
 
     // 版面：左栏大数字；中间平面（北上东右）；右边当前单元轴测（宽画幅才有）
-    const gut = small ? 0 : clamp(Math.round(w * 0.2), 130, 220);
-    const right = !small && w - gut > 520 ? clamp(Math.round((w - gut) * 0.36), 200, 420) : 0;
-    const pa = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 30 : 16), x1: box.x1 - right - 8, y1: box.y1 - 16 };
+    // 竖长条（D-08：右栏约 600×980、800×1200）：大数字改顶部横带（两列），平面满宽居中，当前单元轴测移到底部满宽
+    const BW = box.x1 - box.x0, BH = box.y1 - box.y0, tall = !small && BH > BW * 1.15 && BH >= 460;
+    const topH = tall ? Math.round(clamp(BH * 0.15, 120, 170)) : 0, botH = tall ? Math.round(clamp(BH * 0.27, 160, 340)) : 0;
+    const gut = small || tall ? 0 : clamp(Math.round(w * 0.2), 130, 220);
+    const right = tall ? 1 : !small && w - gut > 520 ? clamp(Math.round((w - gut) * 0.36), 200, 420) : 0;
+    const pa = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 30 : tall ? topH : 16), x1: box.x1 - (tall ? 0 : right) - 8, y1: box.y1 - 16 - botH };
     const E = m.ext, k = Math.min((pa.x1 - pa.x0) / (E.xb - E.xa), (pa.y1 - pa.y0) / (E.zb - E.za));
     const ox = (pa.x0 + pa.x1) / 2 - (E.xa + E.xb) / 2 * k, oy = (pa.y0 + pa.y1) / 2 - (E.za + E.zb) / 2 * k;
     const X = x => ox + x * k, Y = z => oy + z * k;
@@ -133,8 +136,8 @@
     let focusU = ctx.focus && m.units.find(u => u.id === ctx.focus);
     const cur = focusU || s.live.slice().sort((a, b) => b.st - a.st)[0] || m.units.filter(u => t >= u.en).sort((a, b) => b.en - a.en)[0] || m.units[0];
     if (right && cur) {
-      const ra = { x0: box.x1 - right + 4, y0: box.y0 + 16, x1: box.x1 - 6, y1: box.y1 - 40 };
-      g.strokeStyle = C.line; g.lineWidth = 0.6; g.beginPath(); g.moveTo(ra.x0 - 6, box.y0 + 6); g.lineTo(ra.x0 - 6, box.y1 - 6); g.stroke();
+      const ra = tall ? { x0: box.x0 + 10, y0: box.y1 - botH + 8, x1: box.x1 - 10, y1: box.y1 - 40 } : { x0: box.x1 - right + 4, y0: box.y0 + 16, x1: box.x1 - 6, y1: box.y1 - 40 };
+      g.strokeStyle = C.line; g.lineWidth = 0.6; g.beginPath(); if (tall) { g.moveTo(box.x0 + 6, ra.y0 - 8); g.lineTo(box.x1 - 6, ra.y0 - 8); } else { g.moveTo(ra.x0 - 6, box.y0 + 6); g.lineTo(ra.x0 - 6, box.y1 - 6); } g.stroke();
       // 局部：只画正在焊的那几格（单元是 7 m 一格的长条，整条画出来只剩一根线）；正等轴测，竖向 ×2 看得出上下弦与腹杆
       const nCell = cur.cells.length, fC = s.frac(cur), cOn = t >= cur.en ? nCell : Math.floor(nCell * fC), NW = Math.min(4, nCell);
       const i0 = clamp(cOn - Math.floor(NW / 2), 0, nCell - NW), win = cur.cells.slice(i0, i0 + NW);
@@ -161,12 +164,14 @@
     // 左栏：大数字
     const B = big(HZ, t), dayTxt = '第 ' + Math.round(t) + ' 天' + (HZ.dayDate ? ' · ' + HZ.dayDate(t) : '');
     if (!small) {
-      const cx = box.x0 + 8, FS = clamp(Math.round(gut / 4.2), 24, 40);
+      const colW = tall ? Math.round(BW * 0.48) : gut, FS = tall ? clamp(Math.round(BW / 15), 30, 48) : clamp(Math.round(gut / 4.2), 24, 40);
+      let cx = box.x0 + 8;
       g.textBaseline = 'alphabetic'; g.fillStyle = C.ink; g.font = `600 ${FS}px ${MONO}`; const nt = String(B.num); g.fillText(nt, cx, box.y0 + 12 + FS);
       g.font = `600 ${Math.round(FS * 0.36)}px ${SANS}`; g.fillStyle = C.ink2; g.fillText(B.unit, cx, box.y0 + 26 + FS + Math.round(FS * 0.2));
-      let ly = box.y0 + 46 + FS;
-      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > gut - 10) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; } };
+      let ly = box.y0 + 46 + FS + Math.round(FS * 0.2);
+      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > colW - 10) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; } };
       wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9); ly += 4;
+      if (tall) { cx = box.x0 + 8 + colW + 12; ly = box.y0 + 22; }
       wrap('已拼钢量约 ' + Math.round(s.tons).toLocaleString('en-US') + ' / ' + Math.round(m.tonsAll).toLocaleString('en-US') + ' t', C.ink2, 9);
       wrap('在位胎架 ' + s.jigOn + ' 组', C.temp, 9);
       for (const u of s.live.slice(0, 3)) wrap('▸ ' + u.zn + ' ' + u.id + ' 拼装中', C.red, 10);
