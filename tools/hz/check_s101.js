@@ -65,6 +65,24 @@ for (let t = W0; t <= W1 + 1e-9; t += 0.25) {
   if (s.lv[2] > GEO.slabDone && s.struts.some(v => v === 1)) fail(`t=${t} 地铁层侧墙上长时仍有撑在用`);
   for (const W of s.wings) { if (W.base > 0 && W.dig > GEO.fPit + 1e-9) fail(`t=${t} 翼部未挖到底就浇底板`); if (W.roof > 0 && W.base < 1) fail(`t=${t} 翼部顶板早于底板`); if (W.dig < 0 && s.wall < 1) fail(`t=${t} 地连墙未闭合就挖翼部`); if (W.dig < 0 && W.pile < 1) fail(`t=${t} 翼部桩未完成就挖土`); }
 }
+// 5. 联动 v2：parts() 每个采样时刻 ≥ 1 项、id 唯一、hit 在画布内、box 有限且非零体积；focus 描黄不抛错
+let nParts = 0;
+for (const [w, h] of [[760, 420], [1258, 540], [300, 160]]) for (let t = W0; t <= W1 + 1e-9; t += 5) {
+  const c = makeCtx(); P.draw(c.g, w, h, t, sheetCtx());
+  const ps = P.parts(t, sheetCtx()); if (!Array.isArray(ps) || !ps.length) fail(`parts(${t}) ${w}x${h} 为空`);
+  const ids = new Set();
+  for (const q of ps) { if (!q.id || ids.has(q.id)) fail(`parts(${t}) id 重复或为空：${q.id}`); ids.add(q.id);
+    const [x, y, ww, hh] = q.hit; if (!(x >= 0 && y >= 0 && ww > 0 && hh > 0 && x + ww <= w + 1e-6 && y + hh <= h + 1e-6)) fail(`parts(${t}) ${q.id} hit 越出画布 ${q.hit}`);
+    const b = q.box; if (b.length !== 6 || !b.every(Number.isFinite) || !(b[3] > b[0] && b[4] > b[1] && b[5] > b[2])) fail(`parts(${t}) ${q.id} box 无效 ${b}`); nParts++; }
+  if (w === 760) { const f = ps[ps.length - 1].id; const c2 = makeCtx(), cx2 = sheetCtx(); cx2.focus = f; try { P.draw(c2.g, w, h, t, cx2); } catch (e) { fail(`focus=${f} 绘制出错 ${e.message}`); } }
+}
+// 6. 改 HZ，图跟着变：地铁层构件工期 +30 天 → 中央坑收尾时刻与大数字跟着变；SEC_X 改 → 剖切位置跟着变；改完复原
+{ const mt = F.parts.find(p => p.geo && p.geo.mat === 'metro'), du0 = mt.du, U0 = P.model().UGT, tq = Math.round(U0 * 0.5), b0 = P.big(tq).num;
+  mt.du = du0 + 30; const U1 = P.model().UGT, b1 = P.big(tq).num; mt.du = du0;
+  if (Math.abs(U1 - U0 - 30) > 1e-6) fail(`改 metro 工期后中央坑收尾没跟着变（${U0}→${U1}）`); if (b1 === b0) fail('改 metro 工期后大数字没变');
+  const sx0 = HZ.SEC_X; HZ.SEC_X = sx0 + 10; const pr = P.parts(W1 - 1, sheetCtx()).find(q => q.id === 'SEC'); HZ.SEC_X = sx0; P.model();
+  if (!pr || Math.abs(pr.box[0] - (sx0 + 9.5)) > 1e-6) fail('改 HZ.SEC_X 后剖面位置没跟着变'); P.parts(W0, sheetCtx()); }
+
 const end = P.stateAt(W1);
 if (end.struts.some(v => v === 1)) fail('时间窗结束时仍有临时支撑未拆');
-console.log(`OK check_s101 runs=${runs} samples=${samples} cam=${P.cam.length} phases=${M.L.length}`);
+console.log(`OK check_s101 runs=${runs} samples=${samples} cam=${P.cam.length} phases=${M.L.length} parts=${nParts}`);
