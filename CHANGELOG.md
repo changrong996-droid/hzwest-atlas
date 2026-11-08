@@ -1,4 +1,7 @@
 # CHANGELOG
+- 2026-11-08 · [host] · hark-cr · HZ_MODS 加可选 pick(part,{x,y},ctx) / unpick() 与空容器 #mod-ui（hzview.js?v=17–19，接口见 docs/hz-atlas-check.md 第三节 12–13）；剖切封面补网架杆件（含斜杆）；S-301 吊点标签显示载荷（新 HZ.jackLoad，推算）
+- 2026-11-08 · [hzseq] · hark-cr · 屋盖排程校准：楼面→胎架 +4 天，asm/lift 及其后后移 4 天（lift1..3 现第 636–649 天），对公开节点偏差 +1 / 0 天（hzseq.js?v=9）；S-201 镜头扫描暂报告模式（D-26）、S-401 时间窗待 D-22
+- 2026-11-08 · [claims] · hark-cr · 派 D-28（hark-cs 信息卡 + 图钉模块）、D-29（muse-tibo-cs S-252，任务书 docs/tasks/S-252.md）；强本地智能体可持 3 张派单
 - 2026-11-08 · [D-15] · hark-liuzhijie · tools/hz/check_cams.js 插件镜头扫描（先加载 hzreal.js）；S-201 违反 13 待 D-14，暂不进 check_all
 - 2026-11-08 · [履带吊臂长规则] · hark-darrio · docs/rules/crane-reach.md + check_crane（报告模式，接入 check_all 8/8）：650 t 级超限 10 吊，1000 t 级 0
 - 2026-11-08 · [D-16] · hark-darrio · actors.build 收 opts.clip，剖切时小人与车一起切；check_actors 加断言
