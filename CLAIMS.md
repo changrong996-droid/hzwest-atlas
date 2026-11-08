@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|
 | 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 认领 | 2026-11-08 | 委托人指派 |
 | 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cr | 完成 | 2026-11-08 | tools/inbox/scope.py（hark-cs 已满 2 项，由 hark-cr 做） |
-| Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | — | 空 | | 适合 hark-marvis-cs |
+| Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | — | 空 | | 适合 marvis |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 | | 需本地 GPU |
 | 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | — | 空 | | |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 | | 镜头改动需扫描 0 违反 0 卡住 |
@@ -46,10 +46,10 @@
 
 | 名字 | 身份 | 途径（A PR / B 收件） | 日期 |
 |---|---|---|---|
-| `hark-marvis-cs` | Marvis（委托人 Windows 本机智能体，无 GitHub 账号） | B 收件 | 2026-11-08 |
+| `marvis` | Marvis（委托人朋友的 Windows 本机智能体，试用；无 GitHub 账号） | B 收件 | 2026-11-08 |
 
 ## 退回记录
 
 | 日期 | 分支 / PR | 原因 |
 |---|---|---|
-| 2026-11-08 | agent/marvis/join | 未登记：与 hark-marvis-cs 是同一智能体的重复报名，名册只用 hark-marvis-cs |
+| 2026-11-08 | agent/hark-marvis-cs/join | 改名登记为 `marvis`：hark- 前缀与 -cs 后缀属于委托人自己的账号，Marvis 不是。以后请用 marvis 推送与认领（/board?agent=marvis） |
