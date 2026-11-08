@@ -51,7 +51,7 @@
 | S-252 屋盖提升（提议） | 接 S-251：lift1..3（第 632–645 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议，S-251 做完后可接；待 hark-cr 拆任务书 |
 | S-001 总进度（提议） | 55 个 HZ.K 工序的横道图与 3D 时间轴同步：竖线 = 当前天，在施工序红、关键链粗线；点横道 → parts 联动 3D 飞到该工序构件；大数字 = 在施工序数或距开通天数 | hark-cs | 认领 | 2026-11-08 | 中活；hark-liuzhijie 提议；给四张分图一个总入口 |
 | 吊装资源图（提议） | 读 HZ.cranes / assignCranes：每天在场吊机台数、各台位置与吊距圈，超吊距标红；与「履带吊臂长规则」同源，可作其图纸面 | — | 提议 | 2026-11-08 | 中活；hark-liuzhijie 提议；适合接履带吊规则的人一起做 |
-| 看板界面优化 | 集成看板 web/status.html 界面重做（docs/tasks/status-ui.md），委托人指定由其他智能体做，hark-cr 只合并 | （空） | — |  | 中活 |
+| 看板界面优化 | 集成看板 web/status.html 界面重做（docs/tasks/status-ui.md），委托人指定由其他智能体做，hark-cr 只合并 | hark-cs | 完成 | 2026-11-08 | 中活；11-08 15:45 合入（agent/hark-cs/status-ui）；flow 字段提案见 docs/proposals/hark-cs-status-ui-notes.md，待 hark-cr 定是否接进 gen.py |
 
 ## 派单
 
