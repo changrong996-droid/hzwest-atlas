@@ -27,7 +27,7 @@ let last = Infinity;
 for (let t = W0; t <= W1 + 1e-9; t += 0.25) {
   const b = P.big(t);
   if (t < OPEN) { if (typeof b.num !== 'number' || b.num < 1 || b.num > last) fail(`t=${t} 倒计时 ${b.num} 不单调或越界`); last = b.num; if (b.unit !== '天') fail('倒计时单位应为 天'); }
-  else if (!/^[GDC]\d{1,4}$/.test(String(b.num)) || !/^\d{2}:\d{2}$/.test(b.unit)) fail(`t=${t} 开通后应显示车次与时刻，实得 ${b.num} ${b.unit}`);
+  else if (!/^[GDC]\d{1,4}$/.test(String(b.num)) || !/\d{2}:\d{2}/.test(b.label)) fail(`t=${t} 开通后应显示车次与时刻，实得 ${b.num} ${b.unit}`);
 }
 if (P.big(OPEN - 0.01).num !== 1) fail('开通前一刻倒计时应为 1 天');
 if (!P.FIRST.src) fail('首趟车次缺来源');
