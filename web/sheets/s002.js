@@ -20,6 +20,7 @@
   const rmax = need => { let r = 0; for (const [R, c] of C650) if (c >= need) r = R; return r; };
   const PICK = { conc: 8, plat: 8, found: 8, ym: 8, ymG: 10, todG: 10, todB: 10, glass: 6, steel: 20, red: 20 };
   const W = p => (p.tons ? p.tons : PICK[p.mat] != null ? PICK[p.mat] : 10), HOOK = 1.1, SAME = 30;
+  const CAP = 14;   // 履带吊全场同日在吊上限（docs/rules/crane-count.md，与 tools/hz/check_cranecount.js 同值）
 
   let M = null;
   function model(HZ) {
@@ -57,7 +58,7 @@
   function big(HZ, t) {
     const m = model(HZ), s = stateAt(HZ, t, m), n = s.tw.length + s.crane.length;
     const parts = []; if (s.tw.length) parts.push('塔吊 ' + s.tw.length); if (s.crane.length) parts.push('履带吊 ' + s.crane.length);
-    const label = n ? '在场吊机 · ' + parts.join(' + ') + (s.over ? ' · ' + s.over + ' 吊超吊距' : '') : '当天无吊机在场';
+    const label = n ? '在场吊机 · ' + parts.join(' + ') + (s.over ? ' · ' + s.over + ' 吊超吊距' : '') + (s.crane.length > CAP ? ' · 超台数上限' : '') : '当天无吊机在场';
     return { num: String(n), unit: '台', label };
   }
 
@@ -143,11 +144,16 @@
       g.strokeStyle = C.line; g.lineWidth = 0.6; g.beginPath(); g.moveTo(box.x0 + 6, sa.y0 - 8); g.lineTo(box.x1 - 6, sa.y0 - 8); g.stroke();
       const D = m.daily, nMax = Math.max(1, ...D.map(d => d.tw + d.cr)), [W0, W1] = m.win, sx = d => sa.x0 + (d - W0) / Math.max(1, W1 - W0) * (sa.x1 - sa.x0), hy = (sa.y1 - sa.y0 - 12) / nMax;
       for (const d of D) { const x = sx(d.d), bw = Math.max(0.6, (sa.x1 - sa.x0) / D.length);
-        g.fillStyle = C.line; g.fillRect(x, sa.y1 - d.tw * hy, bw, d.tw * hy); g.fillStyle = C.ink2; g.fillRect(x, sa.y1 - (d.tw + d.cr) * hy, bw, d.cr * hy);
+        const ok = Math.min(d.cr, CAP);   // 履带吊贴底画（上限线量的是它），超上限那段画红，塔吊叠在上面
+        g.fillStyle = C.ink2; g.fillRect(x, sa.y1 - ok * hy, bw, ok * hy);
+        if (d.cr > CAP) { g.fillStyle = C.red; g.fillRect(x, sa.y1 - d.cr * hy, bw, (d.cr - CAP) * hy); }
+        g.fillStyle = C.line; g.fillRect(x, sa.y1 - (d.cr + d.tw) * hy, bw, d.tw * hy);
         if (d.over) { g.fillStyle = C.red; g.fillRect(x, sa.y1 + 2, Math.max(1.5, bw), 3); } }
       g.strokeStyle = C.ink; g.lineWidth = 0.6; g.beginPath(); g.moveTo(sa.x0, sa.y1); g.lineTo(sa.x1, sa.y1); g.stroke();
+      if (CAP <= nMax) { const yc = sa.y1 - CAP * hy; g.strokeStyle = C.red; g.lineWidth = 0.6; g.setLineDash([3, 2]); g.beginPath(); g.moveTo(sa.x0, yc); g.lineTo(sa.x1, yc); g.stroke(); g.setLineDash([]);
+        label('履带吊上限 ' + CAP + ' 台', sa.x1, yc - 5, C.red, { fs: 8, al: 'r' }); }
       const xt = sx(clamp(t, W0, W1)); g.strokeStyle = C.red; g.lineWidth = 1.2; g.beginPath(); g.moveTo(xt, sa.y0); g.lineTo(xt, sa.y1 + 6); g.stroke();
-      label('每天在场吊机台数（浅 = 塔吊，深 = 履带吊；红点 = 当天有超吊距）· 最多 ' + nMax + ' 台', sa.x0, sa.y0 + 2, C.ink3, { fs: 8 });
+      label('每天在场吊机台数（深 = 履带吊，浅 = 塔吊；红段 = 履带吊超上限，红点 = 当天有超吊距）· 最多 ' + nMax + ' 台', sa.x0, sa.y0 + 2, C.ink3, { fs: 8 });
       label('第 ' + W0 + ' 天', sa.x0, sa.y1 + 9, C.ink3, { fs: 8, mono: true }); label('第 ' + W1 + ' 天', sa.x1, sa.y1 + 9, C.ink3, { fs: 8, mono: true, al: 'r' });
     }
 
