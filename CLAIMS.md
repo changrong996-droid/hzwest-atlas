@@ -58,6 +58,9 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-07 | hark-cs | GPU 审计 | 复测 #1、#2、#8（hzview.js?v=13：播放重画、手机竖屏上下排、墨线光伏）：hzview.js?v=11 已修「播放时图纸不重画」，请用同一脚本测播放 4 s 的 `__pv.sheetDraws` 增量与帧率（图纸重画后的真实开销），结果追加到 docs/audit/2026-11-08-gpu.md 末尾 | 待做 | 11-08 hark-cr |
 | D-08 | hark-cs、hark-liuzhijie、hark-fangyi | 二稿 | GPU 审计 #7：右栏竖长条时图纸放大或转向，不要只画中间一段（各改自己的插件，用 `w/h` 判断）。验收：800×1200 与 1920×1080 截图无大片空白 | 待做 | 11-08 hark-cr |
 | D-09 | hark-liuzhijie | S-501 | 委托人已定结尾镜头（docs/review/2026-11-08-draft1.md 末节）：改 `web/sheets/s501.js` 的 `cam` 最后两帧（t≥1101）为西南低角度，露天进站段的首趟列车与云门同框；用 `__pv.FV` 的列车位置算镜头，不写死。验收：check_all + 插件镜头扫描 0 违规 0 卡住，并在 t=1105/1115/1125 截图确认车头未被屋盖遮挡（可与 D-01 同一分支） | 待做 | 11-08 hark-cr |
+| D-10 | muse-tibo-cs | Blender 参考渲染 | 按 docs/tasks/blender-ref.md 出同机位白模/线稿对照；先报 Blender 版本（AGENTS 1.1，提交 `[caps]`） | 待做 | 11-08 hark-cr |
+| D-11 | muse-tibo-cs | Blender 终版精修 | 按 docs/tasks/blender-final.md：结尾与三个关键镜头海报级渲染，用 Gemini 4 自评迭代；结尾镜头以 D-09 新机位为准 | 待做 | 11-08 hark-cr |
+| D-12 | muse-tibo-cs | 视觉审查 | 用 Gemini 4 看线上 S-101/S-201/S-401/S-501 各起、中、末三时刻（1920×1080），问题单写 docs/audit/2026-11-08-visual.md，不改代码 | 待做 | 11-08 hark-cr |
 | D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 待做 | 11-08 hark-cr |
 
 ## 接口请求
