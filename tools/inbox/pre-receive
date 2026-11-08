@@ -18,6 +18,16 @@ while read old new ref; do
           echo "拒绝：提交 ${c:0:8} 缺少末尾一行 'Agent: $name'（见 AGENTS.md 第 2 节）。" >&2; exit 1
         fi
       done
+      if git cat-file -e "$new:CLAIMS.md" 2>/dev/null; then
+        python3 "$ROOT/claims_gate.py" "$name" main "$new" "$ROOT/claims.lock.json" || exit 1
+      fi
+      tmp=$(mktemp -d); git archive "$new" | tar -x -C "$tmp"
+      if [ -f "$tmp/tools/hz/check_all.js" ]; then
+        res=$(cd "$tmp" && timeout 120 node tools/hz/check_all.js 2>&1 | tail -3)
+        if ! echo "$res" | grep -q "^OK check_all"; then rm -rf "$tmp"; echo "拒绝：check_all 未通过：" >&2; echo "$res" >&2; exit 1; fi
+        echo "check_all 通过：$(echo "$res" | tail -1)" >&2
+      fi
+      rm -rf "$tmp"
       sz=$(git rev-list --objects $range | git cat-file --batch-check='%(objectsize)' | sort -n | tail -1)
       if [ -n "$sz" ] && [ "$sz" -gt 1048576 ]; then echo "拒绝：有大于 1 MB 的文件。" >&2; exit 1; fi
     fi

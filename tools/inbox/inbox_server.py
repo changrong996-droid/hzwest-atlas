@@ -19,6 +19,10 @@ class H(http.server.BaseHTTPRequestHandler):
         if u.path in ('/', '/health'):
             body = b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\n'
             self.send_response(200); self.send_header('Content-Type', 'text/plain'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if u.path == '/claims':
+            try: body = open(os.path.join(ROOT, 'claims.lock.json'), 'rb').read()
+            except OSError: body = b'{}'
+            self.send_response(200); self.send_header('Content-Type', 'application/json; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if not OK_PATH.match(u.path):
             self.send_error(404); return
         n = int(self.headers.get('Content-Length') or 0)
