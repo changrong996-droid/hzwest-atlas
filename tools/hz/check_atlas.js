@@ -91,4 +91,70 @@ for (const s of ["fetch('hzwest.html'", 'hzatlas.js?v=']) {
   if (!atlasHtml.includes(s)) fail('hzatlas.html 缺少 ' + s);
 }
 
+// 11 HZ2-01 点图飞镜头断言
+check('focusFor 用例', () => {
+  assert.strictEqual(typeof HZA.focusFor, 'function');
+  assert.strictEqual(HZA.focusFor('S-301-3', 0.5, 2), 'CUT');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.1, 2), 'ZN');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.5, 2), 'ZM');
+  assert.strictEqual(HZA.focusFor('S-301-4', 0.9, 2), 'ZS');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 1), 'ZS');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 2), 'ZM');
+  assert.strictEqual(HZA.focusFor('S-301-2', 0.5, 3), 'ZN');
+  assert.strictEqual(HZA.focusFor('X', 0.5, 2), null);
+});
+for (const s of ['HZA.focusFor', 'wireFly', 'location.hash = ', 'hz-hint']) {
+  if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
+}
+if (!atlasHtml.includes('hzatlas.js?v=4')) fail('hzatlas.html 缺少 hzatlas.js?v=4');
+
+// 12 HZ2-02 平面图小地图断言
+const approx = (a, b, tol = 0.75) => assert.ok(Math.abs(a - b) <= tol, a + ' !≈ ' + b);
+const approxPose = (p, e, tol = 1e-6) => {
+  assert.ok(p && typeof p === 'object', 'pose 应为对象');
+  for (const k of ['camX', 'camZ', 'tgtX', 'tgtZ']) approx(p[k], e[k], tol);
+};
+check('planMap 用例', () => {
+  const pm = HZA.planMap(1000, 700, 22);
+  approx(pm.s, 2.4827);
+  approx(pm.ox, 72.98);
+  approx(pm.oy, 22);
+  approx(pm.X(-172), 72.98);
+  approx(pm.X(0), 500);
+  approx(pm.X(172), 927.02);
+  approx(pm.Y(130), 22);
+  approx(pm.Y(39), 247.93);
+  approx(pm.Y(-130), 667.5);
+  assert.ok(pm.X(-110) < pm.X(0) && pm.X(0) < pm.X(110), '北在左');
+  assert.ok(pm.Y(100) < pm.Y(0), '东在上');
+});
+check('planCamPose 用例', () => {
+  approxPose(
+    HZA.planCamPose({ st: { auto: true, t: 0 }, camKey: () => ({ az: 0, el: 0, d: 100, tx: 10, ty: 0, tz: 20 }) }),
+    { camX: 10, camZ: -80, tgtX: 10, tgtZ: 20 }
+  );
+  approxPose(
+    HZA.planCamPose({ st: { auto: false, t: 0 }, focusHash: 'cut', cutShot: { pos: { x: 1, y: 2, z: 3 }, tgt: { x: 39, y: 5, z: 0 } }, camKey: () => null }),
+    { camX: 1, camZ: 3, tgtX: 39, tgtZ: 0 }
+  );
+  approxPose(
+    HZA.planCamPose({ st: { auto: false, t: 0 }, focusHash: 'J05', focusShot: { i: 4, pos: { x: 7, y: 8, z: 9 }, tgt: { x: 11, y: 0, z: 12 } }, camKey: () => null }),
+    { camX: 7, camZ: 9, tgtX: 11, tgtZ: 12 }
+  );
+  approxPose(
+    HZA.planCamPose({ st: { auto: false, t: 0 }, focusHash: 'J05', focusShot: { i: 7, pos: { x: 0, y: 0, z: 0 }, tgt: { x: 0, y: 0, z: 0 } }, shotFor: (i) => ({ i, pos: { x: i, y: 0, z: i }, tgt: { x: 0, y: 0, z: 0 } }), camKey: () => null }),
+    { camX: 4, camZ: 4, tgtX: 0, tgtZ: 0 }
+  );
+  approxPose(
+    HZA.planCamPose({ st: { auto: false, t: 0 }, focusHash: 'ZN', camKey: () => ({ az: 90, el: 0, d: 50, tx: 0, ty: 0, tz: 0 }) }),
+    { camX: 50, camZ: 0, tgtX: 0, tgtZ: 0 }
+  );
+  assert.strictEqual(HZA.planCamPose(null), null);
+  assert.strictEqual(HZA.planCamPose({}), null);
+});
+for (const s of ['HZA.planMap', 'HZA.planCamPose']) {
+  if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
+}
+if (!atlasHtml.includes('hzatlas.js?v=4')) fail('hzatlas.html 缺少 hzatlas.js?v=4');
+
 console.log('OK check_atlas pages=' + Object.keys(HZA.PAGES).length + ' sheets=' + keys.length + ' aliases=' + nal);

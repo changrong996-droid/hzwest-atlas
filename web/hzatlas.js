@@ -67,8 +67,113 @@
     return HZA.PAGES[page].sheets.map((id) => Object.assign({ id }, HZA.SHEETS[id]));
   };
 
-  HZA.wrapFn = function (fn, no) {
-    return (g, w, h, t, ctx) => fn(g, w, h, t, Object.assign({}, ctx, { tb: (w2, h2, _no, name, t2) => ctx.tb(w2, h2, no, name, t2) }));
+  HZA.wrapFn = function (fn, no, kind) {
+    let seenTb = 22;
+    return (g, w, h, t, ctx) => {
+      const r = fn(g, w, h, t, Object.assign({}, ctx, {
+        tb: (w2, h2, _no, name, t2) => {
+          const o = ctx.tb(w2, h2, no, name, t2);
+          if (o && typeof o.tb === 'number') seenTb = o.tb;
+          return o;
+        },
+      }));
+      if (kind === 'plan') {
+        const S = G.__pv;
+        const pose = S && HZA.planCamPose(S);
+        if (pose) {
+          const m = HZA.planMap(w, h, seenTb);
+          const cx = m.X(pose.camZ), cy = m.Y(pose.camX);
+          const tx = m.X(pose.tgtZ), ty = m.Y(pose.tgtX);
+          g.save();
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          g.strokeStyle = 'rgba(180,32,42,.55)';
+          g.lineWidth = 1.2;
+          g.beginPath();
+          g.moveTo(cx, cy);
+          g.lineTo(tx, ty);
+          g.stroke();
+          g.strokeStyle = '#1d1a17';
+          g.lineWidth = 1.4;
+          g.beginPath();
+          g.arc(tx, ty, 5, 0, Math.PI * 2);
+          g.moveTo(tx - 8, ty);
+          g.lineTo(tx + 8, ty);
+          g.moveTo(tx, ty - 8);
+          g.lineTo(tx, ty + 8);
+          g.stroke();
+          g.beginPath();
+          g.arc(cx, cy, 4.5, 0, Math.PI * 2);
+          g.fillStyle = '#b4202a';
+          g.fill();
+          g.lineWidth = 1.6;
+          g.strokeStyle = '#ffffff';
+          g.stroke();
+          g.restore();
+        }
+      }
+      return r;
+    };
+  };
+
+  HZA.focusFor = function (key, fracY, liftZone) {
+    if (key === 'S-301-3') return 'CUT';
+    if (key === 'S-301-4') return fracY < 1 / 3 ? 'ZN' : (fracY < 2 / 3 ? 'ZM' : 'ZS');
+    if (key === 'S-301-2') return liftZone === 1 ? 'ZS' : (liftZone === 3 ? 'ZN' : 'ZM');
+    return null;
+  };
+
+  HZA.planMap = function (w, h, tb) {
+    const box = { x0: 8, y0: 8, x1: w - 8, y1: h - 8.5 - tb };
+    const dw = box.x1 - box.x0 - 8;
+    const dh = box.y1 - box.y0 - 16;
+    const s = Math.min(dw / 344, dh / 260);
+    const ox = box.x0 + 4 + (dw - 344 * s) / 2;
+    const oy = box.y0 + 14 + (dh - 260 * s) / 2;
+    const X = (z) => ox + (z + 172) * s;
+    const Y = (x) => oy + (130 - x) * s;
+    return { s, ox, oy, X, Y };
+  };
+
+  let shotMemoKey = '';
+  let shotMemoVal = null;
+  HZA.planCamPose = function (S) {
+    if (!S || !S.st || typeof S.st !== 'object') return null;
+    if (S.st.auto === false && typeof S.focusHash === 'string') {
+      const m = S.focusHash.match(/^J(\d+)$/);
+      if (m) {
+        const i = Number(m[1]) - 1;
+        let shot = null;
+        if (S.focusShot && S.focusShot.i === i) {
+          shot = S.focusShot;
+        } else if (typeof S.shotFor === 'function') {
+          const key = i + '|' + Math.round(S.st.t);
+          if (shotMemoKey === key && shotMemoVal) {
+            shot = shotMemoVal;
+          } else {
+            shot = S.shotFor(i, S.st.t);
+            shotMemoKey = key;
+            shotMemoVal = shot;
+          }
+        }
+        if (shot && shot.pos && shot.tgt) {
+          return { camX: shot.pos.x, camZ: shot.pos.z, tgtX: shot.tgt.x, tgtZ: shot.tgt.z };
+        }
+      } else if (S.focusHash === 'cut' || S.focusHash === 'gap') {
+        if (S.cutShot && S.cutShot.pos && S.cutShot.tgt) {
+          return { camX: S.cutShot.pos.x, camZ: S.cutShot.pos.z, tgtX: S.cutShot.tgt.x, tgtZ: S.cutShot.tgt.z };
+        }
+      }
+    }
+    if (typeof S.camKey === 'function') {
+      const k = S.camKey(S.st.t);
+      if (!k) return null;
+      const az = k.az * Math.PI / 180;
+      const el = k.el * Math.PI / 180;
+      const camX = k.tx + Math.sin(az) * Math.cos(el) * k.d;
+      const camZ = k.tz - Math.cos(az) * Math.cos(el) * k.d;
+      return { camX, camZ, tgtX: k.tx, tgtZ: k.tz };
+    }
+    return null;
   };
 
   G.HZA = HZA;
@@ -101,6 +206,32 @@
     S.layout();
   };
 
+  const TITLES = {
+    'S-301-2': '点击：镜头飞到本图当前分区的视角',
+    'S-301-3': '点击：镜头飞到剖面切口',
+    'S-301-4': '点击：镜头按点击位置飞到北 / 中 / 南区',
+  };
+
+  function wireFly(el, key) {
+    el.style.cursor = 'pointer';
+    if (TITLES[key]) el.title = TITLES[key];
+    el.addEventListener('click', (e) => {
+      if (!el.clientHeight) return;
+      const fracY = e.offsetY / el.clientHeight;
+      const S = window.__pv;
+      let liftZone = 2;
+      if (S && S.st && typeof S.st.t === 'number' && window.HZ && HZ.K) {
+        const t = S.st.t;
+        liftZone = t < HZ.K.lift2.start ? 1 : (t < HZ.K.lift3.start ? 2 : 3);
+      }
+      const f = HZA.focusFor(key, fracY, liftZone);
+      if (!f) return;
+      const q = new URLSearchParams(location.hash.slice(1));
+      q.set('focus', f);
+      location.hash = q.toString();
+    });
+  }
+
   HZA.mount = function () {
     if (mounted) return;
     const S = G.__pv;
@@ -114,7 +245,7 @@
 
     const st = document.createElement('style');
     st.id = 'hzatlas-css';
-    st.textContent = '#col{grid-template-rows:auto minmax(0,1fr)!important;position:relative}#hz-subtabs{display:flex;gap:4px;font-family:var(--mono);font-size:12px}#hz-subtabs .st{padding:3px 8px;border:1px solid var(--line);border-radius:3px;cursor:pointer;background:#fbf9f5}#hz-subtabs .st.on{background:var(--ink);color:#fff}#hz-subtabs .st small{opacity:.55;font-size:10px;font-weight:400;margin-right:5px}#col canvas.sheet.hz-off{visibility:hidden;position:absolute;inset:0;pointer-events:none}';
+    st.textContent = '#col{grid-template-rows:auto minmax(0,1fr)!important;position:relative}#hz-subtabs{display:flex;gap:4px;font-family:var(--mono);font-size:12px}#hz-subtabs .st{padding:3px 8px;border:1px solid var(--line);border-radius:3px;cursor:pointer;background:#fbf9f5}#hz-subtabs .st.on{background:var(--ink);color:#fff}#hz-subtabs .st small{opacity:.55;font-size:10px;font-weight:400;margin-right:5px}#hz-subtabs .hz-hint{color:#8a8175;font-size:11px;margin-left:8px;align-self:center}#col canvas.sheet.hz-off{visibility:hidden;position:absolute;inset:0;pointer-events:none}';
     document.head.appendChild(st);
 
     const list = HZA.sheetsOf('S-301');
@@ -129,6 +260,10 @@
       bar.appendChild(sp);
       return sp;
     });
+    const hint = document.createElement('span');
+    hint.className = 'hz-hint';
+    hint.textContent = '点击图纸 · 镜头飞过去';
+    bar.appendChild(hint);
     col.insertBefore(bar, col.firstChild);
 
     canvases = list.map((item) => {
@@ -138,7 +273,8 @@
       el.className = 'sheet hz-off';
       el.setAttribute('aria-label', item.no + ' ' + item.title);
       col.appendChild(el);
-      S.SHEETS.push({ id: item.canvas, fn: HZA.wrapFn(S.SH[item.fn], item.no), no: item.no, el, key: '', drawn: 0, n: 0, scale: '' });
+      S.SHEETS.push({ id: item.canvas, fn: HZA.wrapFn(S.SH[item.fn], item.no, item.fn), no: item.no, el, key: '', drawn: 0, n: 0, scale: '' });
+      wireFly(el, item.id);
       return el;
     });
 
