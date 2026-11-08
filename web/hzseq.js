@@ -364,7 +364,11 @@ function supRule(acts) { let n = 0; const ALL = [];
 // 屋盖：拼装 = 胎架 + 楼面；提升 = 提升架；柱头 = 整体提升后；R8 提升净空：静止构件若与任一提升阶段的扫掠体相交 → 必须排在该提升之后
 function roofRule(acts) { const K = {}; for (const a of acts) K[a.key] = a; let n = 0; const L = (b, a, w, lag) => { n += SEQ.link(K[b] || b, K[a] || a, w, lag); };
   for (const z of [1, 2, 3]) { L('asm' + z, 'floorS', 'R1'); L('asm' + z, 'floorN', 'R1'); L('lift' + z, 'asm' + z, 'R3'); L('lift' + z, 'rig', 'R4'); }
-  L('jig1', 'floorS', 'R1'); L('jig2', 'floorS', 'R1'); L('jig2', 'floorN', 'R1'); L('jig3', 'floorN', 'R1');
+  // 屋盖排程校准（11-08，hark-liuzhijie 请求）：楼面完成 → 胎架进场加 JIG_LAG 天（楼面交接 / 测量放线），asm / lift 及其后整体后移 4 天，对齐公开节点——
+  // 2021-05-31「网架桁架拼装累计完成 46.5%」（杭州网，模型按钢量 +1 天）、2021-06-28「屋盖整体提升完成」（央广网，模型对应 lift3 结束，0 天）；check_s251 输出偏差。开通日不动。
+  // 用前置边的 lag 而不用 release：S-001 关键链顺着「被谁卡住」往回走，release 会把链截断在胎架。
+  const JIG_LAG = 4;
+  L('jig1', 'floorS', 'R1', JIG_LAG); L('jig2', 'floorS', 'R1', JIG_LAG); L('jig2', 'floorN', 'R1', JIG_LAG); L('jig3', 'floorN', 'R1', JIG_LAG);
   L('lift2', 'lift1', 'R5'); L('lift3', 'lift2', 'R5');         // 一套提升系统：南 → 中 → 北（实录顺序）
   for (const z of [1, 2, 3]) L('merge', 'lift' + z, 'R3'); L('wlift', 'merge', 'R3'); L('head', 'wlift', 'R3');
   L('holes', 'rig~rm', 'R8');                                   // 提升塔 / 提升架占着孔：拆了才能补

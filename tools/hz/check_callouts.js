@@ -30,9 +30,9 @@ for (const pl of PLS) {
   for (let t = a; t <= b; t += 1) { const r = pick(pl, t); if (r.key !== null) { if (own.indexOf(r.key) < 0) fail(`${pl.id} t=${t} 标注 ${r.key} 不属于本图`); if (!r.a.parts.some(p => p.st <= t)) fail(`${pl.id} t=${t} 选中 ${r.key} 但无已开工构件`); hit++; } runs++; }
   if (!hit) fail(pl.id + ' 整个时间窗都没有本图标注');
 }
-// 审计串台时刻（docs/audit/2026-11-08-visual.md）：全局 caption 是别图工序，过滤后应落回本图
+// 审计串台时刻（docs/audit/2026-11-08-visual.md）：全局 caption 是别图工序，过滤后应落回本图（11-08 屋盖排程校准后移 4 天：S-201 时刻 632 → 636）
 const byId = id => PLS.find(p => p.id === id);
-for (const [id, t, bad, want] of [['S-201', 632, 'lift1', 'trackS'], ['S-401', 685, 'trackS', 'holes'], ['S-501', 710, 'clad', 'ymf']]) {
+for (const [id, t, bad, want] of [['S-201', 636, 'lift1', 'trackS'], ['S-401', 685, 'trackS', 'holes'], ['S-501', 710, 'clad', 'ymf']]) {
   const c = HZ.caption(t).act; if (!c || c.key !== bad) fail(`前提变了：t=${t} 全局 caption 应为 ${bad}，实得 ${c && c.key}`);
   if (LP.leadOwns(LP.leadOwn(id, byId(id)), 'lift1')) fail(id + ' 不应标转轴（S-301 工序）');
   const r = pick(byId(id), t); if (!r.key || r.key === bad || r.own.indexOf(r.key) < 0) fail(`${id} t=${t} 应标本图工序（如 ${want}），实得 ${r.key}`); runs++;
@@ -40,7 +40,7 @@ for (const [id, t, bad, want] of [['S-201', 632, 'lift1', 'trackS'], ['S-401', 6
 // 总图不过滤
 { const own = LP.leadOwn('S-000', undefined); if (own !== null) fail('总图应不过滤'); const t = 620, c = HZ.caption(t).act, la = LP.leadAct(K, own, t, c); if (c && c.parts.length && c.parts.some(p => p.st <= t) && la !== c) fail('总图应沿用全局 caption'); runs++; }
 // 未登记的插件图：空表，什么都不标
-{ const r = LP.leadAct(K, LP.leadOwn('S-999', { id: 'S-999' }), 632, HZ.caption(632).act); if (r) fail('未登记插件图应不标注'); runs++; }
+{ const r = LP.leadAct(K, LP.leadOwn('S-999', { id: 'S-999' }), 636, HZ.caption(636).act); if (r) fail('未登记插件图应不标注'); runs++; }
 // 接线 / 样式
 if (!/leadAct\(K, own, t, ca\)/.test(src)) fail('lead() 未经 leadAct 取材');
 if (!/leadOwns\(own, key\) && t >= A\.start/.test(src)) fail('转轴标注未按图号过滤');
