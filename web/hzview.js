@@ -6,10 +6,49 @@
   const THREE_BASE = 'https://unpkg.com/three@0.160.0/';
   const $ = id => document.getElementById(id), hp = new URLSearchParams(location.hash.slice(1));
   const HZ = window.HZ, SEQ = window.SEQ, S = window.__pv = { ready: false, frames: 0, calls: 0, auditDone: false, sheetDraws: 0, st: { t: 0, u: 0, play: false, auto: true, info: false, pref: hp.get('mode') === 'lit' ? 'lit' : 'ink' } };
-  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 0]];
+  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 1]];
   const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' || PLUG[v] ? v : 'S-000'; };
   // 插件图纸（web/sheets/*.js 登记到 window.HZ_SHEET_PLUGINS）：{ id, name, window:[t0,t1], big(t), draw(g,w,h,t,ctx), cam:[{t,target,az,el,dist}] }
   const PLUG = {}; for (const pl of (window.HZ_SHEET_PLUGINS || [])) PLUG[pl.id] = pl;
+  // <plugLink> 联动接口 v2（docs/tasks/linkage-v2.md）宿主侧纯函数：图纸视图变换 / 逆变换命中 / 3D 盒拾取 / #focus= 读写 / parts 容错。
+  // 不依赖 DOM 与 three，tools/hz/check_linkage.js 按 <plugLink> 标记截取本段在 Node 里求值测试；运行时挂在 window.__pv.plugLink。
+  const PL = (() => {
+    const KMIN = 1, KMAX = 8;
+    // 视图 v = { k, px, py }，画布 w×h：屏幕 = 中心 + (绘图坐标 − 中心)·k + 平移
+    const apply = (g, v, w, h) => { g.translate(w / 2 + v.px, h / 2 + v.py); g.scale(v.k, v.k); g.translate(-w / 2, -h / 2); };
+    const fwd = (v, w, h, x, y) => [w / 2 + (x - w / 2) * v.k + v.px, h / 2 + (y - h / 2) * v.k + v.py];
+    const inv = (v, w, h, sx, sy) => [w / 2 + (sx - w / 2 - v.px) / v.k, h / 2 + (sy - h / 2 - v.py) / v.k];
+    // 放大后允许把边缘的构件平移到画面中央（同 S-301 svClamp）
+    function clamp(v, w, h) { v.k = Math.max(KMIN, Math.min(KMAX, v.k)); const ex = v.k - 1 + Math.min(1, v.k - 1), mx = ex * w / 2, my = ex * h / 2; v.px = Math.max(-mx, Math.min(mx, v.px)); v.py = Math.max(-my, Math.min(my, v.py)); return v; }
+    // 以屏幕点 (mx, my) 为不动点缩放到 k1
+    function zoomAt(v, w, h, k1, mx, my) { k1 = Math.max(KMIN, Math.min(KMAX, k1)); const cx = w / 2, cy = h / 2; v.px = mx - cx - (mx - cx - v.px) * k1 / v.k; v.py = my - cy - (my - cy - v.py) * k1 / v.k; v.k = k1; return clamp(v, w, h); }
+    // 让绘图坐标 (x, y) 落在画布中央、倍数 k
+    function centerOn(v, w, h, x, y, k) { v.k = Math.max(KMIN, Math.min(KMAX, k)); v.px = -(x - w / 2) * v.k; v.py = -(y - h / 2) * v.k; return clamp(v, w, h); }
+    // 视图中心对应的绘图坐标（动画用：k 按指数、中心按线性插值）
+    const center = (v, w, h) => inv(v, w, h, w / 2, h / 2);
+    const okHit = p => p && Array.isArray(p.hit) && p.hit.length === 4 && p.hit.every(Number.isFinite);
+    const okBox = p => p && Array.isArray(p.box) && p.box.length === 6 && p.box.every(Number.isFinite);
+    // 屏幕点 → 逆变换 → 命中 part.hit（容差按屏幕 4 px 折回绘图坐标；多个命中取面积最小）
+    function hitPart(parts, v, w, h, sx, sy, padPx) { const [x, y] = inv(v, w, h, sx, sy), pad = (padPx == null ? 4 : padPx) / v.k; let best = null, ba = Infinity;
+      for (const p of parts || []) { if (!okHit(p)) continue; const [hx, hy, hw, hh] = p.hit, x0 = Math.min(hx, hx + hw), x1 = Math.max(hx, hx + hw), y0 = Math.min(hy, hy + hh), y1 = Math.max(hy, hy + hh);
+        if (x >= x0 - pad && x <= x1 + pad && y >= y0 - pad && y <= y1 + pad) { const a = (x1 - x0) * (y1 - y0); if (a < ba) { ba = a; best = p; } } }
+      return best; }
+    const inBox = (b, x, y, z, m) => { m = m || 0; return x >= Math.min(b[0], b[3]) - m && x <= Math.max(b[0], b[3]) + m && y >= Math.min(b[1], b[4]) - m && y <= Math.max(b[1], b[4]) + m && z >= Math.min(b[2], b[5]) - m && z <= Math.max(b[2], b[5]) + m; };
+    const vol = b => Math.abs((b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]));
+    // 3D 命中点落在哪个 part.box 内（多个取体积最小）
+    function pickBox(parts, x, y, z, m) { let best = null, bv = Infinity; for (const p of parts || []) { if (!okBox(p) || !inBox(p.box, x, y, z, m)) continue; const q = vol(p.box); if (q < bv) { bv = q; best = p; } } return best; }
+    // parts(t, ctx) 容错：抛异常 / 非数组 → []，并只 warn 一次（warn 由调用方给，便于测试）；只保留有 id 的项
+    function safeParts(pl, t, ctx, warn) { if (!pl || typeof pl.parts !== 'function') return []; let r;
+      try { r = pl.parts(t, ctx); } catch (e) { if (warn && !pl.__plWarned) { pl.__plWarned = 1; warn('[hzview] ' + pl.id + '.parts() 抛异常，已忽略：' + (e && e.message || e)); } return []; }
+      return Array.isArray(r) ? r.filter(p => p && p.id != null) : []; }
+    const byId = (parts, id) => (parts || []).find(p => String(p.id) === String(id)) || null;
+    // hash：读 sheet / focus；写 focus 时保留其它参数（hzatlas 的 sub 等）
+    function parseHash(h) { const q = new URLSearchParams(String(h || '').replace(/^#/, '')); return { sheet: (q.get('sheet') || '').toUpperCase() || null, focus: q.get('focus') || null }; }
+    function hashWith(h, focus) { const q = new URLSearchParams(String(h || '').replace(/^#/, '')); if (focus) q.set('focus', focus); else q.delete('focus'); return q.toString().replace(/%2C/g, ',').replace(/%3A/g, ':'); }
+    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith };
+  })();
+  // </plugLink>
+  S.plugLink = PL;
   const ICON = { play: 'M3 1.5v11l9.5-5.5z', pause: 'M2.5 1.5h3.2v11H2.5zM8.3 1.5h3.2v11H8.3z' };
   const icon = k => `<svg class="i" viewBox="0 0 14 14" aria-hidden="true"><path d="${ICON[k]}"/></svg>`;
   const fmt = n => Math.round(n).toLocaleString('en-US').replace(/,/g, ' ');
@@ -45,7 +84,8 @@
   function run(THREE, OrbitControls) {
     const T0 = performance.now();
     // r3 结尾变体参数（#fv=键:值,…；rw 屋盖材质 0–4、re 挑檐加厚 m、pv 光伏 0 角瓣/1 顺轨条带/2 垂轨条带/3 等高环带、cam 结尾机位、tz 列车股道 z、te 车头停位 x、tw 从西进站、dk 黄昏 0–1、lt 亮灯强度、se 结尾太阳高度°、ik 墨线淡出比例、tl 车窗亮度）；默认值 = r3 闭环终选（work/hzwest3/PROGRESS.md）
-    const FV = Object.assign({ rw: 4, re: 3.5, pv: 1, cam: 14, tz: -98.5, te: -240, tw: 1, dk: 0.6, lt: 4.5, se: 9, ik: 0.95, tl: 30 }, Object.fromEntries((hp.get('fv') || '').split(',').filter(Boolean).map(kv => { const [k, v] = kv.split(':'); return [k, +v]; }))); S.FV = FV;
+    // 联动 v2（CLAIMS 接口请求 2026-11-08 hark-liuzhijie，已同意）：首趟 G9528 走湖杭场（南场）靠云谷的第 1 股道 z = 16.5（HZ.tracks(HZ.YARDS.S)[0]），车头停 x = te + 12 = 111 m、车尾 ≈ −99 m，整列居中停在站台 ±225 m 内（原 tz −98.5 杭临绩场、te −240 车头在站台外 −228）
+    const FV = Object.assign({ rw: 4, re: 3.5, pv: 1, cam: 14, tz: HZ.tracks(HZ.YARDS.S)[0], te: 99, tw: 1, dk: 0.6, lt: 4.5, se: 9, ik: 0.95, tl: 30 }, Object.fromEntries((hp.get('fv') || '').split(',').filter(Boolean).map(kv => { const [k, v] = kv.split(':'); return [k, +v]; }))); S.FV = FV;
     HZ.P.edgeDrop = FV.re;
     if (FV.rw >= 1) { Object.assign(HZ.MAT.clad, { c: [0.975, 0.975, 0.97], r: 0.52, m: 0.06 }); Object.assign(HZ.MAT.soffit, { c: [0.96, 0.95, 0.92] }); }   // r3：白色哑光铝板（原 m 0.5 反射暗环境 → 发灰）
     HZ.make(); const TLS = { 'S-000': timeline('S-000'), 'S-301': timeline('S-301') }; for (const id in PLUG) TLS[id] = timeline(id); let SHEET = sheetOf(); TL = TLS[SHEET]; TLF = TLS['S-000']; S.TLS = TLS; S.Tmax = TLF.Tmax; S.OPEN = TLF.OPEN; S.HZ = HZ; const K = HZ.K, P = HZ.P;
@@ -277,7 +317,7 @@
     function measureAt(ps, t) { const e = HZ.gapTab[1][0], q = HZ.xf(ps, 1, e.p0), y = q[1] - e.rr; return { at: [q[0], y, q[2]], v: y - P.floorTop }; }   // 南区内边最紧处那根下弦（拼装姿态净空 = 全屋盖最小 1.40 m），随姿态实时
     let dynKey = ''; const DS = { cranesBusy: 0, crawlers: 0, trucks: 0, workers: 0 };
     function rebuildDyn(t) {
-      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut; if (key === dynKey) return; dynKey = key;
+      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut + ':' + (PV.focus || '') + ':' + (PV.box ? PV.box.join(',') : ''); if (key === dynKey) return; dynKey = key;
       const g = new HZ.GB('yellow'), Lq = []; const Lc = (a, b, c) => Lq.push([a, b, c]);
       const INK = [0.11, 0.1, 0.09], RED = [0.70, 0.13, 0.16], YEL = HZ.MAT.yellow.c;
       DS.cranesBusy = 0;
@@ -316,6 +356,10 @@
         const gp = SV.cut ? secGap3(S.pose, t) : measureAt(S.pose, t); if (gp) { const [x, y, z] = gp.at, f = P.floorTop; Lc([x, f, z], [x, y, z], RED); for (const yy of [f, y]) { Lc([x - 2.5, yy, z], [x + 2.5, yy, z], RED); Lc([x, yy, z - 2.5], [x, yy, z + 2.5], RED); }
           if (gp.sec) { const q = 0.09; g.B(x - q, f, z - q, x + q, y, z + q, RED); for (const yy of [f, y]) g.B(x - q, yy - q, z - 1.6, x + q, yy + q, z + 1.6, RED); }   // set2c：剖切面上的净空尺寸线加粗（实心细杆，近景可读）
           S.gapAt = gp; } }
+      // 联动 v2：插件选中 part 的 3D 黄框（实心细杆 + 线；杆粗随盒尺寸，远景也看得见）
+      if (PLUG[SHEET] && PV.focus && PV.box) { const b = PV.box, xa = Math.min(b[0], b[3]), xb = Math.max(b[0], b[3]), ya = Math.min(b[1], b[4]), yb = Math.max(b[1], b[4]), za = Math.min(b[2], b[5]), zb = Math.max(b[2], b[5]), SEL = [0.98, 0.74, 0.12], q = Math.max(0.09, Math.min(0.8, Math.max(xb - xa, yb - ya, zb - za) * 0.004));
+        const E = []; for (const y of [ya, yb]) for (const z of [za, zb]) E.push([[xa, y, z], [xb, y, z]]); for (const x of [xa, xb]) for (const z of [za, zb]) E.push([[x, ya, z], [x, yb, z]]); for (const x of [xa, xb]) for (const y of [ya, yb]) E.push([[x, y, za], [x, y, zb]]);
+        for (const [a, c] of E) { g.B(Math.min(a[0], c[0]) - q, Math.min(a[1], c[1]) - q, Math.min(a[2], c[2]) - q, Math.max(a[0], c[0]) + q, Math.max(a[1], c[1]) + q, Math.max(a[2], c[2]) + q, SEL); Lc(a, c, SEL); } }
       // 上传
       const n = g.P.length / 3, mp = DYN.mg.attributes.position.array, mn = DYN.mg.attributes.normal.array, mc = DYN.mg.attributes.color.array, cc = new THREE.Color();
       for (let i = 0; i < Math.min(n, 60000); i++) { for (let k = 0; k < 3; k++) { mp[i * 3 + k] = g.P[i * 3 + k]; mn[i * 3 + k] = g.N[i * 3 + k]; } cc.setRGB(g.C[i * 3], g.C[i * 3 + 1], g.C[i * 3 + 2], THREE.SRGBColorSpace); mc[i * 3] = cc.r; mc[i * 3 + 1] = cc.g; mc[i * 3 + 2] = cc.b; }
@@ -416,9 +460,9 @@
     // ---------------- set2b：3D → 图纸（点提升器 / 点屋盖分区）、选中后镜头跟随吊点高度、URL #focus= ----------------
     const ZCODE = { 1: 'ZS', 2: 'ZM', 3: 'ZN' }, ZOF = { ZS: 1, ZM: 2, ZN: 3 }; S.selZone = 0;
     function zoneTint(t, ps) { t = t == null ? S.st.t : t; ps = ps || S.pose || HZ.pose(t); const wl = t > K.wlift.start && t < K.wlift.end; for (const g of [1, 2, 3, 4]) U.uMv.value[g] = SHEET !== 'S-301' ? 0 : S.selZone === g ? 2 : (wl ? 1 : g < 4 && ps[g].moving) ? 1 : 0; dirty = true; }
-    function hashSync() { const q = new URLSearchParams(location.hash.slice(1)), f = SV.sel >= 0 ? 'J' + String(SV.sel + 1).padStart(2, '0') : S.selZone ? ZCODE[S.selZone] : SV.cut === 1 ? 'cut' : SV.cut === 2 ? 'gap' : '';
-      if (f) q.set('focus', f); else q.delete('focus'); const h = q.toString().replace(/%2C/g, ','), cur = location.hash.slice(1); if (h !== cur) history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); S.focusHash = f; }
-    function clearSel() { SV.chartOpen = false; const had = SV.sel >= 0 || S.selZone || SV.cut; cutOff(); SV.sel = -1; S.selZone = 0; FOL = null; if (had) { zoneTint(); sheetInv(); dynKey = ''; leadKey = ''; } hashSync(); }
+    function hashSync() { const q = new URLSearchParams(location.hash.slice(1)), f = SV.sel >= 0 ? 'J' + String(SV.sel + 1).padStart(2, '0') : S.selZone ? ZCODE[S.selZone] : SV.cut === 1 ? 'cut' : SV.cut === 2 ? 'gap' : PLUG[SHEET] && PV ? (PV.focus || PV.pend || '') : '';
+      const h = PL.hashWith(q.toString(), f), cur = location.hash.slice(1); /* 联动 v2：focus 读写与 check_linkage 同一函数，保留其它参数 */ if (h !== cur) history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); S.focusHash = f; }
+    function clearSel() { plugClear(); SV.chartOpen = false; const had = SV.sel >= 0 || S.selZone || SV.cut; cutOff(); SV.sel = -1; S.selZone = 0; FOL = null; if (had) { zoneTint(); sheetInv(); dynKey = ''; leadKey = ''; } hashSync(); }
     // 图纸动画：0.5 s，k 按指数、中心点按线性插值（中心点 = 屏幕中心对应的 k=1 底图坐标），目标点最终落在平面图中央
     let SVA = null, SVP = null;
     function svAnimTo(k1, wz, wx, ms) { const s0 = SHEETS[0], pm = s0.pm; if (!pm) { SVP = [k1, wz, wx, ms]; return; } SVP = null; k1 = Math.max(1, Math.min(8, k1));
@@ -445,7 +489,7 @@
         prev = f; s += Math.max(0.6, s * 0.004); }
       return { none: true }; }
     S.pick3D = pick3D; S.selectZone = selectZone; S.selectLifter3D = selectLifter3D;
-    function onPick(cx, cy) { const h = pick3D(cx, cy); if (!h) return; S.lastPick = h; if (h.lifter >= 0) selectLifter3D(h.lifter); else if (h.zone) selectZone(h.zone); else clearSel(); }
+    function onPick(cx, cy) { if (PLUG[SHEET]) { const q = plugPick3D(cx, cy); if (!q) return; S.lastPick = q; if (q.part != null) plugSelect(q.part, '3d'); else if (PV.focus) { plugClear(); hashSync(); } return; } const h = pick3D(cx, cy); if (!h) return; S.lastPick = h; if (h.lifter >= 0) selectLifter3D(h.lifter); else if (h.zone) selectZone(h.zone); else clearSel(); }
     { let pd = null, np = 0; view.addEventListener('pointerdown', e => { np++; if (np > 1 || e.button !== 0) { pd = null; return; } pd = { x: e.clientX, y: e.clientY, moved: false }; }, true);
       view.addEventListener('pointermove', e => { if (pd && Math.hypot(e.clientX - pd.x, e.clientY - pd.y) >= 5) pd.moved = true; }, true);
       const up = e => { np = Math.max(0, np - 1); const d = pd; pd = null; if (!d || e.type !== 'pointerup' || d.moved || Math.hypot(e.clientX - d.x, e.clientY - d.y) >= 5) return; S.clicks3D = (S.clicks3D || 0) + 1; onPick(e.clientX, e.clientY); };
@@ -587,11 +631,74 @@
       while (k >= 0 && (OPENV[k].cut !== SV.cut || OPENV[k].p.distanceTo(c) < 2 && OPENV[k].t.distanceTo(tg) < 2 || !isOpen(OPENV[k].p, OPENV[k].t, S.st.t))) k--;
       S.escapes = (S.escapes || 0) + 1; if (k < 0) { $('b-home').onclick(); return 'home'; } const v = OPENV[k]; OPENV.length = k + 1; flyTo(v.t, v.p, 600); return 'open'; }
     S.escapeView = escapeView;
-    view.addEventListener('dblclick', e => { const h = pick3D(e.clientX, e.clientY); if (h && (h.lifter >= 0 || h.zone)) return; e.preventDefault(); escapeView(); });
-    function applyFocusHash() { if (SHEET !== 'S-301') return; const f = (new URLSearchParams(location.hash.slice(1)).get('focus') || '').toUpperCase(); if (!f) return; const m = /^J(\d{1,2})$/.exec(f);
+    view.addEventListener('dblclick', e => { const h = pick3D(e.clientX, e.clientY) || plugPick3D(e.clientX, e.clientY); if (h && (h.lifter >= 0 || h.zone || h.part != null)) return; e.preventDefault(); escapeView(); });
+    function applyFocusHash(fIn) { const f0 = fIn != null ? fIn : (new URLSearchParams(location.hash.slice(1)).get('focus') || '');
+      if (PLUG[SHEET]) { if (f0 && f0 !== PV.focus) plugSelect(f0, 'url'); return; }   // 联动 v2：插件 part id 区分大小写
+      if (SHEET !== 'S-301') return; const f = f0.toUpperCase(); if (!f) return; const m = /^J(\d{1,2})$/.exec(f);
       if (m) { const i = +m[1] - 1; if (i >= 0 && i < HZ.lifters.length && SV.sel !== i) { focusLifter(i); sheetToLifter(i); } } else if (ZOF[f] && S.selZone !== ZOF[f]) selectZone(ZOF[f]); else if ((f === 'CUT' || f === 'GAP') && SV.cut !== (f === 'CUT' ? 1 : 2)) focusCut(f === 'CUT' ? 1 : 2); }
     S.applyFocusHash = applyFocusHash;
     S.focusLifter = focusLifter;
+
+    // ---------------- 联动接口 v2：插件图纸 ↔ 3D ↔ 时间（宿主侧，对任何带 parts(t, ctx) 的插件生效；规格 docs/tasks/linkage-v2.md）----------------
+    // 图纸：滚轮 / 双指缩放 1–8×、拖拽平移、双击复位（在 pl.draw 前对 g 施加变换，ctx.zoom 只读）；点 part → ctx.focus 重画 + 1 s 镜头飞到 part.box + 3D 黄框；
+    // 3D 点中落在某 part.box 内 → 选中、图纸居中放大 ×3；#focus=<id> 进出 URL；拖时间每帧重取 parts(t)，同 id 仍在则黄框 / 镜头跟随，不在则停在最后位置；Esc / ⌂ 取消。
+    const PV = S.plugView = { k: 1, px: 0, py: 0, w: 0, h: 0, focus: null, box: null, label: '', pend: null };
+    let PVA = null, PFOL = null, PPC = { key: '', parts: [] }, PPT = null;
+    const sheetT = () => PLUG[SHEET] ? S.st.t : Math.min(S.st.t, TL.OPEN + 0.001), plugT = sheetT,   /* 插件图纸拿真实 t（S-501 时间窗到 OPEN + 30，列车在开通后才进站）；S-301 / 总图仍在开通处冻结 */ pkey = t => SHEET + ':' + t.toFixed(4) + ':' + PV.focus + ':' + PV.k.toFixed(3), pwarn = m => console.warn(m);
+    function plugCtx() { const c = sheetCtx(SHEETS[1]); c.focus = PV.focus; c.zoom = PV.k; return c; }
+    function plugParts(t) { const pl = PLUG[SHEET]; if (!pl || typeof pl.parts !== 'function') return []; t = t == null ? plugT() : t; const key = pkey(t); if (PPC.key !== key) PPC = { key, parts: PL.safeParts(pl, t, plugCtx(), pwarn) }; return PPC.parts; }
+    S.plugParts = t => plugParts(t);
+    const easeIO = u => u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    function plugSheetAnim(k1, x, y, ms) { if (!PV.w) { PVA = { pend: [k1, x, y, ms] }; return; } PVA = { k0: PV.k, k1: Math.max(PL.KMIN, Math.min(PL.KMAX, k1)), c0: PL.center(PV, PV.w, PV.h), c1: [x, y], s: performance.now(), ms: ms || 500 }; dirty = true; }
+    function plugAnimStep(now) { if (!PVA) return; if (PVA.pend) { if (!PV.w) return; const q = PVA.pend; PVA = null; plugSheetAnim(...q); return; }
+      const a = PVA, u = Math.min(1, (now - a.s) / a.ms), e = easeIO(u), k = a.k0 * Math.pow(a.k1 / a.k0, e); PL.centerOn(PV, PV.w, PV.h, a.c0[0] + (a.c1[0] - a.c0[0]) * e, a.c0[1] + (a.c1[1] - a.c0[1]) * e, k); sheetInv(); if (u >= 1) { PVA = null; S.plugAnimDone = (S.plugAnimDone || 0) + 1; } }
+    S.plugSheetAnim = plugSheetAnim;
+    // 镜头：围绕盒中心按 24 方位 × 6 仰角搜视角（同 S-301 shotFor）：盒 8 角全在画面内、避开左上大数字；距离二分取最近再留 30 %；镜头不入地、不进实体 / 网架；视线被在场构件挡住的角点记分
+    function shotForBox(b, t) { const x0 = Math.min(b[0], b[3]), x1 = Math.max(b[0], b[3]), y0 = Math.min(b[1], b[4]), y1 = Math.max(b[1], b[4]), z0 = Math.min(b[2], b[5]), z1 = Math.max(b[2], b[5]);
+      const pts = []; for (const x of [x0, x1]) for (const y of [y0, y1]) for (const z of [z0, z1]) pts.push([x, y, z]); const tgt = new THREE.Vector3((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); pts.push([tgt.x, tgt.y, tgt.z]);
+      const diag = Math.hypot(x1 - x0, y1 - y0, z1 - z0), R = Math.max(320, diag * 1.5 + 60), so = safeObs(); fcam.copy(cam); fcam.updateProjectionMatrix();
+      const occ = FBOX.filter(e => { const q = e.b, st = SH.stOf(e.p, t); if (st < 0 || st === 3) return false; if (q.max[0] > x0 - 0.5 && q.min[0] < x1 + 0.5 && q.max[1] > y0 - 0.5 && q.min[1] < y1 + 0.5 && q.max[2] > z0 - 0.5 && q.min[2] < z1 + 0.5) return false; return Math.hypot((q.min[0] + q.max[0]) / 2 - tgt.x, (q.min[2] + q.max[2]) / 2 - tgt.z) < R; });
+      const o0 = cam.position.clone().sub(ctl.target), az0 = Math.atan2(o0.x, -o0.z) * 180 / Math.PI, dMin = Math.max(CC.minD, 12), dMax = Math.max(300, diag * 3);
+      const place = (az, el, d) => { const a = az * Math.PI / 180, e = el * Math.PI / 180; fcam.position.set(tgt.x + Math.sin(a) * Math.cos(e) * d, tgt.y + Math.sin(e) * d, tgt.z - Math.cos(a) * Math.cos(e) * d); fcam.lookAt(tgt); return fcam.position; };
+      let best = null, tried = 0;
+      for (let az = 0; az < 360; az += 15) for (const el of [8, 14, 22, 32, 46, 60]) { tried++;
+        place(az, el, dMax); const far = projFit(pts, so); if (!far || !far.ok) continue;
+        let lo = dMin, hi = dMax; place(az, el, lo); const n0 = projFit(pts, so); if (n0 && n0.ok) hi = lo; else for (let k = 0; k < 14; k++) { const mid = (lo + hi) / 2; place(az, el, mid); const f = projFit(pts, so); if (f && f.ok) hi = mid; else lo = mid; }
+        let d = Math.min(dMax, Math.max(dMin, hi * 1.3)); place(az, el, d); if (!(projFit(pts, so) || {}).ok) d = hi; const cp = place(az, el, d).clone();
+        if (cp.y < 2 || solidAt(cp.x, cp.y, cp.z, t, 1) || roofAt(cp.x, cp.y, cp.z, t)) continue;   // 不入地、不钻进构件 / 网架
+        const ca = [cp.x, cp.y, cp.z]; let oc = 0, ro = 0; for (const p of pts) { const pq = [p[0], p[1] + 0.4, p[2]]; for (const e of occ) if (HZ.segBox(ca, pq, e.b, -0.05)) { oc++; break; } }
+        for (let k = 1; k < 30; k++) { const f = k / 30; if (roofAt(ca[0] + (tgt.x - ca[0]) * f, ca[1] + (tgt.y - ca[1]) * f, ca[2] + (tgt.z - ca[2]) * f, t)) ro++; }
+        let da = Math.abs(az - az0) % 360; if (da > 180) da = 360 - da;
+        const sc = oc * 1000 + ro * 10 + d * 0.6 * 300 / dMax + da * 0.35 + Math.abs(el - 22) * 1.6; if (!best || sc < best.sc) best = { sc, az, el, d, oc, ro, pos: cp }; }
+      if (!best) { const d = Math.max(40, Math.min(1500, diag * 1.6)); best = { sc: -1, az: az0, el: 22, d, oc: -1, ro: -1, pos: place(az0, 22, d).clone() }; }
+      return { tgt, pos: best.pos, az: best.az, el: best.el, d: +best.d.toFixed(1), occluded: best.oc, roofOcc: best.ro, tried, pts }; }
+    S.shotForBox = shotForBox;
+    // src：'sheet' 图纸点击（镜头飞，图纸不动）/ '3d' 3D 点击（镜头轻对准，图纸居中 ×3）/ 'url' #focus=（两者都做）
+    function plugSelect(id, src) { if (!PLUG[SHEET] || id == null) return false; const p = PL.byId(plugParts(), id); if (!p) { PV.pend = String(id); hashSync(); return false; } PV.pend = null;   // 此刻还没有该 part：挂起、URL 保留 focus，时间走到它出现时自动选中
+      PV.focus = String(p.id); PV.label = p.label || String(p.id); PV.box = PL.okBox(p) ? p.box.slice() : null; PFOL = null; dynKey = ''; leadKey = ''; sheetInv();
+      if (src !== 'sheet' && PL.okHit(p)) { const [hx, hy, hw, hh] = p.hit; plugSheetAnim(3, hx + hw / 2, hy + hh / 2); }
+      if (PV.box) { const b = PV.box; if (src === '3d') { const tg = new THREE.Vector3((b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2), p1 = cam.position.clone().sub(ctl.target).multiplyScalar(0.92).add(tg); flyTo(tg, p1, 600); }
+        else { const k = shotForBox(b, S.st.t); S.plugShot = k; flyTo(k.tgt, k.pos, 1000); } }
+      S.plugSel = (S.plugSel || 0) + 1; hashSync(); return true; }
+    function plugClear() { const had = PV.focus || PV.pend; PV.focus = null; PV.box = null; PV.label = ''; PV.pend = null; PFOL = null; if (had) { dynKey = ''; leadKey = ''; sheetInv(); } }
+    S.plugSelect = plugSelect; S.plugClear = () => { plugClear(); hashSync(); };
+    // 时间跟随：时间一变重取 parts(t)；同 id 仍在 → 黄框换到新 box、镜头（目标与机位一起）按盒中心位移平滑跟随（0.25 s）；不在 → 保持最后位置
+    function plugFollow(dt) { if (!PLUG[SHEET]) { PFOL = null; return; } const t = plugT();
+      if (!PV.focus) { PFOL = null; if (PV.pend && PPT !== t) { PPT = t; if (PL.byId(plugParts(t), PV.pend)) plugSelect(PV.pend, 'url'); } return; }
+      if (!PFOL) PFOL = { t, pend: [0, 0, 0] };
+      if (PFOL.t !== t) { PFOL.t = t; const p = PL.byId(plugParts(t), PV.focus); if (p && PL.okBox(p)) { const nb = p.box, ob = PV.box;
+          if (ob) for (let k = 0; k < 3; k++) PFOL.pend[k] += (nb[k] + nb[k + 3] - ob[k] - ob[k + 3]) / 2;
+          if (!ob || nb.some((v, i) => Math.abs(v - ob[i]) > 1e-6)) { PV.box = nb.slice(); dynKey = ''; leadKey = ''; } if (p.label) PV.label = p.label; } }
+      if (S.st.auto) { PFOL.pend = [0, 0, 0]; return; } if (FLY) return; const q = PFOL.pend; if (Math.abs(q[0]) + Math.abs(q[1]) + Math.abs(q[2]) < 1e-4) return;
+      const a = 1 - Math.exp(-dt / 0.25), d = new THREE.Vector3(q[0] * a, q[1] * a, q[2] * a); ctl.target.add(d); cam.position.add(d); for (let k = 0; k < 3; k++) q[k] -= d.getComponent(k); dirty = true; }
+    // 3D 拾取：视线步进到第一个实体（构件盒 / 网架 / 地面），命中点落在某 part.box（外扩 1.5 m）内 → 该 part（多个取体积最小）
+    function plugPick3D(cx, cy) { if (!PLUG[SHEET]) return null; const R = v3.getBoundingClientRect(), x = cx - R.left, y = cy - R.top; if (x < 0 || y < 0 || x > R.width || y > R.height) return null;
+      cam.updateMatrixWorld(); ndc.set(x / R.width * 2 - 1, -(y / R.height) * 2 + 1); rc.setFromCamera(ndc, cam); const o = rc.ray.origin, dv = rc.ray.direction, t = S.st.t; let at = null;
+      for (let s = 1, n = 0; s < 4500 && n < 6000; n++) { const px = o.x + dv.x * s, py = o.y + dv.y * s, pz = o.z + dv.z * s;
+        if (py < 0 && !inUnder(px, py, pz, t)) { const sg = dv.y < -1e-6 && o.y > 0 ? -o.y / dv.y : s; at = [o.x + dv.x * sg, Math.max(0, o.y + dv.y * sg), o.z + dv.z * sg]; break; }
+        if (solidAt(px, py, pz, t, 0) || roofAt(px, py, pz, t)) { at = [px, py, pz]; break; } s += Math.max(0.4, s * 0.004); }
+      if (!at) return { none: true }; const p = PL.pickBox(plugParts(), at[0], at[1], at[2], 1.5); return p ? { part: p.id, at } : { none: true, at }; }
+    S.plugPick3D = plugPick3D;
 
     // ---------------- 计算读数（审计真实做过的检查，按时间累计）----------------
     let AU = null; const cumOf = (arr, t) => { let s = 0; for (const [d, n] of arr) { if (d > t) break; s += n; } return s; };
@@ -697,7 +804,7 @@
     for (const el of document.querySelectorAll('.ui')) for (const ev of ['pointerdown', 'wheel', 'touchstart']) el.addEventListener(ev, e => e.stopPropagation(), { passive: true });
     const setPlay = p => { S.st.play = p; if (p && S.st.t >= TL.t1 - 0.01) setT(TL.t0); lastNow = performance.now(); hud(); dirty = true; };
     $('b-play').onclick = () => setPlay(!S.st.play);
-    $('b-home').onclick = () => { clearFocus(); if (SV.k > 1.001 && SHEETS[0].pm) svAnimTo(1, 0, 0); S.st.auto = true; placeCam(camKey(S.st.t)); ctl.update(); $('b-home').classList.remove('on'); dirty = true; };
+    $('b-home').onclick = () => { clearFocus(); if (SV.k > 1.001 && SHEETS[0].pm) svAnimTo(1, 0, 0); if (PV.k > 1.001) plugSheetAnim(1, PV.w / 2, PV.h / 2); S.st.auto = true; placeCam(camKey(S.st.t)); ctl.update(); $('b-home').classList.remove('on'); dirty = true; };
     const setMode = m => { S.st.pref = m; setT(S.st.t, S.st.u); shadowWant = true; $('b-mode').classList.toggle('on', m === 'lit'); };
     $('b-mode').onclick = () => setMode(S.st.pref === 'ink' ? 'lit' : 'ink');
     const info = $('info'); const fitInfo = () => { const r = $('bar').getBoundingClientRect(); info.style.bottom = (innerHeight - r.top + 8) + 'px'; }; S.fitInfo = fitInfo;
@@ -710,7 +817,7 @@
       tr.addEventListener('pointerdown', e => { const sg = e.target.closest && e.target.closest('.seg.go'); if (sg) { location.hash = 'sheet=' + sg.dataset.go; return; } drag = true; tr.setPointerCapture(e.pointerId); S.st.play = false; at(e); }); tr.addEventListener('pointermove', e => { if (drag) at(e); }); tr.addEventListener('pointerup', e => { drag = false; try { tr.releasePointerCapture(e.pointerId); } catch (x) { } }); }
     addEventListener('keydown', e => { if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
       if (e.code === 'Space') { e.preventDefault(); setPlay(!S.st.play); } else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { e.preventDefault(); S.st.play = false; const du = (e.shiftKey ? 0.05 : 0.01) * (e.code === 'ArrowRight' ? 1 : -1), u = Math.max(0, Math.min(1, S.st.u + du)); setT(TL.u2t(u), u); }
-      else if (e.code === 'Escape') { if (S.st.info) openInfo(false); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
+      else if (e.code === 'Escape') { if (S.st.info) openInfo(false); else if (PLUG[SHEET] && (PV.focus || PV.pend || PV.k > 1.001)) $('b-home').onclick(); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
 
     // ---------------- 次要信息 ----------------
     function fillInfo(au) { const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -736,7 +843,8 @@
     if (!hp.has('noaudit')) setTimeout(() => auditWorker().then(doneAudit).catch(() => setTimeout(() => doneAudit(HZ.audit()), 50)), 400);
 
     // ---------------- 图纸（右栏）----------------
-    const SHEETS = [{ id: 'sh-jack', fn: SH.jack, no: 'HZW-S-301-1' }, { id: 'sh-plug', fn: (g, w, h, t, cx) => { const pl = PLUG[SHEET]; if (pl) pl.draw(g, w, h, t, cx); }, no: 'plugin' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
+    const SHEETS = [{ id: 'sh-jack', fn: SH.jack, no: 'HZW-S-301-1' }, { id: 'sh-plug', fn: (g, w, h, t, cx) => { const pl = PLUG[SHEET]; if (!pl) return; PV.w = w; PV.h = h; PL.clamp(PV, w, h); cx.focus = PV.focus; cx.zoom = PV.k;   // 联动 v2：缩放平移在 draw 前施加
+      g.save(); PL.apply(g, PV, w, h); try { pl.draw(g, w, h, t, cx); } finally { g.restore(); } if (typeof pl.parts === 'function') PPC = { key: pkey(t), parts: PL.safeParts(pl, t, cx, pwarn) }; }, no: 'plugin' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
     let sheetsDirty = true;
     // set2a：S-301 图纸 ↔ 3D —— 平面缩放平移（1–8×，滚轮 / 双指 / 拖拽，双击复位）；悬停吊点只高亮，点击吊点 → 镜头 1 s 飞到该提升器近景
     const SV = S.sheetView = { k: 1, px: 0, py: 0, hover: -1, sel: -1, cut: 0, hoverK: null };
@@ -766,6 +874,21 @@
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
       el.addEventListener('pointerleave', () => { if (!P0.size && (SV.hover >= 0 || SV.hoverK)) { SV.hover = -1; SV.hoverK = null; sheetInv(); } });
       el.addEventListener('dblclick', e => { e.preventDefault(); S.svReset(); }); }
+    // 联动 v2：插件图纸 sh-plug —— 滚轮 / 双指缩放 1–8×（鼠标点不动）、拖拽平移、双击复位；悬停 part 变手形；单击（未拖动）→ 逆变换命中 part.hit → 选中
+    { const el = $('sh-plug'), P0 = new Map(); let drag = null, pinch = null; el.style.touchAction = 'none';
+      const loc = e => { const r = el.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }, WH = () => [PV.w || el.clientWidth, PV.h || el.clientHeight];
+      el.addEventListener('wheel', e => { if (!PLUG[SHEET]) return; e.preventDefault(); PVA = null; const [x, y] = loc(e), [w, h] = WH(), dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1); PL.zoomAt(PV, w, h, PV.k * Math.exp(-dy * 0.0016), x, y); sheetInv(); }, { passive: false });
+      el.addEventListener('pointerdown', e => { PVA = null; const p = loc(e); P0.set(e.pointerId, p); try { el.setPointerCapture(e.pointerId); } catch (x) { }
+        if (P0.size === 1) drag = { x: p[0], y: p[1], px: PV.px, py: PV.py, moved: false }; else if (P0.size === 2) { const [a, b] = [...P0.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, k: PV.k, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] }; if (drag) drag.moved = true; } });
+      el.addEventListener('pointermove', e => { const p = loc(e), [w, h] = WH();
+        if (!P0.size) { const hp0 = PLUG[SHEET] ? PL.hitPart(plugParts(), PV, w, h, p[0], p[1]) : null; el.style.cursor = hp0 ? 'pointer' : PV.k > 1 ? 'grab' : 'default'; return; }
+        P0.set(e.pointerId, p);
+        if (pinch && P0.size >= 2) { const [a, b] = [...P0.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; PL.zoomAt(PV, w, h, pinch.k * d / pinch.d, pinch.m[0], pinch.m[1]); sheetInv(); return; }
+        if (drag) { const dx = p[0] - drag.x, dy = p[1] - drag.y; if (!drag.moved && Math.hypot(dx, dy) > 4) drag.moved = true; if (drag.moved && PV.k > 1) { PV.px = drag.px + dx; PV.py = drag.py + dy; PL.clamp(PV, w, h); sheetInv(); el.style.cursor = 'grabbing'; } } });
+      const up = e => { const p = P0.get(e.pointerId); P0.delete(e.pointerId); try { el.releasePointerCapture(e.pointerId); } catch (x) { }
+        if (P0.size < 2) pinch = null; if (!P0.size) { const d = drag; drag = null; if (d && !d.moved && p && e.type === 'pointerup' && PLUG[SHEET]) { const [w, h] = WH(), hit = PL.hitPart(plugParts(), PV, w, h, p[0], p[1]); S.plugLastHit = hit ? hit.id : null; if (hit) plugSelect(hit.id, 'sheet'); } } };
+      el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+      el.addEventListener('dblclick', e => { e.preventDefault(); const [w, h] = WH(); plugSheetAnim(1, w / 2, h / 2, 300); }); }
     // set2c：选中吊点的行程–时间（整个 S-301 时间窗；横轴 = 时间轴同一映射 TL.t2u；吊点竖向累计位移 = 与 3D / jackRead 同一姿态函数）
     let STK = null;
     function strokeData() { if (SV.sel < 0 || SHEET !== 'S-301') return null; const i = SV.sel;
@@ -775,7 +898,7 @@
     function sheetCtx(s) { return { tb: (w, h, no, name, t) => ({ tb: h < 170 ? 17 : 20, no, name, scale: s.id === 'sh-jack' ? '示意' : (s.scale || '1:—'), rev: evAt(t), date: HZ.dayDate(Math.floor(Math.min(t, TL.OPEN))), chk: AU ? (AU.zero ? '自检 0 ✓' : '自检 ✕') : '自检中', chkOk: AU && AU.zero }), lastVe: s.ve || 1, view: SV, hover: SV.hover, sel: SV.sel, zone: S.selZone, cut: SV.cut, hoverK: SV.hoverK, stroke: strokeData(), anim: !!SVA, chartOpen: !!SV.chartOpen, noChartDraw: !!S.noChartDraw,
       setScale: px => { const mmPerPx = 25.4 / 96, k = 1000 / (px * mmPerPx); s.scale = '1:' + (Math.round(k / 100) * 100).toLocaleString('en-US'); } }; }
     function drawSheet(s, now) { const c = s.el, w = c.clientWidth, h = c.clientHeight, DPR = Math.min(2, devicePixelRatio || 1); if (w < 20 || h < 20) return; if (c.width !== Math.round(w * DPR) || c.height !== Math.round(h * DPR)) { c.width = Math.round(w * DPR); c.height = Math.round(h * DPR); }
-      const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.textAlign = 'left'; const t0 = performance.now(), cx = sheetCtx(s); s.fn(g, w, h, Math.min(S.st.t, TL.OPEN + 0.001), cx); s.hits = cx.hits || []; s.pa = cx.pa; s.cutHit = cx.cutHit; s.gapHit = cx.gapHit; s.gapVal = cx.gapVal; s.chartBox = cx.chartBox; s.pm = cx.pm; s.zbb = cx.zoneBB; if (cx.ve && cx.ve !== (s.ve || 1)) { s.ve = cx.ve; s.key = ''; sheetsDirty = true; }
+      const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.textAlign = 'left'; const t0 = performance.now(), cx = sheetCtx(s); s.fn(g, w, h, sheetT(), cx); s.hits = cx.hits || []; s.pa = cx.pa; s.cutHit = cx.cutHit; s.gapHit = cx.gapHit; s.gapVal = cx.gapVal; s.chartBox = cx.chartBox; s.pm = cx.pm; s.zbb = cx.zoneBB; if (cx.ve && cx.ve !== (s.ve || 1)) { s.ve = cx.ve; s.key = ''; sheetsDirty = true; }
       if (S.st.t >= TL.OPEN) { g.save(); g.translate(w - 70, 34); g.rotate(-0.18); g.strokeStyle = '#b3202a'; g.fillStyle = 'rgba(179,32,42,.9)'; g.lineWidth = 2; g.strokeRect(-46, -15, 92, 30); g.font = '700 15px "PingFang SC","Noto Sans CJK SC",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('竣工 · 开通', 0, 1); g.restore(); }
       if (s.scale !== s._sc0) { s._sc0 = s.scale; s.key = ''; sheetsDirty = true; } s.ms = performance.now() - t0; s.n++; S.sheetDraws++; s.drawn = now; }
 
@@ -793,9 +916,9 @@
       const top = $('big').getBoundingClientRect().bottom - r.top, bot = 0;
       cam.setViewOffset(w, h, 0, -(top - bot) * (SHEET === 'S-301' ? 0.05 : 0.3), w, h); cam.updateProjectionMatrix();
       trackW = $('track').clientWidth || 1; marks(); if (S.fitInfo) S.fitInfo(); if (S.st.auto) placeCam(camKey(S.st.t)); hud(); dirty = true; sheetsDirty = true; for (const s of SHEETS) s.key = ''; }
-    function setSheet(id) { if (id === SHEET) return; clearFocus(); SHEET = id; S.sheet = id; TL = TLS[id]; S.TL = TL; S.st.play = false; WK.key = ''; dynKey = ''; leadKey = ''; tabs();
+    function setSheet(id) { if (id === SHEET) return; clearFocus(); PV.k = 1; PV.px = PV.py = 0; PVA = null; PPC = { key: '', parts: [] }; SHEET = id; S.sheet = id; TL = TLS[id]; S.TL = TL; S.st.play = false; WK.key = ''; dynKey = ''; leadKey = ''; tabs();
       S.st.auto = true; $('b-home').classList.remove('on'); layout(); let t = S.st.t; if ((id === 'S-301' || PLUG[id]) && (t < TL.t0 || t >= TL.t1)) t = TL.t0; setT(t); }
-    S.setSheet = setSheet; addEventListener('hashchange', () => { setSheet(sheetOf()); applyFocusHash(); });
+    S.setSheet = setSheet; addEventListener('hashchange', () => { const f = PL.parseHash(location.hash).focus || ''; setSheet(sheetOf()); applyFocusHash(f); });
     addEventListener('resize', layout);
     const PIX = +(hp.get('pix') || 5.0e6);
 
@@ -814,7 +937,7 @@
       if (POST.level > 0) POST.render(scene, cam, postOpts()); else { renderer.setRenderTarget(null); renderer.render(scene, cam); } }
     function frame(now) { requestAnimationFrame(frame); const dt = Math.min(0.1, (now - lastNow) / 1000); lastNow = now;
       if (S.st.play) { const u = Math.min(1, S.st.u + dt / TL.playSec); setT(TL.u2t(u), u); if (u >= 1) { S.st.play = false; hud(); } }
-      flyStep(now); follow(dt); svaStep(now); if (S._zonePend && SHEETS[0].pm) sheetToZone(S._zonePend); if (ctl.update()) dirty = true; if (camConstrain(dt)) dirty = true; openViewTick(now);
+      flyStep(now); follow(dt); plugFollow(dt); svaStep(now); plugAnimStep(now); if (S._zonePend && SHEETS[0].pm) sheetToZone(S._zonePend); if (ctl.update()) dirty = true; if (camConstrain(dt)) dirty = true; openViewTick(now);
       // 图纸：时间变了才重画；每帧最多一张（错开），播放中每张 ≤ 20 Hz
       if (sheetsDirty && (SHEET === 'S-301' || PLUG[SHEET]) && !S.noSheet) { const k = S.st.t.toFixed(3) + (AU ? 'a' : ''); let any = false; const ord = SHEETS.slice().sort((a, b) => a.drawn - b.drawn); let drew = false;
         for (const s of ord) { if (s.key === k) continue; any = true; if ((!drew || !S.st.play) && (!S.st.play || now - s.drawn > 50)) { s.key = k; drawSheet(s, now); drew = true; } } if (!any) sheetsDirty = false; }
@@ -852,6 +975,7 @@
       LEAD.innerHTML = o; S.leadPlaced = placed; S.leadText = pts.map(a => a.t1).join(' / '); const lg = pts.find(a => a.gap); S.leadGap = lg ? lg.t1 : ''; S.leadGapPlaced = !!(lg && lg.placed); }
     function lead() { if (S.noLead) return; if (SHEET === 'S-301') return lead301(); const t = S.st.t, r = v3.getBoundingClientRect(), W = r.width, H = r.height; let anchor = null, t1 = '', t2 = '';
       for (const [zone, zA, key, nm] of [[1, P.roofB, 'lift1', '南区'], [3, -P.roofB, 'lift3', '北区']]) { const A = K[key]; if (t >= A.start - 1 && t < A.end + 1) { anchor = [0, P.roofLo + S.pose[zone].dy, zA]; t1 = '转轴 · ' + nm + '外缘（东西向）'; t2 = '已转 ' + (4 * S.pose[zone].r).toFixed(1) + '° / 4° · 内边抬升 ' + (HZ.innerDrop * S.pose[zone].r).toFixed(1) + ' / ' + HZ.innerDrop.toFixed(1) + ' m'; } }
+      if (PLUG[SHEET] && PV.focus && PV.box) { const b = PV.box; anchor = [(b[0] + b[3]) / 2, Math.max(b[1], b[4]), (b[2] + b[5]) / 2]; t1 = PV.label; t2 = SHEET + ' · ' + PV.focus; }   // 联动 v2：选中 part 优先标注
       if (!anchor && t < TL.OPEN) { const c = HZ.caption(t).act; if (c && c.parts.length) { const ps = c.parts.filter(p => p.st <= t).sort((a, b) => b.st - a.st)[0]; if (ps) { anchor = HZ.xf(S.pose, ps.grp || 0, [ps.c[0], ps.top, ps.c[2]]); t1 = c.name; t2 = (QTY(c) || '') + (QTY(c) ? ' · ' : '') + HZ.dayDate(c.start) + ' → ' + HZ.dayDate(c.end); } } }
       if (!anchor && t >= TL.OPEN + 2 && S.train && S.train[0] < 5000) { const ws = FV.tw ? -1 : 1; anchor = [S.train[0] + ws * 70, P.deckTop + 4.6, S.train[2]]; t1 = '首趟列车进站'; t2 = HZ.dayDate(TL.OPEN) + ' · 开通运营'; }
       if (!anchor) { if (LEAD.innerHTML) LEAD.innerHTML = ''; S.leadPlaced = false; return; }

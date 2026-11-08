@@ -14,7 +14,7 @@ for b in $(git for-each-ref --format='%(refname:short)' refs/remotes/inbox/agent
   if git merge-base --is-ancestor $b main; then echo "MERGED $b"; continue; fi
   w=/tmp/inbox-wt; rm -rf $w; git worktree add -q --detach $w main
   ( cd $w && if git -c user.name=hark-cr -c user.email=hark@local merge -q --no-ff --no-edit $b >/dev/null 2>&1; then
-      r=$(node tools/hz/check_all.js 2>&1 | tail -1); echo "PENDING $b | merge ok | $r | $(git log --format='%h %s' main..$b | wc -l) commits"; git log --format='    %h %s [%an]' main..$b
+      r=$(node tools/hz/check_all.js 2>&1 | tail -1); sc=$(python3 /workspace/work/inbox/scope.py $R $b); case "$r" in OK*) [ "${sc%% *}" = AUTO ] && tag=AUTO || tag=PENDING;; *) tag=PENDING;; esac; echo "$tag $b | $sc | merge ok | $r | $(git log --format='%h %s' main..$b | wc -l) commits"; git log --format='    %h %s [%an]' main..$b
     else echo "PENDING $b | MERGE CONFLICT"; fi )
   git worktree remove --force $w
 done

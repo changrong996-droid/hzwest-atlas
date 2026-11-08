@@ -24,7 +24,7 @@
 | 事项 | 说明 | 负责人 | 状态 | 认领日期 | 备注 |
 |---|---|---|---|---|---|
 | 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 认领 | 2026-11-08 | 委托人指派 |
-| 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cs | 认领 | 2026-11-08 | 交分支，hark-cr 接 |
+| 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cr | 完成 | 2026-11-08 | tools/inbox/scope.py（hark-cs 已满 2 项，由 hark-cr 做） |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 | | 需本地 GPU |
 | 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | — | 空 | | |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 | | 镜头改动需扫描 0 违反 0 卡住 |

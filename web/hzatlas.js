@@ -12,7 +12,7 @@
     'S-201': { title: '承轨层', on: 1, sheets: ['S-301-3'] },
     'S-301': { title: '整体提升', on: 1, sheets: ['S-301-1', 'S-301-2', 'S-301-3', 'S-301-4'] },
     'S-401': { title: '屋面', on: 1, sheets: ['S-301-4', 'S-301-3'] },
-    'S-501': { title: '开通', on: 0, sheets: [] },
+    'S-501': { title: '开通', on: 1, sheets: [] },
   };
 
   HZA.SHEETS = {

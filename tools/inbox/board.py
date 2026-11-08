@@ -2,7 +2,7 @@
 Shares claims.lock.json (and its flock) with claims_gate.py. Items come from main's CLAIMS.md."""
 import json, os, time, fcntl, subprocess, urllib.parse
 TTL, MAXN = 3 * 86400, 2
-ORDER = ['S-201', 'S-401', 'S-101', 'S-501', '实物层']
+ORDER = ['S-501', 'GPU', '插件镜头', '实物层']
 
 
 def _items(root):
@@ -33,6 +33,44 @@ def _agents(root):
 
 def _bj(t):
     return time.strftime('%m-%d %H:%M', time.gmtime(t + 8 * 3600))
+
+
+def _git(root, *a):
+    return subprocess.run(['git', '-C', os.path.join(root, 'hzwest-atlas.git')] + list(a), capture_output=True, text=True).stdout
+
+
+def _requests(root, a):
+    t = _git(root, 'show', 'main:CLAIMS.md'); sec = ''; out = []
+    for ln in t.splitlines():
+        if ln.startswith('## '):
+            sec = ln[3:].strip(); continue
+        if sec.startswith('接口请求') and ln.startswith('|') and f'| {a} |' in ln:
+            c = [x.strip() for x in ln.strip().strip('|').split('|')]
+            out.append((c[2][:60], c[-1] if len(c) >= 5 and c[-1] else '（未回复）'))
+    return out
+
+
+def agent_view(root, a, items, lock, now):
+    vf = os.path.join(root, 'visits.json')
+    try: vis = json.load(open(vf))
+    except Exception: vis = {}
+    last = vis.get(a, now - 86400)
+    L = [f'{a} 的进门画面（{_bj(now)} 北京时间；上次来：{_bj(last)}）', '']
+    mine = [f'  {k} · 锁到 {_bj(v["t"] + TTL)}' for k, v in lock.items() if v['a'] == a]
+    mine += [f'  {i["item"]} · {i["state"]}' for i in items if i['owner'] == a and i['item'] not in lock and i['state'] not in ('完成',)]
+    L += ['你手上的事项：'] + (mine or ['  （无）'])
+    merged = set(_git(root, 'branch', '--format=%(refname:short)', '--merged', 'main').split())
+    br = [b for b in _git(root, 'for-each-ref', '--format=%(refname:short)', f'refs/heads/agent/{a}/').split() if not b.endswith('/join')]
+    L += ['', '你的分支：'] + ([f'  {b} · {"已合入 main" if b in merged else "待合并"}' for b in br] or ['  （无）'])
+    rq = _requests(root, a)
+    L += ['', '你的接口请求：'] + ([f'  {q} → {r}' for q, r in rq] or ['  （无）'])
+    since = time.strftime('%Y-%m-%dT%H:%M:%S+00:00', time.gmtime(last))
+    ch = _git(root, 'log', 'main', f'--since={since}', '--format=  %h %s', '--', 'AGENTS.md', 'docs/BRIEF.md', 'docs/tasks', 'docs/review', 'docs/hz-atlas-check.md').strip()
+    L += ['', '上次来之后规矩/任务书/审查的变化（git pull 后细读）：', ch or '  （无）']
+    vis[a] = now
+    try: json.dump(vis, open(vf, 'w'))
+    except OSError: pass
+    return '\n'.join(L) + '\n\n'
 
 
 def handle(root, path, query):
@@ -85,7 +123,8 @@ def handle(root, path, query):
                 st = '空 ← 可认领'
             rows.append(f'{i["item"]:<14}  {st}')
         free = [i['item'] for i in items if i['item'] not in lock and i['owner'] in ('—', '')]
-        body = (msg + '\n\n' if msg else '') + f'认领板（实时，{_bj(now)} 北京时间）\n' + '\n'.join(rows) + \
+        head = agent_view(root, q['agent'], items, lock, now) if path == '/board' and q.get('agent') in _agents(root) else ''
+        body = (msg + '\n\n' if msg else '') + head + f'认领板（实时，{_bj(now)} 北京时间）\n' + '\n'.join(rows) + \
             ('\n\n推荐下一项：' + sorted(free, key=lambda x: next((n for n, p in enumerate(ORDER) if x.startswith(p)), 99))[0] if free else '\n\n全部已认领') + \
             '\n\n认领：curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claim?agent=<名字>&item=S-401"\n放回：curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/release?agent=<名字>&item=S-401"\n'
         return code, body

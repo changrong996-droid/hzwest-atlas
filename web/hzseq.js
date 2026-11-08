@@ -157,7 +157,7 @@ function build() {
   for (const yk of ['S', 'N']) { const Y = HZ.YARDS[yk], parts = [];
     for (const pl of platforms(Y)) { const g = new GB('plat'); g.B(-P.stX, P.deckTop, pl.z - pl.w / 2, P.stX, P.platTop, pl.z + pl.w / 2); parts.push(part(g, { sweep: pl.z * (yk === 'S' ? 1 : -1) })); }
     A({ key: 'plat' + yk, name: '站台 · ' + (yk === 'S' ? '南场 6 台' : '北场 5 台'), stage: 'plat', yard: yk, dur: 20, parts, res: { frame: 1 }, cap: '站台层（14.5 m）' });
-    const tp = []; for (const tz of tracks(Y)) for (let x = -P.apX; x < P.apX; x += 130) { const x1 = Math.min(P.apX, x + 130), g = new GB('slab'); const sl = g.B(x, P.deckTop, tz - 1.5, x1, P.deckTop + 0.3, tz + 1.5); const r1 = new GB('rail'); g.B(x, P.deckTop + 0.3, tz - 0.79, x1, P.deckTop + 0.48, tz - 0.71, MAT.rail.c); g.B(x, P.deckTop + 0.3, tz + 0.71, x1, P.deckTop + 0.48, tz + 0.79, MAT.rail.c); tp.push(part(g, { sweep: Math.abs(x) })); }
+    const tp = [], tzs = tracks(Y).slice().sort((a, b) => Math.abs(a) - Math.abs(b)); for (const tz of tracks(Y)) for (let x = -P.apX; x < P.apX; x += 130) { const x1 = Math.min(P.apX, x + 130), g = new GB('slab'); const sl = g.B(x, P.deckTop, tz - 1.5, x1, P.deckTop + 0.3, tz + 1.5); const r1 = new GB('rail'); g.B(x, P.deckTop + 0.3, tz - 0.79, x1, P.deckTop + 0.48, tz - 0.71, MAT.rail.c); g.B(x, P.deckTop + 0.3, tz + 0.71, x1, P.deckTop + 0.48, tz + 0.79, MAT.rail.c); tp.push(part(g, { sweep: tzs.indexOf(tz) * 1000 + Math.abs(x) })); } // 逐条股道：靠云谷（|z| 小）的股道先铺完，再铺下一条（hark-fangyi 请求 #2）
     A({ key: 'track' + yk, name: '铺轨 · ' + (yk === 'S' ? '湖杭场 11 线' : '杭临绩场 9 线'), stage: 'track', yard: yk, dur: 160, parts: tp, res: { track: 1 }, cap: '铺轨（无砟轨道）' });
   }
   // ===== 5. 候车层：站台上 1.6 m 圆柱 → 24 m 楼面（中间留云谷光井）；雨棚上盖板 =====

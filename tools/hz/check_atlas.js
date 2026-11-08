@@ -106,7 +106,7 @@ check('focusFor 用例', () => {
 for (const s of ['HZA.focusFor', 'wireFly', 'location.hash = ', 'hz-hint']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=4')) fail('hzatlas.html 缺少 hzatlas.js?v=4');
+if (!atlasHtml.includes('hzatlas.js?v=5')) fail('hzatlas.html 缺少 hzatlas.js?v=5');
 
 // 12 HZ2-02 平面图小地图断言
 const approx = (a, b, tol = 0.75) => assert.ok(Math.abs(a - b) <= tol, a + ' !≈ ' + b);
@@ -155,6 +155,6 @@ check('planCamPose 用例', () => {
 for (const s of ['HZA.planMap', 'HZA.planCamPose']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=4')) fail('hzatlas.html 缺少 hzatlas.js?v=4');
+if (!atlasHtml.includes('hzatlas.js?v=5')) fail('hzatlas.html 缺少 hzatlas.js?v=5');
 
 console.log('OK check_atlas pages=' + Object.keys(HZA.PAGES).length + ' sheets=' + keys.length + ' aliases=' + nal);
