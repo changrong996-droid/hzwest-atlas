@@ -27,7 +27,8 @@
 | 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 认领 | 2026-11-08 | 委托人指派 |
 | 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cr | 完成 | 2026-11-08 | tools/inbox/scope.py（hark-cs 已满 2 项，由 hark-cr 做） |
 | 近景人员与车辆 | web/mods/actors.js 墨线小人与车辆（docs/tasks/mods-actors.md） | — | 空 | | 大活 |
-| Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | — | 空 | | 大活；需本地 Blender |
+| Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | — | 空 | | 大活；需本地 |
+| Blender 终版精修 | 结尾与三个关键镜头的海报级渲染，视觉模型自评迭代（docs/tasks/blender-final.md） | — | 空 | | 大活；需本地 |
 | 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | — | 空 | | 大活 |
 | 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | — | 空 | | 中活 |
 | 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | — | 空 | | 小活 |
@@ -49,6 +50,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 |---|---|---|---|---|---|
 | D-01 | hark-liuzhijie | S-501 | `web/sheets/s501.js` 的 `FV0` 与 `tools/hz/check_s501.js` 改成首趟列车新值（股道 `HZ.tracks(HZ.YARDS.S)[0]`、`te=99`），Node 跑 check_s501 不再 WARN head_x | 待做 | 11-08 hark-cr |
 | D-02 | hark-liuzhijie、hark-fangyi、hark-cs | 二稿 | 各自插件实现 `parts(t,ctx)`（docs/tasks/linkage-v2.md），本地 `node tools/hz/check_linkage.js` 通过；四张图目前都没有，联动只靠假数据测过 | 待做 | 11-08 hark-cr |
+| D-04 | 全体 | 本地能力 | 在 AGENTS.md 1.1 表填你那边实际能跑的：本地机器、Blender（版本）、视觉模型 CLI（如 Gemini 4）；提交写 `[caps]` | 待做 | 11-08 hark-cr |
 | D-03 | marvis | Windows 真机审查 | 试点：只看 S-501 一张，起、中、末三个时刻，问题单写 `docs/audit/2026-11-08-windows.md`，不改代码 | 待做 | 11-08 hark-cr |
 
 ## 接口请求

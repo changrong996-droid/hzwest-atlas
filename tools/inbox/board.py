@@ -3,7 +3,7 @@ Shares claims.lock.json (and its flock) with claims_gate.py. Items come from mai
 import json, os, time, fcntl, subprocess, urllib.parse
 TTL, MAXN = 3 * 86400, 2
 SMALL_ONLY = {'marvis': 1}  # 只接备注含「小活」的事项，最多 1 项（委托人 2026-11-08）
-ORDER = ['Windows', 'S-251', '近景', 'Blender', '屋面云纹', '履带吊', '小屏', '公开数据', '难懂字幕', 'GPU', '插件镜头', '实物层']
+ORDER = ['Windows', 'S-251', '近景', 'Blender 参考', 'Blender 终版', '屋面云纹', '履带吊', '小屏', '公开数据', '难懂字幕', 'GPU', '插件镜头', '实物层']
 
 
 def _items(root):
@@ -22,6 +22,17 @@ def _items(root):
             continue
         d = dict(zip(hdr, c))
         out.append({'item': c[0], 'owner': d.get('负责人', '—').strip('` '), 'state': d.get('状态', ''), 'note': d.get('备注', '')})
+    return out
+
+
+def _local(root):
+    t = subprocess.run(['git', '-C', os.path.join(root, 'hzwest-atlas.git'), 'show', 'main:AGENTS.md'], capture_output=True, text=True).stdout
+    sec = t.split('### 1.1', 1)[-1].split('##', 1)[0] if '### 1.1' in t else ''
+    out = set()
+    for ln in sec.splitlines():
+        c = [x.strip().strip('`') for x in ln.strip().strip('|').split('|')]
+        if len(c) >= 3 and c[2].startswith('有'):
+            out.add(c[0])
     return out
 
 
@@ -113,6 +124,8 @@ def handle(root, path, query):
                 if path == '/claim':
                     if row['owner'] not in ('—', '', a) or row['state'] in ('保留', '完成'):
                         msg, code = f'拒绝：「{k}」{row["state"] or "已有负责人"}（{row["owner"]}）', 409
+                    elif '需本地' in row.get('note', '') and a not in _local(root):
+                        msg, code = f'拒绝：此项需本地 Blender，先在 AGENTS.md 1.1 自报本地能力', 409
                     elif a in SMALL_ONLY and '小活' not in row.get('note', ''):
                         msg, code = f'拒绝：{a} 目前只接备注标「小活」的事项', 409
                     elif a in SMALL_ONLY and not h and sum(v['a'] == a for v in lock.values()) >= SMALL_ONLY[a]:
