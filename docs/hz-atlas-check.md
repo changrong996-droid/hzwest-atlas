@@ -80,6 +80,7 @@ node tools/hz/check_real.js
 7. **`hzview.js` 中 `SHEETS_ALL` 的源码字面格式**：check_atlas 用正则从源码提取页序与 `on` 列，改动该字面格式会让检查失效或变红。
 8. **壳页 `hzatlas.html`**：用 `fetch` 载入 `hzwest.html`，并注入 `hzatlas.js?v=<版本>`。**`hzatlas.js` 每次改动必须升版本号**，否则浏览器缓存旧版（已实测踩过）。
 9. **hash 的 `focus` 参数与 `hashchange` 监听**：宿主在 hashchange 时调 `applyFocusHash()` 识别 `J<n> / ZN / ZM / ZS / CUT / GAP` 并飞行镜头。hzatlas 的「点图飞镜头」靠给 `location.hash` 赋值（保留其它参数）触发它；若宿主改掉这套参数或监听，外挂点击将静默失效（检查查不出来，须浏览器实测）。
+10. **平面图布局常数与镜头状态（小地图依赖）**：hzatlas 的平面图标记按 plan 的布局公式（frame 内框、z ±172 / x ±130、边距 8/16/4/14）复算坐标映射，并读宿主镜头状态：自动模式用 `S.camKey(t)`，飞镜头后用 `S.focusShot / S.cutShot`（或 `S.shotFor` 现算），以 `S.focusHash` 与 `S.st.auto` 判断当前处于哪种状态。若宿主改平面图布局常数、相机模型或这些状态字段，标记会偏位或消失，检查只能保证我方公式自洽，位置正确性须浏览器实测。
 
 ## 四、图号规则与映射表
 
