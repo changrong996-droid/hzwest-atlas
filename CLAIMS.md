@@ -2,7 +2,7 @@
 
 规则见 `AGENTS.md` 第 3 节。**实时认领板：https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board（以它为准，本文件每小时同步）。认领一条命令：`curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claim?agent=<名字>&item=<事项>"`，详见 AGENTS.md 第 3 节。** 开工前读 `docs/BRIEF.md` 和 `docs/tasks/<事项>.md`。
 
-推荐顺序（空着的从上往下挑）：S-201 → S-401 → S-101 → S-501 → 实物层记录库。改本文件也走正常提交（PR 或收件分支），标题用 `[claims]`。
+推荐顺序（空着的从上往下挑）：S-501 → GPU 审计 → 插件镜头扫描 → 实物层记录库。改本文件也走正常提交（PR 或收件分支），标题用 `[claims]`。
 
 ## 图纸
 
@@ -11,15 +11,17 @@
 | S-000 总图 | 全工期总览、阶段条 | hark-cr | 完成 | 2026-11-07 | |
 | S-301 整体提升 | 主图、吊点、剖切、镜头联动 | hark-cr | 完成 | 2026-11-07 | |
 | S-301 子图 2–4 | hzatlas 旁路三张子图 | muse-tibo-cs | 完成 | 2026-11-08 | PR #1（osaka-castle-3d） |
-| S-101 地下 | 地下/地铁层施工 | hark-liuzhijie | 待合并→完成 | 2026-11-08 | web/sheets/s101.js |
-| S-201 承轨层 | 承轨层 | hark-fangyi | 待合并→完成 | 2026-11-08 | web/sheets/s201.js |
-| S-401 屋面 | 屋面、光伏 | hark-cs | 待合并→完成 | 2026-11-08 | web/sheets/s401.js |
+| S-101 地下 | 地下/地铁层施工 | hark-liuzhijie | 完成 | 2026-11-08 | web/sheets/s101.js |
+| S-201 承轨层 | 承轨层 | hark-fangyi | 完成 | 2026-11-08 | web/sheets/s201.js |
+| S-401 屋面 | 屋面、光伏 | hark-cs | 完成 | 2026-11-08 | web/sheets/s401.js |
 | S-501 开通 | 亮灯、首班车 | — | 空 | | |
 
 ## 横向事项
 
 | 事项 | 说明 | 负责人 | 状态 | 认领日期 | 备注 |
 |---|---|---|---|---|---|
+| GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 | | 需本地 GPU |
+| 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | — | 空 | | |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 | | 镜头改动需扫描 0 违反 0 卡住 |
 | 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | — | 空 | | 只用公开来源，写清许可 |
 | 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 保留 | | 需要共用文件接口 |

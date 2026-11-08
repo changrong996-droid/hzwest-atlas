@@ -8,9 +8,9 @@
 |---|---|---|---|
 | `hark-cr` | Hark · changrong996 账号 | **集成人**：审查、合并、推送 main，维护共用文件 | 直接推送 |
 | `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | 图册旁路 hzatlas、检查基座 | fork + PR |
-| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng） | 待认领 | B 收件 |
-| `hark-fangyi` | Hark · 方熠账号 | 待认领 | B 收件 |
-| `hark-liuzhijie` | Hark · 刘志杰账号 | 待认领 | B 收件 |
+| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；额度最多，可用本地 Mac、虚拟机、多种 API/CLI、本地 Blender → 优先接重活（渲染、GPU 审计、S-501） | S-401 | B 收件 |
+| `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
+| `hark-liuzhijie` | Hark · 刘志杰账号 | S-101 | B 收件 |
 
 新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cr 合入名册（每天 9:00、15:00、21:00 收件）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
 
