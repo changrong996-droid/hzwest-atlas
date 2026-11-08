@@ -56,7 +56,7 @@ if (!(pl.cam && pl.cam.length >= 2)) fail('镜头关键帧不足 2 个');
 // 5 二稿 parts：窗内每个采样时刻 ≥1 项、id 唯一、hit 在画布内、box 有限且非零体积；选中项绘制不抛错
 if (typeof pl.parts !== 'function') fail('缺 parts()');
 let nParts = 0;
-for (const [w, h] of [[600, 420], [300, 560], [1258 * 0.45, 540 - 60]]) {
+for (const [w, h] of [[600, 420], [300, 560], [1258 * 0.45, 540 - 60], [600, 984], [800, 1200]]) {
   const c0 = makeCtx(); pl.draw(c0.g, w, h, w0, sheetCtx());   // 先画一次，parts 用同一版面
   for (let t = w0; t <= w1; t += (w1 - w0) / 8) {
     const ps = pl.parts(t, { w, h });
@@ -75,6 +75,13 @@ const kinds = new Set(pl.parts(w1).map(q => q.kind)); for (const k of ['hole', '
 for (const id of ['CL-ZN-E', 'SK-ZM', 'PV-ZS-W']) { const c = makeCtx(); try { pl.draw(c.g, 600, 420, K.pv.start + 10, sheetCtx(null, { focus: id })); } catch (e) { fail('focus=' + id + ' 绘制抛错 ' + e.message); } }
 const hj = pl.parts(w0).filter(q => q.kind === 'hole' && /^H-J\d\d[ab]$/.test(q.id)).length;
 if (hj < 40) fail('提升孔与提升器 Jnn 对应过少：' + hj);
+// 5b 竖长画布（D-08）：平面转向后比横放大 ≥1.4 倍；转向后 focus 绘制不抛错、选中项 hit 仍在画布内
+{ const sc = [];
+  for (const [w, h] of [[600, 420], [600, 984]]) { let got = 0; const c = makeCtx(); pl.draw(c.g, w, h, w1, Object.assign(sheetCtx(), { setScale: v => { got = v; } })); sc.push(got); }
+  const cl = makeCtx(); pl.draw(cl.g, 600, 600 * 0.42, w1, Object.assign(sheetCtx(), { setScale: v => { sc.push(v); } }));
+  if (!(sc[1] >= sc[2] * 1.4)) fail(`竖栏未放大：600x984 比例 ${sc[1]} vs 同宽横排 ${sc[2]}`);
+  for (const id of ['CL-ZN-E', 'H-J07a']) { const c = makeCtx(); try { pl.draw(c.g, 600, 984, id[0] === 'H' ? w0 : w1, sheetCtx(null, { focus: id })); } catch (e) { fail('竖栏 focus=' + id + ' 抛错 ' + e.message); } }
+}
 // 6 改 HZ 图跟着变：光伏开工推后 10 天 → 同一时刻光伏面积变小、PV 构件工期跟着变
 const tp = K.pv.start + 15, pvA = pl.stats(tp).pv, pvInfo = JSON.stringify(pl.parts(tp).find(q => q.kind === 'pv').info);
 K.pv.start += 10; const pvB = pl.stats(tp).pv, pvInfo2 = JSON.stringify(pl.parts(tp).find(q => q.kind === 'pv').info); K.pv.start -= 10;
