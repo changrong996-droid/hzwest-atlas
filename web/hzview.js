@@ -6,8 +6,10 @@
   const THREE_BASE = 'https://unpkg.com/three@0.160.0/';
   const $ = id => document.getElementById(id), hp = new URLSearchParams(location.hash.slice(1));
   const HZ = window.HZ, SEQ = window.SEQ, S = window.__pv = { ready: false, frames: 0, calls: 0, auditDone: false, sheetDraws: 0, st: { t: 0, u: 0, play: false, auto: true, info: false, pref: hp.get('mode') === 'lit' ? 'lit' : 'ink' } };
-  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 0], ['S-201', '承轨层', 0], ['S-301', '整体提升', 1], ['S-401', '屋面', 0], ['S-501', '开通', 0]];
-  const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' ? 'S-301' : 'S-000'; };
+  const SHEETS_ALL = [['S-000', '总图', 1], ['S-101', '地下', 1], ['S-201', '承轨层', 1], ['S-301', '整体提升', 1], ['S-401', '屋面', 1], ['S-501', '开通', 0]];
+  const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' || PLUG[v] ? v : 'S-000'; };
+  // 插件图纸（web/sheets/*.js 登记到 window.HZ_SHEET_PLUGINS）：{ id, name, window:[t0,t1], big(t), draw(g,w,h,t,ctx), cam:[{t,target,az,el,dist}] }
+  const PLUG = {}; for (const pl of (window.HZ_SHEET_PLUGINS || [])) PLUG[pl.id] = pl;
   const ICON = { play: 'M3 1.5v11l9.5-5.5z', pause: 'M2.5 1.5h3.2v11H2.5zM8.3 1.5h3.2v11H8.3z' };
   const icon = k => `<svg class="i" viewBox="0 0 14 14" aria-hidden="true"><path d="${ICON[k]}"/></svg>`;
   const fmt = n => Math.round(n).toLocaleString('en-US').replace(/,/g, ' ');
@@ -19,7 +21,8 @@
     const K = HZ.K, OPEN = HZ.P.OPEN, FIN = 30, Tmax = OPEN + FIN;
     let t0 = 0, t1 = Tmax, R = 4, w, playSec = 72;
     const l0 = K.lift1.start - 2, l1 = K.head.end + 2, a0 = K.jig1.start, a1 = K.lift1.start;
-    if (sheet === 'S-301') { t0 = K.lift1.start; t1 = K.head.end; R = 96; playSec = 150;
+    if (PLUG[sheet]) { [t0, t1] = PLUG[sheet].window; R = 8; playSec = 60; w = () => 1; }
+    else if (sheet === 'S-301') { t0 = K.lift1.start; t1 = K.head.end; R = 96; playSec = 150;
       w = t => { const hd = (t - Math.floor(t)) * 24, day = hd >= 8 && hd < 18; for (const k of ['lift1', 'lift2', 'lift3']) { const A = K[k]; if (t >= A.start && t < A.end) return day ? (k === 'lift2' ? 0.6 : 1) : 0.1; }
         if (t >= K.wlift.start && t < K.wlift.end) return day ? 1.7 : 0.12; return 0.07; }; }
     else w = t => { let v = 1; if (t >= l0 && t <= l1) v = 4; else if (t > a0 && t < a1) v = 2.2; else if (t > OPEN - 14) v = 2.6; else if (t < 300) v = 0.55; return v; };
@@ -45,7 +48,7 @@
     const FV = Object.assign({ rw: 4, re: 3.5, pv: 1, cam: 14, tz: -98.5, te: -240, tw: 1, dk: 0.6, lt: 4.5, se: 9, ik: 0.95, tl: 30 }, Object.fromEntries((hp.get('fv') || '').split(',').filter(Boolean).map(kv => { const [k, v] = kv.split(':'); return [k, +v]; }))); S.FV = FV;
     HZ.P.edgeDrop = FV.re;
     if (FV.rw >= 1) { Object.assign(HZ.MAT.clad, { c: [0.975, 0.975, 0.97], r: 0.52, m: 0.06 }); Object.assign(HZ.MAT.soffit, { c: [0.96, 0.95, 0.92] }); }   // r3：白色哑光铝板（原 m 0.5 反射暗环境 → 发灰）
-    HZ.make(); const TLS = { 'S-000': timeline('S-000'), 'S-301': timeline('S-301') }; let SHEET = sheetOf(); TL = TLS[SHEET]; TLF = TLS['S-000']; S.TLS = TLS; S.Tmax = TLF.Tmax; S.OPEN = TLF.OPEN; S.HZ = HZ; const K = HZ.K, P = HZ.P;
+    HZ.make(); const TLS = { 'S-000': timeline('S-000'), 'S-301': timeline('S-301') }; for (const id in PLUG) TLS[id] = timeline(id); let SHEET = sheetOf(); TL = TLS[SHEET]; TLF = TLS['S-000']; S.TLS = TLS; S.Tmax = TLF.Tmax; S.OPEN = TLF.OPEN; S.HZ = HZ; const K = HZ.K, P = HZ.P;
     const SH = window.HZS.make(HZ); S.SH = SH;
     const canvas = $('gl'), v3 = $('v3');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: hp.get('shot') === '1' });
@@ -358,7 +361,11 @@
         { az: -40, el: 11, d: 760, tx: -60, ty: 24, tz: -10 }][FV.cam | 0] };   // 14 = r3 终选：P1 的方位 / 仰角，距离退到 760（9 视口审计屋盖不出画；camfit.py）  // 3 = 东偏南：云门不遮屋盖，列车走南场内侧  // 3 = 正东贴轨：列车迎面、屋盖压顶
     let aspK = 1;
     CAM.s301 = { az: +(hp.get('s3az') || 110), el: +(hp.get('s3el') || 8), d: +(hp.get('s3d') || 165), tx: +(hp.get('s3x') || 98), ty: +(hp.get('s3y') || 36), tz: +(hp.get('s3z') || 45) };   // set1：Mac 机位扫描 12 个（work/hzwest-set1/sweep*.json）选 H：东南低机位，对准南区内边与楼面最紧处（x 98 / z 49，拼装姿态净空 1.40 m）
-    function camKey(t) { if (SHEET === 'S-301') { const k = Object.assign({}, CAM.s301); k.az += 3 * Math.sin((t - TL.t0) / 6); if (S.camOv) Object.assign(k, S.camOv); k.d *= aspK; return k; }
+    function camPlug(t) { const cs = PLUG[SHEET].cam || [], cv = c => ({ az: c.az, el: c.el, d: c.dist, tx: c.target[0], ty: c.target[1], tz: c.target[2] });
+      if (!cs.length) return Object.assign({}, CAM.early); let i = 0; while (i < cs.length - 1 && cs[i + 1].t <= t) i++;
+      const a = cv(cs[i]); if (i >= cs.length - 1 || t <= cs[0].t) return cv(t <= cs[0].t ? cs[0] : cs[i]); const b = cv(cs[i + 1]), f = sm(cs[i].t, cs[i + 1].t, t); for (const k in a) a[k] += (b[k] - a[k]) * f; return a; }
+    function camKey(t) { if (PLUG[SHEET]) { const k = camPlug(t); if (S.camOv) Object.assign(k, S.camOv); k.d *= aspK; return k; }
+      if (SHEET === 'S-301') { const k = Object.assign({}, CAM.s301); k.az += 3 * Math.sin((t - TL.t0) / 6); if (S.camOv) Object.assign(k, S.camOv); k.d *= aspK; return k; }
       const a = sm(380, 560, t), b = sm(TL.l0 - 25, TL.l0 + 2, t) * (1 - sm(TL.l1, TL.l1 + 40, t)), c = sm(TL.OPEN - 40, TL.OPEN + 10, t);
       const mix = (p, q, k) => { const o = {}; for (const key in p) o[key] = p[key] + (q[key] - p[key]) * k; return o; };
       let k = mix(CAM.early, CAM.hero, a);   // set1：总图不再切近景提升机位（细节在 S-301） k = mix(k, CAM.fin, c);
@@ -633,6 +640,9 @@
         const kh = `<b>S-301</b>整体提升详图 · ${HZ.dayDate(d)} ${hhmm(t)}` + (b.st ? ' · ' + b.st : ''); if ($('b-k')._v !== kh) { $('b-k')._v = kh; $('b-k').innerHTML = kh; }
         put($('rd1'), b.J.sync.toFixed(1) + ' / ' + b.J.limit + ' mm'); $('rd1').className = 'v ' + (b.J.sync <= b.J.limit ? 'ok' : 'ng');
         const gp = HZ.gap(S.pose || HZ.pose(t), t); put($('rd2l'), '楼面最小净空 · 碰撞 ' + (AU ? AU.liftClash : '…')); put($('rd2'), gp.v.toFixed(2) + ' m'); $('rd2').className = 'v ' + (gp.v >= P.jigMin && (!AU || !AU.liftClash) ? 'ok' : 'ng'); S.gapNow = gp; return; }
+      if (PLUG[SHEET]) { const pl = PLUG[SHEET]; let b = {}; try { b = pl.big(t) || {}; } catch (e) { b = { num: '—', label: String(e.message || e) }; }
+        put($('b-n'), String(b.num)); put($('b-u'), b.unit || ''); put($('b-c'), b.label || ''); S.cap = b.label || '';
+        const kh = `<b>${pl.id}</b>${pl.name} · ${HZ.dayDate(d)}`; if ($('b-k')._v !== kh) { $('b-k')._v = kh; $('b-k').innerHTML = kh; } return; }
       const fin = t >= TL.OPEN; put($('b-n'), String(d)); put($('b-u'), fin ? '天 · 开通' : '/ ' + TL.OPEN + ' 天'); const c = HZ.caption(Math.min(t, TL.OPEN)).text; put($('b-c'), c);
       const kh = `<b>S-000</b>总图 · 杭州西站 · ${HZ.dayDate(d)}`; if ($('b-k')._v !== kh) { $('b-k')._v = kh; $('b-k').innerHTML = kh; } }
     function hud() { const t = S.st.t, d = Math.min(TL.OPEN, Math.floor(t)); put(elDay, String(d)); put(elDate, HZ.dayDate(d)); hudBig();
@@ -651,7 +661,7 @@
       'S-301': [['南区旋转', K.lift1.start, K.lift1.end], ['中区脱胎', K.lift2.start, K.lift2.end], ['北区旋转', K.lift3.start, K.lift3.end], ['合龙', K.merge.start, K.merge.end], ['整体提升', K.wlift.start, K.wlift.end], ['卸载', K.head.start, K.head.end]] };
     const ARROW = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5h7.5V9H9V4.1L2.6 10.5 1.5 9.4 7.9 3H3z"/></svg>';
     function marks() { const tr = $('track'), W = tr.clientWidth; tr.querySelectorAll('.seg,.tick,.mk,.lab').forEach(e => e.remove());
-      for (const [n, a, b, go] of SEGS[SHEET]) { const u0 = TL.t2u(a), u1 = TL.t2u(b), el = document.createElement('div'); el.className = 'seg' + (go ? ' go' : ''); el.style.left = (u0 * 100) + '%'; el.style.width = ((u1 - u0) * 100) + '%'; el.dataset.a = a; el.dataset.b = b;
+      for (const [n, a, b, go] of (SEGS[SHEET] || (PLUG[SHEET] ? (PLUG[SHEET].segs || [[PLUG[SHEET].name, TL.t0, TL.t1]]) : []))) { const u0 = TL.t2u(a), u1 = TL.t2u(b), el = document.createElement('div'); el.className = 'seg' + (go ? ' go' : ''); el.style.left = (u0 * 100) + '%'; el.style.width = ((u1 - u0) * 100) + '%'; el.dataset.a = a; el.dataset.b = b;
         if (go) { el.dataset.go = go; el.title = '进入 ' + go + ' 整体提升详图'; el.innerHTML = '<span>' + n + ARROW + '</span>'; } else { el.textContent = n; if (SHEET === 'S-301') { const i = document.createElement('i'); i.textContent = Math.round(b - a) + ' 天'; el.appendChild(i); } }
         tr.appendChild(el); if (el.scrollWidth > el.clientWidth + 0.5 && el.querySelector('i')) el.querySelector('i').remove(); if (el.scrollWidth > el.clientWidth + 0.5) el.textContent = ''; }
       if (SHEET === 'S-301') for (let d = Math.ceil(TL.t0); d <= TL.t1; d++) { const k = document.createElement('i'); k.className = 'tick'; k.style.left = (TL.t2u(d) * 100) + '%'; tr.appendChild(k); }
@@ -726,7 +736,7 @@
     if (!hp.has('noaudit')) setTimeout(() => auditWorker().then(doneAudit).catch(() => setTimeout(() => doneAudit(HZ.audit()), 50)), 400);
 
     // ---------------- 图纸（右栏）----------------
-    const SHEETS = [{ id: 'sh-jack', fn: SH.jack, no: 'HZW-S-301-1' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
+    const SHEETS = [{ id: 'sh-jack', fn: SH.jack, no: 'HZW-S-301-1' }, { id: 'sh-plug', fn: (g, w, h, t, cx) => { const pl = PLUG[SHEET]; if (pl) pl.draw(g, w, h, t, cx); }, no: 'plugin' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
     let sheetsDirty = true;
     // set2a：S-301 图纸 ↔ 3D —— 平面缩放平移（1–8×，滚轮 / 双指 / 拖拽，双击复位）；悬停吊点只高亮，点击吊点 → 镜头 1 s 飞到该提升器近景
     const SV = S.sheetView = { k: 1, px: 0, py: 0, hover: -1, sel: -1, cut: 0, hoverK: null };
@@ -773,7 +783,7 @@
     const root = document.documentElement.style;
     function layout() { const W = innerWidth, H = innerHeight, short = H < 640, narrow = W < 1100;
       document.body.classList.toggle('short', short); document.body.classList.toggle('narrow', narrow); document.body.classList.toggle('tiny', H < 600); document.body.classList.toggle('tight', W < 1300 && SHEET === 'S-301');
-      document.body.classList.toggle('s000', SHEET === 'S-000'); document.body.classList.toggle('s301', SHEET === 'S-301');
+      document.body.classList.toggle('s000', SHEET === 'S-000'); document.body.classList.toggle('s301', SHEET === 'S-301'); document.body.classList.toggle('splug', !!PLUG[SHEET]);
       const colW = Math.round(Math.max(300, Math.min(600, W * (narrow ? 0.36 : 0.32)))); root.setProperty('--colW', colW + 'px'); S.colLayout = { colW };
       calcN = H < 600 ? 3 : H < 720 ? 4 : 5; logN = H < 600 ? 1 : 2;
       ctl.minDistance = 0.5;   // set2e：最近距离由 camConstrain（S.camCfg.minD）管
@@ -784,7 +794,7 @@
       cam.setViewOffset(w, h, 0, -(top - bot) * (SHEET === 'S-301' ? 0.05 : 0.3), w, h); cam.updateProjectionMatrix();
       trackW = $('track').clientWidth || 1; marks(); if (S.fitInfo) S.fitInfo(); if (S.st.auto) placeCam(camKey(S.st.t)); hud(); dirty = true; sheetsDirty = true; for (const s of SHEETS) s.key = ''; }
     function setSheet(id) { if (id === SHEET) return; clearFocus(); SHEET = id; S.sheet = id; TL = TLS[id]; S.TL = TL; S.st.play = false; WK.key = ''; dynKey = ''; leadKey = ''; tabs();
-      S.st.auto = true; $('b-home').classList.remove('on'); layout(); let t = S.st.t; if (id === 'S-301' && (t < TL.t0 || t >= TL.t1)) t = TL.t0; setT(t); }
+      S.st.auto = true; $('b-home').classList.remove('on'); layout(); let t = S.st.t; if ((id === 'S-301' || PLUG[id]) && (t < TL.t0 || t >= TL.t1)) t = TL.t0; setT(t); }
     S.setSheet = setSheet; addEventListener('hashchange', () => { setSheet(sheetOf()); applyFocusHash(); });
     addEventListener('resize', layout);
     const PIX = +(hp.get('pix') || 5.0e6);
@@ -806,7 +816,7 @@
       if (S.st.play) { const u = Math.min(1, S.st.u + dt / TL.playSec); setT(TL.u2t(u), u); if (u >= 1) { S.st.play = false; hud(); } }
       flyStep(now); follow(dt); svaStep(now); if (S._zonePend && SHEETS[0].pm) sheetToZone(S._zonePend); if (ctl.update()) dirty = true; if (camConstrain(dt)) dirty = true; openViewTick(now);
       // 图纸：时间变了才重画；每帧最多一张（错开），播放中每张 ≤ 20 Hz
-      if (sheetsDirty && SHEET === 'S-301' && !S.noSheet) { const k = S.st.t.toFixed(3) + (AU ? 'a' : ''); let any = false; const ord = SHEETS.slice().sort((a, b) => a.drawn - b.drawn); let drew = false;
+      if (sheetsDirty && (SHEET === 'S-301' || PLUG[SHEET]) && !S.noSheet) { const k = S.st.t.toFixed(3) + (AU ? 'a' : ''); let any = false; const ord = SHEETS.slice().sort((a, b) => a.drawn - b.drawn); let drew = false;
         for (const s of ord) { if (s.key === k) continue; any = true; if ((!drew || !S.st.play) && (!S.st.play || now - s.drawn > 50)) { s.key = k; drawSheet(s, now); drew = true; } } if (!any) sheetsDirty = false; }
       if (!dirty && !hp.has('always')) return;
       // set1：GPU 帧节拍 —— 最多 2 帧在 GPU 队列里（WebGL2 fence）；否则本次 rAF 跳过渲染、保留 dirty。无 vsync 时 CPU 帧极便宜会把队列塞满，Chrome 回压一次卡 0.3–1.2 s（Mac 实测，PLAYBOOK #43）
@@ -862,7 +872,7 @@
     tabs(); S.sheet = SHEET;
     if (!hp.has('nowarm')) { const pref = S.st.pref, TLk = TL; TL = TLF; for (const [tw, m] of [[K.lift1.start + 1, 'lit'], [K.asm1.start + 10, 'lit'], [TL.Tmax, 'lit'], [K.lift1.start + 1, 'ink']]) { S.st.pref = m; setT(tw); dynKey = ''; rebuildDyn(tw); STR.visible = true; shadowWant = true; if (m === 'lit') renderLit(); else renderInk(1); } S.st.pref = 'lit'; S.st.auto = false; setT(TL.Tmax); for (const az of [0, 45, 90, 135, 180, 225, 270, 315, look.sunAz - 180]) { placeCam({ az, el: az === look.sunAz - 180 ? 3 : 9, d: 900, tx: 0, ty: 30, tz: 0 }); cam.lookAt(0, 30, 0); cam.updateMatrixWorld(); shadowWant = true; renderLit(); } S.st.auto = true;   // 正对太阳：光束（god rays）后处理第一次启用时也会现场编译（Mac 实测转向太阳卡 2.2 s）
       S.st.pref = pref; TL = TLk; WK.key = ''; dynKey = ''; renderer.getContext().finish(); }
-    const t0 = hp.has('t') ? +hp.get('t') : SHEET === 'S-301' ? TL.t0 : K.lift1.start + K.lift1.dur * 0.7; setT(t0); S.st.play = hp.get('play') !== '0'; if (S.st.pref === 'lit') $('b-mode').classList.add('on'); hud(); ctl.update();
+    const t0 = hp.has('t') ? +hp.get('t') : (SHEET === 'S-301' || PLUG[SHEET]) ? TL.t0 : K.lift1.start + K.lift1.dur * 0.7; setT(t0); S.st.play = hp.get('play') !== '0'; if (S.st.pref === 'lit') $('b-mode').classList.add('on'); hud(); ctl.update();
     requestAnimationFrame(frame);
     Object.assign(S, { calcText, cumOf, evAt, v3, applyLook, cam, ctl, render: () => { dirty = true; }, TL, TLF, loadMs: Math.round(performance.now() - T0), SHEETS, layout });
     applyFocusHash();
