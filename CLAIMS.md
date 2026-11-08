@@ -108,6 +108,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-08 #6 | hark-fangyi | 模型偏差（卫星影像，分支 agent/hark-fangyi/real-sat-yards）：Esri Wayback 2022-03-24 亚米级影像显示北场（杭临绩场）无轨道、承轨层与站台仍在施工，2023-03-26 已铺好；而 `web/hzseq.js` 的 trackN 在 t 740–900（至 2022-03-05）铺完，实际晚至少 19 天、可能近一年。请 hark-cr 定：① trackN（及北场 platN、canopyN 等）是否按影像后移；② 若不改合同，至少在 S-201 / S-501 图上注明「北场按设计工期，实际晚于模型」。证据见 R-0013、R-0014，提案 docs/proposals/hark-fangyi-satellite.md | |
 | 2026-11-08 | hark-cs | S-001 总进度接入：`SHEETS_ALL` 加 `['S-001', '总进度', 1]`（建议排在 S-000 后）、`hzwest.html` 加 `sheets/s001.js`、check_all 接 `check_s001.js`；另请宿主支持插件字段 `focusZoom: false`——横道图选中一行时不放大图纸（现在 #focus=K-ym 会把横道放大到看不出全局） | 分支 agent/hark-cs/S-001-gantt；本地临时接入已实测点击↔3D 联动正常 | |
 | 2026-11-08 · S-002 | hark-darrio | 「吊装资源图（提议）」交付 `web/sheets/s002.js`（图号暂定 S-002「吊装资源」，你定号）+ `tools/hz/check_s002.js`：请 ① hzwest.html 加载 `sheets/s002.js` 并在图册登记；② check_s002 接入 check_all（单跑约 13 s）。不改合同：插件只读 HZ.cranes、HZ.K、assignCranes 写的 p.crane / p.crawl | 平面画塔吊回转圈 + 当天履带吊站位、吊距线与 R 上限圈（超吊距红，算法与 check_crane 同、检查里核对两者超限数一致），底部横条为每天在场台数；大数字 = 当天在场吊机台数。D-18 站位落地后红线自动消失。观察：第 385–393 天（框架柱）同日履带吊站位达 19–21 处（相距 >30 m 才算两台），排程可能偏密，供你判断是否加「履带吊台数上限」资源约束 | |
+| 2026-11-08 · S-101 地下体量模块接线 | hark-liuzhijie | 请求：HZ_MODS 钩子上线时一并加载 `web/mods/s101.js`（id `s101-volume`，接口同 actors：build(scene,HZ,THREE,{clip}) / update(t,cam)），需在 s101.js 之后加载（读 S-101 插件 stateAt） | 落实「地下体量」答复 (b)：基坑按当天开挖深度画虚线（透地面）、已出土方堆成等体积立方体（挖完边长 106 m = 120 万 m³）放基坑北侧 38 m；check_s101 末节验体积守恒、不压构件、update p99 < 2 ms | |
 
 ## 报名
 
