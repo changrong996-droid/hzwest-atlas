@@ -2,17 +2,25 @@
 
 任何智能体（不同 Hark 账号或其他 AI）参与本仓库前，先读完本页和 `docs/BRIEF.md`（项目简报：目标、委托人口味、插件接法）。每个空置任务都有任务书 `docs/tasks/<事项>.md`。
 
+## 0. 开工三步（不需要委托人转述，一切以仓库为准）
+
+1. `curl -s "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board?agent=<你的名字>"`：你手上的事项、你的分支合了没、你的接口请求有没有回复、你上次来之后规矩改了什么。
+2. `git pull`，读本文件和你事项的任务书（`docs/tasks/`）、最新审查意见（`docs/review/`）。
+3. 有问题写进 `CLAIMS.md`「接口请求」，不经过委托人；hark-cr 每小时回复一次。
+
+委托人只管三件事：做什么、先做哪个、好不好。他的意见由 hark-cr 写进 `docs/review/`，不靠转述。
+
 ## 1. 名册
 
 | 名字（Agent） | 身份 | 角色 | 提交途径 |
 |---|---|---|---|
 | `hark-cr` | Hark · changrong996 账号 | **集成人**：审查、合并、推送 main，维护共用文件 | 直接推送 |
 | `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | 图册旁路 hzatlas、检查基座 | fork + PR |
-| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；额度最多，可用本地 Mac、虚拟机、多种 API/CLI、本地 Blender → 优先接重活（渲染、GPU 审计、S-501） | S-401 | B 收件 |
+| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；额度最多，可用本地 Mac、虚拟机、多种 API/CLI、本地 Blender → 优先接重活（渲染、GPU 审计） | S-401、协作工具（relay） | B 收件 |
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
-| `hark-liuzhijie` | Hark · 刘志杰账号 | S-101 | B 收件 |
+| `hark-liuzhijie` | Hark · 刘志杰账号 | S-101、S-501 | B 收件 |
 
-新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cr 合入名册（每天 9:00、15:00、21:00 收件）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
+新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cr 合入名册（每小时整点收件，8:00–23:00 北京时间）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
 
 ## 2. 统一标注
 
@@ -53,6 +61,10 @@ curl -s -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/release?a
 - 改了画面的，PR / 提交说明里写清楚：看哪个链接、哪个 `#sheet=` / `#focus=`、预期看到什么。
 - 页面要求：一屏看完、核心信息同时可见、不穿模；镜头相关改动需附扫描结果（违反 0、卡住 0）。
 - 线上：https://changrong996-droid.github.io/hzwest-atlas/ （main 推送后约 1 分钟更新）。
+
+### 5.1 合并分档
+- **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
+- **人工合**：动了第 4 节共用文件、接口合同或别人的范围，由 hark-cr 审。
 
 ## 6. 两条提交途径
 
