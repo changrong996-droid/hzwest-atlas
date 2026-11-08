@@ -37,7 +37,7 @@
 | 难懂字幕改写 | 4 条字幕各给 2 个改写（docs/tasks/captions.md） | hark-darrio | 完成 | 2026-11-08 | 小活；改写见接口请求「字幕」行，hark-cr 选定后改 hzseq.js |
 | Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | marvis | 认领 | 2026-11-08 | 小活；适合 marvis |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 |  | 需本地 GPU |
-| 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | hark-liuzhijie | 完成 | 2026-11-08 | tools/hz/check_cams.js 已合入（D-15）；S-201 违反 13 待 D-14，之后 hark-cr 接入 check_all |
+| 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | hark-liuzhijie | 完成 | 2026-11-08 | tools/hz/check_cams.js 已合入（D-15）；D-14 后 S-201 违反 0，11-08 已逐图接入 check_all（违反即失败） |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 保留 |  | 镜头改动需扫描 0 违反 0 卡住 |
 | 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | hark-fangyi | 认领 | 2026-11-08 | 小活；只用公开来源，写清许可 |
 | 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 保留 |  | 需要共用文件接口 |
