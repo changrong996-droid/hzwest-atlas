@@ -1,52 +1,233 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>hzwest 集成看板</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font:14px/1.45 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f4f2ec;color:#1d1d1b;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-header{display:flex;align-items:baseline;gap:16px;padding:12px 20px 6px}h1{font-size:18px;margin:0}#ts{color:#888;font-size:12px}#ts.old{color:#c0392b;font-weight:600}
-header a{font-size:12px;color:#555;margin-left:auto}header a+a{margin-left:12px}
-#kpi{display:flex;gap:10px;padding:6px 20px 10px}.k{flex:1;background:#fff;border-radius:10px;padding:10px 14px}.k b{display:block;font-size:30px;line-height:1.1}.k span{color:#777;font-size:12px}.k.warn b{color:#c0392b}
-main{flex:1;display:grid;grid-template-columns:1.1fr 1.3fr 1fr;gap:10px;padding:0 20px 10px;min-height:0}
-section{background:#fff;border-radius:10px;padding:12px 14px;overflow:auto;min-height:0}h2{font-size:13px;margin:0 0 8px;color:#555;letter-spacing:.05em}
-.bl{padding:7px 0;border-bottom:1px solid #eee;display:flex;gap:8px}.tag{flex:none;font-size:11px;padding:1px 6px;border-radius:4px;background:#eee;height:18px}.tag.o{background:#c0392b;color:#fff}.tag.i{background:#2c3e50;color:#fff}.tag.c{background:#e67e22;color:#fff}
-.who{color:#999;font-size:12px;margin-left:auto;flex:none}
-#wf{columns:2;column-gap:16px}.ag{margin-bottom:10px;break-inside:avoid}.ag h3{font-size:13px;margin:0 0 4px}.ag h3 small{color:#999;font-weight:400}.w{font-size:13px;padding:2px 0 2px 10px;border-left:3px solid #ddd;margin:2px 0}.w.d{border-color:#2c7be5}.w.c{border-color:#27ae60}.w em{color:#999;font-style:normal;font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:13px}td{padding:5px 4px;border-bottom:1px solid #eee;vertical-align:top}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}td.r{color:#777;font-size:12px}
-footer{padding:0 20px 12px;font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}footer code{background:#fff;padding:1px 5px;border-radius:4px;margin-right:4px}
-.legend{font-size:11px;color:#999;margin-bottom:6px}.legend i{display:inline-block;width:10px;height:3px;margin:0 3px 2px 8px;vertical-align:middle}
-</style></head><body>
-<header><h1>hzwest 集成看板</h1><span id="ts"></span><a id="lk-live" target="_blank">线上图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></header>
-<div id="kpi"></div>
-<main>
-<section><h2>卡点 · 等谁</h2><div id="bl"></div></section>
-<section><h2>进行中 · 谁在做什么</h2><div class="legend"><i style="background:#2c7be5"></i>派单（我下发）<i style="background:#27ae60"></i>认领（他们自取）</div><div id="wf"></div></section>
-<section><h2>协作者 · 提交 · 职责</h2><table id="ag"></table></section>
-</main>
-<footer id="rc"></footer>
+*{box-sizing:border-box}
+:root{--ink:#1c1c1e;--mid:rgba(28,28,30,.62);--low:rgba(28,28,30,.40);--line:#ececec;--bg:#f5f5f3;--blue:#2f6fe4;--red:#d64535;--amber:#e08a00;--green:#2f9e5b;--gray:#c9c9c9}
+html,body{height:100%}body{margin:0;overflow:hidden;font:13px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--blue);text-decoration:none}button{font:inherit;cursor:pointer}
+.wrap{height:100%;max-width:1600px;margin:0 auto;padding:12px 20px 14px;display:flex;flex-direction:column;gap:10px}
+header{display:flex;align-items:center;gap:14px;flex:none}
+h1{font-size:17px;margin:0;font-weight:600}
+.fresh{font-size:12px;color:var(--low);display:flex;align-items:center;gap:6px}
+.fresh i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:p 2.4s infinite}
+.fresh.old,.fresh.old span{color:var(--red)}.fresh.old i{background:var(--red);animation:none}
+@keyframes p{50%{opacity:.35}}
+header nav{margin-left:auto;display:flex;gap:14px;font-size:12px}
+.lbl{font-size:11px;letter-spacing:.12em;color:var(--low);margin:0 0 6px;font-weight:600}
+/* 该你介入 */
+.act{flex:none;background:#fff6ec;border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start}
+.dec{border:0;background:none;text-align:left;padding:0}.dec b{display:block;font-size:28px;font-weight:700;line-height:1.1;color:var(--red)}.dec span{color:var(--mid)}.dec u{text-decoration:none;color:var(--blue);font-size:12px}
+.al{display:grid;grid-template-columns:1fr 1fr;gap:2px 22px}
+.a{display:flex;gap:8px;align-items:baseline;padding:3px 0;cursor:pointer;min-width:0}
+.a .t{flex:none;font-size:11px;padding:0 6px;border-radius:4px;color:#fff;line-height:18px}
+.t.red{background:var(--red)}.t.amber{background:var(--amber)}.t.blue{background:var(--blue)}.t.gray{background:#8e8e93}
+.a span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a:hover span:last-child{text-decoration:underline}
+/* 主区 */
+.main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 300px;gap:10px}
+.card{background:#fff;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;min-height:0}
+.scroll{overflow:auto;min-height:0;flex:1}
+.key{display:flex;gap:4px;align-items:center;font-size:11px;color:var(--low);margin-left:auto}
+.key em{font-style:normal;margin-right:6px}
+.hd{display:flex;align-items:center}
+.row{display:grid;grid-template-columns:150px 150px 1fr;gap:14px;align-items:center;padding:8px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:6px}
+.row:first-child{border-top:0}.row:hover{background:#fafafa}
+.nm{display:flex;align-items:center;gap:8px;min-width:0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.d-working{background:var(--green)}.d-stopped{background:var(--amber)}.d-overload{background:var(--red)}.d-idle{background:var(--gray)}.d-hub{background:var(--blue)}
+.nm b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss{font-size:12px;color:var(--mid);line-height:1.3}.ss b{font-weight:600;color:var(--ink)}
+.ss.warn b{color:var(--amber)}.ss.bad b{color:var(--red)}
+.load{display:flex;gap:3px;margin-top:3px}.load i{width:14px;height:5px;border-radius:2px;background:#d8e3f8}.load.hi i{background:#f2b5ad}
+.jobs{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.job{display:flex;align-items:center;gap:8px;border:1px solid #e6e8ee;border-radius:8px;padding:4px 9px;max-width:300px}
+.job.red{border-color:#f0b8b0;background:#fff6f5}.job.amber{border-color:#f3d39a;background:#fffaf0}
+.job span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.trk{display:flex;align-items:center;flex:none}
+.trk i{width:7px;height:7px;border-radius:50%;background:#dcdcdc}
+.trk s{width:8px;height:2px;background:#dcdcdc;text-decoration:none}
+.trk i.f{background:var(--green)}.trk s.f{background:var(--green)}
+.trk i.cur{width:9px;height:9px;background:#fff;border:2px solid var(--blue)}
+.trk i.cur.amber{border-color:var(--amber)}.trk i.cur.red{border-color:var(--red);background:var(--red)}
+.trk i.ret{border-color:#e5892b;background:#e5892b}
+.none{color:var(--low);font-size:12px}
+.done{font-size:12px;color:var(--low);white-space:nowrap}
+/* 流水线 */
+.st{padding:8px 0;border-top:1px solid var(--line)}.st:first-of-type{border-top:0}
+.st h4{display:flex;align-items:baseline;gap:8px;margin:0 0 4px;font-size:13px;font-weight:600}
+.st h4 b{font-size:20px;margin-left:auto}.st h4 small{color:var(--low);font-weight:400}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.chips span{font-size:11px;padding:1px 7px;border-radius:9px;background:#f1f3f7;color:var(--mid);cursor:pointer}
+.chips span.red{background:#fde9e6;color:var(--red)}.chips span.amber{background:#fff1d9;color:#a86400}
+.arrow{color:var(--low);text-align:center;font-size:11px;line-height:1}
+.prog{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#eee;margin:6px 0 4px}.bar i{display:block}
+/* 抽屉 */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.18);display:none}.mask.on{display:block}
+aside{position:fixed;top:0;right:0;bottom:0;width:min(520px,94vw);background:#fff;box-shadow:-8px 0 30px rgba(0,0,0,.12);padding:18px 22px;overflow:auto;transform:translateX(105%);transition:transform .22s}
+aside.on{transform:none}
+aside h2{font-size:18px;margin:0 0 2px}aside .sub{color:var(--mid);margin-bottom:14px}
+aside .x{position:absolute;top:12px;right:14px;border:0;background:none;font-size:20px;color:var(--low)}
+.jd{border-top:1px solid var(--line);padding:12px 0}
+.jd h3{font-size:14px;margin:0 0 8px;font-weight:600}.jd h3 small{color:var(--low);font-weight:400;margin-left:6px}
+.step{display:grid;grid-template-columns:repeat(5,1fr);position:relative;margin:4px 0 8px}
+.step div{text-align:center;font-size:11px;color:var(--low);position:relative}
+.step div:before{content:"";display:block;width:12px;height:12px;border-radius:50%;background:#e0e0e0;margin:0 auto 4px;position:relative;z-index:1}
+.step div:after{content:"";position:absolute;top:5px;left:-50%;width:100%;height:2px;background:#e0e0e0}
+.step div:first-child:after{display:none}
+.step .f:before,.step .f:after{background:var(--green)}.step .f{color:var(--ink)}
+.step .cur:before{background:#fff;border:2px solid var(--blue);box-sizing:border-box}.step .cur.amber:before{border-color:var(--amber)}.step .cur.red:before{border-color:var(--red)}
+.wt{font-size:13px;padding:6px 10px;border-radius:6px;background:#f5f7fb}.wt.amber{background:#fff6e6}.wt.red{background:#fdeeec}
+.meta{font-size:12px;color:var(--low);margin-top:6px;word-break:break-all}
+.decl li{margin:6px 0}
+@media(max-height:760px){.row{padding:5px 6px}.act{padding:8px 14px}.dec b{font-size:24px}}
+@media(max-width:980px){body{overflow:auto}.wrap{height:auto}.main{grid-template-columns:1fr}.act{grid-template-columns:1fr}.al{grid-template-columns:1fr}.row{grid-template-columns:1fr auto}.row .jobs{grid-column:1/-1}}
+</style></head><body><div class="wrap">
+<header><h1>杭州西站图册 · 团队</h1><span class="fresh" id="fresh"><i></i><span>读取中…</span></span>
+<nav><a id="lk-live" target="_blank">看图纸</a><a id="lk-board" target="_blank">认领板</a><a id="lk-repo" target="_blank">仓库</a></nav></header>
+<section class="act" id="act"></section>
+<div class="main">
+  <section class="card"><div class="hd"><p class="lbl">队伍 · 点人看详情</p>
+    <span class="key"><em>每件活五站：</em>接到 → 开工 → 交了 → 合入 → 完成</span></div>
+    <div class="scroll" id="team"></div></section>
+  <section class="card"><p class="lbl">活卡在哪一站</p><div class="scroll" id="pipe"></div><div class="prog" id="prog"></div></section>
+</div></div>
+<div class="mask" id="mask"></div><aside id="dr"><button class="x" id="x">×</button><div id="drb"></div></aside>
 <script>
-const SRC = location.protocol === 'file:' ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json' : '../docs/status.json';
-const E = s => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const short = s => E(s).replace(/（.*$/, '');
-async function load() {
-  const d = await (await fetch(SRC + '?t=' + Date.now(), {cache: 'no-store'})).json(), h = d.headline;
-  const t = new Date(d.generated_at);
-  const age = Math.round((Date.now() - t) / 60000), ts = document.getElementById('ts');
-  ts.textContent = isNaN(age) ? '数据时间 ' + d.generated_at : `数据 ${age} 分钟前（集成任务每 20 分钟更新）`; ts.className = age > 60 ? 'old' : '';
-  for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = d.links[k];
-  const K = [[h.workflows_running, '进行中工作流', `派单 ${h.dispatch_open} · 认领 ${h.live_claims}`], [h.waiting_on_owner, '等你决定', '', 1], [h.blockers, '卡点总数', h.pending_review ? `待审分支 ${h.pending_review}` : '待审分支 0'], [`${h.items_done}/${h.items_total}`, '事项完成', ''], [h.commits_today, '今日提交', `累计 ${h.commits_total} · 文件 ${h.files}`]];
-  document.getElementById('kpi').innerHTML = K.map(([v, a, b, w]) => `<div class="k${w && v ? ' warn' : ''}"><b>${E(v)}</b><span>${a}${b ? ' · ' + E(b) : ''}</span></div>`).join('');
-  const cls = {'待委托人': 'o', '集成': 'i', '协作者': 'c'};
-  const bl = [...d.blockers].sort((a, b) => (b.who == '委托人') - (a.who == '委托人'));
-  document.getElementById('bl').innerHTML = bl.map(b => `<div class="bl"><span class="tag ${cls[b.kind] || ''}">${E(b.kind)}</span><span>${E(b.what)}</span><span class="who">${E(b.who)}</span></div>`).join('') +
-    (d.stale_locks?.length ? `<div class="bl"><span class="tag i">集成</span><span>已完成但认领锁未释放：${d.stale_locks.map(E).join('、')}</span><span class="who">hark-cr</span></div>` : '') || '<p>没有卡点</p>';
-  const by = {};
-  for (const x of d.dispatches_open) for (const a of x.agent.split(/[、,]/)) (by[a.trim()] ||= []).push(`<div class="w d">${E(x.id)} ${E(x.item)} <em>${short(x.state)}</em></div>`);
-  for (const x of d.live_claims) (by[x.agent] ||= []).push(`<div class="w c">${E(x.item)}</div>`);
-  document.getElementById('wf').innerHTML = Object.entries(by).sort((a, b) => b[1].length - a[1].length).map(([a, l]) => `<div class="ag"><h3>${E(a)} <small>${l.length} 项</small></h3>${l.join('')}</div>`).join('');
-  const role = Object.fromEntries(Object.entries(d.roles).flatMap(([k, v]) => k.split(' / ').map(x => [x, v])));
-  const seen = new Set(d.by_agent.map(x => x.agent));
-  const rows = d.by_agent.map(x => [x.agent == '—' ? '无署名（早期/PR #1）' : x.agent, x.today, x.total, role[x.agent] || '']).concat(Object.keys(role).filter(k => !seen.has(k)).map(k => [k, 0, 0, role[k]]));
-  document.getElementById('ag').innerHTML = '<tr><td></td><td class="n r">今日</td><td class="n r">累计</td><td class="r">职责</td></tr>' + rows.map(r => `<tr><td>${E(r[0])}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="r">${E(r[3])}</td></tr>`).join('');
-  document.getElementById('rc').innerHTML = '最近提交：' + d.recent_commits.slice(0, 6).map(c => `<code>${E(c.agent)}</code>${E(c.subj)}`).join('　');
+const SRC = location.protocol === 'file:'
+  ? 'https://raw.githubusercontent.com/changrong996-droid/hzwest-atlas/main/docs/status.json'
+  : location.pathname.split('/').length === 2 ? '/status.json'   // 本机看板服务（端口 8820）根目录
+  : '../docs/status.json';
+const URL_ = new URLSearchParams(location.search).get('src') || SRC; // ?src= 只给本地截图测试用
+const E = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cut = s => String(s ?? '').replace(/[（(].*$/, '').trim();
+function parseT(s) {
+  if (typeof s === 'number') return new Date(s * 1000);
+  const m = String(s).match(/(\d{4}-\d\d-\d\d)\s+(\d{1,2}):(\d\d)\s*(AM|PM)?.*?UTC([+-]\d\d):?(\d\d)/);
+  if (!m) return new Date(s);
+  let h = +m[2]; if (m[4] === 'PM' && h < 12) h += 12; if (m[4] === 'AM' && h === 12) h = 0;
+  return new Date(`${m[1]}T${String(h).padStart(2, '0')}:${m[3]}:00${m[5]}:${m[6]}`);
 }
-load().catch(e => document.getElementById('ts').textContent = '读取失败：' + e); setInterval(() => load().catch(() => {}), 60000);
+const bj = d => d.toLocaleTimeString('zh-CN', {timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false});
+const dur = m => m == null ? '' : m < 1 ? '刚刚' : m < 60 ? `${m} 分钟` : m < 1440 ? `${Math.round(m / 60 * 10) / 10} 小时`.replace('.0 ', ' ') : `${Math.round(m / 1440)} 天`;
+const ST = ['接到', '开工', '交了', '合入', '完成'], KEYS = ['派出', '开工', '交付', '合入', '关单'];
+let D, F, openWho = decodeURIComponent(location.hash.slice(1));
+
+// 没有 flow 字段时，从派单与认领粗略推一个（只能分「没开工 / 在做」）
+function fallback(d) {
+  const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+  const jobs = [], seen = new Set();
+  for (const x of d.dispatches_open || []) { const on = /在做/.test(x.state); seen.add(x.item);
+    jobs.push({id: x.id, title: x.item, who: x.agent.split(/[、,]/).map(s => s.trim()), stage: on ? 1 : 0, stages: {}, wait: on ? null : {who: x.agent, what: '还没开工'}, done: false}); }
+  for (const x of d.live_claims || []) if (!seen.has(x.item)) jobs.push({id: x.item, title: x.item, who: [x.agent], stage: 1, stages: {}, wait: null, done: false});
+  const people = Object.keys(role).map(n => { const a = jobs.filter(j => j.who.includes(n)).map(j => j.id);
+    return {name: n, active: a, state: a.length >= 3 ? 'overload' : a.length ? 'working' : 'idle', done_today: 0}; });
+  return {people, jobs, suggestions: [], rough: true};
+}
+
+function personLine(p) {
+  if (/集成/.test(p.role || '') && !p.active.length) return [`<b>在把关</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
+  if (p.state === 'overload') return [`<b>活太多</b> · 手上 ${p.active.length} 件`, 'bad'];
+  if (p.state === 'stopped') return [`<b>停了</b> · ${p.idle_min == null ? '一直没动静' : dur(p.idle_min) + '没动静'}`, 'warn'];
+  if (p.state === 'working') return [`<b>在干</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
+  return [`<b>空闲</b> · 可以派活`, ''];
+}
+function track(j) {
+  let h = '';
+  for (let i = 0; i < 5; i++) {
+    if (i) h += `<s class="${i <= j.stage ? 'f' : ''}"></s>`;
+    const cur = !j.done && i === j.stage + 1;
+    h += `<i class="${i <= j.stage ? 'f' : ''}${cur ? ' cur ' + (j.returned ? 'ret' : (j.wait?.level || '')) : ''}"></i>`;
+  }
+  return `<span class="trk" title="${ST.map((s, i) => (i <= j.stage ? '●' : '○') + s).join(' ')}">${h}</span>`;
+}
+const lvl = j => j.returned ? 'amber' : j.wait?.level === 'red' ? 'red' : j.wait?.level === 'amber' ? 'amber' : '';
+
+function render() {
+  const d = D, t = parseT(d.generated_at), age = (Date.now() - t) / 60000;
+  const fr = document.getElementById('fresh'); fr.className = 'fresh' + (age > 60 ? ' old' : '');
+  fr.querySelector('span').textContent = isNaN(age) ? '更新时间未知' : (age > 60 ? `数据过期：${dur(Math.round(age))}前（集成任务可能停了）` : `${dur(Math.round(age))}前更新 · 北京 ${bj(t)}`) + (F.rough ? ' · 粗略模式（数据还没有 flow 字段）' : d.flow_source === 'local' ? ' · 流程由本机推算' : '');
+  for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = (d.links || {})[k] || '#';
+  const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+  const J = Object.fromEntries(F.jobs.map(j => [j.id, j]));
+  const P = F.people.map(p => ({...p, role: role[p.name] || ''}))
+    .filter(p => p.active.length || p.done_today || role[p.name]);
+  const rank = p => /集成/.test(p.role) ? 5 : {overload: 0, stopped: 1, working: 2, idle: 3}[p.state];
+  P.sort((a, b) => rank(a) - rank(b) || b.active.length - a.active.length);
+
+  // 该你介入：拍板 + 自动发现的问题
+  const asks = (d.blockers || []).filter(b => b.who === '委托人');
+  const al = [];
+  for (const s of F.suggestions || []) al.push(['blue', '分流', `${J[s.job]?.title || s.job}：${s.why}${s.to.length ? '，可分给 ' + s.to.join('、') : ''}`, s.from]);
+  for (const j of F.jobs) if (!j.done && j.wait?.level === 'red') al.push(['red', '卡住', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
+  for (const p of P) if (p.state === 'stopped' && !/集成/.test(p.role)) al.push(['amber', '停了', `${p.name} ${p.idle_min == null ? '还没交过东西' : dur(p.idle_min) + '没动静'}，手上 ${p.active.length} 件`, p.name]);
+  const stopped = new Set(P.filter(p => p.state === 'stopped').map(p => p.name));
+  for (const j of F.jobs) if (!j.done && j.wait?.level === 'amber' && !j.who.some(w => stopped.has(w))) al.push(['amber', '快卡了', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
+  for (const j of F.jobs) if (j.returned) al.push(['amber', '退回', `${cut(j.title)} 被退回，等 ${j.who.join('、')} 改`, j.who[0]]);
+  for (const b of d.blockers || []) if (b.kind === '风险') al.push(['gray', '风险', b.what, '']);
+  const MAX = 8;
+  document.getElementById('act').innerHTML = `<button class="dec" id="decb"><b>${asks.length}</b><span>件事等你拍板</span><br><u>${asks.length ? '看是哪几件 ›' : ''}</u></button>
+    <div><p class="lbl" style="margin-bottom:2px">该你留意的 · ${al.length ? al.length + ' 条' : '没有'}</p><div class="al">${al.slice(0, MAX).map(a =>
+      `<div class="a" data-w="${E(a[3])}"><span class="t ${a[0]}">${a[1]}</span><span>${E(a[2])}</span></div>`).join('') || '<span class="none">队伍运转正常，不用介入。</span>'}
+      ${al.length > MAX ? `<div class="a"><span class="none">还有 ${al.length - MAX} 条，点人看</span></div>` : ''}</div></div>`;
+  document.getElementById('decb').onclick = () => asks.length && drawer('__ask');
+  document.querySelectorAll('.a[data-w]').forEach(el => el.onclick = () => el.dataset.w && drawer(el.dataset.w));
+
+  // 队伍
+  document.getElementById('team').innerHTML = P.map(p => {
+    const [line, cls] = personLine(p), act = p.active.map(i => J[i]).filter(Boolean);
+    act.sort((a, b) => (lvl(b) === 'red') - (lvl(a) === 'red') || b.stage - a.stage);
+    return `<div class="row" data-w="${E(p.name)}">
+      <div class="nm"><i class="dot d-${/集成/.test(p.role) ? 'hub' : p.state}"></i><b>${E(p.name)}</b></div>
+      <div><div class="ss ${cls}">${line}</div></div>
+      <div class="jobs">${act.map(j => `<div class="job ${lvl(j)}">${track(j)}<span>${E(cut(j.title))}</span></div>`).join('')
+        || `<span class="none">手上没活</span>`}${p.done_today ? `<span class="done">今天完成 ${p.done_today} 件</span>` : ''}</div></div>`;
+  }).join('');
+  document.querySelectorAll('.row').forEach(el => el.onclick = () => drawer(el.dataset.w));
+
+  // 流水线：每件未完成的活停在哪一站
+  const open = F.jobs.filter(j => !j.done), bucket = [[], [], [], []];
+  for (const j of open) bucket[Math.min(j.stage === 0 ? 0 : j.stage === 1 || j.stage === 2 ? (j.returned ? 1 : j.stage === 2 ? 2 : 1) : 3, 3)].push(j);
+  const names = [['还没开工', '等干活的人'], ['在做 / 被退回', '等干活的人'], ['交了，等审查合入', '等 hark-cr'], ['合入了，等关单', '等 hark-cr']];
+  const doneToday = F.jobs.filter(j => j.done && j.stages['关单'] && Date.now() / 1000 - j.stages['关单'] < 86400).length;
+  document.getElementById('pipe').innerHTML = names.map(([n, w], i) => `${i ? '<div class="arrow">↓</div>' : ''}<div class="st"><h4>${n}<small>${w}</small><b>${bucket[i].length}</b></h4>
+    <div class="chips">${bucket[i].map(j => `<span class="${lvl(j)}" data-w="${E(j.who[0])}" title="${E(j.who.join('、'))}">${E(cut(j.title))}</span>`).join('')}</div></div>`).join('')
+    + `<div class="arrow">↓</div><div class="st"><h4>今天完成<b>${F.rough ? '–' : doneToday}</b></h4></div>`;
+  document.querySelectorAll('.chips span').forEach(el => el.onclick = () => drawer(el.dataset.w));
+  const h = d.headline || {}, tot = h.items_total || 0, dn = h.items_done || 0;
+  document.getElementById('prog').innerHTML = `<p class="lbl">整个项目</p><b style="font-size:18px">${dn} / ${tot}</b> <span class="none">件做完 · 今天 ${h.commits_today ?? '–'} 次提交</span>
+    <div class="bar"><i style="width:${tot ? dn / tot * 100 : 0}%;background:var(--green)"></i></div>`;
+  if (openWho) drawer(openWho, true);
+}
+
+function drawer(who, keep) {
+  openWho = who; if (!keep) location.hash = encodeURIComponent(who);
+  const d = D, b = document.getElementById('drb');
+  if (who === '__ask') {
+    b.innerHTML = `<h2>等你拍板</h2><div class="sub">这些事团队自己定不了</div><ol class="decl">${(d.blockers || []).filter(x => x.who === '委托人').map(x => `<li>${E(x.what)}</li>`).join('')}</ol>`;
+  } else {
+    const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
+    const p = F.people.find(x => x.name === who) || {name: who, active: [], state: 'idle'};
+    const mine = F.jobs.filter(j => j.who.includes(who)), act = mine.filter(j => !j.done), dn = mine.filter(j => j.done);
+    const blk = (d.blockers || []).filter(x => x.who === who);
+    b.innerHTML = `<h2>${E(who)}</h2><div class="sub">${E(role[who] || '')}<br>${personLine({...p, role: role[who] || ''})[0]}</div>
+      ${blk.map(x => `<div class="wt amber" style="margin-bottom:8px">${E(x.what)}</div>`).join('')}
+      ${act.map(j => { const st = j.stages || {};
+        return `<div class="jd"><h3>${E(cut(j.title))}<small>${E(j.id !== j.title ? j.id : '')}${j.who.length > 1 ? ' · 和 ' + E(j.who.filter(x => x !== who).join('、')) + ' 一起' : ''}</small></h3>
+        <div class="step">${ST.map((s, i) => `<div class="${i <= j.stage ? 'f' : ''}${i === j.stage + 1 ? ' cur ' + (j.wait?.level || '') : ''}">${s}${st[KEYS[i]] ? '<br>' + bj(parseT(st[KEYS[i]])) : ''}</div>`).join('')}</div>
+        ${j.wait ? `<div class="wt ${j.wait.level || ''}">${j.returned ? '被退回 · ' : ''}${E(j.wait.what)} · 等 <b>${E(j.wait.who)}</b>${j.wait.age_min != null ? ` · 已等 ${dur(j.wait.age_min)}` : ''}</div>` : ''}
+        ${j.branches?.length ? `<div class="meta">分支：${j.branches.map(E).join('、')} · ${j.commits} 次提交</div>` : ''}</div>`; }).join('') || '<div class="jd none">手上没活</div>'}
+      ${dn.length ? `<div class="jd"><h3>做完的 <small>${dn.length} 件</small></h3><div class="chips">${dn.map(j => `<span>${E(cut(j.title))}</span>`).join('')}</div></div>` : ''}`;
+  }
+  document.getElementById('dr').classList.add('on'); document.getElementById('mask').classList.add('on');
+}
+function close_() { openWho = ''; history.replaceState(null, '', location.pathname + location.search); document.getElementById('dr').classList.remove('on'); document.getElementById('mask').classList.remove('on'); }
+document.getElementById('x').onclick = close_; document.getElementById('mask').onclick = close_;
+document.addEventListener('keydown', e => e.key === 'Escape' && close_());
+
+async function load() {
+  const d = await (await fetch(URL_ + (URL_.includes('?') ? '&' : '?') + 't=' + Date.now(), {cache: 'no-store'})).json();
+  D = d; F = d.flow && d.flow.jobs ? d.flow : fallback(d); render();
+}
+load().catch(e => { const f = document.getElementById('fresh'); f.className = 'fresh old'; f.querySelector('span').textContent = '读取失败（离线或数据地址打不开），60 秒后自动重试：' + e.message; });
+setInterval(() => load().catch(() => {}), 60000);
 </script></body></html>
