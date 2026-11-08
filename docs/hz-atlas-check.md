@@ -79,6 +79,7 @@ node tools/hz/check_real.js
 6. **hash 约定**：参数 `sheet`、`sub`。原页面 `hashSync` 保留未知 hash 参数（hzatlas 靠此共存）；hzatlas 改 `sub` 时用 `history.replaceState` 并保留其它参数。
 7. **`hzview.js` 中 `SHEETS_ALL` 的源码字面格式**：check_atlas 用正则从源码提取页序与 `on` 列，改动该字面格式会让检查失效或变红。
 8. **壳页 `hzatlas.html`**：用 `fetch` 载入 `hzwest.html`，并注入 `hzatlas.js?v=<版本>`。**`hzatlas.js` 每次改动必须升版本号**，否则浏览器缓存旧版（已实测踩过）。
+9. **hash 的 `focus` 参数与 `hashchange` 监听**：宿主在 hashchange 时调 `applyFocusHash()` 识别 `J<n> / ZN / ZM / ZS / CUT / GAP` 并飞行镜头。hzatlas 的「点图飞镜头」靠给 `location.hash` 赋值（保留其它参数）触发它；若宿主改掉这套参数或监听，外挂点击将静默失效（检查查不出来，须浏览器实测）。
 
 ## 四、图号规则与映射表
 
