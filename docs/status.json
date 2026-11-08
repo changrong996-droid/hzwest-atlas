@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-11-08T14:51:00+08:00",
+ "generated_at": "2026-11-08T15:44:00+08:00",
  "headline": {
-  "commits_total": 168,
-  "commits_today": 145,
-  "files": 98,
-  "items_done": 16,
-  "items_total": 38,
-  "workflows_running": 16,
-  "dispatch_open": 9,
-  "live_claims": 7,
-  "pending_review": 0,
+  "commits_total": 191,
+  "commits_today": 163,
+  "files": 119,
+  "items_done": 21,
+  "items_total": 39,
+  "workflows_running": 20,
+  "dispatch_open": 11,
+  "live_claims": 9,
+  "pending_review": 6,
   "blockers": 12,
   "waiting_on_owner": 5
  },
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 79,
-   "today": 79
+   "total": 93,
+   "today": 93
   },
   {
    "agent": "—",
@@ -36,8 +36,8 @@
   },
   {
    "agent": "hark-cs",
-   "total": 20,
-   "today": 20
+   "total": 24,
+   "today": 24
   },
   {
    "agent": "hark-liuzhijie",
@@ -55,85 +55,77 @@
    "today": 6
   },
   {
+   "agent": "muse-tibo-cs",
+   "total": 4,
+   "today": 0
+  },
+  {
    "agent": "marvis",
    "total": 3,
    "today": 3
+  },
+  {
+   "agent": "traycer-cs",
+   "total": 1,
+   "today": 0
   }
  ],
  "recent_commits": [
   {
-   "sha": "9fb3151",
-   "at": "2026-11-08T06:49:45Z",
-   "subj": "Merge agent/hark-liuzhijie/D-15-check-cams",
+   "sha": "53a20b4",
+   "at": "2026-11-08T07:44:08Z",
+   "subj": "[claims] 看板界面优化 记 hark-cs 完成",
    "agent": "hark-cr"
   },
   {
-   "sha": "4b10bbe",
-   "at": "2026-11-08T06:49:45Z",
-   "subj": "Merge agent/hark-darrio/crane-reach-rule",
+   "sha": "e870023",
+   "at": "2026-11-08T07:42:45Z",
+   "subj": "Merge agent/hark-cs/status-ui（看板界面优化）",
    "agent": "hark-cr"
   },
   {
-   "sha": "826250a",
-   "at": "2026-11-08T06:49:45Z",
-   "subj": "Merge agent/hark-darrio/D-16-clip",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "2691446",
-   "at": "2026-11-08T06:49:45Z",
-   "subj": "Merge agent/hark-cs/D-07-retest2",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "e0af1a2",
-   "at": "2026-11-08T06:43:53Z",
-   "subj": "[D-16] actors.build 收 opts.clip，剖切时小人与车一起切",
-   "agent": "hark-darrio"
-  },
-  {
-   "sha": "60ddf70",
-   "at": "2026-11-08T06:43:13Z",
-   "subj": "[status] 集成看板页 web/status.html（一屏：工作流、卡点、谁在做什么、提交）",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "6720512",
-   "at": "2026-11-08T06:43:01Z",
-   "subj": "[GPU 审计] D-07 复测 #2 手机竖屏、#8 墨线光伏：均已修好",
+   "sha": "0d9e7b9",
+   "at": "2026-11-08T07:33:21Z",
+   "subj": "[看板界面] 本机服务根目录读 /status.json（第三条 SRC 规则）；本机推算流程时标注",
    "agent": "hark-cs"
   },
   {
-   "sha": "fcdde2e",
-   "at": "2026-11-08T06:38:16Z",
-   "subj": "[status] 集成看板数据 docs/status.json + 生成脚本 + 卡点清单",
+   "sha": "eae5a68",
+   "at": "2026-11-08T07:26:41Z",
+   "subj": "[D-24] 加标注衬底真机核对；plan 改 9/9",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "ae4930b",
+   "at": "2026-11-08T07:25:01Z",
+   "subj": "[宿主] 三维标注按当前图号过滤 + 衬底避让",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "644a99b",
+   "at": "2026-11-08T07:20:54Z",
+   "subj": "[plan] 方向与规划 docs/plan.md；D-12 拆成 D-19～D-24 雕琢单；D-10/D-12 关单，D-11 改回 muse-tibo-c",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "a373624",
+   "at": "2026-11-08T07:18:37Z",
+   "subj": "Merge agent/muse-tibo-cs/atlas-sheets",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "79d4ead",
+   "at": "2026-11-08T07:17:47Z",
+   "subj": "Merge agent/muse-tibo-cs/blender-ref",
    "agent": "hark-cr"
   }
  ],
  "dispatches_open": [
   {
-   "id": "D-07",
-   "agent": "hark-cs",
-   "item": "GPU 审计",
-   "state": "在做（#1 已交 11-08：重画 15 次/秒、帧率 60；#2 手机竖屏、#8 墨线光伏待测）"
-  },
-  {
-   "id": "D-10",
-   "agent": "muse-tibo-cs",
-   "item": "Blender 参考渲染",
-   "state": "待做"
-  },
-  {
    "id": "D-11",
    "agent": "muse-tibo-cs",
    "item": "Blender 终版精修",
-   "state": "待做（先做 D-10；muse-tibo-cs 待做 3 单超上限，按 D-10 → D-12 → D-11 顺序）"
-  },
-  {
-   "id": "D-12",
-   "agent": "muse-tibo-cs",
-   "item": "视觉审查",
-   "state": "待做"
+   "state": "待做（15:30 改回 muse-tibo-cs：D-10 已由其完成）"
   },
   {
    "id": "D-13",
@@ -148,41 +140,63 @@
    "state": "待做"
   },
   {
-   "id": "D-15",
-   "agent": "hark-liuzhijie",
-   "item": "插件镜头扫描",
-   "state": "待做"
-  },
-  {
-   "id": "D-16",
-   "agent": "hark-darrio",
-   "item": "近景人员与车辆",
-   "state": "待做"
-  },
-  {
    "id": "D-17",
    "agent": "hark-cs",
    "item": "宣传页提案",
    "state": "待做"
+  },
+  {
+   "id": "D-18",
+   "agent": "hark-darrio",
+   "item": "履带吊臂长规则",
+   "state": "待做"
+  },
+  {
+   "id": "D-19",
+   "agent": "hark-fangyi",
+   "item": "S-201 雕琢",
+   "state": "待做"
+  },
+  {
+   "id": "D-20",
+   "agent": "hark-liuzhijie",
+   "item": "S-101 雕琢",
+   "state": "待做"
+  },
+  {
+   "id": "D-21",
+   "agent": "hark-liuzhijie",
+   "item": "S-501 雕琢",
+   "state": "待做"
+  },
+  {
+   "id": "D-22",
+   "agent": "hark-cs",
+   "item": "S-401 雕琢",
+   "state": "待做"
+  },
+  {
+   "id": "D-23",
+   "agent": "traycer-cs",
+   "item": "云门细化",
+   "state": "待做"
+  },
+  {
+   "id": "D-24",
+   "agent": "traycer-cs",
+   "item": "真机体验审查与方向",
+   "state": "待做（D-23 之后或并行）"
   }
  ],
- "dispatches_done": 8,
+ "dispatches_done": 13,
  "live_claims": [
   {
    "item": "实物层记录库",
    "agent": "hark-fangyi"
   },
   {
-   "item": "图册接新图",
-   "agent": "muse-tibo-cs"
-  },
-  {
    "item": "Windows 真机审查",
    "agent": "marvis"
-  },
-  {
-   "item": "Blender 参考渲染",
-   "agent": "muse-tibo-cs"
   },
   {
    "item": "公开数据核对",
@@ -195,19 +209,25 @@
   {
    "item": "S-001 总进度（提议）",
    "agent": "hark-cs"
+  },
+  {
+   "item": "Blender 终版精修",
+   "agent": "traycer-cs"
+  },
+  {
+   "item": "GPU 审计",
+   "agent": "traycer-cs"
+  },
+  {
+   "item": "难懂字幕改写",
+   "agent": "hark-darrio"
+  },
+  {
+   "item": "吊装资源图（提议）",
+   "agent": "hark-darrio"
   }
  ],
  "claimed_items": [
-  {
-   "item": "图册接新图",
-   "agent": "muse-tibo-cs",
-   "state": "认领"
-  },
-  {
-   "item": "Blender 参考渲染",
-   "agent": "muse-tibo-cs",
-   "state": "认领"
-  },
   {
    "item": "Blender 终版精修",
    "agent": "—",
@@ -217,11 +237,6 @@
    "item": "屋面云纹实施",
    "agent": "hark-cr",
    "state": "保留"
-  },
-  {
-   "item": "履带吊臂长规则",
-   "agent": "hark-darrio",
-   "state": "认领"
   },
   {
    "item": "公开数据核对",
@@ -245,11 +260,6 @@
   },
   {
    "item": "GPU 审计",
-   "agent": "—",
-   "state": "空"
-  },
-  {
-   "item": "插件镜头扫描",
    "agent": "—",
    "state": "空"
   },
@@ -300,8 +310,8 @@
   },
   {
    "item": "S-001 总进度（提议）",
-   "agent": "—",
-   "state": "提议"
+   "agent": "hark-cs",
+   "state": "认领"
   },
   {
    "item": "吊装资源图（提议）",
@@ -310,8 +320,18 @@
   }
  ],
  "free_items": [],
- "pending_review": [],
- "stale_locks": [],
+ "pending_review": [
+  "hark-darrio/D-18-stations",
+  "hark-fangyi/S-201-D14-cam",
+  "hark-cs/S-001-gantt",
+  "hark-darrio/S-002-lift",
+  "hark-liuzhijie/S-101-mod",
+  "hark-fangyi/real-sat-yards"
+ ],
+ "stale_locks": [
+  "图册接新图",
+  "Blender 参考渲染"
+ ],
  "blockers": [
   {
    "kind": "待委托人",
@@ -350,8 +370,8 @@
   },
   {
    "kind": "协作者",
-   "what": "muse-tibo-cs 还没报 Blender 版本，D-10/11/12 未开工",
-   "who": "muse-tibo-cs"
+   "what": "traycer-cs 新到：D-23 云门细化、D-24 真机体验审查待首次交付",
+   "who": "traycer-cs"
   },
   {
    "kind": "风险",
