@@ -62,7 +62,17 @@ def _requests(root, a):
     return out
 
 
+def _age(root, needle):
+    t = _git(root, 'log', 'main', '--reverse', '--format=%ct', '-S', needle, '--', 'CLAIMS.md').split()
+    return time.time() - int(t[0]) if t else 0
+
+
+def _done_on_branch(root, a, did):
+    return bool(_git(root, 'log', '--format=%s', '--grep', f'[{did}]', '--fixed-strings', f'--glob=refs/heads/agent/{a}/*').strip())
+
+
 def _orders(root, a):
+    """派单 + 超时提醒（借 relay nudge）：待做 >24 h 且你的分支里没有 [D-xx] 提交 → 标 ⚠；>48 h 集成人改派。"""
     t = _git(root, 'show', 'main:CLAIMS.md'); sec = ''; out = []
     for ln in t.splitlines():
         if ln.startswith('## '):
@@ -70,8 +80,21 @@ def _orders(root, a):
         if sec.startswith('派单') and ln.startswith('|'):
             c = [x.strip() for x in ln.strip().strip('|').split('|')]
             if len(c) >= 5 and c[0].startswith('D-') and (a in [x.strip() for x in c[1].replace('，', '、').split('、')] or c[1] == '全体') and c[4] not in ('完成', '撤回'):
-                out.append(f'  {c[0]} · {c[2]} · {c[3]} · {c[4]}')
+                h = _age(root, f'| {c[0]} |') / 3600; sent = _done_on_branch(root, a, c[0])
+                tag = '已推送，待合并' if sent else ('⚠ 已等 %d 小时，请先做或在该行写原因（48 小时改派）' % h if h > 24 else '已等 %d 小时' % h)
+                out.append(f'  {c[0]} · {c[2]} · {c[3]} · {tag}')
     return out
+
+
+def _bounced(root, a, since):
+    t = _git(root, 'show', 'main:CLAIMS.md'); sec = ''; out = []
+    for ln in t.splitlines():
+        if ln.startswith('## '):
+            sec = ln[3:].strip(); continue
+        if sec.startswith('退回') and ln.startswith('|') and f'| {a} |' in ln:
+            c = [x.strip() for x in ln.strip().strip('|').split('|')]
+            out.append('  ' + ' · '.join(c[1:])[:120])
+    return out[-3:]
 
 
 def agent_view(root, a, items, lock, now):
@@ -82,8 +105,9 @@ def agent_view(root, a, items, lock, now):
     L = [f'{a} 的进门画面（{_bj(now)} 北京时间；上次来：{_bj(last)}）', '']
     mine = [f'  {k} · 锁到 {_bj(v["t"] + TTL)}' for k, v in lock.items() if v['a'] == a]
     mine += [f'  {i["item"]} · {i["state"]}' for i in items if i['owner'] == a and i['item'] not in lock and i['state'] not in ('完成',)]
-    od = _orders(root, a)
-    L += ['派给你的（集成人按合并情况下发，优先做；提交写 [D-xx]）：'] + (od or ['  （无）']) + ['']
+    od = _orders(root, a); bo = _bounced(root, a, last)
+    L += ['谁在等你 · 派给你的单（集成人按合并情况下发，先做；提交写 [D-xx]）：'] + (od or ['  （无）']) + ['']
+    if bo: L += ['谁在等你 · 你被退回的（改完重推）：'] + bo + ['']
     L += ['你手上的事项：'] + (mine or ['  （无）'])
     merged = set(_git(root, 'branch', '--format=%(refname:short)', '--merged', 'main').split())
     br = [b for b in _git(root, 'for-each-ref', '--format=%(refname:short)', f'refs/heads/agent/{a}/').split() if not b.endswith('/join')]

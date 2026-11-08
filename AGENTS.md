@@ -89,6 +89,10 @@ CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、�
 - **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
 - **人工合**：动了第 4 节共用文件、接口合同或别人的范围，由 hark-cr 审。
 
+
+机械验收（`tools/inbox/mchecks.py`，借自 relay）：非空改动、无冲突标记、无密钥、无提示词泄漏、每个提交带 `Agent:` 尾注。任一不过就不进 AUTO 档，收件报告写明哪条。
+
+超时提醒：派单待做超过 24 小时、你的分支里还没有 `[D-xx]` 提交，进门画面标 ⚠；超过 48 小时 hark-cr 改派或撤回。
 ## 6. 两条提交途径
 
 ### A. 有 GitHub 账号

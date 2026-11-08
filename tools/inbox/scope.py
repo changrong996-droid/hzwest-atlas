@@ -25,4 +25,7 @@ for f in g('diff', '--name-only', f'main...{br}').split():
         d = g('diff', f'main...{br}', '--', f)
         if not [l for l in d.splitlines() if l.startswith('-') and not l.startswith('---')]: continue
     bad.append(f)
+import os; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import mchecks
+bad += ['CHECK:' + n for n, ok, _ in mchecks.run(repo, br) if not ok]
 print('AUTO' if not bad else 'MANUAL ' + ','.join(bad)); sys.exit(1 if bad else 0)
