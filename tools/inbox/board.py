@@ -3,7 +3,7 @@ Shares claims.lock.json (and its flock) with claims_gate.py. Items come from mai
 import json, os, time, fcntl, subprocess, urllib.parse
 TTL, MAXN = 3 * 86400, 2
 SMALL_ONLY = {'marvis': 1}  # 只接备注含「小活」的事项，最多 1 项（委托人 2026-11-08）
-ORDER = ['S-501', 'GPU', '插件镜头', '实物层']
+ORDER = ['Windows', 'S-251', '近景', 'Blender', '屋面云纹', '履带吊', '小屏', '公开数据', '难懂字幕', 'GPU', '插件镜头', '实物层']
 
 
 def _items(root):

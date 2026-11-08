@@ -2,7 +2,7 @@
 
 规则见 `AGENTS.md` 第 3 节。**实时认领板：https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/board（以它为准，本文件每小时同步）。认领一条命令：`curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claim?agent=<名字>&item=<事项>"`，详见 AGENTS.md 第 3 节。** 开工前读 `docs/BRIEF.md` 和 `docs/tasks/<事项>.md`。
 
-推荐顺序（空着的从上往下挑）：S-501 → GPU 审计 → 插件镜头扫描 → 实物层记录库。改本文件也走正常提交（PR 或收件分支），标题用 `[claims]`。
+推荐顺序（空着的从上往下挑）：先完成自己的「二稿」；再按备注挑——大活：S-251 → 近景人员与车辆 → Blender 参考渲染 → 屋面云纹提案；中活：履带吊臂长规则；小活：Windows 真机审查 → 小屏可读性检查 → 公开数据核对 → 难懂字幕改写。改本文件也走正常提交（PR 或收件分支），标题用 `[claims]`。
 
 ## 图纸
 
@@ -15,6 +15,7 @@
 | S-201 承轨层 | 承轨层 | hark-fangyi | 完成 | 2026-11-08 | web/sheets/s201.js |
 | S-401 屋面 | 屋面、光伏 | hark-cs | 完成 | 2026-11-08 | web/sheets/s401.js |
 | S-501 开通 | 亮灯、首班车 | hark-liuzhijie | 完成 | 2026-11-08 | web/sheets/s501.js（初稿） |
+| S-251 网架拼装 | 新图：网架分单元拼装（docs/tasks/S-251.md） | — | 空 | | 大活 |
 | S-101 二稿 | 数据接 HZ + parts 联动（docs/tasks/linkage-v2.md，审查意见 docs/review/2026-11-08-draft1.md） | hark-liuzhijie | 认领 | 2026-11-08 | 委托人指派 |
 | S-201 二稿 | 同上 | hark-fangyi | 认领 | 2026-11-08 | 委托人指派 |
 | S-401 二稿 | 同上 | hark-cs | 认领 | 2026-11-08 | 委托人指派 |
@@ -25,6 +26,13 @@
 |---|---|---|---|---|---|
 | 图册接新图 | hzatlas 的 S-101/S-201/S-401/S-501 页改为引用新插件图纸 | muse-tibo-cs | 认领 | 2026-11-08 | 委托人指派 |
 | 自动合并脚本 | collect.sh 加「改动只在本人范围 → 自动合」判断（hark-cs 提案第二条） | hark-cr | 完成 | 2026-11-08 | tools/inbox/scope.py（hark-cs 已满 2 项，由 hark-cr 做） |
+| 近景人员与车辆 | web/mods/actors.js 墨线小人与车辆（docs/tasks/mods-actors.md） | — | 空 | | 大活 |
+| Blender 参考渲染 | 同机位白模/线稿对照（docs/tasks/blender-ref.md） | — | 空 | | 大活；需本地 Blender |
+| 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | — | 空 | | 大活 |
+| 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | — | 空 | | 中活 |
+| 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | — | 空 | | 小活 |
+| 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | — | 空 | | 小活 |
+| 难懂字幕改写 | 4 条字幕各给 2 个改写（docs/tasks/captions.md） | — | 空 | | 小活 |
 | Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | — | 空 | | 小活；适合 marvis |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | — | 空 | | 需本地 GPU |
 | 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | — | 空 | | |

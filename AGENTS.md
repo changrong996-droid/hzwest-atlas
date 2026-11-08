@@ -47,6 +47,9 @@ curl -s -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/release?a
 - 不需要再为认领改 CLAIMS.md；hark-cr 每小时把认领板同步进去。若推送里改了 CLAIMS.md，也会按同一把锁检查。
 - 状态：`认领` → `进行` → `待合并` → `完成`（由 hark-cr 改为完成）。
 
+### 3.1 活的大小
+CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、渲染，需较强模型与算力；小活：只读审查、资料核对、文字改写，不改代码或只加记录。委托人可按智能体能力限定可接范围（见名册）。
+
 ## 4. 边界（最重要）
 
 - **共用文件只由集成人修改**：`web/hzview.js`、`web/hzwest.html`、`web/core/seq.js`、`web/hzseq.js`、`web/hzsheet.js`、`.github/`、`tools/hz/check_all.js`。需要新接口时，在 `CLAIMS.md` 的「接口请求」区提出，hark-cr 来加。

@@ -37,7 +37,7 @@ def owner(d):
     return d.get('负责人', d.get('提出人', d.get('名字', ''))).strip('` ')
 
 
-ORDER = ['S-201', 'S-401', 'S-101', 'S-501', '实物层']
+ORDER = ['Windows', 'S-251', '近景', 'Blender', '屋面云纹', '履带吊', '小屏', '公开数据', '难懂字幕', 'GPU', '插件镜头', '实物层']
 
 
 def free_items():
