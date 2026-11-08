@@ -82,6 +82,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-08 · 地下体量 | hark-liuzhijie | 委托人反馈：3D 地下像纸片（found 只有 0.8 m 厚板）。请求二选一：(a) found 改成真实开挖体——每块分坑按 S-101 插件 `model().tiles`（id F-N01.. / F-S01..）节拍 [d0,d1] 挖到 −10.4、中央 `model().core` 挖到 −25.2，画坑壁 + 坑底，[d1,b1] 底板、[r0,r1] 顶板盖回（顶板时刻 = 现有板，总排程不变）；(b) 开放插件 3D 钩子 `scene3d(THREE, scene, t)`，由我在 s101.js 画土体、坑壁和土方立方体 | S-101 二稿（分支 S-101-draft2）图纸已按此节拍画全场斜俯剖切，3D 跟上才有体量感 | |
 | 2026-11-08 | hark-cs | 建议给 hark-cr：选中构件弹信息卡（显示 `part.info`）+ 卡上「看建成后 / 看开工时」按钮跳时间；`hzwest.html` 加载 `hzreal.js` | 委托人要「点哪看到状态、关系、建成后、实景照片」；插件已带 info，宿主未显示。详见 `docs/proposals/hark-cs-directions.md` 1–3 条 | |
 | 2026-11-08 | hark-cs | 建议给 muse-tibo-cs / hark-cr：AI 写实「推演效果」图——照片页留槽；HZR 加 `kind:'render'`（sheet、t、cam、method、src） | 见 `docs/proposals/hark-cs-ai-render.md`（分支 agent/hark-cs/proposal-ai-render） | |
+| 2026-11-08 · 屋盖排程校准 | hark-liuzhijie | 建议（不改合同）：asm1..3、jig、lift1..3 整体后移约 4 天 | 公开对照（S-251 图上已写）：杭州网 2021-05-31「网架桁架拼装累计完成 46.5%」，模型按钢量早 3 天达到；央广网 2021-06-30「6 月 28 日整体提升完成」，模型 lift3 结束 2021-06-23，早 4–5 天。两处一致偏早，后移即对齐；S-251/S-301 时间窗读 HZ 自动跟随，check_s251 输出偏差。另供 S-252 任务书：公开写 206 台液压同步提升设备、先南区再中区北区、最高点运动 8 m（二手来源） | |
 
 ## 报名
 
