@@ -65,6 +65,92 @@
     return { close: Math.min(100, 100 * shut / d.tot), cur, pv: pvTot * pvA / d.pvTot, pvTot, holesOpen, holesTot: d.holes.length };
   }
 
+  // ---------- 二稿：可点构件 parts（联动接口 v2）----------
+  // 分区与 S-301 一致：|z| ≤ midZ + 3.5 为中区 ZM，z > 0 南区 ZS，z < 0 北区 ZN；x > 0 为东半、x < 0 为西半。
+  // 每个 part 记下自己包含哪些屋面块（tiles）/ 哪个提升孔，hit（图上点击框）每次按当前版面算，box（3D 世界盒）由 HZ 几何算一次。
+  const ZNAME = { ZN: '北区', ZM: '中区', ZS: '南区' }, HNAME = { E: '东', W: '西' };
+  let PD = null;
+  function partsData() {
+    const d = data(), HZ = G.HZ, P = d.P; if (PD && PD.D === d) return PD;
+    const zoneOf = z => (Math.abs(z) <= P.midZ + 3.5 ? 'ZM' : z > 0 ? 'ZS' : 'ZN');
+    const groups = new Map(), put = (id, kind, zone, half, q) => { let gp = groups.get(id); if (!gp) groups.set(id, gp = { id, kind, zone, half, tiles: [] }); gp.tiles.push(q); };
+    for (const q of d.tiles) {
+      const zn = zoneOf(q.zc), hf = q.xc >= 0 ? 'E' : 'W';
+      if (q.sky) put('SK-' + zn, 'sky', zn, null, q); else put('CL-' + zn + '-' + hf, 'clad', zn, hf, q);
+      if (q.pv) put('PV-' + zn + '-' + hf, 'pv', zn, hf, q);
+    }
+    const out = [];
+    // 提升孔：对应最近的提升器 Jnn（与 S-301 的 #focus=Jnn 同一编号）
+    // 一台提升器两侧各一个孔（网架格），编号 H-J01a / H-J01b
+    const L = HZ.lifters || [], seen = {};
+    d.holes.forEach((h, k) => { let bi = -1, bd = 1e9; L.forEach((l, i) => { const dd = Math.hypot(l.x - h.x, l.z - h.z); if (dd < bd) { bd = dd; bi = i; } });
+      const jn = bi >= 0 && bd < 12 ? 'J' + String(bi + 1).padStart(2, '0') : null, key = jn || 'X'; seen[key] = (seen[key] || 0) + 1;
+      const gm = h.p.geo || {}, mn = gm.min || [h.x - 2.5, 30, h.z - 2.5], mx = gm.max || [h.x + 2.5, 40, h.z + 2.5];
+      out.push({ id: 'H-' + (jn ? jn + 'ab'[seen[key] - 1] : String(k + 1).padStart(2, '0')), kind: 'hole', zone: zoneOf(h.z), jn, hole: h, parts: [h.p], area: 0,
+        box: [mn[0], mn[1], mn[2], mx[0], Math.max(mx[1], mn[1] + 0.5), mx[2]] }); });
+    for (const gp of groups.values()) {
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, y0 = 1e9, y1 = -1e9, area = 0; const ps = new Set();
+      for (const q of gp.tiles) { x0 = Math.min(x0, q.xa); x1 = Math.max(x1, q.xa + S); z0 = Math.min(z0, q.za); z1 = Math.max(z1, q.za + S); const y = HZ.Hc(q.xc, q.zc); if (y === y) { y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+        area += gp.kind === 'pv' ? q.a * 2 * PV_W : q.a; ps.add(q.part); }
+      if (!(y1 >= y0)) { y0 = 40; y1 = 50; }
+      out.push(Object.assign(gp, { parts: [...ps], area, box: [x0, y0 - 0.5, z0, x1, y1 + 1.5, z1] }));
+    }
+    // 光伏面积按 HZ.pvArea 标定（与大数字同一口径）
+    const pvRaw = out.filter(p => p.kind === 'pv').reduce((s, p) => s + p.area, 0) || 1;
+    for (const p of out) if (p.kind === 'pv') p.area *= (HZ.pvArea || pvRaw) / pvRaw;
+    const ORD = { hole: 0, pv: 1, sky: 2, clad: 3 }; out.sort((a, b) => ORD[a.kind] - ORD[b.kind] || (a.id < b.id ? -1 : 1));
+    PD = { D: d, list: out, byId: new Map(out.map(p => [p.id, p])) };
+    return PD;
+  }
+  // 工期：构件里最早开工到最晚完工（光伏另按铺设前沿扫过本块的时刻算）
+  function span(p) {
+    const K = data().K;
+    if (p.kind === 'pv') { const za = Math.min(...p.tiles.map(q => q.za)), zb = Math.max(...p.tiles.map(q => q.za + S)), at = z => K.pv.start + K.pv.dur * Math.max(0, Math.min(1, (z + 170) / 345));
+      return [at(za), at(zb)]; }
+    let a = 1e9, b = -1e9; for (const q of p.parts) { if (q.st == null) continue; a = Math.min(a, q.st); b = Math.max(b, q.st + q.du); } return [a, b];
+  }
+  function stateOf(p, t) { const [a, b] = span(p); return t < a ? 0 : t < b ? 1 : 2; }
+  const KIND = { hole: '提升孔嵌补', sky: '十字采光顶', clad: '金属屋面（白色穿孔铝板）+ 吊顶', pv: '光伏条带' };
+  function labelOf(p) {
+    if (p.kind === 'hole') return '提升孔 ' + (p.jn || p.id.slice(2)) + ' · ' + ZNAME[p.zone];
+    if (p.kind === 'sky') return '采光顶 · ' + ZNAME[p.zone];
+    return (p.kind === 'pv' ? '光伏 · ' : '金属屋面 · ') + ZNAME[p.zone] + HNAME[p.half] + '半';
+  }
+  // 实录：HZR 里 S-401 的记录，按工序挂到构件上（只引用编号，不复制内容）
+  const RECS = { clad: ['R-0006', 'R-0007'], sky: ['R-0006'], pv: ['R-0008'], hole: [] };
+  function info(p, t) {
+    const HZ = G.HZ, [a, b] = span(p), k = stateOf(p, t), x = (p.box[0] + p.box[3]) / 2, z = (p.box[2] + p.box[5]) / 2;
+    const have = new Set(((G.HZR && G.HZR.RECORDS) || []).filter(r => r.sheet === 'S-401').map(r => r.id));
+    const rows = [
+      ['工序', KIND[p.kind]],
+      ['状态', ['未开始', '在做', '已完成'][k] + ' · ' + HZ.dayDate(t)],
+      ['工期', HZ.dayDate(a) + ' → ' + HZ.dayDate(b) + '（推算）'],
+      ['位置', `${ZNAME[p.zone]} · 中心 x ${x.toFixed(0)} m、z ${z.toFixed(0)} m · 标高 ${p.box[1].toFixed(1)}–${p.box[4].toFixed(1)} m`],
+    ];
+    if (p.area) rows.push(['面积', fmt(p.area) + ' m²' + (p.kind === 'pv' ? '（按公开总量 ' + fmt(HZ.pvArea) + ' m² 折算）' : '')]);
+    const rel = p.kind === 'hole' ? (p.jn ? `提升器 ${p.jn} 拆除后才能补（S-301 #focus=${p.jn}）` : '提升架拆除后补') : p.kind === 'pv' ? `铺在金属屋面 CL-${p.zone}-${p.half} 完成之后` : p.kind === 'clad' || p.kind === 'sky' ? `所在网架分区 ${p.zone}（S-301 #focus=${p.zone}）提升合龙、补孔之后` : '';
+    if (rel) rows.push(['关系', rel]);
+    const rr = (RECS[p.kind] || []).filter(id => have.has(id)); if (rr.length) rows.push(['实录', rr.join('、')]);
+    return rows;
+  }
+  let LAY = null;   // 最近一次绘制的版面（hit 用同一坐标系）
+  function layout(w, h, tb) {
+    const box = { x0: 8, y0: 8, x1: w - 8, y1: h - 6.5 - (tb || 20) - 2 };
+    const z0 = -172, z1 = 172, x0 = -130, x1 = 130, dw = box.x1 - box.x0 - 8, dh = box.y1 - box.y0 - 30;
+    const s = Math.max(0.05, Math.min(dw / (z1 - z0), dh / (x1 - x0)));
+    const ox = box.x0 + 4 + (dw - (z1 - z0) * s) / 2, oy = box.y0 + 16 + (dh - (x1 - x0) * s) / 2;
+    return { w, h, box, s, X: z => ox + (z - z0) * s, Y: x => oy + (x1 - x) * s };
+  }
+  function hitOf(p, Ly) {
+    if (p.kind === 'hole') { const r = Math.max(4, 2.5 * Ly.s); return [Ly.X(p.hole.z) - r, Ly.Y(p.hole.x) - r, 2 * r, 2 * r]; }
+    const a = Ly.X(p.box[2]), b = Ly.X(p.box[5]), c = Ly.Y(p.box[3]), e = Ly.Y(p.box[0]);
+    return [Math.min(a, b), Math.min(c, e), Math.abs(b - a), Math.abs(e - c)];
+  }
+  function parts(t, ctx) {
+    const Ly = (ctx && ctx.w && ctx.h) ? layout(ctx.w, ctx.h, LAY && LAY.w === ctx.w && LAY.h === ctx.h ? LAY.tb : 20) : LAY || layout(600, 420, 20);
+    return partsData().list.map(p => ({ id: p.id, label: labelOf(p), kind: p.kind, zone: p.zone, state: stateOf(p, t), hit: hitOf(p, Ly), box: p.box.slice(), info: info(p, t) }));
+  }
+
   // ---------- 图框 + 标题栏（与 hzsheet.js 同一版式）----------
   function frame(g, w, h, o) {
     g.fillStyle = C.paper; g.fillRect(0, 0, w, h);
@@ -94,12 +180,11 @@
   // ---------- 图纸 ----------
   function draw(g, w, h, t, ctx) {
     const d = data(), P = d.P, K = d.K; labels.length = 0;
-    const box = frame(g, w, h, ctx.tb(w, h, proj() + '-S-401-1', ['屋面铺设平面 · 嵌补 → 采光顶 → 金属屋面 → 光伏', '屋面铺设平面'], t));
-    const z0 = -172, z1 = 172, x0 = -130, x1 = 130, dw = box.x1 - box.x0 - 8, dh = box.y1 - box.y0 - 30;
-    const s = Math.max(0.05, Math.min(dw / (z1 - z0), dh / (x1 - x0)));
-    const ox = box.x0 + 4 + (dw - (z1 - z0) * s) / 2, oy = box.y0 + 16 + (dh - (x1 - x0) * s) / 2;
+    const tbo = ctx.tb(w, h, proj() + '-S-401-1', ['屋面铺设平面 · 嵌补 → 采光顶 → 金属屋面 → 光伏', '屋面铺设平面'], t);
+    const box = frame(g, w, h, tbo), Ly = layout(w, h, tbo.tb || 20); Ly.tb = tbo.tb || 20; LAY = Ly;
+    const s = Ly.s;
     if (typeof ctx.setScale === 'function') ctx.setScale(s);
-    const X = z => ox + (z - z0) * s, Y = x => oy + (x1 - x) * s;   // 北在左、东在上
+    const X = Ly.X, Y = Ly.Y;   // 北在左、东在上
     const st = stats(t), front = pvFront(K, t);
 
     const rimPath = () => { g.beginPath(); d.rim.forEach(([x, z], k) => (k ? g.lineTo(X(z), Y(x)) : g.moveTo(X(z), Y(x)))); g.closePath(); };
@@ -151,6 +236,14 @@
     if (curZ != null) { const zz = curZ + S / 2; g.strokeStyle = C.red; g.lineWidth = 1; g.setLineDash([6, 2, 1, 2]); g.beginPath(); g.moveTo(X(zz), Y(128)); g.lineTo(X(zz), Y(-128)); g.stroke(); g.setLineDash([]);
       label(g, '铺设 →南', X(zz) + 4, Y(126) + 2, C.red, box, { fs: 8.5, sans: true, b: true }); }
 
+    // 7 选中构件（ctx.focus）：所含屋面块描黄、外框加粗，旁注名称——与 3D 黄框是同一个构件
+    const fp = ctx.focus ? partsData().byId.get(ctx.focus) : null;
+    if (fp) { const YEL = '#e0a800', hb = hitOf(fp, Ly);
+      if (fp.tiles) { g.save(); rimPath(); g.clip(); g.fillStyle = 'rgba(240,190,20,.32)'; for (const q of fp.tiles) g.fillRect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.restore(); }
+      g.strokeStyle = YEL; g.lineWidth = 2; g.strokeRect(hb[0] - 1, hb[1] - 1, hb[2] + 2, hb[3] + 2);
+      const ly2 = hb[1] - 7 > box.y0 + 16 ? hb[1] - 7 : hb[1] + hb[3] + 8;
+      label(g, labelOf(fp), Math.max(box.x0 + 4, Math.min(hb[0], box.x1 - 120)), ly2, '#8a6400', box, { fs: 9, sans: true, b: true }); }
+
     // 文字：一行现状 + 方位 + 等高距；图例
     const now = t < K.holes.start ? '提升到位，等待补孔' : t < K.holes.end ? `补提升孔 ${st.holesTot - st.holesOpen} / ${st.holesTot}` : t < K.pv.start ? `屋面封闭 ${st.close.toFixed(0)}%` : t < K.pv.end ? `光伏 ${fmt(st.pv)} / ${fmt(st.pvTot)} m²` : `屋面完成 · 光伏 ${fmt(st.pvTot)} m²`;
     label(g, now, box.x0 + 4, box.y0 + 7, C.ink, box, { b: true, fs: 9.5, sans: true });
@@ -171,6 +264,7 @@
     big: t => ({ num: Math.round(stats(t).close), unit: '%', label: '屋面封闭' }),
     draw,
     stats,
+    parts,
     // 镜头：高位俯视全屋面 → 逐渐拉近到云谷上方十字采光顶交点（米、度）
     cam: [
       { t: 679, target: [0, 46, 0], az: 135, el: 62, dist: 560 },
