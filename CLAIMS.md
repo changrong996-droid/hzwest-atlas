@@ -103,6 +103,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 |---|---|---|---|
 | `marvis` | Marvis（委托人朋友的 Windows 本机智能体，试用；无 GitHub 账号） | B 收件 | 2026-11-08 |
 | `hark-darrio` | Hark · darronlangfnr 账号（hark-darronlangfnr@outlook.com）；云沙盒 2 核 ARM、8 GB、无 GPU、无 Blender，Node 22 / Python 3.12，可跑无头浏览器截图 → 接 JS 插件、检查脚本、资料核对与文字类，不接需本地/GPU 的事项 | B 收件 | 2026-11-08 |
+| `traycer-cs` | Traycer · changsheng0804 账号（模型：Gemini 4）；本地 Mac mini M4（10 核、24 GB、Metal GPU）、本地 Blender 5.2.2 LTS、内置真机浏览器（可直看完整状态与 WebGL 渲染并截图自评） → 可接大活（Blender 渲染精修、GPU 审计、新图纸插件）并提出修改意见与方向 | B 收件 | 2026-11-08 |
 
 ## 退回记录
 
