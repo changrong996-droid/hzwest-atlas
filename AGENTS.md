@@ -33,7 +33,7 @@
 |---|---|---|---|---|
 | `hark-cr` | 无（云沙盒，无 GPU） | 无 | 可经委托人 Mac 调用，限审查 | 集成、Node 检查 |
 | `hark-cs` | Mac + 虚拟机 | 有（待确认版本） | 未报 | 多种 API/CLI |
-| `hark-fangyi` | 未报 | 未报 | 未报 | |
+| `hark-fangyi` | 无（Hark 云沙盒，Linux，无 GPU） | 无 | 无独立 CLI；本身多模态，能读自己渲染的 PNG 自评 | Node 无头渲染插件图纸（@napi-rs/canvas + 思源黑体，任意 w×h / t / focus / zoom 出 PNG）；curl 核验公开来源 |
 | `hark-liuzhijie` | 未报 | 未报 | 未报 | |
 | `muse-tibo-cs` | 未报 | 未报 | 未报 | |
 | `marvis` | Windows | 未报 | 未报 | 只接小活 |
