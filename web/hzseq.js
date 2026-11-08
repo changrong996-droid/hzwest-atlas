@@ -425,6 +425,14 @@ HZ.jackRead = function (t) {
     rows.push({ i, x: L.x, z: L.z, zone: g, top: L.top, hp, y, disp: y - y0, dev, on: !!(act && (act.key === 'wlift' || act.liftZone === g)) }); }
   const on = rows.filter(r => r.on); let mx = 0; for (const a of on) for (const b of on) mx = Math.max(mx, Math.abs(a.dev - b.dev));
   return { rows, act, m, sync: on.length ? mx : 0, limit: HZ.SYNC.limit, pose: ps }; };
+// 提升器载荷（推算，11-08）：每台吊点分担的网架钢重（t）。各分区网架钢重（asm1..3 的 tally.steel）在本区提升开始（脱胎）时由胎架转到本区吊点、
+// 本区吊点平均分摊；嵌补合龙杆件（merge）随合龙进度加到全部吊点；柱头连接与分级卸载（head）期间线性卸到 0。不含提升架自重、动载系数与吊具。
+HZ.jackLoad = function (t) {
+  const K = HZ.K, L = HZ.lifters, cl = v => Math.max(0, Math.min(1, v)), off = 1 - cl((t - K.head.start) / Math.max(1e-6, K.head.dur)), n = {}, out = new Array(L.length).fill(0);
+  for (const q of L) n[q.zone] = (n[q.zone] || 0) + 1;
+  const zt = z => t >= K['lift' + z].start ? (K['asm' + z].tally.steel || 0) : 0, mt = (K.merge.tally.steel || 0) * cl((t - K.merge.start) / Math.max(1e-6, K.merge.dur));
+  let total = 0; for (let i = 0; i < L.length; i++) { const g = L[i].zone; out[i] = (zt(g) / n[g] + mt / L.length) * off; total += out[i]; }
+  return { rows: out, total, max: Math.max(...out) }; };
 // 当前姿态下网架下弦（含杆件半径）到候车层楼面的最小净空，及其位置
 HZ.gap = function (ps, t) { let best = null; for (const g of [1, 2, 3, 4]) { if (g === 4 && t < HZ.K.merge.start) continue; const T = HZ.gapTab[g]; let e;
     if (T.length === 1) e = T[0]; else { const x = ps[g].r * 32, i = Math.min(31, Math.floor(x)), f = x - i; e = { lo: T[i].lo + (T[i + 1].lo - T[i].lo) * f, at: f < 0.5 ? T[i].at : T[i + 1].at }; }
