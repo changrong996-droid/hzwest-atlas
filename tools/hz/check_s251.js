@@ -49,4 +49,8 @@ for (const k of P.cam) {
   if (k.t < W0 || k.t > W1 || k.t <= lt) fail(`镜头 t=${k.t} 越窗或不递增`); lt = k.t;
   const camY = k.target[1] + k.dist * Math.sin(k.el * Math.PI / 180); if (!(k.target[1] >= 0 && camY > 5)) fail(`镜头 t=${k.t} 进地下`);
 }
-console.log(`OK check_s251 runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}`);
+// 6. 公开对照：两条公开节点都算得出偏差，且在 ±20 天内（超出说明排程或口径走样，需要校准）
+const RC = P.realCmp(); if (RC.length < 2) fail('公开对照少于 2 条');
+for (const r of RC) { if (!Number.isFinite(r.dev)) fail(`公开对照 ${r.date} 算不出模型日期`); if (Math.abs(r.dev) > 20) fail(`公开对照 ${r.date} ${r.txt} 偏差 ${r.dev} 天，超过 ±20`); }
+const devTxt = RC.map(r => r.date + '=' + (r.dev > 0 ? '+' : '') + r.dev + 'd').join(' ');
+console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}`);
