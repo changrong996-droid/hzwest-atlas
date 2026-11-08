@@ -57,7 +57,7 @@
   // ---------- 统计（大数字与检查共用）----------
   function stats(t) {
     const d = data(), K = d.K; let shut = 0, cur = 0, pvA = 0; const front = pvFront(K, t);
-    for (const q of d.tiles) { const s = stOf(q.part, t); if (s >= 2) shut += q.a; else if (s >= 0) { shut += q.a * s; cur++; }
+    for (const q of d.tiles) { const s = stOf(q.part, t); if (s >= 2) shut += q.a; else if (s >= 0) cur++;   // 封闭率只算铺完的块（在铺不折算），与图上纸白 / 浅蓝面积一致（D-22 ③）
       if (q.pv && s >= 2 && q.zc < front) pvA += q.a * (2 * PV_W); }
     let holesOpen = 0; for (const h of d.holes) if (stOf(h.p, t) < 2) holesOpen++;
     // 光伏面积口径与 HZ.pvArea（≈1.5 万 m²，按公开报道标定）一致：按已铺条带占比折算
@@ -197,13 +197,15 @@
     g.save(); Ly.apply(g);   // 竖栏：以下平面图形整体旋转（文字在旋转外另画，保持正向）
     g.save(); rimPath(); g.clip();
     // 1 屋面块：未铺 = 不填（只留淡红幽灵等高线），在铺 = 浅红，已铺 = 纸白 / 采光顶浅蓝灰
-    let curZ = null;
+    let curZ = null; const unl = [];
     for (const q of d.tiles) {
-      const k = stOf(q.part, t); if (k < 0) continue;
+      const k = stOf(q.part, t); if (k < 0) { if (t >= K.sky.start) unl.push(q); continue; }
       const px = X(q.za), py = Y(q.xa + S), sz = S * s;
       if (k < 2) { g.fillStyle = C.red2; g.fillRect(px, py, sz + 0.3, sz + 0.3); if (!q.sky) curZ = q.za; continue; }
       g.fillStyle = q.sky ? C.sky : C.clad; g.fillRect(px, py, sz + 0.3, sz + 0.3);
     }
+    // 未铺（屋面已开铺后）：淡墨 45° 斜线，表示还是裸网架——与纸白的已铺面一眼分开（D-22 ③）
+    if (unl.length) { g.save(); g.beginPath(); for (const q of unl) g.rect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.clip(); g.strokeStyle = 'rgba(29,26,23,.16)'; g.lineWidth = 0.5; g.beginPath(); const U = 2 * w + 2 * h, st6 = 6; for (let c = -U; c < U; c += st6) { g.moveTo(c, -U); g.lineTo(c + 2 * U, U); } g.stroke(); g.restore(); }
     // 金属屋面分格线（每 4 块一条，与 3D 墨线同一规则）；采光顶逐块分格 + 斜线
     g.lineWidth = 0.45;
     if (S * s >= 2.5) {   // 小图（每块不到 2.5 px）不画分格，免得糊成一片灰
@@ -234,7 +236,7 @@
     g.strokeStyle = C.ink; g.lineWidth = 1.1; rimPath(); g.stroke();
     // 5 提升孔：未补 = 方框打叉（洞），在补 = 红，补完 = 小实心
     for (const hq of d.holes) {
-      const k = stOf(hq.p, t), r = Math.max(1.8, 1.9 * s), x = X(hq.z), y = Y(hq.x);
+      const k = stOf(hq.p, t), r = Math.max(Math.min(3, 3.3 * s), 2.6 * s), x = X(hq.z), y = Y(hq.x);   // 半边 ≈ 2.6 m（孔距最近 7 m 不相叠），叉线看得清（D-22 ⑤）
       if (k >= 2) { if (t < K.holes.end + 6) { g.strokeStyle = 'rgba(29,26,23,.40)'; g.lineWidth = 0.7; g.strokeRect(x - r * 0.7, y - r * 0.7, r * 1.4, r * 1.4); } continue; }   // 补完：淡墨空心方框（不画实心小黑点）
       g.strokeStyle = k >= 0 ? C.red : C.ink; g.lineWidth = k >= 0 ? 1.2 : 0.9; g.strokeRect(x - r, y - r, 2 * r, 2 * r);
       g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke();
@@ -253,13 +255,14 @@
       label(g, labelOf(fp), Math.max(box.x0 + 4, Math.min(hb[0], box.x1 - 120)), ly2, '#8a6400', box, { fs: 9, sans: true, b: true }); }
 
     // 文字：一行现状 + 方位 + 等高距；图例
-    const now = t < K.holes.start ? '提升到位，等待补孔' : t < K.holes.end ? `补提升孔 ${st.holesTot - st.holesOpen} / ${st.holesTot}` : t < K.pv.start ? `屋面封闭 ${st.close.toFixed(0)}%` : t < K.pv.end ? `光伏 ${fmt(st.pv)} / ${fmt(st.pvTot)} m²` : `屋面完成 · 光伏 ${fmt(st.pvTot)} m²`;
+    const now = t < K.holes.start ? '提升到位，等待补孔' : t < K.holes.end ? `补提升孔 ${st.holesTot - st.holesOpen} / ${st.holesTot}` : t < K.pv.start ? `屋面封闭 ${st.close.toFixed(0)}%（按面积）` : t < K.pv.end ? `光伏 ${fmt(st.pv)} / ${fmt(st.pvTot)} m²` : `屋面完成 · 光伏 ${fmt(st.pvTot)} m²`;
     label(g, now, box.x0 + 4, box.y0 + 7, C.ink, box, { b: true, fs: 9.5, sans: true });
     label(g, Ly.rot ? '↑北  →东  等高距 2 m' : '↑东  ←北  等高距 2 m', box.x1 - 4, box.y0 + 7, C.ink2, box, { al: 'r', fs: 8.5, sans: true });
-    const lg = [['补孔', 'hole'], ['采光顶', C.sky], ['金属屋面', C.clad], ['光伏', C.pv], ['在铺', C.red2]];
+    const lg = [['补孔', 'hole'], ['采光顶', C.sky], ['金属屋面', C.clad], ['光伏', C.pv], ['在铺', C.red2], ['未铺', 'unl']];
     g.font = `8.5px ${SANS}`; let lx = box.x0 + 4; const ly = box.y1 - 7;
     for (const [n, c] of lg) { const tw = g.measureText(n).width; if (lx + 12 + tw > box.x1 - 4) break;
       if (c === 'hole') { g.strokeStyle = C.ink; g.lineWidth = 0.8; g.strokeRect(lx, ly - 4, 8, 8); g.beginPath(); g.moveTo(lx, ly - 4); g.lineTo(lx + 8, ly + 4); g.moveTo(lx + 8, ly - 4); g.lineTo(lx, ly + 4); g.stroke(); }
+      else if (c === 'unl') { g.strokeStyle = 'rgba(29,26,23,.5)'; g.lineWidth = 0.5; g.strokeRect(lx, ly - 4, 8, 8); g.save(); g.beginPath(); g.rect(lx, ly - 4, 8, 8); g.clip(); g.beginPath(); for (let e = -8; e <= 8; e += 4) { g.moveTo(lx + e, ly - 4); g.lineTo(lx + e + 8, ly + 4); } g.stroke(); g.restore(); }
       else { g.fillStyle = c; g.fillRect(lx, ly - 4, 8, 8); g.strokeStyle = 'rgba(29,26,23,.5)'; g.lineWidth = 0.5; g.strokeRect(lx, ly - 4, 8, 8); }
       g.fillStyle = C.ink2; g.textBaseline = 'middle'; g.fillText(n, lx + 11, ly); lx += 11 + tw + 10; }
     return st;
@@ -268,17 +271,26 @@
   const plugin = {
     id: 'S-401', name: '屋面', sheet: 'S-401-1', title: '屋面铺设平面', owner: 'hark-cs',
     window: [679, 781],
-    // 大数字：屋面封闭率（采光顶 + 金属屋面按块面积，含在铺进度）
-    big: t => ({ num: Math.round(stats(t).close), unit: '%', label: '屋面封闭' }),
+    // 大数字：屋面封闭率（采光顶 + 金属屋面按块面积，只算铺完的块）；补孔阶段说明为何还是 0（D-22 ③）
+    big: t => { const st = stats(t), K = data().K; return { num: Math.round(st.close), unit: '%', label: t < K.sky.start ? `屋面封闭 · 先补提升孔 ${st.holesTot - st.holesOpen}/${st.holesTot}` : '屋面封闭（按面积）' }; },
     draw,
     stats,
+    // 3D 引线锚点（D-22 ④，待宿主接 pl.leadAt，见 CLAIMS 接口请求）：铺金属屋面 / 光伏时落在当前铺设前沿、离开十字采光顶的东侧屋面板上
+    leadAt(t) { const d = data(), K = d.K, HZ = G.HZ; let z = null, t1, t2;
+      if (t >= K.clad.start && t < K.clad.end) { let zf = null; for (const q of d.tiles) { if (q.sky) continue; const k = stOf(q.part, t); if (k >= 0 && k < 2) zf = zf == null ? q.zc : Math.max(zf, q.zc); } z = zf; t1 = KIND.clad; t2 = '铺设前沿 · 由北向南'; }
+      else if (t >= K.pv.start && t < K.pv.end) { z = pvFront(K, t) - 4; t1 = KIND.pv; t2 = '铺设前沿 · 由北向南'; }
+      if (z == null) return null;
+      for (const x of [55, 70, 40, 85]) if (HZ.rho(x, z) < 0.95 && !HZ.inSky(x, z) && (t < K.pv.start || HZ.pvMask(x, z) > 0.5)) return { p: [x, HZ.Hc(x, z) + 1, z], t1, t2 };
+      return null; },
     parts,
-    // 镜头：高位俯视全屋面 → 逐渐拉近到云谷上方十字采光顶交点（米、度）
+    // 镜头（D-22 ①）：全程框住整片屋面（外缘 + 檐口），余白均匀；从南偏东高位俯视，逐渐转向正南、仰角放低。
+    // 一套镜头同时满足横屏与竖屏：方位取 150°–170°（屋面短边 249 m 横在画面里），竖长视口也不裁边。
+    // 数值由屋面外缘投影拟合（28° 视场，含宿主竖屏拉远系数 aspK）：1288×982 视口外缘约占横 −0.7…0.64、纵 −0.9…0.72（上方让出信息卡）；468×1102 视口横向约 ±0.9。
     cam: [
-      { t: 679, target: [0, 46, 0], az: 135, el: 62, dist: 560 },
-      { t: 729, target: [0, 50, 0], az: 125, el: 55, dist: 420 },
-      { t: 751, target: [0, 52, 0], az: 115, el: 48, dist: 300 },
-      { t: 781, target: [0, 55, 0], az: 100, el: 40, dist: 170 },
+      { t: 679, target: [-6, 40, 6], az: 150, el: 62, dist: 675 },
+      { t: 729, target: [6, 40, 6], az: 155, el: 56, dist: 630 },
+      { t: 751, target: [6, 40, 12], az: 160, el: 52, dist: 595 },
+      { t: 781, target: [0, 40, 24], az: 170, el: 45, dist: 520 },
     ],
   };
   (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push(plugin);
