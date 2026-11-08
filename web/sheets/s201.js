@@ -79,7 +79,9 @@
     g.strokeStyle = C.line; g.lineWidth = 0.6; g.setLineDash([6, 3]); g.strokeRect(X(-XS), Z(-122), X(XS) - X(-XS), Z(143) - Z(-122)); g.setLineDash([]);
     for (const sx of [-1, 1]) { const xx = X(sx * (XS + 6)); g.strokeStyle = C.ink3; g.lineWidth = 0.7; g.beginPath(); g.moveTo(xx, Z(zN)); g.lineTo(xx, Z(-2)); g.lineTo(xx - 3, Z(2)); g.lineTo(xx + 3, Z(6)); g.lineTo(xx, Z(10)); g.lineTo(xx, Z(zS)); g.stroke(); }
     // 0) 当前工序（最高优先，先占位）
-    const cur = d.keys.filter(a => t >= a.start && t < a.end).map(a => a.name.replace(/ · /, ' ')).slice(0, 2).join('；');
+    // 同名工序合并：「承轨层 · 湖杭场」+「承轨层 · 杭临绩场」→「承轨层（湖杭场、杭临绩场）」
+    const grp = new Map(); for (const a of d.keys) if (t >= a.start && t < a.end) { const [n, y] = a.name.split(' · '); if (!grp.has(n)) grp.set(n, []); if (y) grp.get(n).push(y); }
+    const cur = [...grp].map(([n, ys]) => ys.length ? n + '（' + ys.join('、') + '）' : n).join('；');
     label(g, cur ? '在做：' + cur : (t < d.keys[0].start ? '承轨层尚未开工' : t >= 900 ? '股道全部贯通' : '等待下一道工序'), box.x0 + 4, box.y0 + 7, cur ? C.red : C.ink2, box, { b: true, fs: 9, sans: true });
     // 1) 承轨层板（含引桥梁）：未建虚线 / 在建浅红 / 已建浅墨底
     for (const e of d.deck) { const st = stOf(e.p, t), r = rect(e.x0, e.x1, e.z0, e.z1);
