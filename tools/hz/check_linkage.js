@@ -116,6 +116,7 @@ has("PL.modsCall(L, 'pick', [p, xy, { sheet: SHEET, t: S.st.t, src, root: $('mod
 has("PL.modsCall(S.modsList, 'unpick', [], pwarn)", 'unpick()');
 has("plugSelect(q.part, '3d', { x: cx - R.left, y: cy - R.top })", '3D 点击把点击位置传给 pick');
 has('S.modsList = MODS;', 'S.modsList');
+has("['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')", '只有 pick / unpick 的模块也进列表（build 可选）');
 if (!/<div id="mod-ui"><\/div>\s*<\/div>\s*<div id="col"/.test(html)) fail('hzwest.html 应在 #v3 末尾放空容器 <div id="mod-ui"></div>');
 if (!/#mod-ui\{position:absolute;inset:0;[^}]*pointer-events:none\}/.test(html)) fail('#mod-ui 应绝对定位铺满 #v3 且 pointer-events:none');
 if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 17) fail('hzview.js 加 pick 钩子后版本号应 ≥ 17');

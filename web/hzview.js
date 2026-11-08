@@ -206,26 +206,34 @@
     const { mesh: MESH, lines: LINES } = compile(); scene.add(MESH, LINES);
 
     // ---------------- set2d：剖切封面（x = 39 m 截面多边形；与构件同一套 aK/aR/aY 生长、未建不显示；uCut 关 = 顶点塌缩，切换不重新编译）----------------
-    const CAP = (() => { const SX = HZ.SEC_X, XC = SX + 0.04, Pp = [], Kk = [], Rr = [], Yy = [], Ff = [], Ee = [];
-      const quad = (it, y0p, z0, z1, ya, yb, za0, za1, zb0, zb1, E) => { const v = [[ya, za0], [ya, za1], [yb, zb1], [ya, za0], [yb, zb1], [yb, zb0]]; for (const [y, z] of v) { Pp.push(XC, y, z); Kk.push(it.st, it.du, 0, 0); Rr.push(it.rm[0], it.rm[1]); Yy.push(y0p, 0); Ff.push(it.temp); Ee.push(...E); } };
-      for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (p.cells || p.grp || !p.geo || !p.geo.boxes) continue; const it = { st: p.st, du: p.du, rm: p.rm || [-1, 0], temp: a.kind === 'temp' ? 1 : 0 }, y0p = p.geo.min[1];
+    // 11-08：网架杆件（含斜杆，p.cells 的 rods，三棱柱）也封面——每根穿过 x = SX 的杆截出一个三角形；随分区姿态 uG[aG] 变换（分区只绕平行 x 的轴转 + 竖移，截面仍在 x = SX 上）
+    const CAP = (() => { const SX = HZ.SEC_X, XC = SX + 0.04, Pp = [], Kk = [], Rr = [], Yy = [], Ff = [], Ee = [], Gg = [], NOE = [-1e9, 1e9, -1e9, 1e9];
+      const quad = (it, y0p, z0, z1, ya, yb, za0, za1, zb0, zb1, E) => { const v = [[ya, za0], [ya, za1], [yb, zb1], [ya, za0], [yb, zb1], [yb, zb0]]; for (const [y, z] of v) { Pp.push(XC, y, z); Kk.push(it.st, it.du, 0, 0); Rr.push(it.rm[0], it.rm[1]); Yy.push(y0p, 0); Ff.push(it.temp); Ee.push(...E); Gg.push(it.g || 0); } };
+      const rodTri = (it, y0p, a, b, r) => { const dx = b[0] - a[0]; if (Math.abs(dx) < 1e-6 || (a[0] - SX) * (b[0] - SX) >= 0) return 0;   // 同 GB.rod 的三棱柱截面
+        const ax = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(...ax) || 1, u = ax.map(v => v / L), h = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]; let e1 = [u[1] * h[2] - u[2] * h[1], u[2] * h[0] - u[0] * h[2], u[0] * h[1] - u[1] * h[0]]; const l1 = Math.hypot(...e1); e1 = e1.map(v => v / l1); const e2 = [u[1] * e1[2] - u[2] * e1[1], u[2] * e1[0] - u[0] * e1[2], u[0] * e1[1] - u[1] * e1[0]];
+        for (let i = 0; i < 3; i++) { const th = i / 3 * Math.PI * 2, c = Math.cos(th) * r, sn = Math.sin(th) * r, o = [e1[0] * c + e2[0] * sn, e1[1] * c + e2[1] * sn, e1[2] * c + e2[2] * sn], f = (SX - a[0] - o[0]) / dx;
+          Pp.push(XC, a[1] + o[1] + ax[1] * f, a[2] + o[2] + ax[2] * f); Kk.push(it.st, it.du, 0, 0); Rr.push(it.rm[0], it.rm[1]); Yy.push(y0p, 0); Ff.push(it.temp); Ee.push(...NOE); Gg.push(it.g || 0); } return 1; };
+      let nRod = 0;
+      for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!p.geo) continue; const it = { st: p.st, du: p.du, rm: p.rm || [-1, 0], temp: a.kind === 'temp' ? 1 : 0, g: p.grp || 0 }, y0p = p.geo.min[1];
+        if (p.cells) { for (const c of p.cells) for (const [ra, rb, rr] of (c.rods || [])) nRod += rodTri(it, y0p, ra, rb, rr); continue; }
+        if (!p.geo.boxes) continue;
         for (const b of p.geo.boxes) { if (!(b.min[0] < SX - 0.02 && b.max[0] > SX + 0.02) || b.max[1] - b.min[1] < 0.05) continue;
           if (b.spin) { const [cx, cz, pr] = b.spin, dx = SX - cx; for (let i = 0; i + 1 < pr.length; i++) { const ha = Math.sqrt(Math.max(0, pr[i][1] ** 2 - dx * dx)), hb = Math.sqrt(Math.max(0, pr[i + 1][1] ** 2 - dx * dx)); if (ha + hb < 0.02) continue; quad(it, y0p, 0, 0, pr[i][0], pr[i + 1][0], cz - ha, cz + ha, cz - hb, cz + hb, [-1e9, 1e9, pr[0][0], pr[pr.length - 1][0]]); } continue; }
           let z0 = b.min[2], z1 = b.max[2]; if (b.cyl) { const [cx, cz, r] = b.cyl, h = Math.sqrt(Math.max(0, r * r - (SX - cx) ** 2)); if (h < 0.01) continue; z0 = cz - h; z1 = cz + h; }
           quad(it, y0p, z0, z1, b.min[1], b.max[1], z0, z1, z0, z1, [z0, z1, b.min[1], b.max[1]]); } } }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3)); g.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 4)); g.setAttribute('aR', new THREE.Float32BufferAttribute(Rr, 2)); g.setAttribute('aY', new THREE.Float32BufferAttribute(Yy, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(Ff, 1)); g.setAttribute('aE', new THREE.Float32BufferAttribute(Ee, 4));
-      const CU = { uT: U.uT, uCut: U.uCut, uPaper: U.uPaper, uRed: U.uRed, uInk: U.uInk, uTemp: U.uTemp, uLitCap: { value: 0 }, uDpr: { value: 1 } };
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(Pp, 3)); g.setAttribute('aK', new THREE.Float32BufferAttribute(Kk, 4)); g.setAttribute('aR', new THREE.Float32BufferAttribute(Rr, 2)); g.setAttribute('aY', new THREE.Float32BufferAttribute(Yy, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(Ff, 1)); g.setAttribute('aE', new THREE.Float32BufferAttribute(Ee, 4)); g.setAttribute('aG', new THREE.Float32BufferAttribute(Gg, 1));
+      const CU = { uT: U.uT, uG: U.uG, uCut: U.uCut, uPaper: U.uPaper, uRed: U.uRed, uInk: U.uInk, uTemp: U.uTemp, uLitCap: { value: 0 }, uDpr: { value: 1 } };
       const m = new THREE.ShaderMaterial({ uniforms: CU, side: THREE.DoubleSide,
-        vertexShader: `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aF; attribute vec4 aE; uniform float uT, uCut; varying vec2 vP; varying vec4 vE; varying float vF;
+        vertexShader: `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aF; attribute vec4 aE; attribute float aG; uniform float uT, uCut; uniform mat4 uG[6]; varying vec2 vP; varying vec4 vE; varying float vF;
           void main() { float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0; if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
-            float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; q.y = aY.x + (q.y - aY.x) * k; vE = vec4(aE.xy, aY.x + (aE.zw - aY.x) * k); vP = q.zy; vF = aF;
+            float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; q.y = aY.x + (q.y - aY.x) * k; vE = vec4(aE.xy, aY.x + (aE.zw - aY.x) * k); vP = q.zy; vF = aF; q = (uG[int(aG + 0.5)] * vec4(q, 1.0)).xyz;
             if (uT < s || k < 1e-4 || uCut < -1e8) q = vec3(0.0, -1e5, 0.0); gl_Position = projectionMatrix * viewMatrix * vec4(q, 1.0); }`,
         fragmentShader: `uniform vec3 uPaper, uRed, uInk, uTemp; uniform float uLitCap, uDpr; varying vec2 vP; varying vec4 vE; varying float vF;
           void main() { vec2 fw = max(fwidth(vP), vec2(1e-5)); float ez = min(vP.x - vE.x, vE.y - vP.x) / fw.x, ey = min(vP.y - vE.z, vE.w - vP.y) / fw.y, edge = 1.0 - smoothstep(0.6 * uDpr, 1.6 * uDpr, min(ez, ey));
             if (uLitCap > 0.5) { vec3 c = vec3(0.50) * (1.0 - 0.35 * edge); gl_FragColor = vec4(c, 1.0); return; }
             vec3 base = vF > 0.5 ? mix(uPaper, uTemp, 0.30) : mix(uPaper, uRed, 0.16); float sp = 7.0 * uDpr, h = abs(fract((gl_FragCoord.x + gl_FragCoord.y) / sp) - 0.5) * sp, ln = 1.0 - smoothstep(0.45 * uDpr, 1.15 * uDpr, h);
             vec3 c = mix(base, mix(uRed, uInk, 0.35), 0.62 * ln); c = mix(c, uInk, edge); gl_FragColor = vec4(c, 1.0); }` });
-      const o = new THREE.Mesh(g, m); o.frustumCulled = false; o.renderOrder = 1; S.capTris = Pp.length / 9; return { o, CU }; })();
+      const o = new THREE.Mesh(g, m); o.frustumCulled = false; o.renderOrder = 1; S.capTris = Pp.length / 9; S.capRods = nRod; return { o, CU }; })();
     scene.add(CAP.o); S.CAP = CAP.o;
 
     // ---- 钢绞线 ----
@@ -1012,7 +1020,7 @@
         o += `<polyline points="${x},${y} ${ux},${yb}" fill="none" stroke="#b3202a" stroke-width=".9"/><rect class="lb" x="${lx}" y="${ly}" width="${w}" height="${h}" rx="3"/><line x1="${lx}" y1="${yb}" x2="${lx + w}" y2="${yb}" stroke="#b3202a" stroke-width=".9"/><text class="lt" x="${lx + 6}" y="${ly + F1 + 1}" font-size="${F1}" font-weight="700">${esc(t1)}</text><text class="ls" x="${lx + 6}" y="${ly + F1 + F2 + 7}" font-size="${F2}">${esc(t2)}</text>`; }
       LEAD.innerHTML = o; S.leadPlaced = !!pos; S.leadText = t1; }
     // 3D 模块钩子（近景人员 actors、S-101 地下体量等）：window.HZ_MODS 逐个 build(scene, HZ, THREE, { clip:[CUTP] })，每次渲染前 update(t, cam)；单个模块抛错只 warn 一次并停用，不连坐
-    const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (m && typeof m.build === 'function') { m.build(scene, HZ, THREE, { clip: [CUTP] }); MODS.push(m); } } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }
+    const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (!m || !['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')) continue; if (typeof m.build === 'function') m.build(scene, HZ, THREE, { clip: [CUTP] }); MODS.push(m); } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }   // 四个方法都可选（只有 pick / unpick 的界面模块也收）
     function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; try { m.update(t, cam); } catch (e) { console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e); MODS.splice(i, 1); } } }
     S.mods = MODS.map(m => m.id); S.modsList = MODS;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）
     tabs(); applyLook(); layout();
