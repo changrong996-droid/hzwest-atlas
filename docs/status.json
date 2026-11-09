@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-11-09T18:06:00+08:00",
+ "generated_at": "2026-11-09T18:35:00+08:00",
  "headline": {
-  "commits_total": 358,
-  "commits_today": 73,
+  "commits_total": 361,
+  "commits_today": 76,
   "files": 180,
   "items_done": 31,
   "items_total": 39,
@@ -26,13 +26,13 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 190,
-   "today": 60
+   "total": 192,
+   "today": 62
   },
   {
    "agent": "hark-cs",
-   "total": 55,
-   "today": 9
+   "total": 56,
+   "today": 10
   },
   {
    "agent": "hark-liuzhijie",
@@ -72,6 +72,24 @@
  ],
  "recent_commits": [
   {
+   "sha": "34a606a",
+   "at": "2026-11-09T10:29:21Z",
+   "subj": "合并 agent/hark-cs/D-22-clouds-label（D-22 ⑦）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "80fe811",
+   "at": "2026-11-09T10:07:43Z",
+   "subj": "[S-401] 图纸标注四朵云与云的缝（D-22 ⑦）",
+   "agent": "hark-cs"
+  },
+  {
+   "sha": "7d736c4",
+   "at": "2026-11-09T10:07:36Z",
+   "subj": "[status] 看板刷新",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "cbae46f",
    "at": "2026-11-09T09:47:16Z",
    "subj": "[status] 看板刷新",
@@ -100,24 +118,6 @@
    "at": "2026-11-09T09:09:12Z",
    "subj": "[D-22] S-401 窗末加西南低角度斜侧机位（⑧）",
    "agent": "hark-cs"
-  },
-  {
-   "sha": "8c510ee",
-   "at": "2026-11-09T09:08:47Z",
-   "subj": "[status] 看板刷新",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "3791a28",
-   "at": "2026-11-09T08:47:56Z",
-   "subj": "[status] 看板刷新",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "b21b41b",
-   "at": "2026-11-09T08:29:04Z",
-   "subj": "[status] 合入 hark-cs 心跳；看板刷新",
-   "agent": "hark-cr"
   }
  ],
  "dispatches_open": [
@@ -137,7 +137,7 @@
    "id": "D-22",
    "agent": "hark-cs",
    "item": "S-401 雕琢",
-   "state": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 17:30 hark-cs：⑧ 已做（分支 agent/hark-cs/D-22-oblique：窗末 t=785 加西南 el 15° 斜侧帧，check_cams S-401 违反 0、check_all 21/21、真机 1920×1080 与 800×1200 屋面完整入框、四朵云与云缝同框；看 #sheet=S-401&t=785&play=0）。下一轮做 ⑦ 四朵云标注；D-28 实物图钉排在其后。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）"
+   "state": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 17:30 hark-cs：⑧ 已做（分支 agent/hark-cs/D-22-oblique：窗末 t=785 加西南 el 15° 斜侧帧，check_cams S-401 违反 0、check_all 21/21、真机 1920×1080 与 800×1200 屋面完整入框、四朵云与云缝同框；看 #sheet=S-401&t=785&play=0）。⑧ 已合入。11-09 18:00 hark-cs：⑦ 已做（分支 agent/hark-cs/D-22-clouds-label：图纸上标东北/东南/西北/西南云「约+3.5 m」与「云的缝（采光顶）」，所在屋面块铺完才标；看 #sheet=S-401&t=785&play=0，横竖屏均可读；check_all 21/21、真机 1920×1080 与 800×1200 无报错；请 hark-cr 把 hzwest.html 的 s401.js 版本号 +1）。D-22 全部完成，下一轮做 D-28 实物图钉。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）"
   },
   {
    "id": "D-28",
@@ -232,7 +232,7 @@
  "free_items": [],
  "pending_review": [
   "agent/hark-fangyi/D-27-mobile",
-  "agent/hark-liuzhijie/cam-sweep2"
+  "agent/hark-cs/world-report"
  ],
  "stale_locks": [],
  "blockers": [
@@ -303,7 +303,7 @@
   },
   {
    "kind": "协作者",
-   "what": "D-20 S-101 ②–⑤、D-22 ⑦（⑧ 已合入）、D-36、D-38（D-30–D-35、D-37 已合入）",
+   "what": "D-20 S-101 ②–⑤、D-36、D-38（D-22、D-30–D-35、D-37 已合入）",
    "who": "hark-liuzhijie、hark-cs"
   },
   {
@@ -318,17 +318,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T18:07:33+08:00",
+  "generated_at": "2026-11-09T18:36:09+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794217636,
+    "last_at": 1794218856,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 19
+    "idle_min": 27
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -348,13 +348,13 @@
      "D-36"
     ],
     "done_today": 3,
-    "last_at": 1794216679,
+    "last_at": 1794218863,
     "mine": [
      "D-22"
     ],
     "state": "working",
     "away": false,
-    "idle_min": 35
+    "idle_min": 27
    },
    {
     "name": "hark-darrio",
@@ -364,7 +364,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 415
+    "idle_min": 444
    },
    {
     "name": "hark-fangyi",
@@ -377,7 +377,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 150
+    "idle_min": 179
    },
    {
     "name": "hark-liuzhijie",
@@ -391,7 +391,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 213
+    "idle_min": 242
    },
    {
     "name": "marvis",
@@ -405,7 +405,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1745
+    "idle_min": 1774
    },
    {
     "name": "muse-tibo-cs",
@@ -419,7 +419,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1433
+    "idle_min": 1462
    },
    {
     "name": "pi-t2",
@@ -457,7 +457,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1632
+    "idle_min": 1660
    }
   ],
   "jobs": [
@@ -741,7 +741,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 1673,
+     "age_min": 1702,
      "level": "red"
     },
     "done": false
@@ -913,7 +913,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190446,
-     "age_min": 472,
+     "age_min": 501,
      "level": "red"
     },
     "done": false
@@ -949,12 +949,12 @@
      "hark-cs"
     ],
     "kind": "派单",
-    "status": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 17:30 hark-cs：⑧ 已做（分支 agent/hark-cs/D-22-oblique：窗末 t=785 加西南 el 15° 斜侧帧，check_cams S-401 违反 0、check_all 21/21、真机 1920×1080 与 800×1200 屋面完整入框、四朵云与云缝同框；看 #sheet=S-401&t=785&play=0）。下一轮做 ⑦ 四朵云标注；D-28 实物图钉排在其后。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）",
+    "status": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 17:30 hark-cs：⑧ 已做（分支 agent/hark-cs/D-22-oblique：窗末 t=785 加西南 el 15° 斜侧帧，check_cams S-401 违反 0、check_all 21/21、真机 1920×1080 与 800×1200 屋面完整入框、四朵云与云缝同框；看 #sheet=S-401&t=785&play=0）。⑧ 已合入。11-09 18:00 hark-cs：⑦ 已做（分支 agent/hark-cs/D-22-clouds-label：图纸上标东北/东南/西北/西南云「约+3.5 m」与「云的缝（采光顶）」，所在屋面块铺完才标；看 #sheet=S-401&t=785&play=0，横竖屏均可读；check_all 21/21、真机 1920×1080 与 800×1200 无报错；请 hark-cr 把 hzwest.html 的 s401.js 版本号 +1）。D-22 全部完成，下一轮做 D-28 实物图钉。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）",
     "stage": 2,
     "stages": {
      "派出": 1794122454,
      "开工": 1794126292,
-     "交付": 1794215352
+     "交付": 1794218863
     },
     "returned": true,
     "branches": [
@@ -962,12 +962,12 @@
      "agent/hark-cs/D-22-window-fix",
      "agent/hark-cs/hb-1609"
     ],
-    "commits": 10,
+    "commits": 11,
     "wait": {
      "who": "hark-cs",
      "what": "被退回，等修改",
-     "since": 1794215352,
-     "age_min": 57,
+     "since": 1794218863,
+     "age_min": 27,
      "level": "ok"
     },
     "done": false
@@ -1107,7 +1107,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190527,
-     "age_min": 471,
+     "age_min": 500,
      "level": "red"
     },
     "done": false
@@ -1131,7 +1131,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 1502,
+     "age_min": 1530,
      "level": "red"
     },
     "done": false
@@ -1309,7 +1309,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794210483,
-     "age_min": 138,
+     "age_min": 167,
      "level": "amber"
     },
     "done": false
@@ -1362,7 +1362,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794206913,
-     "age_min": 198,
+     "age_min": 226,
      "level": "amber"
     },
     "done": false
@@ -1449,7 +1449,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107129,
-     "交付": 1794215352,
+     "交付": 1794218863,
      "关单": 1794109194
     },
     "returned": false,
@@ -1458,7 +1458,7 @@
      "agent/hark-cs/S-401-roof-plan",
      "agent/hark-cs/claim"
     ],
-    "commits": 17,
+    "commits": 18,
     "wait": null,
     "done": true
    },
@@ -1576,7 +1576,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107129,
-     "交付": 1794215352,
+     "交付": 1794218863,
      "关单": 1794118391
     },
     "returned": false,
@@ -1585,7 +1585,7 @@
      "agent/hark-cs/S-401-roof-plan",
      "agent/hark-cs/claim"
     ],
-    "commits": 17,
+    "commits": 18,
     "wait": null,
     "done": true
    },
@@ -1657,7 +1657,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1774,
+     "age_min": 1803,
      "level": "red"
     },
     "done": false
@@ -1681,7 +1681,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1774,
+     "age_min": 1803,
      "level": "red"
     },
     "done": false
@@ -1736,7 +1736,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 472,
+     "age_min": 500,
      "level": "red"
     },
     "done": false
