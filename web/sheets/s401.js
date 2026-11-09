@@ -254,6 +254,16 @@
       const ly2 = hb[1] - 7 > box.y0 + 16 ? hb[1] - 7 : hb[1] + hb[3] + 8;
       label(g, labelOf(fp), Math.max(box.x0 + 4, Math.min(hb[0], box.x1 - 120)), ly2, '#8a6400', box, { fs: 9, sans: true, b: true }); }
 
+    // 四朵云 / 云的缝标注（D-22 ⑦）：云心标在各象限屋面中心（Wv 峰值处），缝标在十字采光顶中心；所在屋面块铺完才标，不提前画未建的东西
+    if (!(w < 300 || h < 200)) {
+      const HZ = G.HZ, hasWv = typeof HZ.Wv === 'function', NS = ['东北', '东南', '西北', '西南'];
+      const doneAt = (x, z, sky) => { for (const q of d.tiles) if (q.sky === sky && x >= q.xa && x < q.xa + S && z >= q.za && z < q.za + S) return stOf(q.part, t) >= 2; return false; };
+      const cl = [[-1, 1], [1, 1], [-1, -1], [1, -1]];   // [z 符号（负 = 北）, x 符号（正 = 东）]
+      cl.forEach(([sz, sx], n) => { const x = sx * 0.5 * P.roofA, z = sz * 0.5 * P.roofB; if (!doneAt(x, z, false)) return;
+        const [px, py] = Ly.tf(X(z), Y(x)), up = hasWv ? HZ.Wv(x, z) : 3.5;
+        label(g, `${NS[n]}云 约+${(Math.round(up * 2) / 2).toFixed(1)} m`, px, py, C.ink, box, { fs: 8.5, sans: true, al: 'c', b: true }); });
+      if (doneAt(0, 0, true) || doneAt(0, 8, true)) { const [px, py] = Ly.tf(X(0), Y(0)); label(g, '云的缝（采光顶）', px, py, '#3a5560', box, { fs: 8.5, sans: true, al: 'c', b: true }); }
+    }
     // 文字：一行现状 + 方位 + 等高距；图例
     const now = t < K.holes.start ? '提升到位，等待补孔' : t < K.holes.end ? `补提升孔 ${st.holesTot - st.holesOpen} / ${st.holesTot}` : t < K.pv.start ? `屋面封闭 ${st.close.toFixed(0)}%（按面积）` : t < K.pv.end ? `光伏 ${fmt(st.pv)} / ${fmt(st.pvTot)} m²` : `屋面完成 · 光伏 ${fmt(st.pvTot)} m²`;
     label(g, now, box.x0 + 4, box.y0 + 7, C.ink, box, { b: true, fs: 9.5, sans: true });
