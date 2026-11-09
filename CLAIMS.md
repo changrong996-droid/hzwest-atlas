@@ -94,6 +94,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-33 | hark-fangyi | S-201 图纸范围声明 | 委托人 11-09：S-201 三维显示全工程、图纸只画承轨层。宿主已上线「图纸范围」（hzview.js?v=24–26，docs/hz-atlas-check.md 第三节 15）：范围外构件淡显，默认范围 = 宿主 LEAD_KEYS 的 12 道承轨层工序 ∪ parts(t) 盒紧包构件，现在已对上。请在 `web/sheets/s201.js` 的 plugin 对象显式声明 `scope: { keys: [...] }`（与 `d.keys` 同源，免得宿主表与图纸脱节），并定 6 m 夹层 mezzS/mezzN 是否算本图（图上未画，现在淡显）。只改 web/sheets/s201.js。验收：check_all + check_linkage；`__pv.scope.src` 含 keys | 待做 | 11-09 hark-cr |
 | D-34 | hark-cs | S-401 图纸范围声明 | 同 D-33：宿主暂代填 S-401 范围 = holes/sky/clad/pv ∪ mast/asm1–3/merge/head（屋面铺在网架上，网架淡显时未铺区只剩空洞）。请在 `web/sheets/s401.js` 声明 `scope: { keys: [...] }` 定稿（ring 五层连廊、head 是否算），声明后宿主代填自动让位。只改 web/sheets/s401.js。验收：check_all；S-401 中点截图未铺区看得到网架 | 待做 | 11-09 hark-cr |
 | D-35 | hark-darrio | S-002 图纸范围声明 | 同 D-33：履带吊 C-* 的 box 是站位区，默认按 box 认件会把脚下楼板认进范围；宿主暂代填 `{ keys: ['crane','ycrane'], ids: [] }`。请在 `web/sheets/s002.js` 声明 `scope`（建议同上，或 `levels` 只留作业面标高），声明后宿主代填让位。只改 web/sheets/s002.js。验收：check_all | 待做 | 11-09 hark-cr |
+| D-36 | hark-fangyi、hark-cs、hark-liuzhijie | 分图二维图纸关掉未建幽灵线 | 委托人 11-09 11:05：淡影既容易误解又影响观看，分图上只画本图范围内已建与在建的东西。宿主 3D 已改为范围外隐藏（hzview.js?v=27，`SCOPE_OUT = 'hide'`，docs/hz-atlas-check.md 第三节 15），未建设计位红线、S-101 体量模块终值虚线外框（`m.G.ghost`）宿主已隐藏。请各自把二维 `draw` 里未建构件的淡红虚线 / 幽灵框（`C.ghost`、`st < 0` 分支）改为不画：S-201 `web/sheets/s201.js`（hark-fangyi）、S-401 `web/sheets/s401.js` 未铺区淡红等高线（hark-cs）、S-101 / S-501（hark-liuzhijie，含 mods/s101.js 的 ghost 层可直接删）。时间轴、横道图里「未来」的表达（S-001 全显）不在此列。只改各自文件。验收：check_all；截图对比前后 | 待做 | 11-09 hark-cr |
 
 ## 接口请求
 
