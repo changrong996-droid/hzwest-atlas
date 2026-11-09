@@ -1,0 +1,35 @@
+name: inbox-automerge
+# 收件绿档自动合入：集成人不在线也照转（委托人 2026-11-09 05:35 PST 要求解决集成人单点）。
+# 只合 scope.py 判 AUTO 且 check_all OK 的分支；其余留给集成人或替补。
+on:
+  schedule:
+    - cron: '7 0-15 * * *'   # 北京 08:07–23:07 每小时
+  workflow_dispatch:
+concurrency:
+  group: integrate-main
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 自动合入绿档
+        id: am
+        run: |
+          python3 tools/inbox/automerge.py . | tee am.txt
+          cat am.txt >> "$GITHUB_STEP_SUMMARY"
+          echo "moved=$(tail -1 am.txt)" >> "$GITHUB_OUTPUT"
+      - name: 推送 main
+        if: steps.am.outputs.moved == 'MOVED'
+        run: |
+          git config user.name inbox-bot; git config user.email inbox-bot@hzwest.invalid
+          git push origin HEAD:main || { git pull --rebase=false --no-edit origin main && node tools/hz/check_all.js | tail -1 | grep -q '^OK' && git push origin HEAD:main; }
