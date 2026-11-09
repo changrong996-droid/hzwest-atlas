@@ -259,6 +259,7 @@
   }
 
   const plugin = {
+    focusZoom: false,
     id: 'S-001', name: '总进度', sheet: 'S-001-1', title: '总进度横道图', owner: 'hark-cs',
     get window() { const m = model(); return [m.t0, m.t1]; },
     big: t => ({ num: stats(t).live, unit: '道', label: '今天在施工序' }),
