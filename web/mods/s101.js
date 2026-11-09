@@ -27,7 +27,7 @@
 
   // 线段：pit = 虚线（透地面），cube = 实线，ghost = 终值外框（虚线）
   function lines(HZ, t, out) {
-    out.pit.length = 0; out.cube.length = 0; out.ghost.length = 0; out.face.length = 0; out.a = 0; out.vol = 0; out.ex = 0; out.live = [];
+    out.pit.length = 0; out.cube.length = 0; out.ghost.length = 0; out.face.length = 0; out.built.length = 0; out.a = 0; out.vol = 0; out.ex = 0; out.live = [];
     const P = plug(); if (!P || !P.stateAt || t < SHOW[0] || t > SHOW[1]) return out;
     const s = P.stateAt(t), m = P.model(), A = anchor(m), GEO_LIFTS = (P.GEO && P.GEO.lifts) || [];
     const seg = (arr, a, b) => arr.push(a[0], a[1], a[2], b[0], b[1], b[2]);
@@ -54,6 +54,10 @@
     { const by = m.by, L = GEO_LIFTS; for (let i = 0; i < L.length; i++) { const b = by['dig' + i]; if (!b || t < b.a || t >= b.b) continue; const yTop = i ? L[i - 1] : 0, y = s.coreDig;
         if (y < yTop - 0.05) work(m.core.x0, m.core.x1, m.core.z0, m.core.z1, yTop, y, 'C-METRO'); } }
     if (P.GEO && P.GEO.struts) P.GEO.struts.forEach((y, i) => { if (s.struts[i] !== 1) return; for (let x = m.core.x0 + 4.5; x < m.core.x1; x += 9) seg(out.pit, [x, y, m.core.z0], [x, y, m.core.z1]); seg(out.pit, [m.core.x0, y, m.core.z0], [m.core.x1, y, m.core.z0]); seg(out.pit, [m.core.x0, y, m.core.z1], [m.core.x1, y, m.core.z1]); });
+    // D-20 ②：中央坑分层回筑（与剖面同一组 stateAt 数）——底板（base ≥ 1）与各层板（lv ≥ slabDone 已浇完）画墨线框 + 9 m 板缝线，透地面；正在浇的板（0 < lv < slabDone）画红框进施工面
+    if (P.GEO) { const c = m.core, SD = P.GEO.slabDone || 0.7, slab = (arr, y, step) => { rect(arr, c.x0, c.x1, c.z0, c.z1, y); for (let x = c.x0 + step; x < c.x1 - 0.5; x += step) seg(arr, [x, y, c.z0], [x, y, c.z1]); };
+      if (s.base >= 1 && P.GEO.base) slab(out.built, P.GEO.base[1], 18);
+      (P.GEO.lv || []).forEach((L, i) => { const k = s.lv[i] || 0; if (k >= SD) slab(out.built, L.y1, 18); else if (k > 0) { rect(F, c.x0, c.x1, c.z0, c.z1, L.y1); if (k > 0.45) hatch(c.x0, c.x0 + (c.x1 - c.x0) * (k - 0.45) / (SD - 0.45), c.z0, c.z1, L.y1, 6); }   /* 0–0.45 内衬墙 + 中柱（只框出板位），0.45 起浇板（斜线按进度铺） */ }); }
     // 方块（底面 y = 0）
     const a = cube(s.vol), box = (arr, x0, y0, z0, x1, y1, z1) => { const v = [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]];
       for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) seg(arr, v[i], v[j]); };
@@ -66,26 +70,32 @@
     return out;
   }
 
-  const MOD = { id: 's101-volume', VPUB, SHOW, GAP, anchor, cube, lines: (HZ, t) => lines(HZ, t, { pit: [], cube: [], ghost: [], face: [] }),
+  const MOD = { id: 's101-volume', VPUB, SHOW, GAP, anchor, cube, lines: (HZ, t) => lines(HZ, t, { pit: [], cube: [], ghost: [], face: [], built: [] }),
     stats: { pit: 0, cube: 0, a: 0 },
-    build(scene, HZ, THREE, opts) { opts = opts || {}; this.HZ = HZ; this.L = { pit: [], cube: [], ghost: [], face: [] }; this.key = null;
+    build(scene, HZ, THREE, opts) { opts = opts || {}; this.HZ = HZ; this.L = { pit: [], cube: [], ghost: [], face: [], built: [] }; this.key = null; this.off = false;
       THREE = THREE || ROOT.THREE; this.T = THREE; const clip = Array.isArray(opts.clip) && opts.clip.length ? { clippingPlanes: opts.clip } : {};
       if (THREE && scene) {
         const mk = (dashed, xray, op, col) => { const g = new THREE.BufferGeometry(), buf = new Float32Array(MAXSEG * 6), at = new THREE.BufferAttribute(buf, 3); at.setUsage && at.setUsage(THREE.DynamicDrawUsage);
-          g.setAttribute('position', at); g.setDrawRange(0, 0);
+          g.setAttribute('position', at); g.setDrawRange(0, 0); let ld = null, la = null;
+          if (dashed) { ld = new Float32Array(MAXSEG * 2); la = new THREE.BufferAttribute(ld, 1); la.setUsage && la.setUsage(THREE.DynamicDrawUsage); g.setAttribute('lineDistance', la); }
           const mat = dashed ? new THREE.LineDashedMaterial(Object.assign({ color: 0x1c1a17, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: op, depthTest: !xray, depthWrite: false }, clip))
             : new THREE.LineBasicMaterial(Object.assign({ color: col || 0x1c1a17, transparent: true, opacity: op, depthTest: !xray, depthWrite: !xray }, clip));
-          const o = new THREE.LineSegments(g, mat); o.frustumCulled = false; o.renderOrder = xray ? (col ? 7 : 6) : 5; scene.add(o); return { o, buf, at, mat, op }; };
-        this.G = { pit: mk(true, true, 0.62), cube: mk(false, false, 0.95), ghost: mk(true, false, 0.4), face: mk(false, true, 0.9, 0xb3261e) };
+          const o = new THREE.LineSegments(g, mat); o.frustumCulled = false; o.renderOrder = xray ? (col ? 7 : 6) : 5; scene.add(o); return { o, buf, at, mat, op, ld, la }; };
+        this.G = { pit: mk(true, true, 0.62), cube: mk(false, false, 0.95), ghost: mk(true, false, 0.4), face: mk(false, true, 0.9, 0xb3261e), built: mk(false, true, 0.7) };
         const fm = new THREE.MeshBasicMaterial(Object.assign({ color: 0xcdb999, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide }, clip));
         this.fill = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), fm); this.fill.frustumCulled = false; this.fill.visible = false; this.fill.renderOrder = 4; scene.add(this.fill);
       }
       return this; },
-    update(t, cam) { if (!this.HZ) return 0; const key = Math.round(t * 8); if (key === this.key) return this.stats.pit + this.stats.cube;
+    update(t, cam) { if (!this.HZ) return 0;
+      // D-20 ⑤：窗外（t > SHOW[1]）全部隐藏一次后直接返回，不再算线段
+      if (t > SHOW[1] || t < SHOW[0]) { if (!this.off) { this.off = true; this.key = null; if (this.G) for (const k in this.G) { this.G[k].o.visible = false; this.G[k].o.geometry.setDrawRange(0, 0); } if (this.fill) this.fill.visible = false; this.stats.pit = this.stats.cube = this.stats.face = 0; } return 0; }
+      this.off = false; const key = Math.round(t * 8); if (key === this.key) return this.stats.pit + this.stats.cube;
       this.key = key; const L = lines(this.HZ, t, this.L), fade = 1 - Math.max(0, Math.min(1, (t - (SHOW[1] - 30)) / 30));
       this.stats.pit = L.pit.length / 6; this.stats.cube = L.cube.length / 6; this.stats.face = L.face.length / 6; this.stats.ex = L.ex; this.stats.a = L.a;
-      if (this.G) { for (const k of ['pit', 'cube', 'ghost', 'face']) { const g = this.G[k], arr = L[k], n = Math.min(arr.length, MAXSEG * 6); g.buf.set(arr.slice(0, n)); g.o.geometry.setDrawRange(0, n / 3); g.at.needsUpdate = true;
-          if (k === 'pit' || k === 'ghost') g.o.computeLineDistances(); g.mat.opacity = g.op * fade; g.o.visible = n > 0 && fade > 0; }
+      if (this.G) { for (const k of ['pit', 'cube', 'ghost', 'face', 'built']) { const g = this.G[k], arr = L[k], n = Math.min(arr.length, MAXSEG * 6), B = g.buf;
+          for (let i = 0; i < n; i++) B[i] = arr[i];   /* build 时一次分配的缓冲，原地写，不 slice 新数组 */
+          g.o.geometry.setDrawRange(0, n / 3); if (n) { g.at.needsUpdate = true; g.at.updateRange && (g.at.updateRange.offset = 0, g.at.updateRange.count = n); }
+          if (g.ld && n) { for (let i = 0; i < n; i += 6) { g.ld[i / 3] = 0; g.ld[i / 3 + 1] = Math.hypot(B[i + 3] - B[i], B[i + 4] - B[i + 1], B[i + 5] - B[i + 2]); } g.la.needsUpdate = true; }   /* 线段虚线距离（同 LineSegments.computeLineDistances，不新建属性） */ g.mat.opacity = g.op * fade; g.o.visible = n > 0 && fade > 0; }
         if (this.fill) { const a = L.a; this.fill.visible = a > 0.5 && fade > 0; if (this.fill.visible) { this.fill.scale.set(a, a, a); this.fill.position.set(L.A.x, a / 2, L.A.zS - a / 2); this.fill.material.opacity = 0.5 * fade; } } }
       return this.stats.pit + this.stats.cube; },
   };
