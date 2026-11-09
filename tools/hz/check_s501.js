@@ -73,4 +73,7 @@ if (!P.parts(W1, sheetCtx()).some(q => q.id === 'TRAIN')) fail('开通后 parts 
 { const O0 = HZ.P.OPEN, tq = O0 - 20, b0 = P.big(tq).num; HZ.P.OPEN = O0 + 10; const b1 = P.big(tq).num, L1 = P.lightAt(O0 + 2).on; HZ.P.OPEN = O0; P.model();
   if (b1 !== b0 + 10) fail(`改开通日后倒计时没跟着变（${b0}→${b1}）`); if (L1 !== 0) fail('改开通日后亮灯没跟着推迟'); }
 
+// 7. D-38：声明整片屋盖范围；开通前 13 天，屋盖各工序（已建的）在场
+{ const ks = (P.scope && P.scope.keys) || []; for (const k of ['asm1', 'asm2', 'asm3', 'merge', 'head']) if (HZ.K[k] && !ks.includes(k)) fail('S-501 scope.keys 缺屋盖工序 ' + k);
+  const tq = HZ.P.OPEN - 13; for (const k of ks) { const ps2 = HZ.K[k].parts.filter(p => p.st != null && p.st <= tq && !(p.rm && p.rm[0] >= 0 && p.rm[0] <= tq)); if (!ps2.length && k !== 'pv') fail(`开通前 13 天 ${k} 无在场构件`); } }
 console.log(`OK check_s501 parts=${nParts}  runs=${runs} cam=${P.cam.length} train_z=${Te.z} head_x=${Te.head.toFixed(1)}`);
