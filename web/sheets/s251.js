@@ -42,14 +42,19 @@
         return { id: 'U-' + Z + String(i + 1).padStart(2, '0'), zone: Z, zn, p, cells, rods, tons: p.t || 0, st: p.st, en: p.st + p.du, xa, xb, za, zb, box: [p.geo.min[0], p.geo.min[1], p.geo.min[2], p.geo.max[0], p.geo.max[1], p.geo.max[2]] };
       });
       units.push(...zu);
-      if (K[jk]) for (const p of K[jk].parts) if (p.geo && p.jigOf) jigs.push({ p, zone: Z, x: (p.geo.min[0] + p.geo.max[0]) / 2, z: (p.geo.min[2] + p.geo.max[2]) / 2 });
+      for (const k of [jk, jk.replace('jig', 'jigL')]) if (K[k]) for (const p of K[k].parts) if (p.geo && p.jigOf) jigs.push({ p, zone: Z, low: !!p.low, x: (p.geo.min[0] + p.geo.max[0]) / 2, z: (p.geo.min[2] + p.geo.max[2]) / 2 });
       zones.push({ Z, zn, ak, units: zu, lift: K[lk] ? K[lk].start : null, liftName: K[lk] ? K[lk].name : '', st: A.start, en: A.end,
         xa: Math.min(...zu.map(u => u.xa)), xb: Math.max(...zu.map(u => u.xb)), za: Math.min(...zu.map(u => u.za)), zb: Math.max(...zu.map(u => u.zb)) });
     }
     const jst = ZONES.map(z => K[z[1]] && K[z[1]].start).filter(Number.isFinite);
     const win = [Math.floor(Math.min(...jst, ...units.map(u => u.st))), Math.ceil(Math.max(...units.map(u => u.en)) + 3)];
     const ext = { xa: Math.min(...zones.map(z => z.xa)), xb: Math.max(...zones.map(z => z.xb)), za: Math.min(...zones.map(z => z.za)), zb: Math.max(...zones.map(z => z.zb)) };
-    const floorY = Math.min(...jigs.map(j => j.p.geo.min[1]));
+    const floorY = HZ.P.floorTop;   // 收进落地胎架 jigL 后最低胎架底是 −9.20，基准仍取候车层楼面顶
+    // 端部悬挑单元 = 吊装（不在楼面拼）：整个单元落在候车层楼板（floorS/N）南北端以外。出处：张翔宇等《杭州西站站房钢结构屋盖施工技术》（fx361.com/page/2022/0428/14548749.shtml）
+    // 「钢结构屋盖采用楼面拼装 + 分区旋转 + 合龙整体提升的方法安装，屋盖南侧悬挑网架结构采用吊装方法安装」；该文只写南区，北端按对称推定（hoistSrc = '推定'）
+    const FB = ['floorS', 'floorN'].flatMap(k => K[k] ? K[k].parts.flatMap(p => p.geo.boxes || [p.geo]) : []);
+    if (FB.length) { const fz0 = Math.min(...FB.map(b => b.min[2])), fz1 = Math.max(...FB.map(b => b.max[2]));
+      for (const u of units) if (u.za >= fz1 - 0.5 || u.zb <= fz0 + 0.5) { u.hoist = true; u.hoistEnd = u.za >= fz1 - 0.5 ? 'S' : 'N'; u.hoistSrc = u.hoistEnd === 'S' ? '论文' : '推定'; } }
     M = { HZ, sig, units, jigs, zones, win, ext, floorY, N: units.length, tonsAll: units.reduce((a, u) => a + u.tons, 0), rodsAll: units.reduce((a, u) => a + u.rods, 0) };
     return M;
   }
@@ -148,6 +153,8 @@
         else { g.strokeStyle = live ? C.red : C.faint; g.lineWidth = live ? 0.6 : 0.4; g.strokeRect(x, y, cw, ch); } });
       if (live) { g.strokeStyle = C.red; g.lineWidth = 1.4; g.strokeRect(X(u.xa), Y(u.za), (u.xb - u.xa) * k, (u.zb - u.za) * k); }
     }
+    // 端部悬挑吊装单元：外框橙色虚线（与胎架同为临时措施色），区别于楼面拼装
+    g.setLineDash([3, 2]); g.strokeStyle = C.temp; g.lineWidth = 0.9; for (const u of m.units) if (u.hoist) g.strokeRect(X(u.xa) - 1, Y(u.za) - 1, (u.xb - u.xa) * k + 2, (u.zb - u.za) * k + 2); g.setLineDash([]);
     // 楼面基座（D-37）：候车层楼板块外框（淡墨）与板下柱位（小点），与 S-201 / S-301 同一轴网
     g.strokeStyle = C.line; g.lineWidth = 0.5; for (const k of FLOOR_KEYS) if (HZ.K[k]) for (const p of HZ.K[k].parts) if (stOf(p, t) >= 2) for (const b of p.geo.boxes) g.strokeRect(X(b.min[0]), Y(b.min[2]), (b.max[0] - b.min[0]) * k, (b.max[2] - b.min[2]) * k);
     g.fillStyle = C.ink3; for (const ck of COL_KEYS) if (HZ.K[ck]) for (const p of HZ.K[ck].parts) { const x = (p.geo.min[0] + p.geo.max[0]) / 2, z = (p.geo.min[2] + p.geo.max[2]) / 2; g.fillRect(X(x) - 1, Y(z) - 1, 2, 2); }
@@ -157,6 +164,8 @@
     // 三区分界与区名
     for (const z of m.zones) { g.strokeStyle = C.ink; g.lineWidth = 0.8; g.setLineDash([4, 3]); g.strokeRect(X(z.xa), Y(z.za), (z.xb - z.xa) * k, (z.zb - z.za) * k); g.setLineDash([]); }
     g.restore();
+    if (!small) for (const e of ['S', 'N']) { const hu = m.units.filter(u => u.hoist && u.hoistEnd === e); if (!hu.length) continue; const zz = e === 'S' ? Math.max(...hu.map(u => u.zb)) : Math.min(...hu.map(u => u.za)), xx = Math.min(...hu.map(u => u.xa));
+      label((e === 'S' ? '南' : '北') + '端悬挑 ' + hu.length + ' 单元 · 落地胎架 + 履带吊吊装' + (hu[0].hoistSrc === '推定' ? '（按南端推定）' : ''), X(xx), Y(zz) + (e === 'S' ? 9 : -4), C.temp, { fs: 8 }); }
     if (!small) for (const z of m.zones) { const dn = z.units.filter(u => t >= u.en).length; label(z.zn + ' ' + dn + '/' + z.units.length, X(z.xb) - 2, Y(z.za) + 8, C.ink2, { al: 'r', b: true }); }
     // 可点：三个拼装区（小画幅也点得到）+ 每个单元（平面框 → 3D 世界盒）
     for (const z of m.zones) { const bs = z.units.map(u => u.box); addHit('Z-' + z.Z, z.zn + '拼装区（' + z.units.length + ' 个单元）', [X(z.xa), Y(z.za), (z.xb - z.xa) * k, (z.zb - z.za) * k], [0, 1, 2].map(i => Math.min(...bs.map(b => b[i]))).concat([3, 4, 5].map(i => Math.max(...bs.map(b => b[i])))), clip); }
@@ -188,7 +197,8 @@
         poly(SL.map(q => [q[0], FT, q[1]]), '#ebe4d6', C.ink2, 0.9); }
       g.setLineDash([3, 3]); poly(base.frame.map(q => [q[0], FT, q[1]]), null, C.line, 0.6); g.setLineDash([]);
       g.strokeStyle = C.ink3; g.lineWidth = 1.2; for (const c of base.cols) { const a = Q([c[0], FB, c[1]]), b = Q([c[0], FB - 4, c[1]]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.moveTo(b[0] - 3, b[1] - 1); g.lineTo(b[0] + 3, b[1] + 1); g.stroke(); }
-      g.strokeStyle = C.temp; g.lineWidth = 1.4; for (const j of base.jigs) { const a = Q([j.x, j.y0, j.z]), b = Q([j.x, j.y1, j.z]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+      g.save(); g.beginPath(); g.rect(ra.x0, ra.y0, ra.x1 - ra.x0, box.y1 - 44 - ra.y0); g.clip();   // 落地胎架（地坪 / 地铁层底板）比楼面胎架长 24–33 m，裁在本栏内
+      g.strokeStyle = C.temp; g.lineWidth = 1.4; for (const j of base.jigs) { const a = Q([j.x, j.y0, j.z]), b = Q([j.x, j.y1, j.z]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } g.restore();
       { const F = base.frame, q = Q([F[2][0], FT, F[2][1]]); label('候车层楼面 ▽+' + FT.toFixed(2) + '（' + base.slabKey + '）' + (base.open ? ' · 本段 ' + base.open + ' 格下方无楼板（开口或楼面外）' : ''), q[0] + 4, q[1] + 6, base.open ? C.red : C.ink2, { fs: 8 }); }
       rods.forEach((r, i) => { const a = Q(r[0]), b = Q(r[1]); g.strokeStyle = onFlag[i] ? (liveU ? C.red : C.ink) : C.line; g.lineWidth = r[2] >= 0.3 ? 1.6 : 0.8; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); });
       const seen = new Set(); g.fillStyle = C.ink;
