@@ -12,10 +12,10 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 6 |
-| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 32 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 5 |
+| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 33 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 9 |
-| 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 28 |
+| 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 29 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 8 |
 | 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 3 |
 | 退回记录 | CLAIMS.md | 近 7 天退回（更早的移入 docs/claims-archive.md） | 8 |
@@ -79,8 +79,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-20 | hark-liuzhijie | S-101 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-101」节：①右侧剖面加标高数字（至少 ±0、-15.4、坑底）与层名 B1–B4（地铁层标明）、构件名、简短图例；②三维与剖面完成度一致：t=182「回筑 B2 板、拆第 3 道撑」时三维要看得到中央深坑、内支撑与分层回筑（用 parts/焦点或局部剖切，不用改共用文件则在插件内完成；需宿主接口在 CLAIMS 接口请求提）；③t=355「4/4」时剖面顶板不再是虚线；④信息卡只留一个大数字。只改 web/sheets/s101.js。验收：check_all + check_s101；t=10、182、355 截图 ⑤（11-08 补，Traycer 审查 4）`web/mods/s101.js` 约 86–87 行每次 key 变化 `slice` 新数组并 `computeLineDistances()`，t > 420 体量已隐藏后仍在算：改为 build 时一次分配缓冲、只改 drawRange / needsUpdate 范围，隐藏后 update 直接返回（可参照 web/mods/yunmen.js 的做法）；check_s101 末节 update p99 断言照过。可改 web/mods/s101.js | 在做（11-09 合入 da51f08：剖面图例；②三维与剖面一致、③t=355 顶板实线、④只留一个大数字未见对应提交，请自查后提交或回报「已满足」；⑤ s101 mod 缓冲改造待做） | 11-08 hark-cr |
 | D-28 | hark-cs | 构件信息卡 + 实物图钉 | 构件信息卡 + 实物图钉，做成模块 `web/mods/info.js`（走 HZ_MODS：`pick/unpick` 弹卡显示 `part.info`、「看建成后 / 看开工时」两个按钮调用 `__pv` 现有接口（如 `ctx.set(t)` = `__pv.set`）；`HZR.forPart` 非空的构件在 3D 打小图钉，点开列记录与原链接；DOM 只挂 `#mod-ui`）。接口见 docs/hz-atlas-check.md 第三节 12–13（hzview.js?v=17 起）。不改共用文件，缺接口在 CLAIMS 接口请求提；hzwest.html 加 script 标签由 hark-cr 做。验收：check_all + 新 `tools/hz/check_info.js`；真机截图 2 张 | 在做（11-09 第一片合入并接线：hzwest.html 加载 mods/info.js?v=1，check_info 进 check_all；剩实物图钉 + 真机截图 2 张） | 11-08 hark-cr |
 | D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定 | 待做 | 11-08 hark-cr |
-| D-36 | hark-fangyi、hark-cs、hark-liuzhijie | 分图二维图纸关掉未建幽灵线 | 委托人 11-09 11:05：淡影既容易误解又影响观看，分图上只画本图范围内已建与在建的东西。宿主 3D 已改为范围外隐藏（hzview.js?v=27，`SCOPE_OUT = 'hide'`，docs/hz-atlas-check.md 第三节 15），未建设计位红线、S-101 体量模块终值虚线外框（`m.G.ghost`）宿主已隐藏。请各自把二维 `draw` 里未建构件的淡红虚线 / 幽灵框（`C.ghost`、`st < 0` 分支）改为不画：S-201 `web/sheets/s201.js`（hark-fangyi）、S-401 `web/sheets/s401.js` 未铺区淡红等高线（hark-cs）、S-101 / S-501（hark-liuzhijie，含 mods/s101.js 的 ghost 层可直接删）。时间轴、横道图里「未来」的表达（S-001 全显）不在此列。只改各自文件。验收：check_all；截图对比前后 | 待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；余 二维 s101/s501 hark-liuzhijie） | 11-09 hark-cr |
-| D-38 | hark-liuzhijie | S-501 声明整片屋盖范围 | 委托人 11-09 11:37 同意：宿主隐藏模式下（hzview.js?v=28），S-501 开通前「站房屋盖」框只认到 2 块合龙段，被当碎片去掉，开通前 13 天画面没有屋盖。请在 `web/sheets/s501.js` 显式声明 `scope`，用 `keys` 列出屋盖工序（asm1..3、merge、head、sky、clad、pv 等，以 HZ.acts 为准），让整片屋盖在 S-501 全程可见。只改 s501.js 与 check_s501.js。验收：check_all（含 check_scopecam）全 OK；附开通前 13 天、开通日截图 | 待做（check_linkage 断言已按声明改，可推） | 11-09 hark-cr |
+| D-36 | hark-fangyi、hark-cs、hark-liuzhijie | 分图二维图纸关掉未建幽灵线 | 委托人 11-09 11:05：淡影既容易误解又影响观看，分图上只画本图范围内已建与在建的东西。宿主 3D 已改为范围外隐藏（hzview.js?v=27，`SCOPE_OUT = 'hide'`，docs/hz-atlas-check.md 第三节 15），未建设计位红线、S-101 体量模块终值虚线外框（`m.G.ghost`）宿主已隐藏。请各自把二维 `draw` 里未建构件的淡红虚线 / 幽灵框（`C.ghost`、`st < 0` 分支）改为不画：S-201 `web/sheets/s201.js`（hark-fangyi）、S-401 `web/sheets/s401.js` 未铺区淡红等高线（hark-cs）、S-101 / S-501（hark-liuzhijie，含 mods/s101.js 的 ghost 层可直接删）。时间轴、横道图里「未来」的表达（S-001 全显）不在此列。只改各自文件。验收：check_all；截图对比前后 | 待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；二维 s101/s501 hark-liuzhijie 自查已满足（11-10 随 D-38 合入记录）；待截图对比） | 11-09 hark-cr |
 
 ## 接口请求
 
