@@ -229,7 +229,7 @@
     const rowDone = []; for (const q of d.tiles) { const k = stOf(q.part, t); if (rowDone[q.j] == null || k < rowDone[q.j]) rowDone[q.j] = k; }
     g.lineWidth = 0.6;   // 按四种笔型分桶，一桶一次 stroke
     const ISO = ['rgba(29,26,23,.62)', 'rgba(29,26,23,.34)', 'rgba(179,32,42,.40)', 'rgba(179,32,42,.20)'], bk = [[], [], [], []];
-    for (const [L, a, b] of d.iso) { const k = rowDone[Math.floor(((a[1] + b[1]) / 2 + P.roofB) / S)]; bk[(k != null && k >= 2 ? 0 : 2) + (L % 10 === 0 ? 0 : 1)].push(a, b); }
+    for (const [L, a, b] of d.iso) { const k = rowDone[Math.floor(((a[1] + b[1]) / 2 + P.roofB) / S)]; if (k != null && k >= 2) bk[L % 10 === 0 ? 0 : 1].push(a, b); }   // D-36：未铺处不画淡红幽灵线
     bk.forEach((seg, n) => { if (!seg.length) return; g.strokeStyle = ISO[n]; g.beginPath(); for (let k = 0; k < seg.length; k += 2) { g.moveTo(X(seg[k][1]), Y(seg[k][0])); g.lineTo(X(seg[k + 1][1]), Y(seg[k + 1][0])); } g.stroke(); });
     g.restore();
     // 4 屋面外缘（云形轮廓）
@@ -273,6 +273,7 @@
     get window() { const K = G.HZ && G.HZ.K; return K && K.holes && K.pv ? [K.holes.start, K.pv.end] : [683, 785]; },
     // 大数字：屋面封闭率（采光顶 + 金属屋面按块面积，只算铺完的块）；补孔阶段说明为何还是 0（D-22 ③）
     big: t => { const st = stats(t), K = data().K; return { num: Math.round(st.close), unit: '%', label: t < K.sky.start ? `屋面封闭 · 先补提升孔 ${st.holesTot - st.holesOpen}/${st.holesTot}` : '屋面封闭（按面积）' }; },
+    scope: { keys: ['holes', 'sky', 'clad', 'pv', 'mast', 'asm1', 'asm2', 'asm3', 'merge', 'head'] },   // D-34
     draw,
     stats,
     // 3D 引线锚点（D-22 ④，待宿主接 pl.leadAt，见 CLAIMS 接口请求）：铺金属屋面 / 光伏时落在当前铺设前沿、离开十字采光顶的东侧屋面板上
