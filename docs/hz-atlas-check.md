@@ -97,6 +97,7 @@ node tools/hz/check_real.js
     - 宿主状态：`__pv.mods`（已启用模块 id）、`__pv.modsList`、`__pv.modPicks / modUnpicks`（调用计数，供检查与真机复测）。
 13. **模块 DOM 容器 `#mod-ui`**：`hzwest.html` 在 `#v3` 末尾放一个空的 `<div id="mod-ui"></div>`（`position:absolute; inset:0; z-index:3; pointer-events:none`，其直接子元素 `pointer-events:auto`）。宿主永远不往里放东西；模块的卡片、图钉等 DOM 只挂这里，自行绝对定位，不要铺满整个容器（会挡住 3D 拖拽）。id 不改。
     检查：`check_linkage` 在 vm 里测 `PL.modsCall`（跳过无方法的模块、抛错只 warn 一次、顺序与参数），并对源码断言 pick / unpick 接线、`#mod-ui` 容器与 `hzview.js?v` ≥ 17。
+14. **插件引线锚点 `pl.leadAt(t)`（可选，11-09 起，hzview.js?v=23）**：插件图上、未选中构件时，宿主先调 `leadAt(t)`，返回 `{ p: [x, y, z], t1, t2, key? }` 即以 `p` 为红点、`t1 / t2` 为两行字；返回 null 或抛错则回落到默认（本图工序里最新开工构件）。S-401 已实现；S-201（D-19 ③ 请求的 `leadAnchor`）请改用同名 `leadAt`。
 
 ## 四、图号规则与映射表
 
