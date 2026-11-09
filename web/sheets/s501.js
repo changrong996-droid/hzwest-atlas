@@ -51,7 +51,7 @@
   function big(HZ, t) {
     const O = HZ.P.OPEN;
     if (t < O) return { num: Math.ceil(O - t - 1e-9), unit: '天', label: '距开通（' + HZ.dayDate(O) + '）' };
-    return { num: FIRST.no, unit: FIRST.time, label: '首趟列车 · ' + FIRST.dir };
+    return { num: FIRST.no, unit: '次', label: '首趟列车 · ' + FIRST.time + ' · ' + FIRST.dir };
   }
 
   function frame(g, w, h, tbo) {
@@ -109,10 +109,10 @@
     // 站房屋盖轮廓（HZ.R 极坐标，同 jack 平面）
     const roof = () => { g.beginPath(); for (let a = 0; a <= 96; a++) { const th = a / 96 * Math.PI * 2, r = HZ.R(th), xx = Math.cos(th) * r, zz = Math.sin(th) * r; a ? g.lineTo(X(xx), Y(zz)) : g.moveTo(X(xx), Y(zz)); } g.closePath(); };
     roof(); g.fillStyle = '#ebe4d6'; g.fill();
-    if (L.on > 0) { g.save(); roof(); g.clip(); const rg = L.r > 0 ? L.r : 2000; g.beginPath(); g.arc(X(0), Y(0), rg * s, 0, Math.PI * 2); g.fillStyle = `rgba(242,169,59,${0.55 * L.on})`; g.fill(); g.restore(); }
+    if (L.on > 0) { g.save(); roof(); g.clip(); const rg = L.r > 0 ? L.r : 2000; g.beginPath(); g.arc(X(0), Y(0), rg * s, 0, Math.PI * 2); g.fillStyle = `rgba(242,169,59,${0.22 * L.on})`; g.fill(); g.restore(); }
     roof(); g.strokeStyle = C.ink; g.lineWidth = 1.1; g.stroke();
     // 站台（灰底）+ 股道（线）：铺轨按构件状态
-    for (const q of m.plats) { const st = stOf(q.p, t); if (st === -1) continue; const k = lit((q.b.min[0] + q.b.max[0]) / 2, (q.b.min[2] + q.b.max[2]) / 2); rectXZ(q.b, k > 0.5 ? C.lit3 : 'rgba(207,200,187,.55)', null); }
+    for (const q of m.plats) { const st = stOf(q.p, t); if (st === -1) continue; const k = lit((q.b.min[0] + q.b.max[0]) / 2, (q.b.min[2] + q.b.max[2]) / 2); rectXZ(q.b, k > 0.5 ? '#efe2c4' : 'rgba(207,200,187,.55)', null); }
     for (const q of m.tracks) { const st = stOf(q.p, t); if (st === -1 || st === 3) continue; const zc = (q.b.min[2] + q.b.max[2]) / 2; g.strokeStyle = st < 2 ? C.red : C.ink2; g.lineWidth = st < 2 ? 1 : 0.6;
       const x1 = st < 2 ? q.b.min[0] + (q.b.max[0] - q.b.min[0]) * st : q.b.max[0]; g.beginPath(); g.moveTo(X(q.b.min[0]), Y(zc)); g.lineTo(X(x1), Y(zc)); g.stroke(); }
     // 云谷（两场之间 28 m）
@@ -121,13 +121,13 @@
     const corners = new Map(); for (const q of m.tod) { const key = Math.sign(q.b.min[0] + q.b.max[0]) + ',' + Math.sign(q.b.min[2] + q.b.max[2]); if (!corners.has(key)) corners.set(key, []); corners.get(key).push(q); }
     for (const list of corners.values()) { let done = 0, live = null; for (const q of list) { const st = stOf(q.p, t); if (st === 2) done++; else if (st >= 0 && st < 2) live = q; }
       const fr = done / list.length, b0 = list[0].b, cxz = [(b0.min[0] + b0.max[0]) / 2, (b0.min[2] + b0.max[2]) / 2], k = lit(cxz[0], cxz[1]);
-      if (done || live) { rectXZ(b0, k > 0.5 ? `rgba(242,169,59,${0.35 + 0.4 * fr})` : `rgba(93,86,76,${0.12 + 0.38 * fr})`, C.ink, 0.9); if (live) rectXZ(live.b, null, C.red, 1.4); }
+      if (done || live) { rectXZ(b0, k > 0.5 ? `rgba(214,170,100,${0.16 + 0.2 * fr})` : `rgba(93,86,76,${0.12 + 0.38 * fr})`, C.ink, 0.9); if (live) rectXZ(live.b, null, C.red, 1.4); }
       else rectXZ(b0, null, C.ink3, 0.6); }
     // 云门：基础虚线 → 两腿逐段 → 横梁 → 幕墙双线
     const ymS = m.ymParts.map(q => ({ q, st: stOf(q.p, t) }));
     const ymBox = uBox(m.ymParts.filter(q => q.k === 'ym'));
     { const f = ymS.find(o => o.q.k === 'ymf'); if (f && f.st !== -1) { g.setLineDash([4, 3]); rectXZ(f.q.b, null, f.st < 2 ? C.red : C.ink3, 0.8); g.setLineDash([]); } }
-    for (const o of ymS) { if (o.q.k !== 'ym' || o.st === -1) continue; const k = lit(0, 208); rectXZ(o.q.b, k > 0.5 ? 'rgba(242,169,59,.28)' : 'rgba(93,86,76,.13)', o.st < 2 ? C.red : C.ink, o.st < 2 ? 1.3 : 0.8); }
+    for (const o of ymS) { if (o.q.k !== 'ym' || o.st === -1) continue; const k = lit(0, 208); rectXZ(o.q.b, k > 0.5 ? 'rgba(214,170,100,.2)' : 'rgba(93,86,76,.13)', o.st < 2 ? C.red : C.ink, o.st < 2 ? 1.3 : 0.8); }
     for (const o of ymS) { if (o.q.k !== 'ymc' || o.st === -1) continue; const k = o.st >= 2 ? 1 : o.st; g.strokeStyle = C.glass; g.lineWidth = 1.6; const zc = o.q.b.min[2]; g.beginPath(); g.moveTo(X(o.q.b.min[0]), Y(zc)); g.lineTo(X(o.q.b.min[0] + (o.q.b.max[0] - o.q.b.min[0]) * k), Y(zc)); g.stroke(); }
     // 云门塔吊：十字 + 臂长圆（拆除后消失）
     for (const q of m.cranes) { const st = stOf(q.p, t); if (st === -1 || st === 3) continue; const x = X((q.b.min[0] + q.b.max[0]) / 2), y = Y((q.b.min[2] + q.b.max[2]) / 2);
@@ -136,7 +136,7 @@
     if (L.r > 0 && L.on > 0) { g.strokeStyle = C.lit; g.lineWidth = 2; g.beginPath(); g.arc(X(0), Y(0), L.r * s, 0, Math.PI * 2); g.stroke(); }
     // 首趟列车路径：开通前一周起用红色虚线 + 箭头预告；开通后列车本体（8 节，宽度至少 5 px）
     const showPath = t >= m.OPEN - 30;
-    if (showPath) { g.strokeStyle = t >= m.OPEN ? C.lit : C.red; g.lineWidth = 1.4; g.setLineDash([8, 4]); g.beginPath(); g.moveTo(X(-1500 * T.dir), Y(T.z)); g.lineTo(X(T.stop + (T.dir > 0 ? TRAIN.nose : -TRAIN.nose)), Y(T.z)); g.stroke(); g.setLineDash([]);
+    if (showPath) { g.strokeStyle = t >= m.OPEN ? C.ink3 : C.red; g.lineWidth = 1; g.setLineDash([8, 5]); g.beginPath(); g.moveTo(X(-1500 * T.dir), Y(T.z)); g.lineTo(X(T.stop + (T.dir > 0 ? TRAIN.nose : -TRAIN.nose)), Y(T.z)); g.stroke(); g.setLineDash([]);
       const ax = X(T.stop + T.dir * (TRAIN.nose + 2)), ay = Y(T.z); g.fillStyle = g.strokeStyle; g.beginPath(); g.moveTo(ax + T.dir * 7, ay); g.lineTo(ax - T.dir * 3, ay - 5); g.lineTo(ax - T.dir * 3, ay + 5); g.closePath(); g.fill(); }
     if (T.vis) { const th = Math.max(5, 3.4 * s), y = Y(T.z), xa = X(Math.min(T.head, T.tail)), xb = X(Math.max(T.head, T.tail));
       g.fillStyle = C.ink; g.fillRect(xa, y - th / 2, xb - xa, th);
@@ -157,7 +157,14 @@
       label('云门 ' + Math.round(m.ymTop) + ' m', X(96), Y(208), C.ink, { b: true });
       label('上盖开发', X(160), Y(-122), C.ink2);
       if (showPath) label(t >= m.OPEN ? '首趟列车 ' + FIRST.no : '首趟列车路径', Math.max(pa.x0 + 4, X(-430)), Y(T.z) - 10, t >= m.OPEN ? C.temp : C.red, { b: true });
-      label('北 ↑', pa.x1 - 6, pa.y0 + 8, C.ink3, { al: 'r' });
+      // 指北针、100 m 比例尺、图例、建筑名称（D-21）
+      { const nx = pa.x1 - 16, ny = pa.y0 + 26; g.strokeStyle = C.ink; g.fillStyle = C.ink; g.lineWidth = 1; g.beginPath(); g.arc(nx, ny, 9, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.moveTo(nx, ny - 8); g.lineTo(nx - 3.5, ny + 4); g.lineTo(nx, ny + 1.5); g.lineTo(nx + 3.5, ny + 4); g.closePath(); g.fill(); label('N', nx, ny - 15, C.ink, { al: 'c', b: true, mono: true }); }
+      { const sx = pa.x0 + 10, sy = pa.y1 - 10, L100 = 100 * s; g.strokeStyle = C.ink; g.fillStyle = C.ink; g.lineWidth = 1; g.beginPath(); g.moveTo(sx, sy - 4); g.lineTo(sx, sy); g.lineTo(sx + L100, sy); g.lineTo(sx + L100, sy - 4); g.stroke(); g.fillRect(sx, sy - 3, L100 / 2, 2); label('0', sx, sy - 10, C.ink3, { al: 'c', mono: true, fs: 8 }); label('100 m', sx + L100, sy - 10, C.ink3, { al: 'c', mono: true, fs: 8 }); }
+      label('站房（屋盖）', X(0), Y(0), C.ink, { al: 'c', b: true });
+      { let nc = 0; for (const list of corners.values()) { const b0 = uBox(list); if (nc++ < 4) label('配楼', X((b0.min[0] + b0.max[0]) / 2), Y((b0.min[2] + b0.max[2]) / 2), C.ink2, { al: 'c', fs: 8 }); } }
+      if (!tall) { const lx = pa.x0 + 150, ly = pa.y1 - 30; g.save(); g.fillStyle = C.paper; g.fillRect(lx - 6, ly - 10, 96, 40); g.strokeStyle = C.line; g.lineWidth = 0.6; g.strokeRect(lx - 6, ly - 10, 96, 40);
+        g.strokeStyle = C.red; g.lineWidth = 1.3; g.strokeRect(lx, ly - 4, 14, 6); g.strokeStyle = C.ink3; g.lineWidth = 1; g.setLineDash([5, 3]); g.beginPath(); g.moveTo(lx, ly + 14); g.lineTo(lx + 14, ly + 14); g.stroke(); g.restore();
+        label('在建', lx + 20, ly - 1, C.ink2, { fs: 8 }); label('列车路径', lx + 20, ly + 14, C.ink2, { fs: 8 }); }
     }
     // 云门立面小样（右下角，向北看）：两腿 → 横梁到 80 m，在建段红；亮灯后暖色
     if (!small) { const iw = tall ? bw - 30 : clamp(pw * 0.2, 70, 120), ih = tall ? botH - 22 : iw * 0.62, ix = tall ? box.x0 + 15 : pa.x1 - iw - 6, iy = tall ? box.y1 - botH + 16 : pa.y1 - ih - 6, k = tall ? Math.min(iw / 200, (ih - 10) / 80) : iw / 200, base = iy + ih - 6, lx = v => ix + iw / 2 + v * k, ly = v => base - v * k * 0.9;
