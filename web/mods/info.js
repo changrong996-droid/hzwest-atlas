@@ -1,7 +1,7 @@
 // 构件信息卡（D-28 第一片）· hark-cs
 // 选中插件图纸的构件时，在 #mod-ui 里弹一张小卡：标题、part.info 各行、挂接的实物记录（HZR.forPart）。
 // 若 part 带 t0 / t1（HZ 天数，开工 / 完工），卡上多两个按钮「看开工时 / 看建成后」调 ctx.set(t)；没有就不显示按钮。
-// 图钉（3D 小图钉）留给下一片。DOM 只挂 #mod-ui；卡片自带关闭键。
+// 第二片：当前图纸里挂有实物记录（HZR.forPart 非空）的构件，在 3D 里打一个小图钉（DOM，随相机投影），点图钉 = 选中该构件（弹卡）。DOM 只挂 #mod-ui；卡片自带关闭键。
 (function () {
   'use strict';
   const G = typeof window !== 'undefined' ? window : globalThis;
@@ -37,10 +37,41 @@
     const s = document.createElement('style'); s.id = 'hz-info-css';
     s.textContent = '.hz-info{position:absolute;max-width:260px;background:rgba(250,248,240,.95);color:#222;border:1px solid #333;padding:8px 10px;font:12px/1.5 sans-serif;box-shadow:2px 2px 0 #3334}' +
       '.hz-info-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}.hz-info-x{cursor:pointer;padding:0 4px}' +
+      '.hz-pin{position:absolute;width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#c0392b;border:1.5px solid #fff;box-shadow:0 0 0 1px #333;cursor:pointer;color:#fff;font:bold 9px/13px sans-serif;text-align:center}' +
       '.hz-info-r i{font-style:normal;color:#a60;margin-right:6px}.hz-info-b{margin-top:6px}.hz-info-b button{margin-right:6px;font-size:12px}';
     document.head.appendChild(s);
   }
+
+  // ---- 实物图钉（第二片）----
+  const pins = {}; let last = -1e9, cache = [], lastSheet = '';
+  function pinList(sheet, t) {
+    const R = G.HZR, P = G.HZ_SHEET_PLUGINS || [];
+    if (!R || typeof R.forPart !== 'function') return [];
+    const pl = P.find(q => q && (q.id === sheet)); if (!pl || typeof pl.parts !== 'function') return [];
+    let ps = []; try { ps = pl.parts(t, { w: 800, h: 600, t, sheet }) || []; } catch (e) { return []; }
+    return ps.filter(p => p && p.id && Array.isArray(p.box) && p.box.length === 6 && R.forPart(sheet, p.id).length).slice(0, 40)
+      .map(p => ({ id: String(p.id), n: R.forPart(sheet, p.id).length, c: [(p.box[0] + p.box[3]) / 2, p.box[4], (p.box[2] + p.box[5]) / 2] }));
+  }
+  function pinsUpdate(t, cam, pv, root) {
+    if (!cam || !pv || !root || typeof document === 'undefined') return;
+    const sheet = pv.sheet, now = Date.now();
+    if (sheet !== lastSheet || now - last > 1000) { cache = pinList(sheet, t); last = now; lastSheet = sheet; }
+    style(); cam.updateMatrixWorld();
+    const W = root.clientWidth || 800, H = root.clientHeight || 600, seen = {};
+    for (const p of cache) {
+            const q = new (cam.position.constructor)(p.c[0], p.c[1], p.c[2]).project(cam);
+      let el = pins[p.id];
+      if (!el) { el = pins[p.id] = document.createElement('div'); el.className = 'hz-pin'; el.title = '实物记录 ' + p.n + ' 条：点开看';
+        el.addEventListener('click', ev => { ev.stopPropagation(); if (pv.plugSelect) pv.plugSelect(el.getAttribute('data-id')); }); root.appendChild(el); }
+      el.setAttribute('data-id', p.id); el.textContent = p.n > 1 ? p.n : '';
+      const x = (q.x + 1) / 2 * W, y = (1 - q.y) / 2 * H, ok = q.z < 1 && x > 4 && y > 4 && x < W - 4 && y < H - 4;
+      el.style.display = ok ? 'block' : 'none'; el.style.left = (x - 8) + 'px'; el.style.top = (y - 20) + 'px'; seen[p.id] = 1;
+    }
+    for (const k of Object.keys(pins)) if (!seen[k]) { const e = pins[k]; if (e.parentNode) e.parentNode.removeChild(e); delete pins[k]; }
+  }
   const MOD = {
+    update(t, cam) { if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return; pinsUpdate(t, cam, G.__pv, document.getElementById('mod-ui')); },
+    pinList,
     id: 'info',
     html,
     rows,
