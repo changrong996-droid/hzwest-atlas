@@ -111,21 +111,25 @@ for j in jobs:
 for w in last: people.setdefault(w, {'name': w, 'active': [], 'done_today': 0})
 for p in people.values():
     p['last_at'] = last.get(p['name']); idle = NOW - p['last_at'] if p['last_at'] else None
-    n = len(p['active'])
+    # 只数「球在他手上」的活（没开工/在做/被退回）；交了等审查的不算他的负担
+    p['mine'] = [i for i in p['active'] if next(j for j in jobs if j['id'] == i)['stage'] <= 1
+                 or next(j for j in jobs if j['id'] == i)['returned']]
+    n = len(p['mine'])
     p['state'] = ('overload' if n >= 3 else 'stopped' if n and (idle is None or idle >= AMBER)
-                  else 'working' if n else 'idle')
+                  else 'working' if n else 'review' if p['active'] else 'idle')
+    p['away'] = p['name'] != HUB and (idle is None or idle >= 6 * 3600)   # 6 小时没动静或从没提交 = 不在场
     p['idle_min'] = idle // 60 if idle is not None else None
 
 # 建议：活太多的人，把还没开工的分出去
 sug = []
 J = {j['id']: j for j in jobs}
-free = [p for p in people.values() if p['state'] == 'idle' and p['name'] != HUB]
+free = [p for p in people.values() if p['state'] in ('idle', 'review') and not p['away'] and p['name'] != HUB]
 for p in people.values():
     if p['state'] != 'overload': continue
-    waiting = [J[i] for i in p['active'] if J[i]['stage'] == 0][1:]
+    waiting = [J[i] for i in p['mine'] if J[i]['stage'] == 0][1:]
     for j in waiting:
         sug.append({'job': j['id'], 'from': p['name'], 'to': [f['name'] for f in free][:3],
-                    'why': f"{p['name']} 手上 {len(p['active'])} 件，这件还没开工"})
+                    'why': f"{p['name']} 要做的有 {len(p['mine'])} 件，这件还没开工"})
 print(json.dumps({'generated_at': datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).isoformat(timespec='seconds'),
                   'people': sorted(people.values(), key=lambda p: p['name']), 'jobs': jobs, 'suggestions': sug},
                  ensure_ascii=False, indent=1))

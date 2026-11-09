@@ -34,7 +34,8 @@ header nav{margin-left:auto;display:flex;gap:14px;font-size:12px}
 .row:first-child{border-top:0}.row:hover{background:#fafafa}
 .nm{display:flex;align-items:center;gap:8px;min-width:0}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
-.d-working{background:var(--green)}.d-stopped{background:var(--amber)}.d-overload{background:var(--red)}.d-idle{background:var(--gray)}.d-hub{background:var(--blue)}
+.d-working{background:var(--green)}.d-stopped{background:var(--amber)}.d-overload{background:var(--red)}.d-idle{background:var(--gray)}.d-hub{background:var(--blue)}.d-review{background:#9cc9a5}
+.out{margin-top:6px;padding:8px 6px;border-top:1px dashed var(--line);font-size:12px;color:#888;cursor:pointer;display:flex;gap:10px;align-items:baseline}.out span{color:#555}.out em{font-style:normal;cursor:pointer}.out em:hover{text-decoration:underline}.out u{text-decoration:none;color:#aaa;margin-left:auto}
 .nm b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ss{font-size:12px;color:var(--mid);line-height:1.3}.ss b{font-weight:600;color:var(--ink)}
 .ss.warn b{color:var(--amber)}.ss.bad b{color:var(--red)}
@@ -126,9 +127,10 @@ function fallback(d) {
 
 function personLine(p) {
   if (/集成/.test(p.role || '') && !p.active.length) return [`<b>在把关</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
-  if (p.state === 'overload') return [`<b>活太多</b> · 手上 ${p.active.length} 件`, 'bad'];
+  if (p.state === 'overload') return [`<b>活太多</b> · 要他做的 ${p.mine.length} 件`, 'bad'];
   if (p.state === 'stopped') return [`<b>停了</b> · ${p.idle_min == null ? '一直没动静' : dur(p.idle_min) + '没动静'}`, 'warn'];
   if (p.state === 'working') return [`<b>在干</b> · ${p.idle_min != null ? dur(p.idle_min) + '前动过' : ''}`, ''];
+  if (p.state === 'review') return [`<b>交完了</b> · 等审查`, ''];
   return [`<b>空闲</b> · 可以派活`, ''];
 }
 function track(j) {
@@ -149,18 +151,32 @@ function render() {
   for (const k of ['live', 'board', 'repo']) document.getElementById('lk-' + k).href = (d.links || {})[k] || '#';
   const role = Object.fromEntries(Object.entries(d.roles || {}).flatMap(([k, v]) => k.split(' / ').map(x => [x.trim(), v])));
   const J = Object.fromEntries(F.jobs.map(j => [j.id, j]));
-  const P = F.people.map(p => ({...p, role: role[p.name] || ''}))
-    .filter(p => p.active.length || p.done_today || role[p.name]);
-  const rank = p => /集成/.test(p.role) ? 5 : {overload: 0, stopped: 1, working: 2, idle: 3}[p.state];
-  P.sort((a, b) => rank(a) - rank(b) || b.active.length - a.active.length);
+  // 人的状态只看「球在他手上」的活：没开工、在做、被退回。交了等审查的活算 hark-cr 的，不算他的负担。
+  const AWAY = 6 * 60, now = Date.now() / 1000;
+  const ALL = F.people.map(p => {
+    const act = p.active.map(i => J[i]).filter(j => j && !j.done);
+    const mine = act.filter(j => j.stage <= 1 || j.returned).map(j => j.id);
+    const idle = p.last_at ? Math.round((now - p.last_at) / 60) : null;
+    const hub = /集成/.test(role[p.name] || '');
+    const state = hub ? 'hub' : mine.length >= 3 ? 'overload' : mine.length && (idle == null || idle >= 120) ? 'stopped'
+      : mine.length ? 'working' : act.length ? 'review' : 'idle';
+    const away = !F.rough && !hub && (idle == null || idle >= AWAY);   // 6 小时没动静或从没交过东西 = 不在场
+    return {...p, role: role[p.name] || '', mine, idle_min: idle, state, away};
+  });
+  const P = ALL.filter(p => !p.away && (p.active.length || p.done_today || p.role || (p.idle_min ?? 1e9) < AWAY));
+  const OUT = ALL.filter(p => p.away);
+  const rank = p => ({overload: 0, stopped: 1, working: 2, review: 3, idle: 4, hub: 5})[p.state];
+  P.sort((a, b) => rank(a) - rank(b) || b.mine.length - a.mine.length);
 
   // 该你介入：拍板 + 自动发现的问题
   const asks = (d.blockers || []).filter(b => b.who === '委托人');
   const al = [];
   for (const s of F.suggestions || []) al.push(['blue', '分流', `${J[s.job]?.title || s.job}：${s.why}${s.to.length ? '，可分给 ' + s.to.join('、') : ''}`, s.from]);
-  for (const j of F.jobs) if (!j.done && j.wait?.level === 'red') al.push(['red', '卡住', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
-  for (const p of P) if (p.state === 'stopped' && !/集成/.test(p.role)) al.push(['amber', '停了', `${p.name} ${p.idle_min == null ? '还没交过东西' : dur(p.idle_min) + '没动静'}，手上 ${p.active.length} 件`, p.name]);
-  const stopped = new Set(P.filter(p => p.state === 'stopped').map(p => p.name));
+  const gone = new Set(ALL.filter(p => p.away).map(p => p.name));
+  for (const j of F.jobs) if (!j.done && j.wait?.level === 'red' && !j.who.every(w => gone.has(w))) al.push(['red', '卡住', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
+  for (const p of P) if (p.state === 'stopped') al.push(['amber', '停了', `${p.name} ${dur(p.idle_min)}没动静，有 ${p.mine.length} 件等他做`, p.name]);
+  for (const p of OUT) if (p.mine.length) al.push(['amber', '没人做', `派给 ${p.name} 的 ${p.mine.map(i => cut(J[i].title)).join('、')}：他${p.idle_min == null ? '一直没露面' : dur(p.idle_min) + '没动静'}`, p.name]);
+  const stopped = new Set(ALL.filter(p => p.state === 'stopped' || p.away).map(p => p.name));
   for (const j of F.jobs) if (!j.done && j.wait?.level === 'amber' && !j.who.some(w => stopped.has(w))) al.push(['amber', '快卡了', `${cut(j.title)}：${j.wait.what}，已 ${dur(j.wait.age_min)}`, j.wait.who.split('、')[0]]);
   for (const j of F.jobs) if (j.returned) al.push(['amber', '退回', `${cut(j.title)} 被退回，等 ${j.who.join('、')} 改`, j.who[0]]);
   for (const b of d.blockers || []) if (b.kind === '风险') al.push(['gray', '风险', b.what, '']);
@@ -177,11 +193,12 @@ function render() {
     const [line, cls] = personLine(p), act = p.active.map(i => J[i]).filter(Boolean);
     act.sort((a, b) => (lvl(b) === 'red') - (lvl(a) === 'red') || b.stage - a.stage);
     return `<div class="row" data-w="${E(p.name)}">
-      <div class="nm"><i class="dot d-${/集成/.test(p.role) ? 'hub' : p.state}"></i><b>${E(p.name)}</b></div>
+      <div class="nm"><i class="dot d-${p.state}"></i><b>${E(p.name)}</b></div>
       <div><div class="ss ${cls}">${line}</div></div>
       <div class="jobs">${act.map(j => `<div class="job ${lvl(j)}">${track(j)}<span>${E(cut(j.title))}</span></div>`).join('')
         || `<span class="none">手上没活</span>`}${p.done_today ? `<span class="done">今天完成 ${p.done_today} 件</span>` : ''}</div></div>`;
-  }).join('');
+  }).join('') + (OUT.length ? `<div class="out" id="outb">不在场 · ${OUT.length} 人<span>${OUT.map(p => `<em data-w="${E(p.name)}">${E(p.name)}</em>`).join(' · ')}</span><u>6 小时以上没动静，或从没交过东西</u></div>` : '');
+  document.querySelectorAll('.out em').forEach(el => el.onclick = () => drawer(el.dataset.w));
   document.querySelectorAll('.row').forEach(el => el.onclick = () => drawer(el.dataset.w));
 
   // 流水线：每件未完成的活停在哪一站
