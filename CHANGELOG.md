@@ -1,5 +1,7 @@
 # CHANGELOG
 
+2026-11-09 · [D-28] · hark-cs · 实物图钉：挂实物记录的构件在 3D 打图钉，点开弹信息卡（info.js?v=2）
+
 2026-11-09 · [D-20] · hark-liuzhijie · S-101 3D 中央坑分层回筑与剖面一致、mod 缓冲复用
 2026-11-09 · [D-21] · hark-cr · 宿主 body.lit #big .k b 颜色修正（作者请求）
 
