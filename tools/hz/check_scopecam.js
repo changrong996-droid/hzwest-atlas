@@ -22,7 +22,7 @@ const CRS = HZ.cranes.map((c, k) => { const seq = []; for (const a of HZ.acts) f
   return { mast: its.findIndex(it => it.key === c.key && Math.abs(it.p.c[0] - c.x) < 1 && Math.abs(it.p.c[2] - c.z) < 1), seq }; });
 function scopeOf(id) { const pl = PLG[id]; if (ALL.includes(id)) return null; const [a, b] = pl.window, parts = [];
   for (let i = 0; i <= 6; i++) for (const q of PL.safeParts(pl, a + (b - a) * i / 6, { w: 560, h: 420 })) parts.push(q);
-  const r = PL.scopeMask(pl.scope === undefined && HOST[id] ? Object.assign(Object.create(pl), { scope: HOST[id] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD[id], parts, midZ: HZ.P.midZ, t: a });
+  const r = PL.scopeMask(pl.scope === undefined && HOST[id] ? Object.assign(Object.create(pl), { scope: HOST[id] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD[id], parts, midZ: HZ.P.midZ, t: a, frag: OUT === 'hide' });
   if (r.on && OUT === 'hide' && ((HOST[id] && pl.scope === undefined ? HOST[id] : (typeof pl.scope === 'object' && pl.scope) || {}).keys || []).some(k => /crane/.test(k))) its.forEach((it, i) => { const p = it.p; if ((p.crane >= 0 || p.crawl) && p.st <= b && p.st + (p.du || 0) >= a) r.mask[i] = 1; });   // 同宿主：现场图连同所吊构件
   if (r.on) { const cr = PL.scopeCranes(CRS, r.mask, pl.window); CRS.forEach((c, k) => { if (cr[k] && c.mast >= 0) r.mask[c.mast] = 1; }); } return r; }
 const FOV = 28, ASPECT = 16 / 9, GRID = [32, 18], MIN = 0.02, D2R = Math.PI / 180, sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };

@@ -69,6 +69,9 @@
       const inside = (it, b, e) => { for (let k = 0; k < 3; k++) if (it.min[k] < Math.min(b[k], b[k + 3]) - e || it.max[k] > Math.max(b[k], b[k + 3]) + e) return false; return true; };
       let nb = 0; for (const p of o.parts || []) { if (!okBox(p) || (ids && !ids.has(String(p.id)))) continue; const hit = [];
         const bv = vol0(p.box); for (let i = 0; i < n && hit.length <= CAP; i++) { const it = items[i]; if (live(it) && inside(it, p.box, tol) && vol0([...it.min, ...it.max]) >= 0.02 * bv) hit.push(i); }
+        if (o.frag && hit.length && hit.length <= CAP) { const hk = {}, ik = {}; for (const i of hit) hk[items[i].key] = (hk[items[i].key] || 0) + 1;   // o.frag（隐藏模式）：盒子只认到某工序在盒内构件的一小撮（< 50%，例 S-501「站房屋盖」盒只认进 2 块合龙段）→ 这一撮是碎片，不认，免得半空悬一条
+          for (let i = 0; i < n; i++) { const k = items[i].key; if (hk[k] && live(items[i]) && inside(items[i], p.box, tol)) ik[k] = (ik[k] || 0) + 1; }
+          for (let j = hit.length - 1; j >= 0; j--) { const k = items[hit[j]].key; if (hk[k] < 0.5 * ik[k]) hit.splice(j, 1); } }
         if (hit.length && hit.length <= CAP) { nb++; for (const i of hit) m[i] = 1; } }
       if (nb) src.push('parts');
       const lv = (sc.levels || []).filter(b => Array.isArray(b) && b.length === 2 && b.every(Number.isFinite)), zs = (sc.zones || []).map(String), bx = (sc.boxes || []).filter(b => okBox({ box: b })), mz = o.midZ == null ? 17 : o.midZ;
@@ -1033,7 +1036,7 @@
       if (!pl || SCOPE_ALL.has(sheet)) r = { on: false, mask: null, n: 0, live: 0, src: 'host', keys: [] };
       else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm })), parts = [], [a, b] = pl.window || [0, 0];
         for (let i = 0; i <= 6; i++) for (const p of PL.safeParts(pl, a + (b - a) * i / 6, plugCtx(), pwarn)) parts.push(p);
-        r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a });
+        r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a, frag: SCOPE_OUT === 'hide' });
         if (r.on) { const dk = ((pl.scope && typeof pl.scope === 'object' ? pl.scope : pl.scope === undefined ? SCOPE_HOST[sheet] : null) || {}).keys || []; r.site = dk.includes('crane') || dk.includes('ycrane');   // 声明了塔吊工序的图（S-002 吊装资源）= 现场图：履带吊、运输车、堆场照画
           if (r.site && SCOPE_OUT === 'hide') { const [w0, w1] = pl.window || [0, 0]; ITEMS.forEach((it, i) => { const p = it.p; if ((p.crane >= 0 || p.crawl) && p.st <= w1 && p.st + (p.du || 0) >= w0) r.mask[i] = 1; }); }   // 现场图隐藏模式：吊机连同它们本图时间窗内吊的构件（塔吊 / 履带吊所吊）一起画，免得满场只剩吊机、履带吊吊空气
           r.cr = PL.scopeCranes(CRS, r.mask, pl.window); CRS.forEach((c, k) => { if (r.cr[k] && c.mast >= 0) r.mask[c.mast] = 1; });   // 服务本图的塔吊连塔身一起留（不悬空）
