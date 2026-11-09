@@ -86,6 +86,7 @@ body.narrow #nums{gap:5px}body.narrow .num{padding:4px 8px 5px}body.narrow .num 
 #big .n{font-family:var(--mono);font-size:58px;font-weight:700;line-height:1.02;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
 #big .n small{font-size:22px;font-weight:400;color:var(--ink2);margin-left:6px}
 #big .c{font-family:var(--serif);font-size:20px;font-weight:700;letter-spacing:1px;line-height:1.35;margin-top:4px;color:var(--ink)}
+#big .lede{font-family:var(--sans);font-size:11.5px;color:var(--ink2);letter-spacing:.5px;line-height:1.35;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}body.lit #big .lede{color:rgba(244,239,230,.8)}
 #rd{right:14px;top:12px;display:none;flex-direction:column;gap:6px;pointer-events:none}
 #rd .r{background:rgba(246,242,234,.93);border:1px solid var(--line);border-radius:8px;padding:6px 12px 7px;white-space:nowrap;text-align:right}
 #rd .r .l{font-size:14px;color:var(--ink2);letter-spacing:1px}#rd .r .v{font-family:var(--mono);font-size:22px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
@@ -123,7 +124,7 @@ body.port #tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 body.port #big{max-width:78%;padding:5px 10px 6px 8px}body.port #big .k{font-size:12px}body.port #big .n{font-size:34px}body.port #big .n small{font-size:15px}body.port #big .c{font-size:15px}
 body.port #ttl{display:none}
 </style>
-<link rel="stylesheet" href="hzmobile.css?v=2">
+<link rel="stylesheet" href="hzmobile.css?v=3">
 </head>
 <body>
 <div id="app">
@@ -139,7 +140,7 @@ body.port #ttl{display:none}
         <div class="num"><div class="l">网架杆件已装</div><div class="v"><span id="n-r">0</span><small>根</small></div></div>
       </div>
     </div>
-    <div id="big" class="ov ui"><div class="k" id="b-k"><b>S-000</b>总图</div><div class="n"><span id="b-n">0</span><small id="b-u"></small></div><div class="c" id="b-c"></div></div>
+    <div id="big" class="ov ui"><div class="lede" id="lede">杭州西站施工顺序预演：工序由规则推导，每一帧都在自检<span class="lx">（支承 · 拆除先后 · 提升净空 · 吊装覆盖）</span></div><div class="k" id="b-k"><b>S-000</b>总图</div><div class="n"><span id="b-n">0</span><small id="b-u"></small></div><div class="c" id="b-c"></div></div>
     <div id="rd" class="ov ui"><div class="r"><div class="l" id="rd1l">同步差</div><div class="v" id="rd1">—</div></div><div class="r"><div class="l" id="rd2l">最小净空</div><div class="v" id="rd2">—</div></div></div>
     <div id="fin" class="ov" style="display:none"><div class="k">推演完成 · 2022-09-22 开通</div><div id="f-n">—</div></div>
     <div id="low" class="ov ui">
@@ -192,6 +193,6 @@ body.port #ttl{display:none}
 <script src="mods/yunmen.js?v=1"></script>
 <script src="mods/actors.js?v=1"></script>
 <script src="mods/info.js?v=2"></script>
-<script src="hzview.js?v=29"></script>
+<script src="hzview.js?v=30"></script>
 </body>
 </html>

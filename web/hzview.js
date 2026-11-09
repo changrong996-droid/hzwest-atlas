@@ -114,14 +114,18 @@
 
   async function main() {
     const im = document.createElement('script'); im.type = 'importmap';
-    // GPU 审计 #9：three.js 默认用仓库本地 web/vendor（r160，与 CDN 同版），本地取不到（4 s 内 HEAD 失败）才回退 unpkg；#three=cdn 强制走 CDN
-    const VEN = new URL('vendor/three.module.js', document.baseURI).href;
+    // GPU 审计 #9 / 11-09 首访：three.js 默认直接用仓库本地 web/vendor（r160 min，与 CDN 同版），不再先 HEAD 探测（原最长阻塞 4 s）；本地 import 失败才回退 unpkg；#three=cdn 强制走 CDN
+    // importmap 只能写一次：imports.three → 本地；scopes 让 unpkg 下的模块（回退时的 OrbitControls）里的 'three' 指回 unpkg 同一份，保证 THREE 实例一致
+    const VEN = new URL('vendor/three.module.min.js', document.baseURI).href, VOC = new URL('vendor/OrbitControls.js', document.baseURI).href;
+    const CDN3 = THREE_BASE + 'build/three.module.js', CDNOC = THREE_BASE + 'examples/jsm/controls/OrbitControls.js';
     let loc = hp.get('three') !== 'cdn';
-    if (loc) { try { const ac = typeof AbortController === 'function' ? new AbortController() : null, tm = ac && setTimeout(() => ac.abort(), 4000); const r = await fetch(VEN, { method: 'HEAD', cache: 'force-cache', signal: ac && ac.signal }); clearTimeout(tm); loc = r.ok; } catch (e) { loc = false; } if (!loc) console.warn('[hzview] 本地 vendor/three.module.js 取不到，回退 unpkg'); }
-    S.threeSrc = loc ? 'vendor' : 'cdn';
-    im.textContent = JSON.stringify({ imports: loc ? { three: VEN } : { three: THREE_BASE + 'build/three.module.js', 'three/addons/': THREE_BASE + 'examples/jsm/' } });
+    if (loc) for (const u of [VEN, VOC]) { const l = document.createElement('link'); l.rel = 'modulepreload'; l.href = u; document.head.appendChild(l); }
+    im.textContent = JSON.stringify(loc ? { imports: { three: VEN }, scopes: { [THREE_BASE]: { three: CDN3 } } } : { imports: { three: CDN3, 'three/addons/': THREE_BASE + 'examples/jsm/' } });
     document.head.appendChild(im);
-    const [THREE, { OrbitControls }] = await Promise.all([import('three'), import(loc ? new URL('vendor/OrbitControls.js', document.baseURI).href : 'three/addons/controls/OrbitControls.js')]);
+    let THREE, OrbitControls;
+    if (loc) { try { [THREE, { OrbitControls }] = await Promise.all([import('three'), import(VOC)]); } catch (e) { loc = false; console.warn('[hzview] 本地 vendor/three.module.min.js 载入失败，回退 unpkg', e); } }
+    if (!loc) [THREE, { OrbitControls }] = await Promise.all([import(CDN3), import(CDNOC)]);
+    S.threeSrc = loc ? 'vendor' : 'cdn';
     run(THREE, OrbitControls);
   }
 
@@ -880,7 +884,12 @@
     $('b-mode').onclick = () => setMode(S.st.pref === 'ink' ? 'lit' : 'ink');
     const info = $('info'); const fitInfo = () => { const r = $('bar').getBoundingClientRect(); info.style.bottom = (innerHeight - r.top + 8) + 'px'; }; S.fitInfo = fitInfo;
     const openInfo = o => { S.st.info = o; if (o) fitInfo(); info.style.display = o ? 'flex' : 'none'; $('b-info').classList.toggle('on', o); };
-    $('b-info').onclick = () => openInfo(!S.st.info); $('i-x').onclick = () => openInfo(false);
+    // 11-09 首访引导：说明面板首次访问自动展开一次，关闭后记 localStorage hz.introSeen 不再自动开；深链（hash 带 sheet= / fv=）、?noIntro、自动化（navigator.webdriver）不开
+    const INTRO_K = 'hz.introSeen', lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return '1'; } }, seenIntro = () => { try { localStorage.setItem(INTRO_K, '1'); } catch (e) { } };
+    const closeInfo = () => { if (S.st.info) seenIntro(); openInfo(false); };
+    $('b-info').onclick = () => S.st.info ? closeInfo() : openInfo(true); $('i-x').onclick = closeInfo;
+    S.introAuto = !lsGet(INTRO_K) && !/(^|[#&])(sheet|fv)=/.test(location.hash) && !/[?&]noIntro\b/.test(location.search) && !navigator.webdriver;
+    if (S.introAuto) setTimeout(() => { if (!S.st.info) openInfo(true); }, 0);
     S.opt = o => { if (o.play != null) setPlay(o.play); if (o.auto != null) { S.st.auto = o.auto; if (o.auto) placeCam(camKey(S.st.t)); } if (o.info != null) openInfo(o.info); if (o.mode) setMode(o.mode); dirty = true; };
     ctl.addEventListener('start', () => { FLY = null; S.flying = false; S.st.auto = false; $('b-home').classList.add('on'); });
     ctl.addEventListener('change', () => { dirty = true; });
