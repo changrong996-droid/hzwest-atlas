@@ -173,7 +173,8 @@ has('CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;', '地铁层镜头入口只�
       if (!!cr[k] !== !!serve) fail(`S-201 塔吊 #${k} 显隐与是否服务本图不符`); if (cr[k] && c.mast >= 0 && !m2[c.mast]) fail(`S-201 塔吊 #${k} 留着但塔身不在范围（悬空）`); });
     if (cr[6] || cr[7]) fail('S-201 不应留云门塔吊 ycrane（吊的是云门，不属承轨层）');
     if (process.env.HZ_DBG) for (const id of Object.keys(PLG)) { const q = hideOf(id); console.log(id, q.r.on, q.r.src, 'cr=' + q.cr.join(''), 'n=' + q.r.n + '/' + q.r.live, q.r.keys.join(' ')); } }
-  { const { cr, r } = hideOf('S-501'); if (!cr[6] || !cr[7]) fail('S-501 云门塔吊 ycrane 应留'); if (its.some((it, i) => r.mask[i] && it.key === 'asm2')) fail('S-501 隐藏模式不应认进「站房屋盖」盒里的屋盖碎片（o.frag）'); }
+  { const { cr, r } = hideOf('S-501'); if (!cr[6] || !cr[7]) fail('S-501 云门塔吊 ycrane 应留'); const dk = ((PLG['S-501'].scope && PLG['S-501'].scope.keys) || []), has2 = its.some((it, i) => r.mask[i] && it.key === 'asm2');
+    if (dk.includes('asm2') ? !has2 : has2) fail(dk.includes('asm2') ? 'S-501 已声明屋盖 scope.keys（asm1..3 等），asm2 须在范围内（D-38）' : 'S-501 未声明屋盖 scope 时，隐藏模式不应认进「站房屋盖」盒里的屋盖碎片（o.frag）'); }
   runs++; }
 has("const SCOPE_OUT = 'hide';", '范围外默认隐藏（单一常量，改 ghost 即切回 7e3b03b 淡显）');
 has("if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0 || uScH > 0.5) discard;", '隐藏模式范围外墨线不画');
