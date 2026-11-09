@@ -15,7 +15,7 @@ for (const r of R.RECORDS) { if (r.parts == null) continue; if (!Array.isArray(r
   for (const p of r.parts) { if (typeof p !== 'string' || !/^S-\d{3}:[A-Z][A-Z0-9-]*\*?$/.test(p)) fail(r.id + ' parts 格式不对: ' + p);
     const sh = p.slice(0, p.indexOf(':')), set = ids[sh]; if (!set) fail(r.id + ' parts 指向无 parts() 的图 ' + sh);
     const hit = [...set].filter(id => R.pmatch(p, sh, id)); if (!hit.length) fail(`${r.id} ${p} 在 ${sh} 找不到构件`); pats++; linked += hit.length; } }
-const g9 = R.forPart('S-201', 'G-N09').map(r => r.id).join(','); if (g9 !== 'R-0013,R-0010,R-0014') fail('forPart(S-201,G-N09) = ' + g9);
+const g9 = R.forPart('S-201', 'G-N09').map(r => r.id).join(','); if (g9 !== 'R-0013,R-0015,R-0010,R-0016,R-0014') fail('forPart(S-201,G-N09) = ' + g9);
 const s3 = R.forPart('S-201', 'G-S03').map(r => r.id).join(','); if (s3 !== 'R-0009,R-0010') fail('forPart(S-201,G-S03) = ' + s3);
 if (R.forPart('S-201', 'D-S01').length) fail('承轨层板不应挂铺轨记录');
 const PL = G.HZ_SHEET_PLUGINS.find(p => p.id === 'S-201'), I = PL.info('G-N09', 900); if (!I || !I.lines.some(l => l[0] === '实物' && /R-0013/.test(l[1]))) fail('S-201 身份卡未读到挂接记录');
