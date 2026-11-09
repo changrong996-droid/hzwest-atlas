@@ -243,10 +243,10 @@
       const lines = new THREE.LineSegments(lg, lineMat); lines.frustumCulled = false; lines.renderOrder = 2;
       S.tris = nv / 3; S.segs = nl / 2; return { mesh, lines, items }; }
     const { mesh: MESH, lines: LINES, items: ITEMS } = compile(); scene.add(MESH, LINES);
-    // 图纸范围幽灵（11-09）：与 MESH 共用同一份几何，只画 aGh = 1（范围外）的构件：纸色上淡墨半透明、不写深度、不投影、不拾取；墨线另由 LFS 降为淡墨
-    const ghostMat = new THREE.ShaderMaterial({ uniforms: Object.assign({}, U, { uGhP: { value: 1 }, uGhA: { value: 0.16 } }), side: THREE.DoubleSide, transparent: true, depthWrite: false,
+    // 图纸范围幽灵（11-09）：与 MESH 共用同一份几何，只画 aGh = 1（范围外）的构件：纸色上淡墨半透明（写深度防叠色）、不投影、不拾取；墨线另由 LFS 降为淡墨
+    const ghostMat = new THREE.ShaderMaterial({ uniforms: Object.assign({}, U, { uGhP: { value: 1 }, uGhA: { value: 0.16 } }), side: THREE.DoubleSide, transparent: true, depthWrite: true, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,   /* 写深度：多层幽灵基本只留最前一层，不叠成泥色；面后退让淡墨线在上 */
       vertexShader: VDEF + `attribute float aF; uniform float uYm; varying vec3 vN; varying float vWx; void main() { hzCalc(); if (aF > 2.5 && uYm > 0.5) hzP = vec3(0.0, -1e5, 0.0); vWx = hzP.x; vN = mat3(hzM) * normal; gl_Position = projectionMatrix * viewMatrix * vec4(hzP, 1.0); }`,
-      fragmentShader: `uniform vec3 uPaper, uInk, uSun2; uniform float uCut, uGhA; varying vec3 vN; varying float vWx; void main() { if (vWx < uCut) discard; float l = abs(dot(normalize(vN), uSun2)); gl_FragColor = vec4(mix(uPaper, uInk, 0.16 + 0.10 * (1.0 - l)), uGhA); }` });
+      fragmentShader: `uniform vec3 uPaper, uInk, uSun2; uniform float uCut, uGhA; varying vec3 vN; varying float vWx; void main() { if (vWx < uCut) discard; float l = abs(dot(normalize(vN), uSun2)); gl_FragColor = vec4(mix(uPaper, uInk, 0.08 + 0.08 * (1.0 - l)), uGhA); }` });
     const GHOST = new THREE.Mesh(MESH.geometry, ghostMat); GHOST.frustumCulled = false; GHOST.renderOrder = 1; GHOST.visible = false; scene.add(GHOST); S.GHOST = GHOST;
 
     // ---------------- set2d：剖切封面（x = 39 m 截面多边形；与构件同一套 aK/aR/aY 生长、未建不显示；uCut 关 = 顶点塌缩，切换不重新编译）----------------
@@ -992,7 +992,7 @@
     let lastNow = performance.now();
     const GL2 = (() => { const g = renderer.getContext(); return typeof WebGL2RenderingContext !== 'undefined' && g instanceof WebGL2RenderingContext && !hp.has('nofence') ? g : null; })(), FEN = [];
     { const az = THREE.MathUtils.degToRad(232), el = THREE.MathUtils.degToRad(12); U.uRakeDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); }   // 掠射光方向：与实景太阳同方位（西南 232°），高 12°
-    function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.16; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
+    function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.22; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
       U.uLA.value = la; renderer.setRenderTarget(null); renderer.setClearColor(0xefe9dd, 1); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); }
     function renderLit() { ghostMat.uniforms.uGhA.value = 0.3; CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 1);
@@ -1022,7 +1022,7 @@
     const LEAD_KEYS = { 'S-101': ['found'], 'S-201': ['frameS', 'frameN', 'pierS', 'pierN', 'deckS', 'deckN', 'platS', 'platN', 'deckapS', 'deckapN', 'trackS', 'trackN'], 'S-251': ['jig1', 'jig2', 'jig3', 'asm1', 'asm2', 'asm3'], 'S-401': ['holes', 'sky', 'clad', 'pv'], 'S-501': ['ymf', 'ycrane', 'ym', 'ymc', 'tod', 'ycrane~rm', 'crane~rm', 'open'] };
     // 图纸范围（11-09）：插件图纸激活时，本图内容照常画、其余淡显（PL.scopeMask；接口见 docs/hz-atlas-check.md §3 第 15 条）。按图缓存，切图时写一次 aGh。
     // 总图 S-000 / S-301 不用；收官（开通前 12 天起，与实景渐显同一时刻）全显。
-    const SCOPES = {}, SCOPE_ALL = new Set(['S-001']), SCOPE_HOST = { 'S-002': { keys: ['crane', 'ycrane'], ids: [] } }; let scopeSheet = null;   // SCOPE_HOST：插件未声明 pl.scope 时宿主代填（S-002 履带吊 C-* 盒是站位区，会顺带认进脚下楼板，故只认塔吊工序；已派单请作者自己声明）   // S-001 总进度横道图讲的就是全部工序：视同总图全显（插件可用 pl.scope 覆盖除此之外的默认）
+    const SCOPES = {}, SCOPE_ALL = new Set(['S-001']), SCOPE_HOST = { 'S-002': { keys: ['crane', 'ycrane'], ids: [] }, 'S-401': { keys: ['mast', 'asm1', 'asm2', 'asm3', 'merge', 'head'] } }; let scopeSheet = null;   // SCOPE_HOST：插件未声明 pl.scope 时宿主代填（S-002 履带吊 C-* 盒是站位区，会顺带认进脚下楼板，故只认塔吊工序；S-401 屋面铺在网架上，网架与梭形柱是它的底，一并照常画；均已派单请作者自己声明）   // S-001 总进度横道图讲的就是全部工序：视同总图全显（插件可用 pl.scope 覆盖除此之外的默认）
     function scopeOf(sheet) { if (SCOPES[sheet]) return SCOPES[sheet]; const pl = PLUG[sheet]; let r;
       if (!pl || SCOPE_ALL.has(sheet)) r = { on: false, mask: null, n: 0, live: 0, src: 'host', keys: [] };
       else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm })), parts = [], [a, b] = pl.window || [0, 0];
