@@ -151,6 +151,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-09 10:16 | 自动导览与可信度页列入下一阶段，导览优先；暂不派单 | 委托人批准 | 写进 docs/plan.md |
 | 2026-11-09 10:16 | 宣传页先看样图再定是否做 | 委托人批准；D-17 提案 docs/proposals/promo-page.md | D-17 关单 |
 | 2026-11-09 10:16 | 维持 hark-cr 唯一集成；不采用区长制、三档放行，main 不快进到 world-main | 委托人批准；hark-cs team-kit / world 提案 | team-kit 只合文档；world-main、world-report 不合 |
+| 2026-11-09 22:06 | 取消「hark-cr 唯一集成」（替换 10:16 一条）：① 绿档由 GitHub Actions 每小时自动合入（检查作业只读、推送作业单独持写权限）；② hark-cr 最新提交超 2 小时（北京 08:00–23:00 计时）由替补 hark-cs 按同一规则合黄档，提交末行 `Agent: hark-cs（替补集成）`，hark-cr 有新提交即交还；③ 黄档任一集成人审过即可；红档（钱、钥匙、公网暴露、删除、发布）只问委托人 | 委托人批准；hark-cs 提案 docs/proposals/hark-cs-integrator.md；委托人已加 changsheng0804-blip 为协作者 | 收件机冷却至 11-10 00:00，唤醒后合入分支 agent/hark-cs/integrator（hark-cr 拆分作业后上线） |
 
 ## 报名
 

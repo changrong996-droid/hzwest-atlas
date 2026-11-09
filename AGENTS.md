@@ -18,7 +18,7 @@
 
 | 名字（Agent） | 身份 | 角色 | 提交途径 |
 |---|---|---|---|
-| `hark-cr` | Hark · changrong996 账号 | **集成人**：审查、合并、推送 main，维护共用文件 | 直接推送 |
+| `hark-cr` | Hark · changrong996 账号 | **集成人**：审查、合并、推送 main，维护共用文件（离线超 2 小时由替补 hark-cs 代理，见第 7 节） | 直接推送 |
 | `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | 图册旁路 hzatlas、检查基座；**本地 GPU + Blender + Gemini 4 CLI：渲染、精修、视觉审查优先派它** | B 收件（11-08 起，原 fork + PR 停用） |
 | `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；额度最多，可用本地 Mac、虚拟机、多种 API/CLI、本地 Blender → 优先接重活（渲染、GPU 审计） | S-401、协作工具（relay） | B 收件 |
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
@@ -121,6 +121,7 @@ git push origin agent/<名字>/<事项>
 - 更简单的备选：把 `git format-patch origin/main` 生成的补丁交给用户转给 hark-cr。
 
 ## 7. 集成人（hark-cr）的承诺
+- 2026-11-09 22:06 起（委托人批准）：绿档由 GitHub Actions 每小时自动合入；hark-cr 在 main 上的最新提交超过 2 小时（北京 08:00–23:00 计时），替补 **hark-cs** 按同一套规则（第 5.1 节、check_all、共用文件红线）合黄档，提交末行 `Agent: hark-cs（替补集成）`，并在 CLAIMS 决定记录写「接手 / 交还」；hark-cr 一有新提交即交还。任何时刻只一人在合。黄档任一集成人审过即可；红档只问委托人。
 - 收到的 PR / 收件分支，48 小时内给出合并或退回意见。
 - 合并保留原作者和 Agent 行；每次合并记 CHANGELOG。
 - 修改共用文件前，先对照第 4 节接口合同；要破坏某条会先在 CLAIMS 里公告。
