@@ -58,7 +58,8 @@
     const a = cube(s.vol), box = (arr, x0, y0, z0, x1, y1, z1) => { const v = [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]];
       for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) seg(arr, v[i], v[j]); };
     const aF = cube(VPUB);
-    box(out.ghost, A.x - aF / 2, 0, A.zS - aF, A.x + aF / 2, aF, A.zS);
+    // D-36 终值虚线外框不再画（未建幽灵线）
+    // box(out.ghost, A.x - aF / 2, 0, A.zS - aF, A.x + aF / 2, aF, A.zS);
     if (a > 0.5) { box(out.cube, A.x - a / 2, 0, A.zS - a, A.x + a / 2, a, A.zS);
       for (let k = 10; k < a; k += 10) seg(out.cube, [A.x - a / 2 + k, 0, A.zS], [A.x - a / 2 + k, k % 50 ? 1.5 : 3.5, A.zS]); }   // 南边沿刻度：10 m 一格，50 m 长刻
     out.a = a; out.aF = aF; out.vol = s.vol; out.A = A;
