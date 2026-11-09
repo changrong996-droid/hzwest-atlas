@@ -6,16 +6,16 @@
 // 分片：--shard=i/n 只跑清单里第 i 片（1 起算，按序号取模），给单条命令有时长上限的环境分几次跑；CI 跑全量。
 // --list 只列清单。SOLO 里的项（有耗时断言）等其余项跑完后单独跑。
 //
-// 镜头扫描：CAMS 里的图逐张跑 `check_cams.js <图号>`，违反即失败；CAMS_REPORT 里的图只报告不判失败（11-08 起临时放 S-201，见 D-26）。
+// 镜头扫描：CAMS 里的图逐张跑 `check_cams.js <图号>`，违反即失败；CAMS_REPORT 里的图只报告不判失败（11-09 起为空）。
 const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js'];
-const CAMS = ['S-001', 'S-002', 'S-101', 'S-251', 'S-401', 'S-501'];
+const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js', 'check_info.js'];
+const CAMS = ['S-001', 'S-002', 'S-101', 'S-201', 'S-251', 'S-401', 'S-501'];
 // 只报告、不判失败的图号（有遗留违反时临时放这里，并在 CLAIMS 记明）。
-// S-201：11-08 屋盖排程校准（胎架后移 4 天）后 t=636 拼好的南区屋盖仍在胎架上，挡住末条视线（违反 1）；修法已写进派单 D-26（s201.js 加一帧），合入后移回 CAMS
-const CAMS_REPORT = ['S-201'];
+// 11-09：D-26 合入（s201.js 加 t=636 帧）后 S-201 违反 0，已移回 CAMS 严格模式
+const CAMS_REPORT = [];
 // 含耗时断言的检查（check_actors 断言 update / 重排帧耗时）单独跑：并行时 CPU 被占满会误报，等其余项跑完、没有别的进程时再跑
 const SOLO = new Set(['check_actors.js']);
 const items = scripts.map(s => ({ name: s, args: [s], report: false, solo: SOLO.has(s) }))

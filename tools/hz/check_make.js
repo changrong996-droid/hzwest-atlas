@@ -42,5 +42,8 @@ const vsrc = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8'
   for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const w = HZ.Wv(sx * 0.5 * P.roofA, sz * 0.5 * P.roofB); if (!(w > 3.0 && w < 4.2)) bad('云心鼓起 ' + w.toFixed(2) + ' m 不在 3.0–4.2'); }
   for (const [x, z] of [[0, 60], [80, 0], [P.skyW, 100]]) if (Math.abs(HZ.Wv(x, z)) > 1e-9) bad('天窗缝 (' + x + ',' + z + ') 应为 0');
   let mx = -1e9, at = null; for (let x = -P.roofA; x <= P.roofA; x += 2) for (let z = -P.roofB; z <= P.roofB; z += 2) { if (HZ.rho(x, z) > 1) continue; const y = HZ.Hc(x, z); if (y > mx) { mx = y; at = [x, z]; } if (HZ.Hc(x, z) - HZ.Ht(x, z) < -0.5) bad('覆面低于结构顶 (' + x + ',' + z + ')'); }
-  if (Math.abs(at[0]) > 4 || Math.abs(at[1]) > 4) bad('屋面最高点不在天窗中心 ' + at); }
+  if (Math.abs(at[0]) > 4 || Math.abs(at[1]) > 4) bad('屋面最高点不在天窗中心 ' + at);
+  if (P.skinTop != null && Math.abs(mx - P.skinTop) > 0.05) bad('屋面最高点 ' + mx.toFixed(2) + ' m ≠ 公开 ' + P.skinTop + ' m');
+  if (Math.abs(HZ.Ht(0, 0) - 55.2) > 0.05) bad('钢结构最高点应仍为 55.2 m（公开 55.237 m）'); }
+{ const T = HZ.makeTrain && HZ.makeTrain().T; if (!T || Math.abs(T.nose + T.len - 209.55) > 0.01 || T.W !== 3.36 || T.H !== 4.05) { console.log('FAIL check_make: 首趟列车尺寸不是复兴号 8 编组（209.55 m / 3.36 / 4.05）'); process.exit(1); } }
 console.log('OK check_make acts=55 cells=1432 lifters=32 D=5.8 zero=true');

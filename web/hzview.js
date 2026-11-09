@@ -179,12 +179,9 @@
         if (vMv > 1.5 && vF < 0.5) { gl_FragColor = vec4(uRed, uLA); return; } if (vMv > 0.5 && vF < 0.5) { gl_FragColor = vec4(mix(uInk, uRed, 0.8), 0.85 * uLA); return; } gl_FragColor = vec4(vF > 0.5 ? uTemp : uInk, (vF > 1.5 ? 0.55 : 0.72) * uLA * fade); }`;
     const lineMat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: LVS, fragmentShader: LFS, transparent: true, depthWrite: false });
 
-    const trainGeo = (() => { const g = new HZ.GB('train'), cars = 8, L = 25.5; for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); g.box(x0, 0.6, -1.6, x0 + L, 4.1, 1.6, HZ.MAT.train.c, false); g.box(x0, 1.9, -1.62, x0 + L, 2.25, 1.62, [0.85, 0.15, 0.12], false); g.box(x0 + 0.5, 2.6, -1.63, x0 + L - 0.5, 3.3, 1.63, [0.12, 0.14, 0.18], false); }
-      g.hexa([[-12, 0.6, -1.6], [0, 0.6, -1.6], [0, 0.6, 1.6], [-12, 0.6, 1.6], [-12, 1.2, -0.6], [0, 4.1, -1.6], [0, 4.1, 1.6], [-12, 1.2, 0.6]], HZ.MAT.train.c, false);
-      for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); for (const [a, b] of [[[x0, 4.1, -1.6], [x0 + L, 4.1, -1.6]], [[x0, 4.1, 1.6], [x0 + L, 4.1, 1.6]], [[x0, 0.6, 1.6], [x0 + L, 0.6, 1.6]], [[x0, 0.6, -1.6], [x0 + L, 0.6, -1.6]]]) g.line(a, b); } return g; })();
-    // r3：车窗带 + 头灯单独一个材质（开通点亮时发光，列车在黄昏里可读）
+    // 定型提案（hark-cs shape-freeze，hark-cr 采纳 11-09）：复兴号流线车头（HZ.makeTrain，hzseq.js）；trainW = 车窗带 + 头灯，开通点亮时发光
     HZ.MAT.trainW = { c: [0.16, 0.17, 0.2], r: 0.2, m: 0.3, e: FV.tl };
-    const trainWGeo = (() => { const g = new HZ.GB('trainW'), cars = 8, L = 25.5; for (let k = 0; k < cars; k++) { const x0 = k * (L + 0.8); g.box(x0 + 0.6, 2.45, -1.645, x0 + L - 0.6, 3.45, 1.645, null, false); } g.box(-11.6, 1.25, -1.0, -11.2, 1.65, 1.0, [0.9, 0.9, 0.85], false); return g; })();
+    const { g: trainGeo, gw: trainWGeo } = HZ.makeTrain();
     const YMK = new Set(['ymf', 'ym', 'ymc']);   // 旧云门体块（hzseq.js 第 11 节）：顶点 / 线 aF 记 3，uYm = 1 时墨线模式塌缩（实景照旧用体块）
     function compile() {
       const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0, ym: YMK.has(a.key) }); }

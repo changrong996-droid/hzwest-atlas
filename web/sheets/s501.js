@@ -21,7 +21,7 @@
   // = hzview.js FV 默认：股道从 HZ 读（湖杭场靠云谷第 1 股道），停位 te = 99（车头 x = 111，整列在站台 ±stX 内）
   const FV0 = HZ => ({ tz: HZ.tracks && HZ.YARDS ? HZ.tracks(HZ.YARDS.S)[0] : 16.5, te: 99, tw: 1, lt: 4.5 });
   const FIRST = { no: 'G9528', time: '09:52', dir: '开通当天发车（向湖州方向）', src: '新华网 2022-09-22' };
-  const TRAIN = { cars: 8, L: 25.5, gap: 0.8, nose: 12 };                                                  // = hzview.js trainGeo
+  const TRAIN = { cars: 8, L: 25, gap: 0.65, nose: 10.5, len: 199.05 };                                     // = HZ.makeTrain（hzseq.js）：鼻根 → 尾车鼻尖 len
 
   // 构件状态：-1 未建 / 0..1 在建 / 2 已建 / 3 已拆（同 hzsheet.js stOf）
   const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
@@ -42,7 +42,7 @@
   // 亮灯波：返回 { on: 0..1 亮度, r: 波前半径 m（0 = 全亮或未亮）}
   function lightAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), lw = sm(O - 1, O + 5, t); const on = FV.lt > 1.7 ? lw : sm(O - 6, O + 4, t); return { on, lw, r: FV.lt > 1.7 ? (lw >= 1 ? 0 : 20 + 420 * lw) : 0 }; }
   // 列车：车头 x、车尾 x、股道 z、是否可见（与 hzview.js 同式）
-  function trainAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), f = sm(O + 1, O + 24, t), tv = t > O + 0.5, len = TRAIN.cars * (TRAIN.L + TRAIN.gap);
+  function trainAt(HZ, t) { const O = HZ.P.OPEN, FV = FVof(), f = sm(O + 1, O + 24, t), tv = t > O + 0.5, len = TRAIN.len || TRAIN.cars * (TRAIN.L + TRAIN.gap);
     const tx = !tv ? 9000 : FV.tw ? -1500 + (1500 + FV.te) * (1 - Math.pow(1 - f, 2.2)) : 1500 - (1500 - FV.te) * (1 - Math.pow(1 - f, 2.2));
     // tw = 1：车体绕 Y 转 180°，车厢在 tx 西侧、车头鼻在 tx..tx+12 → 车头朝东
     const head = FV.tw ? tx + TRAIN.nose : tx - TRAIN.nose, tail = FV.tw ? tx - len : tx + len;
