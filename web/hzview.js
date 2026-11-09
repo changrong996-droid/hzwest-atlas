@@ -10,6 +10,9 @@
   const sheetOf = () => { const v = (new URLSearchParams(location.hash.slice(1)).get('sheet') || 'S-000').toUpperCase(); return v === 'S-301' || PLUG[v] ? v : 'S-000'; };
   // 插件图纸（web/sheets/*.js 登记到 window.HZ_SHEET_PLUGINS）：{ id, name, window:[t0,t1], big(t), draw(g,w,h,t,ctx), cam:[{t,target,az,el,dist}] }
   const PLUG = {}; for (const pl of (window.HZ_SHEET_PLUGINS || [])) PLUG[pl.id] = pl;
+  // 图纸范围外怎么画（委托人 11-09 11:04）：'hide' = 不画（范围外构件、未建设计位红线、不服务本图的塔吊 / 履带吊 / 车辆 / 堆场 / 近景人员 / 云门墨线、模块幽灵层全部不画）；
+  // 'ghost' = 7e3b03b 的淡显（幽灵填充 + 11% 淡墨 + 云门 15%，现场机械照画）。只改这一个常量即可切回。
+  const SCOPE_OUT = 'hide';
   // <plugLink> 联动接口 v2（docs/tasks/linkage-v2.md）宿主侧纯函数：图纸视图变换 / 逆变换命中 / 3D 盒拾取 / #focus= 读写 / parts 容错。
   // 不依赖 DOM 与 three，tools/hz/check_linkage.js 按 <plugLink> 标记截取本段在 Node 里求值测试；运行时挂在 window.__pv.plugLink。
   const PL = (() => {
@@ -76,7 +79,10 @@
       let k = 0, L = 0; const ks = new Set(); for (let i = 0; i < n; i++) { if (m[i]) ks.add(items[i].key); if (!live(items[i])) continue; L++; if (m[i]) k++; }
       if (!k) return all('none'); if (k >= 0.9 * L) return all('most');
       return { on: true, mask: m, n: k, live: L, src: src.join('+'), keys: [...ks] }; }
-    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith, modsCall, scopeMask };
+    // 现场机械随范围（11-09 委托人：范围外隐藏）：塔吊 cr[i] = { mast: 塔身构件下标 | -1, seq: [{ i: 所吊构件下标, t: 吊装时刻 }] }；
+    // 塔身已在范围内，或它吊的构件里有范围内的、且吊装时刻落在本图时间窗 ±30 天 → 留（返回 1）；否则 0 = 隐藏
+    function scopeCranes(cr, mask, W) { W = Array.isArray(W) ? W : [-Infinity, Infinity]; return cr.map(c => (c.mast >= 0 && mask[c.mast]) || c.seq.some(e => e.i >= 0 && mask[e.i] && e.t >= W[0] - 30 && e.t <= W[1] + 30) ? 1 : 0); }
+    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith, modsCall, scopeMask, scopeCranes };
   })();
   // </plugLink>
   S.plugLink = PL;
@@ -158,7 +164,7 @@
     // ---------------- 构件：1 个网格（实景 / 墨线两套材质）+ 1 组墨线 ----------------
     const U = { uT: { value: 0 }, uG: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Matrix4()) }, uGlowDays: { value: 6 }, uGlowCol: { value: new THREE.Vector3(1.0, 0.58, 0.26).multiplyScalar(0.6) }, uLights: { value: 0 }, uPV: { value: 0 }, uPVs: { value: 0 }, uRoofLift: { value: 0 }, uWave: { value: 0 }, uLightCol: { value: new THREE.Vector3(1.0, 0.78, 0.5) },
       uPaper: { value: new THREE.Color('#efe9dd') }, uRed: { value: new THREE.Color('#b3202a') }, uInk: { value: new THREE.Color('#1d1a17') }, uTemp: { value: new THREE.Color('#c46a12') }, uSun2: { value: new THREE.Vector3(-0.45, 0.8, 0.4).normalize() }, uLA: { value: 1 }, uGhost: { value: 1 }, uMv: { value: [0, 0, 0, 0, 0, 0] }, uCam: { value: new THREE.Vector3() }, uCut: { value: -1e9 },
-      uYm: { value: 0 }, uRake: { value: 0 }, uRakeDir: { value: new THREE.Vector3() }, uRakeK: { value: 1.5 }, uScope: { value: 0 }, uGhP: { value: 0 } };   // uYm：云门模块 web/mods/yunmen.js 生效时墨线模式隐去旧云门体块（aF = 3）；uRake：屋面低角度掠射光（四朵云读得出）
+      uYm: { value: 0 }, uRake: { value: 0 }, uRakeDir: { value: new THREE.Vector3() }, uRakeK: { value: 1.5 }, uScope: { value: 0 }, uGhP: { value: 0 }, uScH: { value: SCOPE_OUT === 'hide' ? 1 : 0 } };   // uYm：云门模块 web/mods/yunmen.js 生效时墨线模式隐去旧云门体块（aF = 3）；uRake：屋面低角度掠射光（四朵云读得出）
     // set2c：统一剖切平面 x = 39 m（切掉 x < 39）。自定义着色器用 uCut（-1e9 = 不切）；内置材质常驻 clippingPlanes=[CUTP]，关闭时把平面推到 1e7 外 → 切换不重新编译
     const CUTP = new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e7); renderer.localClippingEnabled = true; S.CUTP = CUTP;
     const VDEF = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute vec4 aM; attribute float aGh;
@@ -202,10 +208,10 @@
         float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; mat4 M = uG[int(aG + 0.5)];
         if (uT < s) { vS = -1.0; M = mat4(1.0); } else { q.y = aY.x + (q.y - aY.x) * k; vS = uT < s + d + 2.0 ? 0.5 : 2.0; if (k < 1e-4) vS = -3.0; }
         vec4 w = M * vec4(q, 1.0); vWx = w.x; vF = aF; if (aF > 2.5) { vF = 0.0; if (uYm > 0.5) vS = -3.0; } vD = distance(w.xyz, uCam); gl_Position = projectionMatrix * viewMatrix * w; }`;
-    const LFS = `uniform vec3 uInk, uRed, uTemp; uniform float uLA, uGhost, uCut, uScope; varying float vGh; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
+    const LFS = `uniform vec3 uInk, uRed, uTemp; uniform float uLA, uGhost, uCut, uScope, uScH; varying float vGh; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
       void main() { if (vS < -2.0 || vWx < uCut) discard; float fade = 1.0 - 0.55 * smoothstep(900.0, 3000.0, vD);
-        if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0) discard; gl_FragColor = vec4(uInk, 0.11 * uLA * fade); return; }   /* 图纸范围外：已建构件只留淡墨线（与设计位幽灵同一量级），未建 / 在建不画 */
-        if (vS < 0.0) { if (uGhost < 0.5 || vF > 0.5) discard; gl_FragColor = vec4(uRed, 0.085 * uLA * fade); return; }
+        if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0 || uScH > 0.5) discard; gl_FragColor = vec4(uInk, 0.11 * uLA * fade); return; }   /* 图纸范围外：已建构件只留淡墨线（与设计位幽灵同一量级），未建 / 在建不画 */
+        if (vS < 0.0) { if (uGhost < 0.5 || vF > 0.5 || uScope * uScH > 0.5) discard; gl_FragColor = vec4(uRed, 0.085 * uLA * fade); return; }
         if (vS < 1.0) { gl_FragColor = vec4(uRed, uLA); return; }
         if (vMv > 1.5 && vF < 0.5) { gl_FragColor = vec4(uRed, uLA); return; } if (vMv > 0.5 && vF < 0.5) { gl_FragColor = vec4(mix(uInk, uRed, 0.8), 0.85 * uLA); return; } gl_FragColor = vec4(vF > 0.5 ? uTemp : uInk, (vF > 1.5 ? 0.55 : 0.72) * uLA * fade); }`;
     const lineMat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: LVS, fragmentShader: LFS, transparent: true, depthWrite: false });
@@ -356,7 +362,7 @@
     S.WK = WK;
     scene.add(WK.o);
     // 塔吊：按工序时刻插值的回转角（每台的吊装序列 = R10 分派给它的构件）
-    const CR = HZ.cranes.map((c, k) => { const seq = []; for (const a of HZ.acts) for (const p of a.parts) if (p.crane === k) seq.push({ t: p.st + p.du * 0.5, t0: p.st, t1: p.st + p.du, yaw: Math.atan2(p.c[2] - c.z, p.c[0] - c.x), r: Math.hypot(p.c[2] - c.z, p.c[0] - c.x), top: p.top });
+    const CR = HZ.cranes.map((c, k) => { const seq = []; for (const a of HZ.acts) for (const p of a.parts) if (p.crane === k) seq.push({ p, t: p.st + p.du * 0.5, t0: p.st, t1: p.st + p.du, yaw: Math.atan2(p.c[2] - c.z, p.c[0] - c.x), r: Math.hypot(p.c[2] - c.z, p.c[0] - c.x), top: p.top });
       seq.sort((a, b) => a.t - b.t); return Object.assign({}, c, { seq, act: K[c.key] }); });
     const crawlParts = []; for (const a of HZ.acts) for (const p of a.parts) if (p.crane === -1 && p.crawl) crawlParts.push(p);
     const CREW = { civil: 320, frame: 220, mezz: 70, bridge: 90, track: 110, steel: 140, asm: 260, jig: 60, lifters: 50, skin: 170, tod: 150, ym: 170 }; S.CREW = CREW;
@@ -372,33 +378,33 @@
     function measureAt(ps, t) { const e = HZ.gapTab[1][0], q = HZ.xf(ps, 1, e.p0), y = q[1] - e.rr; return { at: [q[0], y, q[2]], v: y - P.floorTop }; }   // 南区内边最紧处那根下弦（拼装姿态净空 = 全屋盖最小 1.40 m），随姿态实时
     let dynKey = ''; const DS = { cranesBusy: 0, crawlers: 0, trucks: 0, workers: 0 };
     function rebuildDyn(t) {
-      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut + ':' + (PV.focus || '') + ':' + (PV.box ? PV.box.join(',') : ''); if (key === dynKey) return; dynKey = key;
+      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut + ':' + (PV.focus || '') + ':' + (PV.box ? PV.box.join(',') : '') + ':' + SHEET + (SC_HIDE ? 'h' : ''); if (key === dynKey) return; dynKey = key; const SH = SC_HIDE;   // SH：范围外隐藏时只画服务本图的机械
       const g = new HZ.GB('yellow'), Lq = []; const Lc = (a, b, c) => Lq.push([a, b, c]);
       const INK = [0.11, 0.1, 0.09], RED = [0.70, 0.13, 0.16], YEL = HZ.MAT.yellow.c;
       DS.cranesBusy = 0;
-      for (const c of CR) { const s = craneState(c, t); if (!s) continue; const ca = Math.cos(s.yaw), sa = Math.sin(s.yaw), y = c.jy + 0.6;
+      for (let ci = 0; ci < CR.length; ci++) { const c = CR[ci]; if (SH && !(SH.cr && SH.cr[ci])) continue; const s = craneState(c, t); if (!s) continue; const ca = Math.cos(s.yaw), sa = Math.sin(s.yaw), y = c.jy + 0.6;
         const tip = [c.x + ca * c.L, y, c.z + sa * c.L], tail = [c.x - ca * c.Lc, y, c.z - sa * c.Lc], top = [c.x, c.top, c.z];
         g.rod(tail, tip, 0.55); g.rod(top, [c.x + ca * c.L * 0.6, y + 0.5, c.z + sa * c.L * 0.6], 0.12); g.rod(top, [tail[0], y + 0.5, tail[2]], 0.12);
         g.B(tail[0] - 2, y - 2, tail[2] - 2, tail[0] + 2, y + 1, tail[2] + 2, HZ.MAT.conc.c);
         const tr = [c.x + ca * s.r, y - 0.6, c.z + sa * s.r]; g.B(tr[0] - 0.9, tr[1] - 0.8, tr[2] - 0.9, tr[0] + 0.9, tr[1], tr[2] + 0.9, YEL);
         Lc(tr, [tr[0], s.hookY, tr[2]], s.busy ? RED : INK); if (s.busy) { DS.cranesBusy++; g.B(tr[0] - 1.6, s.hookY - 1.4, tr[2] - 1.6, tr[0] + 1.6, s.hookY, tr[2] + 1.6, [0.75, 0.2, 0.15]); } }
       // 履带吊（R10：不在任何塔吊回转半径内的构件；站位由 hzseq 搜出、不与在场构件相交）
-      DS.crawlers = 0; for (const p of crawlParts) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (DS.crawlers >= 14) break; DS.crawlers++; const [x, z] = p.crawl, by = p.crawlY || 0, ang = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(ang), sa = Math.sin(ang);
+      DS.crawlers = 0; for (const p of crawlParts) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (SH && !(SH.crawl && SH.crawl.has(p))) continue; if (DS.crawlers >= 14) break; DS.crawlers++; const [x, z] = p.crawl, by = p.crawlY || 0, ang = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(ang), sa = Math.sin(ang);
         g.B(x - 3.6, by, z - 2.8, x + 3.6, by + 1.4, z + 2.8, [0.35, 0.33, 0.30]); g.B(x - 2.2, by + 1.4, z - 2.0, x + 2.2, by + 3.6, z + 2.0, [0.86, 0.32, 0.12]);
         const hd = Math.hypot(p.c[0] - x, p.c[2] - z), tipY = Math.max(p.top + 10, by + 22), tip = [x + ca * hd * 0.92, tipY, z + sa * hd * 0.92]; g.rod([x, by + 3, z], tip, 0.35); Lc(tip, [tip[0], p.top + 1.5, tip[2]], RED); }
       // 运输车（便道环线；车数 ∝ 在建工序数；钢构车 = 红，混凝土 = 灰）
       const act = HZ.acts.filter(a => a.parts.length && a.kind !== 'temp' && t >= a.start && t < a.end); let nSteel = 0, nConc = 0; for (const a of act) { if (a.res.steel || a.res.asm || a.res.skin) nSteel++; else nConc++; }
-      const nT = t < TL.OPEN - 30 ? Math.min(36, 4 + (nSteel + nConc) * 4) : 0; DS.trucks = nT; const per = 2 * (1400 + 560);
+      const nT = t < TL.OPEN - 30 && !(SH && !SH.site) ? Math.min(36, 4 + (nSteel + nConc) * 4) : 0; DS.trucks = nT; const per = 2 * (1400 + 560);
       for (let i = 0; i < nT; i++) { const d = ((t * 140 + i * per / Math.max(1, nT)) % per + per) % per; let x, z, dir; if (d < 1400) { x = -700 + d; z = -280; dir = 0; } else if (d < 1960) { x = 700; z = -280 + (d - 1400); dir = 1; } else if (d < 3360) { x = 700 - (d - 1960); z = 280; dir = 0; } else { x = -700; z = 280 - (d - 3360); dir = 1; }
         const steel = i < nT * nSteel / Math.max(1, nSteel + nConc), c = steel ? [0.72, 0.18, 0.12] : [0.62, 0.62, 0.6], hx = dir ? 1.4 : 6, hz = dir ? 6 : 1.4; g.B(x - hx, 0.4, z - hz, x + hx, 3.0, z + hz, c); }
       // 堆场：钢构堆场库存 = 已到场 − 已安装（到场比安装提前 40 日）；钢筋 / 预制堆场随土建活动
       const steelA = HZ.acts.filter(a => a.tally && a.tally.steel), inst = tt => steelA.reduce((s, a) => s + a.tally.steel * Math.max(0, Math.min(1, (tt - a.start) / a.dur)), 0), stock = Math.max(0, inst(t + 40) - inst(t)) / 13000;
       const civ = act.filter(a => !(a.res.steel || a.res.asm || a.res.skin)).length;
-      for (const [sx, sz, kind] of [[-420, -205, 's'], [420, -205, 's'], [-420, 205, 'c'], [420, 205, 'c']]) { if (t >= TL.OPEN - 30) continue; const amt = kind === 's' ? stock : Math.min(1, civ / 5);
+      for (const [sx, sz, kind] of [[-420, -205, 's'], [420, -205, 's'], [-420, 205, 'c'], [420, 205, 'c']]) { if (t >= TL.OPEN - 30 || (SH && !SH.site)) continue; const amt = kind === 's' ? stock : Math.min(1, civ / 5);
         for (const [a, b] of [[[sx - 60, 0.2, sz - 30], [sx + 60, 0.2, sz - 30]], [[sx + 60, 0.2, sz - 30], [sx + 60, 0.2, sz + 30]], [[sx + 60, 0.2, sz + 30], [sx - 60, 0.2, sz + 30]], [[sx - 60, 0.2, sz + 30], [sx - 60, 0.2, sz - 30]]]) Lc(a, b, INK);
         const n = Math.round(amt * 24); for (let i = 0; i < n; i++) { const ix = i % 8, iz = Math.floor(i / 8), x0 = sx - 52 + ix * 13.5, z0 = sz - 22 + iz * 16, hh = 1.2 + ((i * 37) % 5) * 0.5; g.B(x0, 0, z0, x0 + 10, hh, z0 + 9, kind === 's' ? [0.55, 0.57, 0.6] : [0.6, 0.5, 0.42]); } }
       // 南 / 北区转轴（旋转提升期间）
-      const ps = S.pose; for (const [zone, zA, key] of [[1, P.roofB, 'lift1'], [3, -P.roofB, 'lift3']]) { const A = K[key]; if (!(t >= A.start - 1.5 && t < A.end + 1.5)) continue; const y = P.roofLo + ps[zone].dy; for (let x = -128; x < 128; x += 8) Lc([x, y, zA], [x + 5, y, zA], RED); Lc([-128, y, zA], [-128, y + 14, zA], RED); Lc([128, y, zA], [128, y + 14, zA], RED); }
+      const ps = S.pose; for (const [zone, zA, key] of [[1, P.roofB, 'lift1'], [3, -P.roofB, 'lift3']]) { const A = K[key]; if (!(t >= A.start - 1.5 && t < A.end + 1.5) || (SH && !(SH.keys || []).includes(key))) continue; const y = P.roofLo + ps[zone].dy; for (let x = -128; x < 128; x += 8) Lc([x, y, zA], [x + 5, y, zA], RED); Lc([-128, y, zA], [-128, y + 14, zA], RED); Lc([128, y, zA], [128, y + 14, zA], RED); }
       // S-301：提升器油缸（伸缸 = 红、缩缸换锚 = 橙、锁定 = 墨）+ 楼面净空尺寸线（最小净空处，3D 实时）
       if (SHEET === 'S-301' && !S.noJack) { const J = HZ.jackRead(t), st = J.m ? J.m.state : 'lock';
         for (const r of J.rows) { const on = r.on && (st === 'ext' || st === 'ret'), c = !on ? [0.3, 0.28, 0.26] : st === 'ext' ? [0.78, 0.12, 0.14] : [0.86, 0.48, 0.12], ex = on ? J.m.ext * 0.25 * 4 : 0, y0 = r.top; // 活塞外伸按 ×4 显示（实际行程 250 mm）
@@ -992,7 +998,7 @@
     let lastNow = performance.now();
     const GL2 = (() => { const g = renderer.getContext(); return typeof WebGL2RenderingContext !== 'undefined' && g instanceof WebGL2RenderingContext && !hp.has('nofence') ? g : null; })(), FEN = [];
     { const az = THREE.MathUtils.degToRad(232), el = THREE.MathUtils.degToRad(12); U.uRakeDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); }   // 掠射光方向：与实景太阳同方位（西南 232°），高 12°
-    function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.22; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
+    function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.22; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = !YMH; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
       U.uLA.value = la; renderer.setRenderTarget(null); renderer.setClearColor(0xefe9dd, 1); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); }
     function renderLit() { ghostMat.uniforms.uGhA.value = 0.3; CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 1);
@@ -1013,7 +1019,7 @@
       renderer.info.reset(); const b = S.blend; document.body.classList.toggle('lit', b > 0.5);
       if (b <= 0.001) renderInk(1);
       else { renderLit(); if (b < 0.999) { renderer.autoClear = false; paperQuad.m.uniforms.uA.value = Math.max(0, (0.85 - b) / 0.85) * 0.9; renderer.render(paperQuad.sc, cam);
-          const vis = scene.children.map(o => o.visible); for (const o of scene.children) o.visible = (o === LINES || o === CTX.lines || o === DYN.lines || o === MESH || YMO.includes(o)); MESH.material = inkMat; inkMat.colorWrite = false; renderer.clearDepth(); U.uLA.value = Math.max(1 - FV.ik, 1 - b); U.uYm.value = YMON ? 1 : 0; for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * U.uLA.value; } renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); scene.children.forEach((o, i) => o.visible = vis[i]); for (const o of YMO) if (o.material && o.userData.op != null) o.material.opacity = o.userData.op; U.uYm.value = 0; inkMat.colorWrite = true; MESH.material = MESH.userData.lit; renderer.autoClear = true; } }
+          const vis = scene.children.map(o => o.visible); for (const o of scene.children) o.visible = (o === LINES || o === CTX.lines || o === DYN.lines || o === MESH || (YMO.includes(o) && !YMH)); MESH.material = inkMat; inkMat.colorWrite = false; renderer.clearDepth(); U.uLA.value = Math.max(1 - FV.ik, 1 - b); U.uYm.value = YMON ? 1 : 0; for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * U.uLA.value; } renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); scene.children.forEach((o, i) => o.visible = vis[i]); for (const o of YMO) if (o.material && o.userData.op != null) o.material.opacity = o.userData.op; U.uYm.value = 0; inkMat.colorWrite = true; MESH.material = MESH.userData.lit; renderer.autoClear = true; } }
       if (GL2) { FEN.push(GL2.fenceSync(GL2.SYNC_GPU_COMMANDS_COMPLETE, 0)); GL2.flush(); } const pf2 = performance.now(); S.frames++; S.calls = renderer.info.render.calls; lead(); const pf3 = performance.now(); if (S.pf) { const q = S.pf; q.n++; q.dyn = Math.max(q.dyn, pf1 - pf0); q.rnd = Math.max(q.rnd, pf2 - pf1); q.lead = Math.max(q.lead, pf3 - pf2); q.pre = Math.max(q.pre, pf0 - now); } }
     // ---------------- 3D 引线标注：旋转提升时标转轴，其余时刻标当前工作面 ----------------
     const LEAD = $('lead'), MC = document.createElement('canvas').getContext('2d'), v3v = new THREE.Vector3(); let leadKey = '';
@@ -1027,13 +1033,17 @@
       if (!pl || SCOPE_ALL.has(sheet)) r = { on: false, mask: null, n: 0, live: 0, src: 'host', keys: [] };
       else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm })), parts = [], [a, b] = pl.window || [0, 0];
         for (let i = 0; i <= 6; i++) for (const p of PL.safeParts(pl, a + (b - a) * i / 6, plugCtx(), pwarn)) parts.push(p);
-        r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a }); }
+        r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a });
+        if (r.on) { const dk = ((pl.scope && typeof pl.scope === 'object' ? pl.scope : pl.scope === undefined ? SCOPE_HOST[sheet] : null) || {}).keys || []; r.site = dk.includes('crane') || dk.includes('ycrane');   // 声明了塔吊工序的图（S-002 吊装资源）= 现场图：履带吊、运输车、堆场照画
+          if (r.site && SCOPE_OUT === 'hide') { const [w0, w1] = pl.window || [0, 0]; ITEMS.forEach((it, i) => { const p = it.p; if ((p.crane >= 0 || p.crawl) && p.st <= w1 && p.st + (p.du || 0) >= w0) r.mask[i] = 1; }); }   // 现场图隐藏模式：吊机连同它们本图时间窗内吊的构件（塔吊 / 履带吊所吊）一起画，免得满场只剩吊机、履带吊吊空气
+          r.cr = PL.scopeCranes(CRS, r.mask, pl.window); CRS.forEach((c, k) => { if (r.cr[k] && c.mast >= 0) r.mask[c.mast] = 1; });   // 服务本图的塔吊连塔身一起留（不悬空）
+          r.crawl = new Set(); for (const p of crawlParts) { const i = ITEM_OF.get(p); if (r.site || (i != null && r.mask[i])) r.crawl.add(p); } } }
       return (SCOPES[sheet] = r); }
     function scopeAt(t) { const sc = scopeOf(SHEET); if (scopeSheet !== SHEET) { scopeSheet = SHEET;
         const ga = MESH.geometry.getAttribute('aGh'), la = LINES.geometry.getAttribute('aGh'); ga.array.fill(0); la.array.fill(0);
         if (sc.on) ITEMS.forEach((it, i) => { if (sc.mask[i]) return; ga.array.fill(1, it.v[0], it.v[1]); la.array.fill(1, it.l[0], it.l[1]); });
         ga.needsUpdate = la.needsUpdate = true; }
-      const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on; S.scope = { sheet: SHEET, on, n: sc.n, live: sc.live, src: sc.src, keys: sc.keys }; }
+      const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on && SCOPE_OUT === 'ghost'; SC_HIDE = on && SCOPE_OUT === 'hide' ? sc : null; S.scope = { sheet: SHEET, on, n: sc.n, live: sc.live, src: sc.src, keys: sc.keys, mode: SCOPE_OUT, hide: !!SC_HIDE, cranes: sc.cr ? sc.cr.slice() : null, site: !!sc.site }; }
     function leadOwn(sheet, pl) { if (pl && Array.isArray(pl.leadKeys)) return pl.leadKeys.slice(); if (pl) return LEAD_KEYS[sheet] || []; return null; }   // null = 总图（不过滤）；插件图没登记 → 空表 → 宁缺毋串
     const leadOwns = (own, k) => !own || own.indexOf(k) >= 0;
     function leadAct(K, own, t, capAct) { if (!own) return capAct && capAct.parts && capAct.parts.length && capAct.parts.some(p => p.st <= t) ? capAct : null;
@@ -1042,6 +1052,9 @@
         if (!best || crane(k) < crane(bk) || (crane(k) === crane(bk) && a.start > best.start)) { best = a; bk = k; } }
       return best ? Object.assign({ leadKey: bk }, { a: best }) : null; }
     // </leadPick>
+    const ITEM_OF = new Map(); ITEMS.forEach((it, i) => { if (!ITEM_OF.has(it.p)) ITEM_OF.set(it.p, i); });
+    const CRS = CR.map(c => ({ mast: ITEMS.findIndex(it => it.key === c.key && Math.abs(it.p.c[0] - c.x) < 1 && Math.abs(it.p.c[2] - c.z) < 1), seq: c.seq.map(e => ({ i: ITEM_OF.has(e.p) ? ITEM_OF.get(e.p) : -1, t: e.t })) }));
+    let SC_HIDE = null;   // 范围启用且 SCOPE_OUT = 'hide' 时 = 当前图的范围（rebuildDyn / scopeMods 用）；否则 null
     function lead301() { const t = S.st.t, r = v3.getBoundingClientRect(), W = r.width, H = r.height, b = S.big || big301(t), J = b.J, ps = S.pose, A = [], JL = HZ.jackLoad ? HZ.jackLoad(t) : null, ld = i => JL && JL.rows[i] >= 0.5 ? ' · 载荷≈' + Math.round(JL.rows[i]) + ' t' : '';   // 吊点载荷（HZ.jackLoad，推算）
       const gp = S.gapAt; if (gp) A.push({ p: [gp.at[0], (gp.at[1] + P.floorTop) / 2, gp.at[2]], t1: '净空 ' + SH.f2(gp.v) + ' m', t2: gp.sec ? '剖面 B–B 最低处 · 下弦 → 楼面' : '此处下弦 → 候车层楼面', gap: 1 });
       if (SV.sel >= 0) { const q = J.rows[SV.sel]; A.push({ p: [q.x, q.top + 2.2, q.z], t1: 'J' + String(q.i + 1).padStart(2, '0') + ' 提升器 · 行程 ' + fmt(q.disp * 1000) + ' mm', t2: '同步偏差 ' + (q.dev >= 0 ? '+' : '−') + Math.abs(q.dev).toFixed(1) + ' mm · ' + (q.on && J.m ? (STATE[J.m.state] || '') : '本段不动') + ld(q.i), sel: 1 }); }
@@ -1090,9 +1103,14 @@
     function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; if (MOB) MOB.takeRecords(); try { m.update(t, cam); modOwn(m); } catch (e) { modOff(m, e); } } scopeMods(); }
     // 图纸范围（11-09）：分图 3D 模块（m.sheet，或 id 形如 s251-face → S-251）只在自己那张图或全显时出现；云门模块的墨线在范围外（本图范围不含 ym）时降到 15% 透明度
     const modSheet = m => m.sheet || (/^s(\d{3})(-|$)/.exec(m.id || '') ? 'S-' + /^s(\d{3})/.exec(m.id)[1] : null);
-    function scopeMods() { const on = U.uScope.value > 0.5, sc = S.scope || {};
-      for (const m of MODS) { const ms = modSheet(m); if (on && ms && ms !== SHEET) for (const o of (m.__nodes || [])) o.visible = false; }
-      const ymG = on && !(sc.keys || []).includes('ym'); for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * (ymG ? 0.15 : 1); } }
+    // 隐藏模式（SCOPE_OUT = 'hide'）另外：近景人员 actors 整个不画（说不清服务哪张图）；云门墨线本图范围不含 ym 时不画；模块的幽灵层（m.G.ghost.o 或 userData.ghost = true 的节点）不画。宿主隐藏的节点记 userData.scOff，范围关掉时还原
+    let YMH = false;
+    const scOff = (o, h) => { if (h) { if (o.visible) { o.visible = false; o.userData.scOff = 1; } } else if (o.userData.scOff) { o.visible = true; o.userData.scOff = 0; } };
+    function scopeMods() { const on = U.uScope.value > 0.5, sc = S.scope || {}, hide = !!SC_HIDE;
+      for (const m of MODS) { const ms = modSheet(m), out = on && ms && ms !== SHEET, all = out || (hide && m.id === 'actors'); const gh = m.G && m.G.ghost && m.G.ghost.o;
+        for (const o of (m.__nodes || [])) scOff(o, all || (hide && (o === gh || (o.userData && o.userData.ghost === true)))); if (gh && !(m.__nodes || []).includes(gh)) scOff(gh, all || hide); }
+      YMH = hide && !(sc.keys || []).includes('ym'); S.scopeHidden = { ym: YMH, actors: hide && MODS.some(m => m.id === 'actors') };
+      const ymG = on && !hide && !(sc.keys || []).includes('ym'); for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * (ymG ? 0.15 : 1); } }
     S.mods = MODS.map(m => m.id); S.modsList = MODS; S.modOff = modOff;
     // 云门：web/mods/yunmen.js 生效 → 墨线模式隐去旧体块（uYm），模块墨线只在墨线模式显示；实景 / 结尾仍用体块
     const YMM = MODS.find(m => m.id === 'yunmen'), YMON = !!YMM, YMO = YMM ? YMM.__nodes : []; S.yunmen = YMON;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）

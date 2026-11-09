@@ -158,11 +158,35 @@ has('CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;', '地铁层镜头入口只�
   if (PL.scopeMask(Object.assign({ scope: false }, F), its, {}).on) fail('pl.scope = false 应全显');
   const lv = PL.scopeMask(Object.assign({ scope: { levels: [[-1, 12]], zones: ['ZS'] } }, F), its, { midZ: HZ.P.midZ }); if (!lv.on || its.some((it, i) => lv.mask[i] && (it.max[1] > 12.5 || (it.min[2] + it.max[2]) / 2 <= HZ.P.midZ + 3.5))) fail('pl.scope.levels/zones 取交不对');
   if (!PL.scopeMask(Object.assign({ scope: { keys: ['canopyS'] } }, F), its, {}).keys.includes('canopyS')) fail('pl.scope.keys 应进范围');
+  // 11-09 11:04 委托人：范围外隐藏（SCOPE_OUT = 'hide'）。S-201 中点：范围外在场构件画出来的 = 0；塔吊只留服务本图（塔身在范围或吊本图构件）的，塔身随之进范围
+  const OUT = (/const SCOPE_OUT = '(hide|ghost)';/.exec(src) || [])[1]; if (!OUT) fail('hzview.js 缺单一常量 SCOPE_OUT');
+  if (typeof PL.scopeCranes !== 'function') fail('PL.scopeCranes 不是函数');
+  const iof = new Map(); { let i = 0; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!iof.has(p)) iof.set(p, i); i++; } } }
+  const CRS = HZ.cranes.map((c, k) => { const seq = []; for (const a of HZ.acts) for (const p of a.parts) if (p.crane === k) seq.push({ i: iof.has(p) ? iof.get(p) : -1, t: p.st + p.du * 0.5 });
+    return { key: c.key, mast: its.findIndex((it, i) => it.key === c.key && [...iof].some(([p, j]) => j === i && Math.abs(p.c[0] - c.x) < 1 && Math.abs(p.c[2] - c.z) < 1)), seq }; });
+  const hideOf = (id) => { const r = scopeFor(id), m2 = Uint8Array.from(r.mask), cr = PL.scopeCranes(CRS, m2, PLG[id].window); CRS.forEach((c, k) => { if (cr[k] && c.mast >= 0) m2[c.mast] = 1; }); return { r, m2, cr }; };
+  { const { m2, cr } = hideOf('S-201'), ghostOn = OUT === 'ghost'; let drawnOut = 0, outN = 0;
+    its.forEach((it, i) => { if (!vis(it, tm) || m2[i]) return; outN++; if (ghostOn) drawnOut++; });
+    if (OUT === 'hide' && drawnOut) fail(`S-201 t=${tm} 范围外在场构件仍画出 ${drawnOut} 件（隐藏模式应 0）`);
+    if (outN < 100) fail(`S-201 中点范围外在场构件 ${outN}（应 ≥ 100，候车层、雨棚、网架等都该隐去）`);
+    CRS.forEach((c, k) => { const serve = (c.mast >= 0 && hideOf('S-201').r.mask[c.mast]) || c.seq.some(e => e.i >= 0 && hideOf('S-201').r.mask[e.i] && e.t >= PLG['S-201'].window[0] - 30 && e.t <= PLG['S-201'].window[1] + 30);
+      if (!!cr[k] !== !!serve) fail(`S-201 塔吊 #${k} 显隐与是否服务本图不符`); if (cr[k] && c.mast >= 0 && !m2[c.mast]) fail(`S-201 塔吊 #${k} 留着但塔身不在范围（悬空）`); });
+    if (cr[6] || cr[7]) fail('S-201 不应留云门塔吊 ycrane（吊的是云门，不属承轨层）');
+    if (process.env.HZ_DBG) for (const id of Object.keys(PLG)) { const q = hideOf(id); console.log(id, q.r.on, q.r.src, 'cr=' + q.cr.join(''), 'n=' + q.r.n + '/' + q.r.live, q.r.keys.join(' ')); } }
+  { const { cr } = hideOf('S-501'); if (!cr[6] || !cr[7]) fail('S-501 云门塔吊 ycrane 应留'); }
   runs++; }
+has("const SCOPE_OUT = 'hide';", '范围外默认隐藏（单一常量，改 ghost 即切回 7e3b03b 淡显）');
+has("if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0 || uScH > 0.5) discard;", '隐藏模式范围外墨线不画');
+has("if (vS < 0.0) { if (uGhost < 0.5 || vF > 0.5 || uScope * uScH > 0.5) discard;", '分图隐藏模式不画未建设计位红线（委托人 11:05：其它淡影一并关）');
+has("GHOST.visible = on && SCOPE_OUT === 'ghost'; SC_HIDE = on && SCOPE_OUT === 'hide' ? sc : null;", '隐藏模式不开幽灵网格');
+has("if (SH && !(SH.cr && SH.cr[ci])) continue;", '不服务本图的塔吊不画');
+has("if (SH && !(SH.crawl && SH.crawl.has(p))) continue;", '履带吊随所吊构件');
+has("&& !(SH && !SH.site) ? Math.min(36,", '运输车只在现场图（S-002）画');
+has("all = out || (hide && m.id === 'actors')", '隐藏模式近景人员不画');
+has("for (const o of YMO) o.visible = !YMH;", '隐藏模式云门墨线范围外不画');
 has('if (uScope > 0.5 && abs(step(0.5, aGh) - uGhP) > 0.5) hzP = vec3(0.0, -1e5, 0.0);', '主网格塌掉范围外 / 幽灵网格只留范围外');
-has('if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0) discard;', '范围外墨线降为淡墨');
-has('const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on;', '收官（开通前 12 天起）全显');
+has('const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0;', '收官（开通前 12 天起）全显');
 has('U.uT.value = Math.min(t, TL.OPEN + 0.001); scopeAt(t);', 'setT 更新图纸范围');
-has("if (on && ms && ms !== SHEET) for (const o of (m.__nodes || [])) o.visible = false;", '分图 3D 模块只在本图或全显时出现');
+has("const ms = modSheet(m), out = on && ms && ms !== SHEET", '分图 3D 模块只在本图或全显时出现');
 has('STR.visible = sv && !(U.uScope.value > 0.5);', '提升钢绞线在分图范围启用时不画');
 console.log('OK check_linkage runs=' + runs);
