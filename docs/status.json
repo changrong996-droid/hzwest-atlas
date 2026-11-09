@@ -1,15 +1,15 @@
 {
- "generated_at": "2026-11-09T16:07:00+08:00",
+ "generated_at": "2026-11-09T16:28:00+08:00",
  "headline": {
-  "commits_total": 347,
-  "commits_today": 62,
+  "commits_total": 350,
+  "commits_today": 65,
   "files": 180,
   "items_done": 31,
   "items_total": 39,
   "workflows_running": 12,
   "dispatch_open": 7,
   "live_claims": 5,
-  "pending_review": 2,
+  "pending_review": 1,
   "blockers": 15,
   "waiting_on_owner": 4
  },
@@ -26,13 +26,13 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 182,
-   "today": 52
+   "total": 184,
+   "today": 54
   },
   {
    "agent": "hark-cs",
-   "total": 52,
-   "today": 6
+   "total": 53,
+   "today": 7
   },
   {
    "agent": "hark-liuzhijie",
@@ -72,6 +72,24 @@
  ],
  "recent_commits": [
   {
+   "sha": "eb7b554",
+   "at": "2026-11-09T08:24:39Z",
+   "subj": "合并 agent/hark-cs/hb-1609（D-22 排期心跳）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "49fcf76",
+   "at": "2026-11-09T08:08:03Z",
+   "subj": "[status] 看板刷新",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "05b0102",
+   "at": "2026-11-09T08:04:25Z",
+   "subj": "[CLAIMS] hark-cs 心跳：D-22 下一步排期",
+   "agent": "hark-cs"
+  },
+  {
    "sha": "738667e",
    "at": "2026-11-09T07:53:12Z",
    "subj": "[收件] 合入 D-32/D-33/D-36 S-201；派单状态、看板刷新",
@@ -100,24 +118,6 @@
    "at": "2026-11-09T07:26:47Z",
    "subj": "合并 agent/hark-cs/D-34-36-s401-scope",
    "agent": "hark-cr"
-  },
-  {
-   "sha": "7a098b4",
-   "at": "2026-11-09T07:09:11Z",
-   "subj": "[status] 看板刷新",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "7308e13",
-   "at": "2026-11-09T07:04:35Z",
-   "subj": "[S-401] 声明图纸范围 scope，未铺处不画淡红幽灵等高线（D-34、D-36）",
-   "agent": "hark-cs"
-  },
-  {
-   "sha": "d5a6d70",
-   "at": "2026-11-09T06:54:57Z",
-   "subj": "[收件] D-36 s101 外框合入后同步：check_linkage 断言按 S-501 声明改；接口请求回复；看板刷新",
-   "agent": "hark-cr"
   }
  ],
  "dispatches_open": [
@@ -137,7 +137,7 @@
    "id": "D-22",
    "agent": "hark-cs",
    "item": "S-401 雕琢",
-   "state": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）"
+   "state": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 16:10 hark-cs：下一轮先做 ⑧ 斜侧机位（拟 az≈225、el≈15°，用 fit.js 拟合 + 镜头扫描），再做 ⑦ 标注；D-28 实物图钉排在其后。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）"
   },
   {
    "id": "D-28",
@@ -231,8 +231,7 @@
  ],
  "free_items": [],
  "pending_review": [
-  "agent/hark-fangyi/D-27-mobile",
-  "agent/hark-liuzhijie/cam-sweep2"
+  "agent/hark-cs/world-main-1109-1529"
  ],
  "stale_locks": [],
  "blockers": [
@@ -318,17 +317,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T16:08:00+08:00",
+  "generated_at": "2026-11-09T16:29:04+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794210792,
+    "last_at": 1794211683,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 13
+    "idle_min": 20
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -348,13 +347,13 @@
      "D-36"
     ],
     "done_today": 3,
-    "last_at": 1794209851,
+    "last_at": 1794211465,
     "mine": [
      "D-22"
     ],
     "state": "working",
     "away": false,
-    "idle_min": 29
+    "idle_min": 24
    },
    {
     "name": "hark-darrio",
@@ -364,7 +363,7 @@
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 295
+    "idle_min": 317
    },
    {
     "name": "hark-fangyi",
@@ -377,7 +376,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 30
+    "idle_min": 52
    },
    {
     "name": "hark-liuzhijie",
@@ -391,7 +390,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 93
+    "idle_min": 115
    },
    {
     "name": "marvis",
@@ -405,7 +404,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1626
+    "idle_min": 1647
    },
    {
     "name": "muse-tibo-cs",
@@ -419,7 +418,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1313
+    "idle_min": 1335
    },
    {
     "name": "pi-t2",
@@ -457,7 +456,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1512
+    "idle_min": 1533
    }
   ],
   "jobs": [
@@ -741,7 +740,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 1553,
+     "age_min": 1575,
      "level": "red"
     },
     "done": false
@@ -913,7 +912,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190446,
-     "age_min": 353,
+     "age_min": 374,
      "level": "red"
     },
     "done": false
@@ -949,26 +948,26 @@
      "hark-cs"
     ],
     "kind": "派单",
-    "status": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）",
+    "status": "在做（11-09 合入 agent/hark-cs/D-22-fix：①③⑤⑥ 完成、window/cam 跟随 HZ.K；② 宿主已修；④ 宿主 11-09 上线 pl.leadAt 钩子，s401.js 的 leadAt 现已生效；剩 ⑦ 四朵云标注、⑧ 窗末斜侧机位。11-09 16:10 hark-cs：下一轮先做 ⑧ 斜侧机位（拟 az≈225、el≈15°，用 fit.js 拟合 + 镜头扫描），再做 ⑦ 标注；D-28 实物图钉排在其后。D-22-s401-polish / -window-fix / -s401-window 视为重复不合）",
     "stage": 2,
     "stages": {
      "派出": 1794122454,
      "开工": 1794126292,
-     "交付": 1794182717
+     "交付": 1794211465
     },
     "returned": true,
     "branches": [
-     "agent/hark-cs/D-22-s401-polish2",
      "agent/hark-cs/D-22-s401-window",
-     "agent/hark-cs/D-22-window-fix"
+     "agent/hark-cs/D-22-window-fix",
+     "agent/hark-cs/hb-1609"
     ],
-    "commits": 7,
+    "commits": 8,
     "wait": {
      "who": "hark-cs",
      "what": "被退回，等修改",
-     "since": 1794182717,
-     "age_min": 481,
-     "level": "red"
+     "since": 1794211465,
+     "age_min": 24,
+     "level": "ok"
     },
     "done": false
    },
@@ -1107,7 +1106,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190527,
-     "age_min": 351,
+     "age_min": 373,
      "level": "red"
     },
     "done": false
@@ -1131,7 +1130,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 1382,
+     "age_min": 1403,
      "level": "red"
     },
     "done": false
@@ -1309,7 +1308,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794210483,
-     "age_min": 19,
+     "age_min": 40,
      "level": "ok"
     },
     "done": false
@@ -1362,7 +1361,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794206913,
-     "age_min": 78,
+     "age_min": 100,
      "level": "ok"
     },
     "done": false
@@ -1657,7 +1656,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1654,
+     "age_min": 1676,
      "level": "red"
     },
     "done": false
@@ -1681,7 +1680,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1654,
+     "age_min": 1676,
      "level": "red"
     },
     "done": false
@@ -1736,7 +1735,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 352,
+     "age_min": 373,
      "level": "red"
     },
     "done": false
