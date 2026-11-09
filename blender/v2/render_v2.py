@@ -12,12 +12,12 @@ T0 = time.time()
 # ---------- 镜头（数据坐标 x 东 / y 上 / z 南）----------
 SHOTS = {
     # S-301 整体提升中段 t=661：wlift 659–663 中点，四区同步 dy = -2.6 m，柱头未连
-    'lift':  dict(pos=(175, 40, 175), tgt=(110, 40, 105), lens=30, sun=(38, 128), night=False),   # r3：拉近东南角提升点（提升器 + 柱头 + 2.6 m 未连间隙）；r2 压低机位分数降，弃用
+    'lift':  dict(pos=(172, 30, 172), tgt=(112, 38, 106), lens=32, sun=(38, 128), night=False),   # r4：机位降到楼板（24 m）与屋盖之间、近距，悬空间隙居中；r3 拉近东南角提升点；r2 远景压低（塔吊挡镜）分数降
     # S-401 屋面合拢 t=756：金属屋面刚铺完（clad 693–755），低角度掠射光读四朵云与云缝
     'roof':  dict(pos=(318, 236, 352), tgt=(0, 38, 8), lens=40, sun=(7, 320), night=False),   # r3：侧逆光 7°（西北来）；r2 东北 9° 分数未升
-    # S-501 首趟列车 + 云门同框：geo = t1131f58（开通后、列车按页面同一进站曲线 f=0.58，鼻尖 x=-127.6 到达屋盖西缘；
+    # S-501 首趟列车 + 云门同框：geo = t1131f64（开通后、列车按页面同一进站曲线 f=0.64，鼻尖 x=-59.4 已进屋盖；r3/r4 用 f=0.58 鼻尖 -127.6；
     # 停靠位 x=109.5 在屋盖下、四角上盖开发 47 m 体量挡住云门，任何机位都无法同框，见审计文档）
-    'train': dict(pos=(-380, 95, -140), tgt=(-170, 8, 45), lens=28, sun=(30, 210), night=False),   # r3：列车整列入框（射线核查 inframe 1.00 / 可见 0.90，云门入框 1.00 / 可见 ≈0.69）
+    'train': dict(pos=(-400, 90, -120), tgt=(-200, 10, 40), lens=28, sun=(30, 210), night=False),   # r5：geo t1131f64（鼻尖已进屋盖 60 m，尾部在露天 → 读成驶入站房；r3/r4 尾车流线头被误读为车头背离）；射线核查列车入框 1.00 / 可见 0.92、云门入框 1.00 / 可见 0.68
     # 夜景亮灯全景 t=1131
     'night': dict(pos=(380, 300, 520), tgt=(0, 18, 20), lens=36, sun=(40, 140), night=True),   # r3：抬高、偏南，云门不再以黑侧面挡站房
 }
@@ -37,6 +37,8 @@ for k, v in (('use_shadows', True), ('use_raytracing', True), ('use_gtao', True)
 try: sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Medium High Contrast' if style == 'real' else 'None'
 except Exception: pass
 if style == 'ink': sc.view_settings.view_transform = 'Standard'
+if style == 'clay' and not NIGHT:   # r4：AgX 把白模压成灰，换 Standard（太阳同时降到 3.2 免得过曝）
+    sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'
 
 bpy.ops.wm.obj_import(filepath=os.path.join(geo, 'scene.obj'), forward_axis='NEGATIVE_Z', up_axis='Y')
 objs = {}
@@ -83,23 +85,25 @@ def real_mat(key):
         return principled('r_trainW', lin((0.06, 0.07, 0.09)), 0.1, 0.3, LIGHT, 3.0 if NIGHT else 0.0)
     M = MAT.get(key, {'c': [0.6, 0.6, 0.6], 'r': 0.8, 'm': 0})
     c = lin(M['c']); e = M.get('e', 0) if NIGHT else 0
-    if key == 'glass' and NIGHT: return principled('r_glass', c, 0.1, 0.2, (1.0, 0.86, 0.62), 5.0)
+    if key == 'glass' and NIGHT: return principled('r_glass', c, 0.1, 0.2, (1.0, 0.86, 0.62), 3.5)
     if NIGHT and key in ('todG', 'ymG'): return principled('r_' + key, c, 0.1, 0.3, (1.0, 0.80, 0.55), 1.4)
     if NIGHT and key == 'plat': return principled('r_plat', c, 0.8, 0.0, (1.0, 0.85, 0.6), 1.6)
-    if key == 'clad': return principled('r_clad', c, 0.5, 0.2)
+    if key == 'clad': return principled('r_clad', c, 0.62, 0.15)   # r4：压高光（r3 远端两朵云过曝）
     return principled('r_' + key, c, M.get('r', 0.8), min(M.get('m', 0), 0.6), tuple(LIGHT[i] * c[i] for i in range(3)) if e else None, e * 2.2)
 
 def clay_mat(key):
     base = (0.80, 0.79, 0.76)
     if key in ('red', 'yellow', 'jig'): c = lin({'red': (0.80, 0.20, 0.12), 'yellow': (0.85, 0.70, 0.40), 'jig': (0.82, 0.62, 0.40)}[key])
-    elif key in ('glass', 'todG', 'ymG', 'trainW', 'tr_blk'): c = (0.38, 0.40, 0.43)
+    elif key in ('glass', 'todG', 'ymG'): c = (0.60, 0.62, 0.64)   # r4：云缝 / 幕墙浅灰（r3 深灰条被扣分）
+    elif key in ('trainW', 'tr_blk'): c = (0.10, 0.11, 0.12)
+    elif key in ('slab', 'rail') and shot == 'train': c = (0.45, 0.44, 0.42)   # r4：道床压暗，白车读得出
     elif key == 'pv': c = (0.30, 0.33, 0.38)
     elif key == 'tr_red': c = lin((0.82, 0.12, 0.08))
     elif key == 'tr_sil': c = (0.95, 0.95, 0.95)
     else: c = base
     if NIGHT:
         M = MAT.get(key, {}); e = M.get('e', 0)
-        if key in ('glass',): return principled('c_' + key, c, 0.6, 0, (1.0, 0.85, 0.6), 4.0)
+        if key in ('glass',): return principled('c_' + key, c, 0.6, 0, (1.0, 0.85, 0.6), 3.0)
         if key == 'trainW': return principled('c_trainW', c, 0.6, 0, (1.0, 0.85, 0.6), 3.0)
         if e: return principled('c_' + key, c, 0.8, 0, (1.0, 0.85, 0.6), e * 1.6)
     return principled('c_' + key, c, 0.85 if key not in ('clad', 'pv') else 0.5, 0.0)
@@ -172,10 +176,9 @@ if style == 'ink':
     if 'wv' in LG: add_lines('wv', LG['wv'], 0.17 if shot == 'roof' else 0.24, INK if not NIGHT else (0.62, 0.74, 0.90))
     if 'iso' in LG and shot == 'roof': add_lines('iso', LG['iso'], 0.07, (0.55, 0.53, 0.50) if not NIGHT else (0.3, 0.4, 0.55))
     # r3：页面同源墨线（Geo.L）里的屋面分格（clad）与采光顶格栅（glass）细线画上
-    for k_, r_ in (('clad', 0.055), ('glass', 0.07)):
+    for k_, r_ in (('glass', 0.07),):   # r4：去掉 clad 分格线（r3 加上后云纹读法反而降分），只留采光顶格栅
         if k_ in LG and shot != 'lift': add_lines('L_' + k_, LG[k_], r_ * (1.0 if shot == 'roof' else 1.6), (0.35, 0.34, 0.32) if not NIGHT else (0.45, 0.55, 0.7))
-elif style == 'clay' and shot == 'roof' and 'wv' in LG:
-    add_lines('wv', LG['wv'], 0.09, (0.42, 0.41, 0.39), 1.0)
+
 
 # ---------- Freestyle（ink：轮廓 + 折棱 + 边界；clay 细淡线）----------
 if style in ('ink', 'clay'):
@@ -203,7 +206,7 @@ if style in ('ink', 'clay'):
 # ---------- 世界 / 灯光 ----------
 w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True; nt = w.node_tree; bg = nt.nodes['Background']
 if style == 'ink': bgc, bgs = ((0.955, 0.935, 0.89) if not NIGHT else (0.035, 0.06, 0.12)), 1.0
-elif NIGHT: bgc, bgs = (0.035, 0.055, 0.11), 1.0
+elif NIGHT: bgc, bgs = (0.05, 0.08, 0.16), 1.0
 elif style == 'clay': bgc, bgs = (0.86, 0.84, 0.80), 0.55
 else: bgc, bgs = (0.52, 0.62, 0.78), 0.85
 if style != 'ink' and not NIGHT:
@@ -232,7 +235,7 @@ el, az = S['sun']
 sd = bpy.data.lights.new('sun', 'SUN'); so = bpy.data.objects.new('sun', sd); sc.collection.objects.link(so)
 # 太阳方向：仰角 el、方位 az（度，从北顺时针；北 = 数据 -z = Blender +y）
 so.rotation_euler = (math.radians(90 - el), 0, math.radians(180 - az))
-sd.energy = (0.45 if NIGHT else (4.2 if style == 'real' else 4.6)); sd.angle = math.radians(1.2)
+sd.energy = (0.45 if NIGHT else (4.2 if style == 'real' else 3.2)); sd.angle = math.radians(1.2)
 sd.color = (0.62, 0.72, 1.0) if NIGHT else (1.0, 0.96, 0.90)
 if style == 'ink': sd.energy = 3.0
 

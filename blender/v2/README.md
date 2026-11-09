@@ -11,4 +11,4 @@
 | score.py / bgscore.sh | Gemini 4（~/tv-hub/tools/gemini4）逐张评分，一次 1 张、JPEG ≤300 KB，429 等 120 s 重试一次 |
 
 --scope 同页面 SCOPE_OUT='hide'：临时构件（塔吊）不服务本图范围的不导出。
-镜头时刻：lift t=661（wlift 659–663 中点，dy=-2.6 m）、roof t=756（clad 铺完）、train/night t=1131（OPEN+30）；train 用 `--train-f 0.58`（页面同一进站曲线，鼻尖 x=-127.6）。
+镜头时刻：lift t=661（wlift 659–663 中点，dy=-2.6 m）、roof t=756（clad 铺完）、train/night t=1131（OPEN+30）；train 用 `--train-f 0.64`（页面同一进站曲线，鼻尖 x=-59.4 已进屋盖）。
