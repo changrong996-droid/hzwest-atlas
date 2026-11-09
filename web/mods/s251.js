@@ -24,6 +24,12 @@
     const hit = es.some(e => e.b.max[0] > x - 3.5 && e.b.min[0] < x + 3.5 && e.b.max[2] > z - 3.5 && e.b.min[2] < z + 3.5 && e.b.max[1] > y + 0.05 && e.b.min[1] < y + 4);
     return sup && !hit; }
 
+  // 吊装单元（端部悬挑，楼面以外）：履带吊停在楼板端头以外的下层（脚下取在场构件顶面最高者，没有就是地面 0），[x±4, y..y+5, z±4] 不压构件
+  function standLow(I, t, x, z, yMax) { const es = near(I, x - 5, z - 5, x + 5, z + 5).filter(e => { const s = stOf(e.p, t); return s >= 0 && s < 3; });
+    let y = 0; for (const e of es) if (e.b.min[0] <= x && e.b.max[0] >= x && e.b.min[2] <= z && e.b.max[2] >= z && e.b.max[1] < yMax - 1 && e.b.max[1] > y) y = e.b.max[1];
+    const hit = es.some(e => e.b.max[0] > x - 4 && e.b.min[0] < x + 4 && e.b.max[2] > z - 4 && e.b.min[2] < z + 4 && e.b.max[1] > y + 0.05 && e.b.min[1] < y + 5);
+    return hit ? null : y; }
+
   function lines(HZ, I, t, out) {
     out.face.length = 0; out.live = []; out.cranes = []; out.rods = 0;
     const P = plug(); if (!P || !P.stateAt) return out;
@@ -55,16 +61,19 @@
       let cr = I.crane.has(ck) ? I.crane.get(ck) : undefined; if (cr === undefined) {
       const cand = []; for (const o of [OFF, OFF + 6, OFF + 12, OFF + 18]) for (const f of [0, -0.15, 0.15, -0.3, 0.3, -0.45, 0.45]) { const ex = (u.xb - u.xa) * f, ez = (u.zb - u.za) * f; cand.push([cx + ex, u.za - o], [cx + ex, u.zb + o], [u.xa - o, cz + ez], [u.xb + o, cz + ez]); }
       cand.sort((a, b) => Math.hypot(a[0] - cx, a[1] - cz) - Math.hypot(b[0] - cx, b[1] - cz));
-        cr = null; for (const [x, z] of cand) if (standOK(I, t, x, fy, z)) { cr = { x, y: fy, z }; break; } I.crane.set(ck, cr); }
-      if (cr) cr = { x: cr.x, y: cr.y, z: cr.z };
+        cr = null; if (u.hoist) { const zE = u.hoistEnd === 'S' ? u.zb : u.za, sg2 = u.hoistEnd === 'S' ? 1 : -1;
+          for (const o of [12, 18, 24, 30, 36]) { for (const f of [0, -0.2, 0.2, -0.4, 0.4]) { const x = cx + (u.xb - u.xa) * f, z = zE + sg2 * o, y = standLow(I, t, x, z, fy); if (y != null) { cr = { x, y, z, hoist: true }; break; } } if (cr) break; } }
+        else for (const [x, z] of cand) if (standOK(I, t, x, fy, z)) { cr = { x, y: fy, z }; break; } I.crane.set(ck, cr); }
+      if (cr) cr = { x: cr.x, y: cr.y, z: cr.z, hoist: !!cr.hoist };
       if (cr) { const yaw = Math.atan2(top[2] - cr.z, top[0] - cr.x), c = Math.cos(yaw), sn = Math.sin(yaw), W = (a, b, w) => [cr.x + a * c - w * sn, cr.y + b, cr.z + a * sn + w * c];
         const bx = (a0, b0, w0, a1, b1, w1) => { const v = [W(a0, b0, w0), W(a1, b0, w0), W(a1, b0, w1), W(a0, b0, w1), W(a0, b1, w0), W(a1, b1, w0), W(a1, b1, w1), W(a0, b1, w1)];
           for (const [i, j] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) seg(v[i], v[j]); };
-        bx(-3.5, 0.4, -1.2, 3.5, 1.6, 1.2); bx(2.0, 1.6, -1.1, 3.4, 3.2, 1.1); bx(-1.6, 1.6, -0.9, 0.8, 2.6, 0.9);   // 底盘、驾驶室、转台
-        const foot = W(0, 2.8, 0), hd = Math.hypot(top[0] - cr.x, top[2] - cr.z), tip = [cr.x + c * hd, Math.max(top[1] + 6, cr.y + 12), cr.z + sn * hd];
-        seg(foot, tip); seg(tip, [tip[0], top[1] + 1, tip[2]]); for (const w of [-1.1, 1.1]) for (const a of [-3, 3]) seg(W(a, 0.4, w), W(a, 0, w * 2.2));   // 臂、钩、支腿
+        if (cr.hoist) { bx(-4, 0, -2.8, 4, 1.1, -1.6); bx(-4, 0, 1.6, 4, 1.1, 2.8); bx(-2.6, 1.1, -1.8, 2.6, 3.4, 1.8); }   /* 履带吊：两条履带 + 机身（吊装单元，楼面以外） */
+        else { bx(-3.5, 0.4, -1.2, 3.5, 1.6, 1.2); bx(2.0, 1.6, -1.1, 3.4, 3.2, 1.1); bx(-1.6, 1.6, -0.9, 0.8, 2.6, 0.9); }   /* 汽车吊：底盘、驾驶室、转台 */
+        const foot = W(0, cr.hoist ? 3.4 : 2.8, 0), hd = Math.hypot(top[0] - cr.x, top[2] - cr.z), tip = [cr.x + c * hd, Math.max(top[1] + 6, cr.y + 12), cr.z + sn * hd];
+        seg(foot, tip); seg(tip, [tip[0], top[1] + 1, tip[2]]); if (!cr.hoist) for (const w of [-1.1, 1.1]) for (const a of [-3, 3]) seg(W(a, 0.4, w), W(a, 0, w * 2.2));   // 臂、钩、支腿（履带吊无支腿）
         out.cranes.push(Object.assign(cr, { yaw, unit: u.id })); }
-      out.live.push({ id: u.id, cell: cur, jigs: nj, rods: nR }); out.rods += nR;
+      out.live.push({ id: u.id, cell: cur, jigs: nj, rods: nR, hoist: !!u.hoist }); out.rods += nR;
     }
     return out;
   }
@@ -78,7 +87,7 @@
         const clip = Array.isArray(opts.clip) && opts.clip.length ? { clippingPlanes: opts.clip } : {};
         this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial(Object.assign({ color: 0xb3261e, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false }, clip))); this.obj.frustumCulled = false; this.obj.renderOrder = 7; scene.add(this.obj); }
       return this; },
-    update(t, cam) { if (!this.HZ) return 0; const key = Math.round(t * 8);   // 3 小时重算一次 if (key === this.key) return this.stats.segs; this.key = key;
+    update(t, cam) { if (!this.HZ) return 0; const key = Math.round(t * 8); if (key === this.key) return this.stats.segs; this.key = key;   // 3 小时重算一次（原注释吞掉了这句缓存）
       const L = lines(this.HZ, this.I, t, this.L), n = Math.min(L.face.length, MAXSEG * 6);
       this.stats.live = L.live.length; this.stats.segs = n / 6; this.stats.cranes = L.cranes.length;
       if (this.obj) { this.buf.set(L.face.length > n ? L.face.slice(0, n) : L.face); this.obj.geometry.setDrawRange(0, n / 3); this.attr.needsUpdate = true; this.obj.visible = n > 0; }
