@@ -122,5 +122,16 @@ let modTxt = '';
   const ms = [], re = []; let key = null; for (let f = 0; f < 1800; f++) { const t = 100 + f / 60, k = Math.round(t * 8), t0 = process.hrtime.bigint(); MD.update(t, [0, 50, 300]); const d = Number(process.hrtime.bigint() - t0) / 1e6; if (f > 30) { ms.push(d); if (k !== key) re.push(d); } key = k; }
   re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, worst = re[re.length >> 1];   // 同 check_actors：按 60 帧/秒、1 天/秒播放，平均与重算帧中位都 < 2 ms
   if (avg > 2 || worst > 2) fail(`update 平均 ${avg.toFixed(2)} ms、重算帧中位 ${worst.toFixed(2)} ms，应 < 2 ms`);
+  // D-20 ②：t=182「回筑 B2 板、拆第 3 道撑」——3D 有中央坑虚线、在用内支撑、已浇底板与 B3 板（墨线，透地面）、B2 板在浇（红）
+  { const L = MD.lines(HZ, 182), s = P.stateAt(182), c = P.model().core, atY = (arr, y) => { let n = 0; for (let i = 0; i < arr.length; i += 6) if (Math.abs(arr[i + 1] - y) < 0.01 && Math.abs(arr[i + 4] - y) < 0.01) n++; return n; };
+    if (!(s.lv[0] >= 1 && s.lv[1] > 0 && s.lv[1] < 1)) fail('t=182 状态与任务书不符（应 B3 已浇、B2 在浇）');
+    if (atY(L.built, P.GEO.base[1]) < 4) fail('t=182 3D 未画中央坑底板'); if (atY(L.built, P.GEO.lv[0].y1) < 4) fail('t=182 3D 未画已回筑 B3 板');
+    if (atY(L.built, P.GEO.lv[1].y1) > 0) fail('t=182 B2 板未浇完却画成墨线'); if (atY(L.face, P.GEO.lv[1].y1) < 4) fail('t=182 B2 板在浇未画红框');
+    for (let i = 0; i < 3; i++) if (s.struts[i] === 1 && atY(L.pit, P.GEO.struts[i]) < 3) fail(`t=182 第 ${i + 1} 道在用内支撑 3D 未画`);
+    if (atY(L.pit, P.GEO.struts[3]) > 0) fail('t=182 已拆第 4 道撑仍在画');
+    if (!L.pit.some((v, i) => i % 6 === 1 && Math.abs(v - s.coreDig) < 0.01)) fail('t=182 中央深坑轮廓未画'); }
+  // D-20 ⑤：窗外 update 直接返回、节点隐藏
+  { MD.update(MD.SHOW[1] + 5, [0, 50, 300]); if (!MD.off) fail('t > SHOW[1] 后 update 未进入隐藏态'); const t0 = process.hrtime.bigint(); for (let i = 0; i < 1000; i++) MD.update(MD.SHOW[1] + 5 + i / 60, [0, 50, 300]);
+    const us = Number(process.hrtime.bigint() - t0) / 1e6; if (us > 5) fail(`窗外 1000 帧 update 共 ${us.toFixed(2)} ms，应近 0`); }
   modTxt = ` mod_a=${aMax.toFixed(1)} mod_face=${nFace} mod_ms=${worst.toFixed(2)}`; }
 console.log(`OK check_s101 runs=${runs} samples=${samples} cam=${P.cam.length} phases=${M.L.length} parts=${nParts}${modTxt}`);
