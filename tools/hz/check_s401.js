@@ -88,4 +88,18 @@ K.pv.start += 10; const pvB = pl.stats(tp).pv, pvInfo2 = JSON.stringify(pl.parts
 if (!(pvB < pvA)) fail(`改 HZ.K.pv.start 后光伏面积未变 ${pvA} → ${pvB}`);
 if (pvInfo === pvInfo2) fail('改 HZ.K.pv.start 后 parts 工期未变');
 
+// 7 屋盖工序（holes、sky、clad、pv）整体 +7 / −7 天：pl.window 与 pl.cam 首尾帧跟着变，检查完恢复原值
+{
+  const roofKeys = ['holes', 'sky', 'clad', 'pv'];
+  const cam0 = pl.cam.map(k => k.t), c0 = cam0[0], c1 = cam0[cam0.length - 1];
+  for (const d of [7, -7]) {
+    for (const k of roofKeys) { K[k].start += d; K[k].end += d; }
+    const [nw0, nw1] = pl.window, cm = pl.cam, nc0 = cm[0].t, nc1 = cm[cm.length - 1].t;
+    for (const k of roofKeys) { K[k].start -= d; K[k].end -= d; }
+    if (nw0 !== w0 + d || nw1 !== w1 + d) fail(`屋盖工序 ${d > 0 ? '+' : ''}${d} 天后 window 期望 [${w0 + d},${w1 + d}] 实得 [${nw0},${nw1}]`);
+    if (nc0 !== c0 + d || nc1 !== c1 + d || cm.some((k, i) => k.t !== cam0[i] + d)) fail(`屋盖工序 ${d > 0 ? '+' : ''}${d} 天后 cam 首尾期望 [${c0 + d},${c1 + d}] 实得 [${nc0},${nc1}]`);
+  }
+  if (pl.window[0] !== w0 || pl.window[1] !== w1 || pl.cam[0].t !== c0 || pl.cam[pl.cam.length - 1].t !== c1) fail('屋盖工序恢复后 window / cam 未回到原值');
+}
+
 console.log(`OK check_s401 runs=${runs} parts=${nParts} close=${pl.big(w1).num}% pv=${Math.round(sEnd.pv)} holes=${sEnd.holesTot}`);
