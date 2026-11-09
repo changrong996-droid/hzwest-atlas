@@ -76,9 +76,9 @@
   const labels = []; let LZ = 1, ROT = false;   // ROT：当前在转向后的平面层画字，字要转回正   // LZ：缩放层标注的字号系数（放大时字不跟着变得巨大）
   const freeAt = (x, y, w, h, b) => x >= b.x0 && y >= b.y0 && x + w <= b.x1 && y + h <= b.y1 && labels.every(r => x + w < r[0] || x > r[2] || y + h < r[1] || y > r[3]);
   function label(g, txt, x, y, col, b, o) { o = o || {}; const fs = (o.fs || 9) * (o.any ? LZ : 1); g.font = `${o.b ? '600 ' : ''}${fs}px ${o.sans ? SANS : MONO}`; const w = g.measureText(txt).width, h = fs + 2;
-    if (ROT && o.any) { g.save(); g.translate(x, y); g.rotate(Math.PI / 2); const ax = o.al === 'c' ? -w / 2 : o.al === 'r' ? -w : 0; g.textBaseline = 'middle'; g.lineWidth = 3; g.strokeStyle = C.paper; g.lineJoin = 'round'; g.strokeText(txt, ax, 0); g.fillStyle = col || C.ink; g.fillText(txt, ax, 0); g.restore(); return true; }
+    if (ROT && o.any) { g.save(); g.translate(x, y); g.rotate(Math.PI / 2); const ax = o.al === 'c' ? -w / 2 : o.al === 'r' ? -w : 0; g.textBaseline = 'middle'; if (o.bg) { g.fillStyle = C.paper; g.fillRect(ax - 3, -h / 2 - 1, w + 6, h + 2); } g.lineWidth = 3; g.strokeStyle = C.paper; g.lineJoin = 'round'; g.strokeText(txt, ax, 0); g.fillStyle = col || C.ink; g.fillText(txt, ax, 0); g.restore(); return true; }
     const lx = o.al === 'c' ? x - w / 2 : o.al === 'r' ? x - w : x, ly = y - h / 2; if (!freeAt(lx - 1, ly, w + 2, h, b)) return false; labels.push([lx - 1, ly, lx + w + 1, ly + h]);
-    g.textBaseline = 'middle'; g.lineWidth = 3; g.strokeStyle = C.paper; g.lineJoin = 'round'; g.strokeText(txt, lx, y); g.fillStyle = col || C.ink; g.fillText(txt, lx, y); return true; }
+    g.textBaseline = 'middle'; if (o.bg) { g.fillStyle = C.paper; g.fillRect(lx - 3, ly - 1, w + 6, h + 2); } g.lineWidth = 3; g.strokeStyle = C.paper; g.lineJoin = 'round'; g.strokeText(txt, lx, y); g.fillStyle = col || C.ink; g.fillText(txt, lx, y); return true; }
 
   // ================= 版面（draw 与 parts 共用同一套换算，hit 与图上位置严格一致）=================
   // 横向：站内 ±P.stX 真比例，引桥压缩到 0.22；纵向范围取自承轨层 / 站台 / 股道构件的实际外包（HZ.YARDS 改了就跟着变）
@@ -152,11 +152,12 @@
       else { const r = rect(F.x0, F.x1, F.z0, F.z1); g.lineWidth = 2.2 * ZW; g.strokeRect(r[0] - 1, r[1] - 1, r[2] + 2, r[3] + 2); } }
     // 7) 构件编号：放大到 2× 起逐条标出（细节层级），选中的总是标出
     const S = stats(t), doneOf = yk => d.lines.filter(Ln => Ln.yk === yk && Ln.segs.every(q => stOf(q.p, t) >= 2)).length, totOf = yk => d.lines.filter(Ln => Ln.yk === yk).length;
-    if (L.rot) { const mid = yk => { const ls = d.lines.filter(Ln => Ln.yk === yk).map(Ln => Ln.tz); return (Math.min(...ls) + Math.max(...ls)) / 2; }, xe = X(XS) + 10 * ZW + (X(XA) - X(XS)) * 0.5;
-      label(g, `北 · ${YK.N.name} ${doneOf('N')}/${totOf('N')} 线贯通`, xe, Z(mid('N')), YK.N.ink, box, { al: 'c', b: true, fs: 9, sans: true, any: true });
-      label(g, `南 · ${YK.S.name} ${doneOf('S')}/${totOf('S')} 线贯通`, xe, Z(mid('S')), YK.S.ink, box, { al: 'c', b: true, fs: 9, sans: true, any: true }); }
-    else { label(g, `北 · ${YK.N.name} ${doneOf('N')}/${totOf('N')} 线贯通`, X(-XS) + 4, Z(-P.gap / 2), YK.N.ink, box, { b: true, fs: 9, sans: true, any: true });
-      label(g, `南 · ${YK.S.name} ${doneOf('S')}/${totOf('S')} 线贯通`, X(-XS) + 4, Z(P.gap / 2), YK.S.ink, box, { b: true, fs: 9, sans: true, any: true }); }
+    // 两场贯通数：各放在本场正中（分列），宽度放不下就逐级缩短（全称 → 场名 → 方位），纸色衬底不压引桥墨线（D-19 ①）
+    const yardTxt = yk => { const n = `${doneOf(yk)}/${totOf(yk)}`, fw = yk === 'N' ? '北' : '南'; return [`${fw} · ${YK[yk].name} ${n} 线贯通`, `${YK[yk].name} ${n} 线`, `${fw} ${n}`]; };
+    const fitTxt = (opts, room, fs) => { g.font = `600 ${fs * LZ}px ${SANS}`; return opts.find(q => g.measureText(q).width + 8 <= room) || opts[opts.length - 1]; };
+    if (L.rot) { const ext = yk => { const ls = d.lines.filter(Ln => Ln.yk === yk).map(Ln => Ln.tz); return [Math.min(...ls), Math.max(...ls)]; }, xe = X(XS) + 10 * ZW + (X(XA) - X(XS)) * 0.5;
+      for (const yk of ['N', 'S']) { const [a, b] = ext(yk), room = Math.abs(Z(b) - Z(a)) + 10; label(g, fitTxt(yardTxt(yk), room, 9), xe, Z((a + b) / 2), YK[yk].ink, box, { al: 'c', b: true, fs: 9, sans: true, any: true, bg: true }); } }
+    else { for (const yk of ['N', 'S']) label(g, fitTxt(yardTxt(yk), X(XS) - X(-XS), 9), X(-XS) + 4, Z((yk === 'N' ? -1 : 1) * P.gap / 2), YK[yk].ink, box, { b: true, fs: 9, sans: true, any: true, bg: true }); }
     label(g, `云谷 ${Math.round(2 * P.gap)} m`, X(XS) - 4, Z(0), C.ink2, box, { al: 'r', fs: 8.5, sans: true, any: true });
     if (F) label(g, F.id, F.kind === 'track' ? X(-XS) - 3 : X(F.x0) - 3, F.kind === 'track' ? Z(F.tz) : Z((F.z0 + F.z1) / 2), '#8a6a00', box, { al: 'r', fs: 9, b: true, any: true });
     if (zoom >= 2) { const fs = 8;
@@ -170,6 +171,10 @@
       const cur = [...grp].map(([n, ys]) => ys.length ? n + '（' + ys.join('、') + '）' : n).join('；');
       label(g, cur ? '在做：' + cur : (t < d.keys[0].start ? '承轨层尚未开工' : t >= T1 ? '股道全部贯通' : '等待下一道工序'), L.B.x0 + 4, L.B.y0 + 7, cur ? C.red : C.ink2, L.B, { b: true, fs: 9, sans: true });
       label(g, L.rot ? '↑东  北←' : '↑北  东→', L.B.x1 - 4, L.B.y0 + 7, C.ink2, box, { al: 'r', fs: 8.5, sans: true });
+      label(g, '三维自东向西看：南场在左', L.B.x1 - 4, L.B.y0 + 19, C.ink3, box, { al: 'r', fs: 8, sans: true });   // D-19 ②：图纸与三维方位不同，标明免误读（三维 cam az 62°–96°，机位都在东侧）
+      // D-26：北场铺轨开始后加小注（排程不动，只说明模型与卫星影像的差）；放屏幕固定层左上、「在做」下一行，与右侧方位注互相避让，放不下逐级缩短
+      if (t >= G.HZ.K.trackN.start) { const nt = ['北场铺轨按设计工期示意，卫星影像显示实际晚于模型（R-0013）', '北场铺轨按设计工期示意，实际偏晚（R-0013）', '北场实际铺轨偏晚（R-0013）'];
+        nt.some(s => label(g, s, L.B.x0 + 4, L.B.y0 + 19, YK.N.ink, L.B, { fs: 8, sans: true, bg: true })) || nt.some(s => label(g, s, L.B.x0 + 4, L.B.y0 + 31, YK.N.ink, L.B, { fs: 8, sans: true, bg: true })); }
       if (F) card(g, F, t, L.B, L.band); else if (L.band) roster(g, t, L.B, L.band);
       frame(g, w, h, Object.assign({ noFill: true }, tbo)); });
     return S;
@@ -253,6 +258,7 @@
     { t: 365, target: [0, 5, 10], az: 62, el: 24, dist: 520 },
     { t: 420, target: [40, 10, 20], az: 70, el: 14, dist: 380 },
     { t: 580, target: [90, 13, 70], az: 84, el: 7, dist: 300 },
+    { t: 636, target: [90, 13, 47], az: 86, el: 6, dist: 280 },    // D-26：南区屋盖拼好仍在胎架上，挡最后一条视线；hark-cr 以 --cam= 试过违反 0
     { t: 790, target: [90, 15, -60], az: 96, el: 4, dist: 300 },   // D-14：压低到雨棚 canopyN 下沿以下，避开 t 798–822 遮挡
     { t: 900, target: [60, 15, 0], az: 88, el: 4, dist: 360 },
   ];
