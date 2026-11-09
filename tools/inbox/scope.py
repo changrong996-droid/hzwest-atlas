@@ -27,6 +27,8 @@ for f in g('diff', '--name-only', f'main...{br}').split():
         if f.startswith('docs/audit/'): continue
         bad.append(f); continue
     if f in ok_paths or f.startswith('docs/audit/'): continue
+    # 作者本人的提案（AGENTS 5.1，2026-11-10）：docs/proposals/<作者>-*.md，不含子目录
+    if f.startswith(f'docs/proposals/{agent}-') and f.endswith('.md') and '/' not in f[len('docs/proposals/'):]: continue
     if ui_ok and (f == 'web/status.html' or f.startswith('web/status/')): continue
     if f in ('CLAIMS.md', 'web/hzreal.js', 'CHANGELOG.md'):
         d = g('diff', f'main...{br}', '--', f)

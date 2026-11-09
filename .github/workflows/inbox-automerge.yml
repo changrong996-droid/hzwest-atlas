@@ -1,0 +1,91 @@
+name: inbox-automerge
+# 收件绿档自动合入：集成人不在线也照转（委托人 2026-11-09 22:06 批准；提案 docs/proposals/hark-cs-integrator.md）。
+# 只合 scope.py 判 AUTO 且 check_all OK 的分支；其余留给集成人或替补。
+# 加固（hark-cr 2026-11-10）：分两个 job。
+#   check：只读权限、不留凭据；跑 automerge.py（试合 + check_all，会执行分支代码），结果打成 git bundle 作 artifact。
+#   push ：写权限；不执行任何分支 / 仓库代码，只校验 bundle 基于当前 origin/main、可快进，然后推送。
+on:
+  schedule:
+    - cron: '7 0-15 * * *'   # 北京 08:07–23:07 每小时
+  workflow_dispatch:
+concurrency:
+  group: integrate-main
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      moved: ${{ steps.am.outputs.moved }}
+      base: ${{ steps.am.outputs.base }}
+      head: ${{ steps.am.outputs.head }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 试合绿档（不推送）
+        id: am
+        run: |
+          base=$(git rev-parse HEAD)
+          python3 tools/inbox/automerge.py . | tee am.txt
+          cat am.txt >> "$GITHUB_STEP_SUMMARY"
+          moved=$(tail -1 am.txt)
+          head=$(git rev-parse HEAD)
+          echo "moved=$moved" >> "$GITHUB_OUTPUT"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          mkdir -p out
+          if [ "$moved" = MOVED ]; then
+            git branch -f automerge-head "$head"
+            git bundle create out/am.bundle automerge-head "^$base"
+            git bundle verify out/am.bundle
+            printf '%s\n%s\n' "$base" "$head" > out/refs.txt
+          fi
+      - uses: actions/upload-artifact@v4
+        if: steps.am.outputs.moved == 'MOVED'
+        with:
+          name: automerge-bundle
+          path: out/
+          retention-days: 3
+  push:
+    needs: check
+    if: needs.check.outputs.moved == 'MOVED'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          name: automerge-bundle
+          path: am
+      # 以下只用 git 本身，不运行仓库或分支里的任何脚本
+      - name: 校验并快进推送
+        env:
+          BASE: ${{ needs.check.outputs.base }}
+          HEAD_SHA: ${{ needs.check.outputs.head }}
+        run: |
+          set -eu
+          [ "$(sed -n 1p am/refs.txt)" = "$BASE" ] && [ "$(sed -n 2p am/refs.txt)" = "$HEAD_SHA" ] || { echo 'refs.txt 与 check 输出不符'; exit 1; }
+          git fetch -q origin main
+          cur=$(git rev-parse origin/main)
+          [ "$cur" = "$BASE" ] || { echo "origin/main 已前进（$BASE → $cur），本轮不推，下一轮重试"; exit 1; }
+          git bundle verify am/am.bundle
+          git fetch -q am/am.bundle "refs/heads/automerge-head:refs/automerge/head"
+          [ "$(git rev-parse refs/automerge/head)" = "$HEAD_SHA" ]
+          git merge-base --is-ancestor "$BASE" "$HEAD_SHA" || { echo '不是快进'; exit 1; }
+          git push origin "$HEAD_SHA:refs/heads/main"
+          echo "快进推送 main：$BASE → $HEAD_SHA" >> "$GITHUB_STEP_SUMMARY"

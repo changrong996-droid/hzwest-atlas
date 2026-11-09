@@ -94,7 +94,7 @@ CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、�
 - 线上：https://changrong996-droid.github.io/hzwest-atlas/ （main 推送后约 1 分钟更新）。
 
 ### 5.1 合并分档
-- **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
+- **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、你本人的提案 `docs/proposals/<你的名字>-*.md`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
 - **人工合**：动了第 4 节共用文件、接口合同或别人的范围，由 hark-cr 审。
 
 
