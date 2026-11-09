@@ -86,7 +86,8 @@ def add(jid, title, who, kind, status, slug=None):
                  'branches': brs[-3:], 'commits': len(mine), 'wait': wait, 'done': done})
 
 seen = set()
-for r in table(claims, '派单'):
+# 2026-11-09 拆分：已关单派单在 docs/dispatch-archive.md（同格式），合并读取
+for r in table(claims, '派单') + table(g('show', f'{REF}:docs/dispatch-archive.md'), '派单'):
     if not r or not r[0].startswith('D-') or len(r) < 5: continue
     who = [x.strip() for x in re.split('[、,]', r[1]) if x.strip()]
     if who == ['全体']: continue

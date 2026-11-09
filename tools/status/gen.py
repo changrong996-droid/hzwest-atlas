@@ -23,8 +23,12 @@ for c in commits:
     d['total'] += 1; d['today'] += c['at'].startswith(today)
 files = len(g('ls-files').split())
 # CLAIMS 表
+# 2026-11-09 拆分：已关单派单在 docs/dispatch-archive.md，决定记录在 docs/decisions.md（同格式）
+SRC = {'派单': ('CLAIMS.md', 'docs/dispatch-archive.md'), '决定记录': ('docs/decisions.md',)}
 def table(sec):
-    t = g('show', 'main:CLAIMS.md'); s = t.split('## ' + sec, 1)
+    return [r for f in SRC.get(sec, ('CLAIMS.md',)) for r in _table(f, sec)]
+def _table(f, sec):
+    t = g('show', 'main:' + f); s = t.split('## ' + sec, 1)
     if len(s) < 2: return []
     rows = []
     for ln in s[1].split('\n## ', 1)[0].splitlines():
@@ -35,6 +39,7 @@ items = [r for sec in ('图纸', '横向事项') for r in table(sec) if len(r) >
 done = [r[0] for r in items if r[3] == '完成']
 claimed = [{'item': r[0], 'agent': r[2], 'state': r[3]} for r in items if r[2] and r[3] != '完成']
 free = [r[0] for r in items if not r[2]]
+decisions = [r for r in table('决定记录') if r and r[0][:4].isdigit()]
 disp = [{'id': r[0], 'agent': r[1], 'item': r[2], 'state': r[4] if len(r) > 4 else ''} for r in table('派单') if r and r[0].startswith('D-')]
 # 实时认领锁
 try: live = json.load(urllib.request.urlopen(board + '/claims', timeout=15))
@@ -55,7 +60,8 @@ out = {
                'files': files, 'items_done': len(done), 'items_total': len(items),
                'workflows_running': len(open_d) + len(live_rows), 'dispatch_open': len(open_d),
                'live_claims': len(live_rows), 'pending_review': len(pend), 'blockers': len(bl),
-               'waiting_on_owner': sum(b['who'] == '委托人' for b in bl)},
+               'waiting_on_owner': sum(b['who'] == '委托人' for b in bl),
+               'decisions': len(decisions)},
   'roles': {'hark-cr': '集成人：审查、合并、派单、共用文件（唯一可合 main）',
             'hark-cs': 'Mac mini M4 + Blender：GPU 审计、渲染、屋面',
             'muse-tibo-cs': '本地 GPU + Blender + Gemini 4：精修、视觉审查（首选重活）',
