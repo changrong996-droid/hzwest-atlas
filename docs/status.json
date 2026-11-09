@@ -1,8 +1,8 @@
 {
- "generated_at": "2026-11-09T17:34:00+08:00",
+ "generated_at": "2026-11-09T17:46:00+08:00",
  "headline": {
-  "commits_total": 356,
-  "commits_today": 71,
+  "commits_total": 357,
+  "commits_today": 72,
   "files": 180,
   "items_done": 31,
   "items_total": 39,
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 188,
-   "today": 58
+   "total": 189,
+   "today": 59
   },
   {
    "agent": "hark-cs",
@@ -72,6 +72,12 @@
  ],
  "recent_commits": [
   {
+   "sha": "dd4c926",
+   "at": "2026-11-09T09:35:05Z",
+   "subj": "[D-22] 合入斜侧机位后：s401.js?v=4、CHANGELOG、看板刷新",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "5723f1b",
    "at": "2026-11-09T09:28:49Z",
    "subj": "合并 agent/hark-cs/D-22-oblique（D-22 ⑧）",
@@ -111,12 +117,6 @@
    "sha": "eb7b554",
    "at": "2026-11-09T08:24:39Z",
    "subj": "合并 agent/hark-cs/hb-1609（D-22 排期心跳）",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "49fcf76",
-   "at": "2026-11-09T08:08:03Z",
-   "subj": "[status] 看板刷新",
    "agent": "hark-cr"
   }
  ],
@@ -231,8 +231,8 @@
  ],
  "free_items": [],
  "pending_review": [
-  "agent/hark-cs/D-22-s401-polish",
-  "agent/hark-cs/D-22-window-fix"
+  "agent/hark-fangyi/D-27-mobile",
+  "agent/hark-liuzhijie/cam-sweep2"
  ],
  "stale_locks": [],
  "blockers": [
@@ -318,17 +318,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T17:35:05+08:00",
+  "generated_at": "2026-11-09T17:47:13+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794215327,
+    "last_at": 1794216905,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 25
+    "idle_min": 11
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -348,13 +348,13 @@
      "D-36"
     ],
     "done_today": 3,
-    "last_at": 1794215352,
+    "last_at": 1794216679,
     "mine": [
      "D-22"
     ],
     "state": "working",
     "away": false,
-    "idle_min": 25
+    "idle_min": 15
    },
    {
     "name": "hark-darrio",
@@ -364,7 +364,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 383
+    "idle_min": 395
    },
    {
     "name": "hark-fangyi",
@@ -377,7 +377,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 118
+    "idle_min": 130
    },
    {
     "name": "hark-liuzhijie",
@@ -391,7 +391,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 181
+    "idle_min": 193
    },
    {
     "name": "marvis",
@@ -405,7 +405,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1713
+    "idle_min": 1725
    },
    {
     "name": "muse-tibo-cs",
@@ -419,7 +419,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1401
+    "idle_min": 1413
    },
    {
     "name": "pi-t2",
@@ -457,7 +457,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1599
+    "idle_min": 1611
    }
   ],
   "jobs": [
@@ -741,7 +741,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 1641,
+     "age_min": 1653,
      "level": "red"
     },
     "done": false
@@ -913,7 +913,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190446,
-     "age_min": 440,
+     "age_min": 452,
      "level": "red"
     },
     "done": false
@@ -967,7 +967,7 @@
      "who": "hark-cs",
      "what": "被退回，等修改",
      "since": 1794215352,
-     "age_min": 25,
+     "age_min": 37,
      "level": "ok"
     },
     "done": false
@@ -1107,7 +1107,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190527,
-     "age_min": 439,
+     "age_min": 451,
      "level": "red"
     },
     "done": false
@@ -1131,7 +1131,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 1469,
+     "age_min": 1482,
      "level": "red"
     },
     "done": false
@@ -1309,7 +1309,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794210483,
-     "age_min": 106,
+     "age_min": 118,
      "level": "ok"
     },
     "done": false
@@ -1362,7 +1362,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794206913,
-     "age_min": 166,
+     "age_min": 178,
      "level": "amber"
     },
     "done": false
@@ -1657,7 +1657,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1742,
+     "age_min": 1754,
      "level": "red"
     },
     "done": false
@@ -1681,7 +1681,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1742,
+     "age_min": 1754,
      "level": "red"
     },
     "done": false
@@ -1736,7 +1736,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 439,
+     "age_min": 452,
      "level": "red"
     },
     "done": false
