@@ -210,11 +210,13 @@ function main() {
             ...refsOf(cells),
           });
         } else if (sec === '报名') {
-          const name = c(0).trim().replace(/`/g, '');
+          const nameCell = c(0).trim();
+          const name = nameCell.replace(/`/g, '');
           if (!name) throw new Error(`${f.rel}:${line} 报名行缺名字`);
           if (data.enrollments.some((x) => x.id === name)) throw new Error(`enrollment id 重复: ${name} @ ${f.rel}:${line}`);
           data.enrollments.push({
-            id: name, seq: line, state, name,
+            id: name, seq: line, state,
+            name: nameCell, // 名字单元格原样保留（报名表习惯写成 `名字`），id 才去反引号
             identity: c(1), channel_text: c(2),
             date: normDate(c(3), yearPrefix, warnings, `${f.rel}:${line}`),
           });
