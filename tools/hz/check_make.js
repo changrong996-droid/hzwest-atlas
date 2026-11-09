@@ -8,12 +8,12 @@ HZ.make();
 const audit = HZ.audit();
 
 const checks = [
-  ['acts.length', 55, HZ.acts.length],
+  ['acts.length', 63, HZ.acts.length],
   ['cells.length', 1432, HZ.cells.length],
   ['lifters.length', 32, HZ.lifters.length],
   ['D≈5.8', true, Math.abs(HZ.D - 5.8) < 1e-9, HZ.D],
   ['audit.zero', true, audit && audit.zero],
-  ['keys(K).length', 55, Object.keys(HZ.K).length],
+  ['keys(K).length', 63, Object.keys(HZ.K).length],
 ];
 for (const [name, exp, got, raw] of checks) {
   if (got !== exp) {
@@ -46,4 +46,29 @@ const vsrc = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8'
   if (P.skinTop != null && Math.abs(mx - P.skinTop) > 0.05) bad('屋面最高点 ' + mx.toFixed(2) + ' m ≠ 公开 ' + P.skinTop + ' m');
   if (Math.abs(HZ.Ht(0, 0) - 55.2) > 0.05) bad('钢结构最高点应仍为 55.2 m（公开 55.237 m）'); }
 { const T = HZ.makeTrain && HZ.makeTrain().T; if (!T || Math.abs(T.nose + T.len - 209.55) > 0.01 || T.W !== 3.36 || T.H !== 4.05) { console.log('FAIL check_make: 首趟列车尺寸不是复兴号 8 编组（209.55 m / 3.36 / 4.05）'); process.exit(1); } }
-console.log('OK check_make acts=55 cells=1432 lifters=32 D=5.8 zero=true');
+// 开口段落地胎架（11-09，S-251 方案①）：jigL1..3 底 = 脚下最高已建面（地铁层底板顶 −9.20 / 地坪 ±0.00），开工 / 拆除 = 本区 jig，下方支承在胎架开工时已建，scopeWith 随 jig 进范围
+let jlTxt = '';
+{ const K = HZ.K, bad = m => { console.log('FAIL check_make: 落地胎架 ' + m); process.exit(1); }; let n = 0; const on = {};
+  for (const z of [1, 2, 3]) { const a = K['jigL' + z]; if (!a) continue; const j = K['jig' + z];
+    if (a.start !== j.start || a.rm.start !== j.rm.start) bad(`jigL${z} 开工 ${a.start} / 拆除 ${a.rm.start} ≠ jig${z} ${j.start} / ${j.rm.start}`);
+    for (const p of a.parts) { n++; const b = p.geo.boxes[0], y0 = p.low.y0; if (Math.abs(b.min[1] - y0) > 1e-9) bad('胎架底 ' + b.min[1] + ' ≠ 支承面 ' + y0);
+      if (!p.jigOf || !(p.scopeWith || []).includes('jig' + z)) bad('缺 jigOf / scopeWith');
+      if (p.low.on === 'ground') { if (y0 !== 0) bad('落地胎架底应 = 地坪 0'); }
+      else { const s = K[p.low.on].parts.find(q => q.scopeWith && q.geo.boxes.some(e => Math.abs(e.max[1] - y0) < 1e-9 && e.min[0] <= b.min[0] && e.max[0] >= b.max[0] && e.min[2] <= b.min[2] && e.max[2] >= b.max[2]));
+        if (!s) bad(`(${b.min[0].toFixed(1)}, ${b.min[2].toFixed(1)}) 下方没有顶面 ${y0} 的 ${p.low.on} 构件`); if (s.st + s.du > p.st + 1e-6) bad(`支承 ${p.low.on} 第 ${(s.st + s.du).toFixed(1)} 天才建完，胎架第 ${p.st.toFixed(1)} 天`); }
+      const k = z + ':' + p.low.on + '@' + y0.toFixed(2); on[k] = (on[k] || 0) + 1; } }
+  if (!n) bad('没有落地胎架'); jlTxt = ' jigL=' + n + '(' + Object.entries(on).map(([k, v]) => k + '×' + v).join(' ') + ')'; }
+// D-25 塔吊表：HZ.TOWERS 与 docs/rules/crane-stations.json 一致；4 台进 HZ.cranes（下标 8–11，不动 crane 0–5 / ycrane 6–7）；lift1 前退场；mast / rig 内侧 8 吊改派塔吊且在臂长内（额定复算见 check_crane）
+let tcTxt = '';
+{ const J = JSON.parse(fs.readFileSync(path.join(__dirname, '../../docs/rules/crane-stations.json'), 'utf8')), T = HZ.TOWERS, K = HZ.K, bad = m => { console.log('FAIL check_make: D-25 塔吊 ' + m); process.exit(1); };
+  if (!T || T.model !== J.towerModel.name || T.jib !== J.towerModel.jib || T.Lc !== J.towerModel.Lc || T.mast !== J.towerModel.mast || JSON.stringify(T.chart) !== JSON.stringify(J.towerModel.chart)) bad('型号 / 臂长 / 额定表与 json 不一致');
+  if (T.list.length !== J.towers.length) bad('台数 ' + T.list.length + ' ≠ ' + J.towers.length);
+  J.towers.forEach((u, i) => { const v = T.list[i], c = HZ.cranes[8 + i]; if (!v || v.id !== u.id || v.x !== u.x || v.z !== u.z || v.jy !== u.jy) bad(u.id + ' 塔位与 json 不一致');
+    if (!c || c.key !== 'tcrane' || c.x !== u.x || c.z !== u.z || c.L !== T.jib || c.jy !== u.jy) bad(u.id + ' 未进 HZ.cranes[' + (8 + i) + ']');
+    if (K.tcrane.start !== u.erect[0] || K.tcrane.end !== u.erect[1] || K['tcrane~rm'].start !== u.remove[0] || K['tcrane~rm'].end !== u.remove[1]) bad(u.id + ' 进场 / 拆除日期与 json 不一致'); });
+  if (HZ.cranes.slice(0, 6).some(c => c.key !== 'crane') || HZ.cranes.slice(6, 8).some(c => c.key !== 'ycrane')) bad('crane / ycrane 下标被挪');
+  if (!(K['tcrane~rm'].end <= K.lift1.start)) bad('拆除完成晚于 lift1');
+  let n = 0; const seen = new Set(); for (const a of HZ.acts) for (const p of a.parts) { if (!(p.crane >= 8) || seen.has(p)) continue; seen.add(p); n++; const c = HZ.cranes[p.crane], R = Math.hypot(p.c[0] - c.x, p.c[2] - c.z);
+    if (!['mast', 'rig'].includes(a.key.replace(/~rm$/, ''))) bad(c.id + ' 吊了 ' + a.key + '（表里只派 mast / rig）'); if (R > T.jib) bad(c.id + ' 吊距 ' + R.toFixed(1)); }
+  if (n !== 8) bad('改派塔吊 ' + n + ' 吊（应 8：mast ×4、rig ×4）'); tcTxt = ' towers=' + T.list.length + '×' + T.jib + 'm lifts=' + n; }
+console.log('OK check_make acts=63 cells=1432 lifters=32 D=5.8 zero=true' + jlTxt + tcTxt);

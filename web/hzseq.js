@@ -357,6 +357,19 @@ function build() {
   const jig = { 1: [], 2: [], 3: [] };
   for (const c of cells) { if (!(c.grp >= 1 && c.grp <= 3) || (c.i + c.j) % 2) continue; const bn = rotY(c.grp, bnode(c), 0), y1 = bn[1] - D - 0.31; /* 胎架顶 = 下弦节点 − 杆件半径 */ if (!onFloor(bn[0], bn[2])) continue;
     const g = new GB('jig'); g.B(bn[0] - 0.6, P.floorTop, bn[2] - 0.6, bn[0] + 0.6, y1, bn[2] + 0.6); jig[c.grp].push(part(g, { sweep: Math.abs(bn[2]), jigOf: c })); }
+  // 开口段落地胎架（11-09，S-251 接口请求方案①）：整行（= S-251 一个拼装单元）没有一格在候车层楼面上的——中区 |z| < gap 的楼面开口（云谷）、南北端 |z| > floorZ——
+  // 胎架改落到该处最高的、已有的下层面：云谷下是地铁层底板顶（−9.20），南北端楼面以外是地坪（±0.00，底下埋 0.6 m 路基箱垫块 = 落地支承）。胎架顶同上（下弦节点 − 杆件半径），只是更高。
+  // 另立工序 jigL1..3（同区 R4 服务 asm / lift，开工 = 本区 jig 开工、拆除 = 本区 jig 拆除，排程不动）；构件 scopeWith 声明随 jig1..3 进图纸范围（宿主 scopeMask），所站的地铁层底板同样。
+  const jigL = { 1: [], 2: [], 3: [] }, lowSup = new Set(), SUPB = []; HZ.jigLow = [];
+  for (const a of acts) if (a.kind !== 'temp' && a.kind !== 'milestone') for (const p of a.parts) if (!p.grp && p.geo && p.geo.boxes) for (const b of p.geo.boxes) SUPB.push({ a, p, b });
+  { const byRow = new Map(); for (const c of cells) { if (!(c.grp >= 1 && c.grp <= 3)) continue; const k = c.grp + ':' + c.j; if (!byRow.has(k)) byRow.set(k, []); byRow.get(k).push(c); }
+    for (const [, L] of byRow) { if (L.some(c => onFloor(c.xc, c.zc)) || L.some(c => !((c.i + c.j) % 2) && onFloor(...(b => [b[0], b[2]])(rotY(c.grp, bnode(c), 0))))) continue;
+      for (const c of L) { if ((c.i + c.j) % 2) continue; const bn = rotY(c.grp, bnode(c), 0), y1 = bn[1] - D - 0.31, x0 = bn[0] - 0.6, x1 = bn[0] + 0.6, z0 = bn[2] - 0.6, z1 = bn[2] + 0.6;
+        let y0 = 0, on = null; for (const e of SUPB) { const b = e.b; if (b.min[0] <= x0 && b.max[0] >= x1 && b.min[2] <= z0 && b.max[2] >= z1 && b.max[1] < y1 - 1 && (on ? b.max[1] > y0 : b.max[1] >= y0 - 9.5)) { y0 = b.max[1]; on = e; } }
+        const g = new GB('jig'); g.B(x0, y0, z0, x1, y1, z1); if (!on) g.B(x0 - 0.6, y0 - 0.6, z0 - 0.6, x1 + 0.6, y0, z1 + 0.6);
+        const pt = part(g, { sweep: Math.abs(bn[2]), jigOf: c, scopeWith: ['jig' + c.grp], low: { y0, on: on ? on.a.key : 'ground' } }); jigL[c.grp].push(pt); if (on) lowSup.add(on.p);
+        HZ.jigLow.push({ grp: c.grp, xc: c.xc, zc: c.zc, y0, y1, on: on ? on.a.key : 'ground' }); } } }
+  for (const p of lowSup) p.scopeWith = ['jig1', 'jig2', 'jig3'];
 
   // 提升架（柱顶钢架 + 提升器）/ 提升塔（中区，楼面起）+ 钢绞线
   const rigFor = { 1: [], 2: [], 3: [] }, lifters = [];
@@ -375,6 +388,7 @@ function build() {
   // ===== 活动：屋盖 =====
   const crew = { asm: 1 };
   for (const z of [1, 2, 3]) A({ key: 'jig' + z, name: zoneName[z] + '拼装胎架', stage: 'jig', kind: 'temp', zone: z, dur: 10, parts: jig[z], res: { jig: 1 }, temp: { serves: ['asm', 'lift'], removeStage: 'unjig', removeName: zoneName[z] + '胎架拆除', removeDur: 6 }, scope: 'z' + z, cap: '屋盖楼面拼装（南 / 中 / 北三区）' });
+  for (const z of [1, 2, 3]) if (jigL[z].length) A({ key: 'jigL' + z, name: zoneName[z] + (z === 2 ? '开口段落地胎架（云谷）' : '端部落地胎架'), stage: 'jig', kind: 'temp', zone: z, dur: 10, parts: jigL[z], res: {}, temp: { serves: ['asm', 'lift'], removeStage: 'unjig', removeName: zoneName[z] + '落地胎架拆除', removeDur: 6, removeRes: {} }, scope: 'z' + z, cap: '屋盖楼面拼装（南 / 中 / 北三区）' });
   for (const z of [1, 2, 3]) A({ key: 'asm' + z, name: '屋盖网架楼面拼装 · ' + zoneName[z], stage: 'asm', zone: z, dur: z === 2 ? 24 : 32, parts: zoneParts[z], res: crew, scope: 'z' + z, need: 'jig', cap: '屋盖楼面拼装（南 / 中 / 北三区）' });
   A({ key: 'rig', name: '提升架 / 提升塔 + 液压提升器', stage: 'rig', kind: 'temp', dur: 15, parts: [...rigFor[1], ...rigFor[2], ...rigFor[3]], res: { steel: 1 }, temp: { serves: ['lift', 'merge', 'wlift', 'head'], removeStage: 'unrig', removeName: '提升架 / 提升塔拆除', removeCap: '屋顶已升到位，拆提升架', removeDur: 12 }, scope: 'rig', strands, cap: '提升架就位' });
   const lift = (z, d, nm) => A({ key: 'lift' + z, name: nm, stage: 'lift', zone: z, dur: d, parts: [], res: { lifters: 1 }, scope: 'z' + z, cap: nm, liftZone: z });
@@ -440,6 +454,14 @@ function build() {
     A({ key: 'crane', name: '塔吊', stage: 'crane', kind: 'temp', dur: 10, release: 300, parts: cr1.map(g => part(g)), res: {}, temp: { serves: ['frame', 'mezz', 'deck', 'plat', 'col24', 'floor', 'canopy', 'mast', 'tod'], removeStage: 'uncrane', removeName: '塔吊拆除', removeDur: 10 }, cap: '塔吊进场' });
     const cr2 = [mk(-60, 262, 96, -Math.PI / 2, 'ycrane'), mk(60, 262, 96, -Math.PI / 2 * 1.2, 'ycrane')];
     A({ key: 'ycrane', name: '云门塔吊', stage: 'crane', kind: 'temp', dur: 10, release: 705, parts: cr2.map(g => part(g)), res: {}, temp: { serves: ['ym', 'ymc'], removeStage: 'uncrane', removeName: '云门塔吊拆除', removeDur: 10 }, scope: 'ym', cap: '立两台塔吊，准备盖云门' }); }
+    // D-25（hark-darrio，docs/rules/crane-stations.json「towers」）：内侧 6 吊（mast / rig 在 x = ±39 的 8 吊）改塔吊——4 台 Liebherr 1000 EC-B 100 Litronic，
+    // 起重臂 31.5 m（Lc 16 m），臂底 64 m，1000 HC 塔节 3.4 m 方形；塔位在屋盖南 / 北嵌补带（38.5 < |z| < 45.5，merge 才装），塔身从基础穿 mezz / deck / plat / floor 预留洞（p.thru，A2 穿模不计）；
+    // 进场 580–590、拆除 614–624（lift1 前退场）。数据与 json 一致由 check_make 断言。放在 ycrane 之后：HZ.cranes 下标 0–5 crane、6–7 ycrane 不变。
+    { const TW = HZ.TOWERS = { model: 'Liebherr 1000 EC-B 100 Litronic', jib: 31.5, Lc: 16, mast: 3.4, chart: [[10, 100], [15, 69.35], [20, 48.53], [25, 36.11], [31.5, 25.9]], erect: [580, 590], remove: [614, 624], thru: ['mezz', 'deck', 'plat', 'floor', 'found'],
+        list: [{ id: 'TC-W北', x: -39, z: -40, jy: 64, yaw: Math.PI / 2 }, { id: 'TC-E北', x: 39, z: -40, jy: 64, yaw: Math.PI / 2 }, { id: 'TC-W南', x: -45, z: 42, jy: 64, yaw: -Math.PI / 2 }, { id: 'TC-E南', x: 45, z: 42, jy: 64, yaw: -Math.PI / 2 }] };
+      const h = TW.mast / 2, cr3 = TW.list.map(T => { const g = new GB('yellow'); g.B(T.x - h, -1, T.z - h, T.x + h, T.jy, T.z + h); g.B(T.x - h - 0.3, T.jy, T.z - h - 0.3, T.x + h + 0.3, T.jy + 3, T.z + h + 0.3);
+        HZ.cranes.push({ x: T.x, z: T.z, jy: T.jy, L: TW.jib, Lc: TW.Lc, yaw0: T.yaw, key: 'tcrane', top: T.jy + 7, id: T.id, model: TW.model }); return part(g, { thru: TW.thru, tower: T.id }); });
+      A({ key: 'tcrane', name: '内侧塔吊（1000 EC-B 100 × 4）', stage: 'crane', kind: 'temp', dur: TW.erect[1] - TW.erect[0], release: TW.erect[0], parts: cr3, res: {}, temp: { serves: ['mast'], removeStage: 'uncrane', removeName: '内侧塔吊拆除', removeDur: TW.remove[1] - TW.remove[0], removeRes: {} }, cap: '内侧 4 台塔吊吊梭形柱与提升架（D-25）' }); }
   // ===== 13. 开通 =====
   A({ key: 'open', name: '开通运营 · 首趟列车', stage: 'open', kind: 'milestone', dur: 0, release: P.OPEN, parts: [], cap: '2022-09-22 开通，首趟列车进站' });
 
@@ -490,6 +512,8 @@ function roofRule(acts) { const K = {}; for (const a of acts) K[a.key] = a; let 
   // 用前置边的 lag 而不用 release：S-001 关键链顺着「被谁卡住」往回走，release 会把链截断在胎架。
   const JIG_LAG = 4;
   L('jig1', 'floorS', 'R1', JIG_LAG); L('jig2', 'floorS', 'R1', JIG_LAG); L('jig2', 'floorN', 'R1', JIG_LAG); L('jig3', 'floorN', 'R1', JIG_LAG);
+  // 落地胎架与本区楼面胎架同进同出（负滞后 = 同开工 / 同开拆）
+  for (const z of [1, 2, 3]) if (K['jigL' + z]) { L('jigL' + z, 'jig' + z, 'R3', -K['jig' + z].dur); L('jigL' + z + '~rm', 'jig' + z + '~rm', 'R3', -K['jig' + z + '~rm'].dur); }
   L('lift2', 'lift1', 'R5'); L('lift3', 'lift2', 'R5');         // 一套提升系统：南 → 中 → 北（实录顺序）
   for (const z of [1, 2, 3]) L('merge', 'lift' + z, 'R3'); L('wlift', 'merge', 'R3'); L('head', 'wlift', 'R3');
   L('holes', 'rig~rm', 'R8');                                   // 提升塔 / 提升架占着孔：拆了才能补
@@ -499,7 +523,7 @@ function roofRule(acts) { const K = {}; for (const a of acts) K[a.key] = a; let 
 function sweepRule(acts) {   // R8：任何静止构件的包围盒与提升扫掠包络（每区：拼装姿态 ∪ 设计姿态）相交 → 排在整体提升之后
   let n = 0; const env = HZ.liftEnv, K = {}; for (const a of acts) K[a.key] = a; HZ.r8 = []; HZ.r8bad = [];
   const anc = new Set(), st = [K.wlift]; while (st.length) { const x = st.pop(); for (const e of x.pred) if (!anc.has(e.a)) { anc.add(e.a); st.push(e.a); } }   // 整体提升的前驱：若与扫掠相交 = 几何冲突（审计报出），不加依赖（否则成环）
-  for (const a of acts) { if (a.kind === 'milestone' || ['asm', 'merge', 'lift', 'wlift', 'head', 'holes', 'jig', 'rig', 'unjig', 'unrig', 'sky', 'clad', 'pv'].includes(a.stage) || a.kind === 'untemp') continue;
+  for (const a of acts) { if (a.kind === 'milestone' || ['asm', 'merge', 'lift', 'wlift', 'head', 'holes', 'jig', 'rig', 'unjig', 'unrig', 'sky', 'clad', 'pv'].includes(a.stage) || a.kind === 'untemp' || a.key === 'tcrane') continue;   // tcrane（D-25）按表 lift1 前退场，不进扫掠；check_make 断言 tcrane~rm.end ≤ lift1.start
     let hit = false; for (const p of a.parts) { if (p.grp) continue; for (const b of p.geo.boxes) for (const e of env) if (SEQ.BB.hit(b, e, -0.05)) { hit = true; break; } if (hit) break; }
     if (hit) { if (anc.has(a)) HZ.r8bad.push(a.name); else { n += SEQ.link(a, K.wlift, 'R8'); HZ.r8.push(a.name); } } }
   return n; }
@@ -596,6 +620,7 @@ HZ.make = function () {
   const caps = { jig: 2, mezz: 2, frame: 2, bridge: 1, steel: 1, lifters: 1, skin: 2, track: 1, tod: 1, ym: 1, civil: 1, asm: 3 };
   // 拼装班组：两个工作面（南北两半可同时拼）
   for (const a of acts) if (a.res && a.res.asm) a.res = { asm: 1 };
+  { const R = acts.find(a => a.key === 'tcrane~rm'); if (R && HZ.TOWERS) R.release = HZ.TOWERS.remove[0]; }   // D-25 塔吊拆除按表（614 起）
   const sch = SEQ.schedule(acts, { caps, write: true });
   const K = {}; for (const a of acts) K[a.key] = a; HZ.K = K; HZ.acts = acts; HZ.counts = counts; HZ.caps = caps;
   HZ.total = Math.max(...acts.map(a => a.end));
@@ -657,7 +682,7 @@ HZ.audit = function () {
   const B = []; for (const a of acts) if (a.kind !== 'untemp') for (const p of a.parts) if (!p.grp) for (const b of p.geo.boxes) B.push({ a, p, b });
   const cs = 20, grid = new Map(); B.forEach((e, idx) => { for (let i = Math.floor(e.b.min[0] / cs); i <= Math.floor(e.b.max[0] / cs); i++) for (let j = Math.floor(e.b.min[2] / cs); j <= Math.floor(e.b.max[2] / cs); j++) { const k = i * 100000 + j; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(idx); } });
   let clip = 0; const cex = [], seen = new Set();
-  for (const L of grid.values()) for (let x = 0; x < L.length; x++) for (let y = x + 1; y < L.length; y++) { const e = B[L[x]], f = B[L[y]]; if (e.p === f.p || e.p.host === f.p || f.p.host === e.p || (e.p.headOf && e.p.headOf === f.p) || (f.p.headOf && f.p.headOf === e.p) || (e.p.hole >= 0 && e.p.hole === f.p.hole && (e.p.headOf || f.p.headOf)) || (e.p.cells && f.p.cells)) continue;
+  for (const L of grid.values()) for (let x = 0; x < L.length; x++) for (let y = x + 1; y < L.length; y++) { const e = B[L[x]], f = B[L[y]]; if (e.p === f.p || e.p.host === f.p || f.p.host === e.p || (e.p.headOf && e.p.headOf === f.p) || (f.p.headOf && f.p.headOf === e.p) || (e.p.hole >= 0 && e.p.hole === f.p.hole && (e.p.headOf || f.p.headOf)) || (e.p.cells && f.p.cells) || (e.p.thru && e.p.thru.includes(f.a.stage) && f.b.max[1] - f.b.min[1] <= 2.5) || (f.p.thru && f.p.thru.includes(e.a.stage) && e.b.max[1] - e.b.min[1] <= 2.5)) continue;   // p.thru：塔身穿楼板预留洞（D-25）
     const k = L[x] < L[y] ? L[x] * 1e6 + L[y] : L[y] * 1e6 + L[x]; if (seen.has(k)) continue; seen.add(k);
     bump(ev.clip, Math.max(e.a.start, f.a.start)); if (!SEQ.BB.hit(e.b, f.b, -0.06)) continue;
     // 时间上是否共存

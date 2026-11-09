@@ -63,7 +63,7 @@
       const W = Array.isArray(pl.window) ? pl.window : [-Infinity, Infinity], src = [];
       const live = it => it.st != null && it.st <= W[1] && !(it.rm && it.rm[0] >= 0 && it.rm[0] + it.rm[1] <= W[0]);
       const keys = new Set([].concat(sc.keys || [], Array.isArray(pl.leadKeys) ? pl.leadKeys : (o.leadKeys || [])).map(k => String(k).replace(/~rm$/, '')));
-      if (keys.size) { src.push('keys'); for (let i = 0; i < n; i++) if (keys.has(items[i].key)) m[i] = 1; }
+      if (keys.size) { src.push('keys'); for (let i = 0; i < n; i++) { const it = items[i], sw = it.p && it.p.scopeWith; if (keys.has(it.key) || (Array.isArray(sw) && sw.some(k => keys.has(k)))) m[i] = 1; } }   // 构件 p.scopeWith = [工序 key]：随这些工序进范围（11-09：开口段落地胎架 jigL* 与其所站地铁层底板随 jig1..3）
       const ids = Array.isArray(sc.ids) ? new Set(sc.ids.map(String)) : null, CAP = o.cap || 16, tol = 0.6;
       const vol0 = b => (Math.abs(b[3] - b[0]) + 0.2) * (Math.abs(b[4] - b[1]) + 0.2) * (Math.abs(b[5] - b[2]) + 0.2);   // box 认件只认「占这个盒子一块」的构件（≥ 2% 体积），细高的塔吊盒不顺带认进楼板碎块
       const inside = (it, b, e) => { for (let k = 0; k < 3; k++) if (it.min[k] < Math.min(b[k], b[k + 3]) - e || it.max[k] > Math.max(b[k], b[k + 3]) + e) return false; return true; };
@@ -1031,10 +1031,10 @@
     const LEAD_KEYS = { 'S-101': ['found'], 'S-201': ['frameS', 'frameN', 'pierS', 'pierN', 'deckS', 'deckN', 'platS', 'platN', 'deckapS', 'deckapN', 'trackS', 'trackN'], 'S-251': ['jig1', 'jig2', 'jig3', 'asm1', 'asm2', 'asm3'], 'S-401': ['holes', 'sky', 'clad', 'pv'], 'S-501': ['ymf', 'ycrane', 'ym', 'ymc', 'tod', 'ycrane~rm', 'crane~rm', 'open'] };
     // 图纸范围（11-09）：插件图纸激活时，本图内容照常画、其余淡显（PL.scopeMask；接口见 docs/hz-atlas-check.md §3 第 15 条）。按图缓存，切图时写一次 aGh。
     // 总图 S-000 / S-301 不用；收官（开通前 12 天起，与实景渐显同一时刻）全显。
-    const SCOPES = {}, SCOPE_ALL = new Set(['S-001']), SCOPE_HOST = { 'S-002': { keys: ['crane', 'ycrane'], ids: [] }, 'S-401': { keys: ['mast', 'asm1', 'asm2', 'asm3', 'merge', 'head'] } }; let scopeSheet = null;   // SCOPE_HOST：插件未声明 pl.scope 时宿主代填（S-002 履带吊 C-* 盒是站位区，会顺带认进脚下楼板，故只认塔吊工序；S-401 屋面铺在网架上，网架与梭形柱是它的底，一并照常画；均已派单请作者自己声明）   // S-001 总进度横道图讲的就是全部工序：视同总图全显（插件可用 pl.scope 覆盖除此之外的默认）
+    const SCOPES = {}, SCOPE_ALL = new Set(['S-001']), SCOPE_HOST = { 'S-002': { keys: ['crane', 'ycrane', 'tcrane'], ids: [] }, 'S-401': { keys: ['mast', 'asm1', 'asm2', 'asm3', 'merge', 'head'] } }; let scopeSheet = null;   // SCOPE_HOST：插件未声明 pl.scope 时宿主代填（S-002 履带吊 C-* 盒是站位区，会顺带认进脚下楼板，故只认塔吊工序；S-401 屋面铺在网架上，网架与梭形柱是它的底，一并照常画；均已派单请作者自己声明）   // S-001 总进度横道图讲的就是全部工序：视同总图全显（插件可用 pl.scope 覆盖除此之外的默认）
     function scopeOf(sheet) { if (SCOPES[sheet]) return SCOPES[sheet]; const pl = PLUG[sheet]; let r;
       if (!pl || SCOPE_ALL.has(sheet)) r = { on: false, mask: null, n: 0, live: 0, src: 'host', keys: [] };
-      else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm })), parts = [], [a, b] = pl.window || [0, 0];
+      else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm, p: it.p })), parts = [], [a, b] = pl.window || [0, 0];
         for (let i = 0; i <= 6; i++) for (const p of PL.safeParts(pl, a + (b - a) * i / 6, plugCtx(), pwarn)) parts.push(p);
         r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a, frag: SCOPE_OUT === 'hide' });
         if (r.on) { const dk = ((pl.scope && typeof pl.scope === 'object' ? pl.scope : pl.scope === undefined ? SCOPE_HOST[sheet] : null) || {}).keys || []; r.site = dk.includes('crane') || dk.includes('ycrane');   // 声明了塔吊工序的图（S-002 吊装资源）= 现场图：履带吊、运输车、堆场照画
