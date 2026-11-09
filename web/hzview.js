@@ -850,7 +850,7 @@
     function setT(t, fromU) { t = Math.max(TL.t0, Math.min(TL.t1, t)); S.st.t = t; S.st.u = fromU != null ? fromU : TL.t2u(t); U.uT.value = Math.min(t, TL.OPEN + 0.001); scopeAt(t);
       const ps = HZ.pose(t); for (const g of [1, 2, 3, 4]) U.uG.value[g].fromArray(HZ.mat(ps, g)); S.pose = ps;
       zoneTint(t, ps);   // set1：S-301 正在动的分区染淡红；set2b：选中分区 = 2（加深）
-      const rig = K.rig, sv = t >= rig.start + rig.dur * 0.6 && t < rig.rm.start + rig.rm.dur * 0.3; STR.visible = sv; STR.material.uniforms.uA.value = sv ? 1 : 0;
+      const rig = K.rig, sv = t >= rig.start + rig.dur * 0.6 && t < rig.rm.start + rig.rm.dur * 0.3; STR.visible = sv && !(U.uScope.value > 0.5); STR.material.uniforms.uA.value = sv ? 1 : 0;   /* 提升钢绞线属 S-301：分图范围启用时不画 */
       // r3「点亮」：开通当天由中心向外一波亮灯（uWave = 波前半径 m），之后保持；黄昏程度 dk
       const lw = sm(TL.OPEN - 1, TL.OPEN + 5, t); U.uLights.value = FV.lt * (FV.lt > 1.7 ? lw : sm(TL.OPEN - 6, TL.OPEN + 4, t)); U.uWave.value = FV.lt > 1.7 ? (lw >= 1 ? 0 : 20 + 420 * lw) : 0;
       U.uPV.value = Math.max(0, Math.min(1, (t - K.pv.start) / K.pv.dur)); U.uPVs.value = FV.pv; U.uRoofLift.value = FV.rw >= 2 ? (FV.rw >= 4 ? 0.38 : FV.rw >= 3 ? 0.22 : 0.10) * (1 - 0.6 * duskK) * sm(TL.OPEN - 30, TL.OPEN, t) : 0;
@@ -1087,7 +1087,12 @@
     const MODS = []; for (const m of (window.HZ_MODS || [])) { try { if (!m || !['build', 'update', 'pick', 'unpick'].some(k => typeof m[k] === 'function')) continue; const before = new Set(scene.children); if (MOB) MOB.takeRecords(); if (typeof m.build === 'function') m.build(scene, HZ, THREE, { clip: [CUTP] }); m.__nodes = scene.children.filter(o => !before.has(o)); modOwn(m); MODS.push(m); } catch (e) { console.warn('HZ_MODS ' + (m && m.id) + ' build 失败', e); } }   // 四个方法都可选（只有 pick / unpick 的界面模块也收）
     function modOff(m, e) { const i = MODS.indexOf(m); if (i < 0) return; MODS.splice(i, 1); S.mods = MODS.map(q => q.id); console.warn('HZ_MODS ' + m.id + ' update 失败，已停用', e);
       if (MPICK != null && typeof m.unpick === 'function') { try { m.unpick(); } catch (e2) { } } for (const o of (m.__nodes || [])) o.visible = false; modOwn(m); for (const n of (m.__dom || [])) if (n.parentNode) n.parentNode.removeChild(n); m.__dom = null; dirty = true; }
-    function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; if (MOB) MOB.takeRecords(); try { m.update(t, cam); modOwn(m); } catch (e) { modOff(m, e); } } }
+    function modsUpdate(t) { for (let i = MODS.length - 1; i >= 0; i--) { const m = MODS[i]; if (typeof m.update !== 'function') continue; if (MOB) MOB.takeRecords(); try { m.update(t, cam); modOwn(m); } catch (e) { modOff(m, e); } } scopeMods(); }
+    // 图纸范围（11-09）：分图 3D 模块（m.sheet，或 id 形如 s251-face → S-251）只在自己那张图或全显时出现；云门模块的墨线在范围外（本图范围不含 ym）时降到 15% 透明度
+    const modSheet = m => m.sheet || (/^s(\d{3})(-|$)/.exec(m.id || '') ? 'S-' + /^s(\d{3})/.exec(m.id)[1] : null);
+    function scopeMods() { const on = U.uScope.value > 0.5, sc = S.scope || {};
+      for (const m of MODS) { const ms = modSheet(m); if (on && ms && ms !== SHEET) for (const o of (m.__nodes || [])) o.visible = false; }
+      const ymG = on && !(sc.keys || []).includes('ym'); for (const o of YMO) if (o.material) { o.userData.op = o.userData.op ?? o.material.opacity; o.material.opacity = o.userData.op * (ymG ? 0.15 : 1); } }
     S.mods = MODS.map(m => m.id); S.modsList = MODS; S.modOff = modOff;
     // 云门：web/mods/yunmen.js 生效 → 墨线模式隐去旧体块（uYm），模块墨线只在墨线模式显示；实景 / 结尾仍用体块
     const YMM = MODS.find(m => m.id === 'yunmen'), YMON = !!YMM, YMO = YMM ? YMM.__nodes : []; S.yunmen = YMON;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）

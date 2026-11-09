@@ -163,4 +163,6 @@ has('if (uScope > 0.5 && abs(step(0.5, aGh) - uGhP) > 0.5) hzP = vec3(0.0, -1e5,
 has('if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0) discard;', '范围外墨线降为淡墨');
 has('const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on;', '收官（开通前 12 天起）全显');
 has('U.uT.value = Math.min(t, TL.OPEN + 0.001); scopeAt(t);', 'setT 更新图纸范围');
+has("if (on && ms && ms !== SHEET) for (const o of (m.__nodes || [])) o.visible = false;", '分图 3D 模块只在本图或全显时出现');
+has('STR.visible = sv && !(U.uScope.value > 0.5);', '提升钢绞线在分图范围启用时不画');
 console.log('OK check_linkage runs=' + runs);
