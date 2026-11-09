@@ -1,17 +1,18 @@
 {
- "generated_at": "2026-11-09T21:33:00+08:00",
+ "generated_at": "2026-11-10T00:24:00+08:00",
  "headline": {
-  "commits_total": 373,
-  "commits_today": 88,
-  "files": 180,
+  "commits_total": 384,
+  "commits_today": 0,
+  "files": 188,
   "items_done": 31,
   "items_total": 39,
-  "workflows_running": 12,
-  "dispatch_open": 6,
-  "live_claims": 6,
-  "pending_review": 1,
-  "blockers": 14,
-  "waiting_on_owner": 5
+  "workflows_running": 10,
+  "dispatch_open": 5,
+  "live_claims": 5,
+  "pending_review": 0,
+  "blockers": 16,
+  "waiting_on_owner": 5,
+  "decisions": 8
  },
  "roles": {
   "hark-cr": "集成人：审查、合并、派单、共用文件（唯一可合 main）",
@@ -26,18 +27,18 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 200,
-   "today": 70
+   "total": 208,
+   "today": 0
   },
   {
    "agent": "hark-cs",
-   "total": 57,
-   "today": 11
+   "total": 59,
+   "today": 0
   },
   {
    "agent": "hark-liuzhijie",
-   "total": 31,
-   "today": 5
+   "total": 32,
+   "today": 0
   },
   {
    "agent": "—",
@@ -47,12 +48,12 @@
   {
    "agent": "hark-fangyi",
    "total": 26,
-   "today": 1
+   "today": 0
   },
   {
    "agent": "hark-darrio",
    "total": 20,
-   "today": 1
+   "today": 0
   },
   {
    "agent": "muse-tibo-cs",
@@ -72,51 +73,51 @@
  ],
  "recent_commits": [
   {
-   "sha": "26bf761",
-   "at": "2026-11-09T13:29:41Z",
-   "subj": "合并 agent/hark-liuzhijie/S-251-jigL",
+   "sha": "b85317b",
+   "at": "2026-11-09T16:18:04Z",
+   "subj": "[inbox] 合入 agent/hark-cs/integrator：绿档自动合入搬到 GitHub Actions（加固为 check / push 两个 ",
    "agent": "hark-cr"
   },
   {
-   "sha": "37ec241",
-   "at": "2026-11-09T12:39:30Z",
-   "subj": "[S-251] 读落地胎架 jigL1..3 + 端部悬挑单元吊装（履带吊在楼面以外）",
-   "agent": "hark-liuzhijie"
-  },
-  {
-   "sha": "8aeb98b",
-   "at": "2026-11-09T12:18:18Z",
-   "subj": "[host] S-251 开口段/端部 7 单元胎架落地（jigL1..3）+ [D-25] 塔吊表落 hzseq.js（tcrane 4 台）",
+   "sha": "ae57b2a",
+   "at": "2026-11-09T16:17:37Z",
+   "subj": "[D-38] 合入 agent/hark-liuzhijie/D-38：S-501 声明整片屋盖 scope.keys；s501.js?v=5；D-38 完成移",
    "agent": "hark-cr"
   },
   {
-   "sha": "20cb52c",
-   "at": "2026-11-09T11:32:32Z",
-   "subj": "[D-28] 合入实物图钉，info.js?v=2、CHANGELOG",
+   "sha": "d94244f",
+   "at": "2026-11-09T15:58:35Z",
+   "subj": "[host] 竖屏首访说明改三行短版",
    "agent": "hark-cr"
   },
   {
-   "sha": "b4c5638",
-   "at": "2026-11-09T11:30:20Z",
-   "subj": "合并 agent/hark-cs/D-28-pins",
+   "sha": "171984d",
+   "at": "2026-11-09T15:42:04Z",
+   "subj": "[host] 首访副标题竖屏 9 px 免省略（hzmobile.css?v=4）",
    "agent": "hark-cr"
   },
   {
-   "sha": "173e78d",
-   "at": "2026-11-09T11:16:11Z",
-   "subj": "合并 D-20b/D-21d，宿主 lit 红字修正，mods/s101 ?v=3",
+   "sha": "2f5b373",
+   "at": "2026-11-09T15:37:20Z",
+   "subj": "[host] 首访引导：副标题 + 说明自动展开一次；three 加载不阻塞",
    "agent": "hark-cr"
   },
   {
-   "sha": "6585fff",
-   "at": "2026-11-09T11:09:49Z",
-   "subj": "合并 agent/hark-liuzhijie/D-21d",
+   "sha": "75a8216",
+   "at": "2026-11-09T15:32:48Z",
+   "subj": "[claims] CLAIMS 拆分：索引 + docs/decisions.md + 派单归档",
    "agent": "hark-cr"
   },
   {
-   "sha": "e0f7540",
-   "at": "2026-11-09T11:08:49Z",
-   "subj": "[D-28] 实物图钉：挂有实物记录的构件在3D打图钉，点开弹信息卡",
+   "sha": "5d90992",
+   "at": "2026-11-09T14:06:39Z",
+   "subj": "[claims] 取消唯一集成：绿档自动合入 + 替补 hark-cs（委托人 22:06 批准）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "c421344",
+   "at": "2026-11-09T13:53:14Z",
+   "subj": "[claims] 接口请求：拆集成人单点（委托人 11-09 21:35 新意见）",
    "agent": "hark-cs"
   }
  ],
@@ -149,16 +150,10 @@
    "id": "D-36",
    "agent": "hark-fangyi、hark-cs、hark-liuzhijie",
    "item": "分图二维图纸关掉未建幽灵线",
-   "state": "待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；余 二维 s101/s501 hark-liuzhijie）"
-  },
-  {
-   "id": "D-38",
-   "agent": "hark-liuzhijie",
-   "item": "S-501 声明整片屋盖范围",
-   "state": "待做（check_linkage 断言已按声明改，可推）"
+   "state": "待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；二维 s101/s501 hark-liuzhijie 自查已满足（11-10 随 D-38 合入记录）；待截图对比）"
   }
  ],
- "dispatches_done": 32,
+ "dispatches_done": 33,
  "live_claims": [
   {
    "item": "实物层记录库",
@@ -179,10 +174,6 @@
   {
    "item": "S-252 屋盖提升（提议）",
    "agent": "muse-tibo-cs"
-  },
-  {
-   "item": "Blender 终版精修",
-   "agent": "hark-cs"
   }
  ],
  "claimed_items": [
@@ -228,9 +219,7 @@
   }
  ],
  "free_items": [],
- "pending_review": [
-  "agent/hark-fangyi/D-27-mobile"
- ],
+ "pending_review": [],
  "stale_locks": [],
  "blockers": [
   {
@@ -280,7 +269,7 @@
   },
   {
    "kind": "协作者",
-   "what": "D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；余 S-101/S-501 二维）",
+   "what": "D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；S-101/S-501 二维自查已满足，余前后截图对比）",
    "who": "hark-liuzhijie"
   },
   {
@@ -300,8 +289,18 @@
   },
   {
    "kind": "协作者",
-   "what": "D-20 S-101 ②–⑤、D-36、D-38（D-22、D-30–D-35、D-37 已合入）",
+   "what": "D-20 S-101 ②–⑤、D-36 截图（D-22、D-30–D-35、D-37、D-38 已合入）",
    "who": "hark-liuzhijie、hark-cs"
+  },
+  {
+   "kind": "集成",
+   "what": "收件自动合入（GitHub Actions inbox-automerge，check/push 两 job）11-10 00:22 首跑：check 成功、合入 0（11 个按规则留下），push job 因无可合跳过——快进推送路径尚未实跑过，首次真合入后要看一眼",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "协作者",
+   "what": "收件 4 个分支和 main 冲突需作者 rebase：hark-fangyi/D-19-s201-polish；hark-cs/D-22-s401-polish、D-22-window-fix、D-22-s401-window（后三个已被 D-22-fix 取代，可删）",
+   "who": "hark-fangyi、hark-cs"
   }
  ],
  "links": {
@@ -310,17 +309,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T21:34:15+08:00",
+  "generated_at": "2026-11-10T00:24:47+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794226698,
+    "last_at": 1794239915,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 75
+    "idle_min": 25
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -339,21 +338,21 @@
      "D-36"
     ],
     "done_today": 4,
-    "last_at": 1794227435,
+    "last_at": 1794240092,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 63
+    "idle_min": 22
    },
    {
     "name": "hark-darrio",
     "active": [],
     "done_today": 4,
-    "last_at": 1794193891,
+    "last_at": 1794233392,
     "mine": [],
     "state": "idle",
-    "away": true,
-    "idle_min": 622
+    "away": false,
+    "idle_min": 134
    },
    {
     "name": "hark-fangyi",
@@ -366,21 +365,20 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 122
+    "idle_min": 293
    },
    {
     "name": "hark-liuzhijie",
     "active": [
      "D-20",
-     "D-36",
-     "D-38"
+     "D-36"
     ],
-    "done_today": 2,
+    "done_today": 3,
     "last_at": 1794227970,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 54
+    "idle_min": 224
    },
    {
     "name": "marvis",
@@ -394,7 +392,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1952
+    "idle_min": 2123
    },
    {
     "name": "muse-tibo-cs",
@@ -408,7 +406,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1640
+    "idle_min": 1810
    },
    {
     "name": "pi-t2",
@@ -446,10 +444,152 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1838
+    "idle_min": 2009
    }
   ],
   "jobs": [
+   {
+    "id": "D-13",
+    "title": "Windows 真机审查",
+    "who": [
+     "marvis"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794118391
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "marvis",
+     "what": "还没开工",
+     "since": 1794118391,
+     "age_min": 2051,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-20",
+    "title": "S-101 雕琢",
+    "who": [
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "在做（11-09 合入 da51f08：剖面图例；②三维与剖面一致、③t=355 顶板实线、④只留一个大数字未见对应提交，请自查后提交或回报「已满足」；⑤ s101 mod 缓冲改造待做）",
+    "stage": 3,
+    "stages": {
+     "派出": 1794122454,
+     "开工": 1794126892,
+     "交付": 1794221300,
+     "合入": 1794222971
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-liuzhijie/D-20-s101",
+     "agent/hark-liuzhijie/D-20b"
+    ],
+    "commits": 2,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794222971,
+     "age_min": 308,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-28",
+    "title": "构件信息卡 + 实物图钉",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "在做（11-09 第一片合入并接线：hzwest.html 加载 mods/info.js?v=1，check_info 进 check_all；剩实物图钉 + 真机截图 2 张）",
+    "stage": 3,
+    "stages": {
+     "派出": 1794128678,
+     "开工": 1794142605,
+     "交付": 1794222529,
+     "合入": 1794223820
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/D-28-info-card",
+     "agent/hark-cs/D-28-note",
+     "agent/hark-cs/D-28-pins"
+    ],
+    "commits": 3,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794223820,
+     "age_min": 293,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-29",
+    "title": "S-252 屋盖提升",
+    "who": [
+     "muse-tibo-cs"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794128678
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "muse-tibo-cs",
+     "what": "还没开工",
+     "since": 1794128678,
+     "age_min": 1879,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-36",
+    "title": "分图二维图纸关掉未建幽灵线",
+    "who": [
+     "hark-fangyi",
+     "hark-cs",
+     "hark-liuzhijie"
+    ],
+    "kind": "派单",
+    "status": "待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；二维 s101/s501 hark-liuzhijie 自查已满足（11-10 随 D-38 合入记录）；待截图对比）",
+    "stage": 3,
+    "stages": {
+     "派出": 1794194970,
+     "开工": 1794205992,
+     "交付": 1794220827,
+     "合入": 1794241057
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/D-32-33-36",
+     "agent/hark-liuzhijie/D-38",
+     "agent/hark-liuzhijie/D-38-36"
+    ],
+    "commits": 4,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794241057,
+     "age_min": 6,
+     "level": "ok"
+    },
+    "done": false
+   },
    {
     "id": "D-01",
     "title": "S-501",
@@ -716,30 +856,6 @@
     "done": true
    },
    {
-    "id": "D-13",
-    "title": "Windows 真机审查",
-    "who": [
-     "marvis"
-    ],
-    "kind": "派单",
-    "status": "待做",
-    "stage": 0,
-    "stages": {
-     "派出": 1794118391
-    },
-    "returned": false,
-    "branches": [],
-    "commits": 0,
-    "wait": {
-     "who": "marvis",
-     "what": "还没开工",
-     "since": 1794118391,
-     "age_min": 1880,
-     "level": "red"
-    },
-    "done": false
-   },
-   {
     "id": "D-14",
     "title": "S-201",
     "who": [
@@ -881,36 +997,6 @@
     "commits": 3,
     "wait": null,
     "done": true
-   },
-   {
-    "id": "D-20",
-    "title": "S-101 雕琢",
-    "who": [
-     "hark-liuzhijie"
-    ],
-    "kind": "派单",
-    "status": "在做（11-09 合入 da51f08：剖面图例；②三维与剖面一致、③t=355 顶板实线、④只留一个大数字未见对应提交，请自查后提交或回报「已满足」；⑤ s101 mod 缓冲改造待做）",
-    "stage": 3,
-    "stages": {
-     "派出": 1794122454,
-     "开工": 1794126892,
-     "交付": 1794221300,
-     "合入": 1794222971
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-liuzhijie/D-20-s101",
-     "agent/hark-liuzhijie/D-20b"
-    ],
-    "commits": 2,
-    "wait": {
-     "who": "hark-cr",
-     "what": "合入了，等关单",
-     "since": 1794222971,
-     "age_min": 137,
-     "level": "amber"
-    },
-    "done": false
    },
    {
     "id": "D-21",
@@ -1073,61 +1159,6 @@
     "done": true
    },
    {
-    "id": "D-28",
-    "title": "构件信息卡 + 实物图钉",
-    "who": [
-     "hark-cs"
-    ],
-    "kind": "派单",
-    "status": "在做（11-09 第一片合入并接线：hzwest.html 加载 mods/info.js?v=1，check_info 进 check_all；剩实物图钉 + 真机截图 2 张）",
-    "stage": 3,
-    "stages": {
-     "派出": 1794128678,
-     "开工": 1794142605,
-     "交付": 1794222529,
-     "合入": 1794223820
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-cs/D-28-info-card",
-     "agent/hark-cs/D-28-note",
-     "agent/hark-cs/D-28-pins"
-    ],
-    "commits": 3,
-    "wait": {
-     "who": "hark-cr",
-     "what": "合入了，等关单",
-     "since": 1794223820,
-     "age_min": 123,
-     "level": "amber"
-    },
-    "done": false
-   },
-   {
-    "id": "D-29",
-    "title": "S-252 屋盖提升",
-    "who": [
-     "muse-tibo-cs"
-    ],
-    "kind": "派单",
-    "status": "待做",
-    "stage": 0,
-    "stages": {
-     "派出": 1794128678
-    },
-    "returned": false,
-    "branches": [],
-    "commits": 0,
-    "wait": {
-     "who": "muse-tibo-cs",
-     "what": "还没开工",
-     "since": 1794128678,
-     "age_min": 1709,
-     "level": "red"
-    },
-    "done": false
-   },
-   {
     "id": "D-30",
     "title": "S-002 点空白取消选中",
     "who": [
@@ -1273,38 +1304,6 @@
     "done": true
    },
    {
-    "id": "D-36",
-    "title": "分图二维图纸关掉未建幽灵线",
-    "who": [
-     "hark-fangyi",
-     "hark-cs",
-     "hark-liuzhijie"
-    ],
-    "kind": "派单",
-    "status": "待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；余 二维 s101/s501 hark-liuzhijie）",
-    "stage": 2,
-    "stages": {
-     "派出": 1794194970,
-     "开工": 1794205992,
-     "交付": 1794220827
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-fangyi/D-32-33-36",
-     "agent/hark-liuzhijie/D-38",
-     "agent/hark-liuzhijie/D-38-36"
-    ],
-    "commits": 4,
-    "wait": {
-     "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794220827,
-     "age_min": 173,
-     "level": "amber"
-    },
-    "done": false
-   },
-   {
     "id": "D-37",
     "title": "S-251 拼装面与承轨层基座衔接",
     "who": [
@@ -1335,12 +1334,14 @@
      "hark-liuzhijie"
     ],
     "kind": "派单",
-    "status": "待做（check_linkage 断言已按声明改，可推）",
-    "stage": 2,
+    "status": "完成 11-10（6a8abbf 合入；截图未附，委托人真机看）",
+    "stage": 4,
     "stages": {
      "派出": 1794195475,
      "开工": 1794205992,
-     "交付": 1794220827
+     "交付": 1794220827,
+     "合入": 1794241057,
+     "关单": 1794241057
     },
     "returned": false,
     "branches": [
@@ -1348,14 +1349,8 @@
      "agent/hark-liuzhijie/D-38-36"
     ],
     "commits": 2,
-    "wait": {
-     "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794220827,
-     "age_min": 173,
-     "level": "amber"
-    },
-    "done": false
+    "wait": null,
+    "done": true
    },
    {
     "id": "S-301 子图 2–4",
@@ -1465,6 +1460,7 @@
      "派出": 1794105383,
      "开工": 1794109143,
      "交付": 1794221535,
+     "合入": 1794241057,
      "关单": 1794110640
     },
     "returned": false,
@@ -1646,7 +1642,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1981,
+     "age_min": 2151,
      "level": "red"
     },
     "done": false
@@ -1670,7 +1666,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1981,
+     "age_min": 2151,
      "level": "red"
     },
     "done": false
@@ -1725,7 +1721,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 679,
+     "age_min": 849,
      "level": "red"
     },
     "done": false

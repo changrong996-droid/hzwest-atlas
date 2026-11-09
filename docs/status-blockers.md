@@ -10,9 +10,10 @@
 - [集成] S-301 focus=cut 默认侧视看不出剖切封面，需换斜俯视机位复看（GPU 审计 #12） · hark-cr
 
 - [待委托人] D-25 塔吊表已落 hzseq.js（11-09，tcrane 4 台、内侧 8 吊改塔吊，超650=0）；同工序同日 ≤5 台履带吊未满足（frameS 369–397 最多 10 台、frameN 370–397 最多 8、ccolS 489–495、ccolN 495、col24S 556、rig 621–622 各 6），check_cranecount --strict 暂不接入，是否改排程削峰 · 委托人
-- [协作者] D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；余 S-101/S-501 二维） · hark-liuzhijie
+- [协作者] D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；S-101/S-501 二维自查已满足，余前后截图对比） · hark-liuzhijie
 - [待委托人] S-101 地下节拍偏早 4–5 个月（hark-fangyi #8）：重排 found 内部节拍还是只注记 · 委托人 / hark-liuzhijie
 - [待委托人] 屋面铺设顺序与影像相反（南先北后，hark-fangyi #9）：改排程还是注记 · 委托人 / hark-cs
 - [待委托人] 履带吊台数上限 14 / 同工序 5 是否作为硬约束改排程（hark-darrio 拟定） · 委托人
-- [协作者] D-20 S-101 ②–⑤、D-36、D-38（D-22、D-30–D-35、D-37 已合入） · hark-liuzhijie、hark-cs
-
+- [协作者] D-20 S-101 ②–⑤、D-36 截图（D-22、D-30–D-35、D-37、D-38 已合入） · hark-liuzhijie、hark-cs
+- [集成] 收件自动合入（GitHub Actions inbox-automerge，check/push 两 job）11-10 00:22 首跑：check 成功、合入 0（11 个按规则留下），push job 因无可合跳过——快进推送路径尚未实跑过，首次真合入后要看一眼 · hark-cr
+- [协作者] 收件 4 个分支和 main 冲突需作者 rebase：hark-fangyi/D-19-s201-polish；hark-cs/D-22-s401-polish、D-22-window-fix、D-22-s401-window（后三个已被 D-22-fix 取代，可删） · hark-fangyi、hark-cs
