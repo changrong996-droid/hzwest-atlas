@@ -191,5 +191,118 @@
    "y": 0,
    "on": "ground"
   }
+ ],
+ "towerNote": "D-25 内侧 6 吊改塔吊（hark-darrio）：4 台 Liebherr 1000 EC-B 100 Litronic，起重臂 31.5 m，双小车，臂底标高 jy=64 m。塔位落在屋盖南/北嵌补带（38.5<|z|<45.5，嵌补到 merge 才装），塔身从基础穿 mezz/deck/plat/floor 楼板预留洞；塔吊在场 580–624（进场 580–590、拆除 614–624），早于 lift1（632）退场。验证：node tools/hz/check_crane.js --towers",
+ "towerModel": {
+  "name": "Liebherr 1000 EC-B 100 Litronic",
+  "jib": 31.5,
+  "Lc": 16,
+  "mast": 3.4,
+  "minR": 5.4,
+  "chart": [
+   [
+    10,
+    100
+   ],
+   [
+    15,
+    69.35
+   ],
+   [
+    20,
+    48.53
+   ],
+   [
+    25,
+    36.11
+   ],
+   [
+    31.5,
+    25.9
+   ]
+  ],
+  "src": "Liebherr 1000 EC-B 100 Litronic 数据表（EN 14439）第 3 页「Ausladung und Tragfähigkeit」，31.5 m 臂一行（r=34.6），单位 t；5.4–11.0 m 额定 100 t，表中 10 m 起列。塔身按 1000 HC 塔节 3.4 m 方形；同表 24 HC（2.4 m）独立高度不够 64 m",
+  "tower": "1000 HC（3.4 m×3.4 m 方形塔节），独立式最大吊钩高 72.2 m（同一数据表「Turmhöhen」页）"
+ },
+ "towers": [
+  {
+   "id": "TC-W北",
+   "x": -39,
+   "z": -40,
+   "jy": 64,
+   "erect": [
+    580,
+    590
+   ],
+   "remove": [
+    614,
+    624
+   ],
+   "serves": [
+    "mast @(-39,-46.5)"
+   ]
+  },
+  {
+   "id": "TC-E北",
+   "x": 39,
+   "z": -40,
+   "jy": 64,
+   "erect": [
+    580,
+    590
+   ],
+   "remove": [
+    614,
+    624
+   ],
+   "serves": [
+    "mast @(39,-46.5)"
+   ]
+  },
+  {
+   "id": "TC-W南",
+   "x": -45,
+   "z": 42,
+   "jy": 64,
+   "erect": [
+    580,
+    590
+   ],
+   "remove": [
+    614,
+    624
+   ],
+   "serves": [
+    "mast @(-39,46.5)",
+    "rig @(-39,24.5)"
+   ]
+  },
+  {
+   "id": "TC-E南",
+   "x": 45,
+   "z": 42,
+   "jy": 64,
+   "erect": [
+    580,
+    590
+   ],
+   "remove": [
+    614,
+    624
+   ],
+   "serves": [
+    "mast @(39,46.5)",
+    "rig @(39,24.5)"
+   ]
+  }
+ ],
+ "towerOpenings": [
+  "mezz",
+  "deck",
+  "plat",
+  "floor"
+ ],
+ "towerBase": [
+  "found"
  ]
 }

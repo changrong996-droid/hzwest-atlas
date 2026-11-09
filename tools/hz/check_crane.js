@@ -4,6 +4,8 @@
 // 吊距 R = 站位到构件中心的水平距离；单吊重量 W 按 docs/rules/crane-reach.md 表 2 取（推算）。
 // 规则：W × 1.1（吊钩、索具） ≤ 机型在 R 处的额定起重量，否则换站位或换机型。
 // --relocate：按 docs/rules/crane-stations.json（D-18 站位调整建议）替换超限吊次的站位，先独立验站位可行，再复算；仍有超 650 t 级即失败。
+// --towers：按 docs/rules/crane-stations.json 的 towers（D-25 内侧 6 吊改塔吊）加塔吊：先验塔位（塔身只穿楼板预留洞、不碰其他构件，回转净空同 R9，塔吊间不打架，lift1 前退场），
+//   再把塔吊在场且吊距 ≤ 臂长的履带吊吊次改派塔吊（同 hzseq R10 分派规则，取最近），按塔吊额定表核；塔吊超载或仍超 650 t 级即失败。
 // 默认只报告不判失败；加 --strict 时，有 1000 t 级也够不着的吊次就退出码 1（规则落地到 hzseq.js 后再接入 check_all）。
 const { load } = require('./harness');
 const { HZ } = load();
@@ -41,9 +43,39 @@ if (relocate) {   // D-18：替换站位前先验可行：ground = HZ.crawlClash
     p.crawl = [x, z]; p.crawlY = r.y; moved++; }
   console.log(`按 docs/rules/crane-stations.json 替换站位 ${moved} 吊（均已验可行）`);
 }
-const seen = new Set(), rows = [];
+const towersOn = process.argv.includes('--towers'), towerRows = [];
+if (towersOn) {   // D-25：内侧 6 吊改塔吊
+  const J = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../../docs/rules/crane-stations.json'), 'utf8')), M = J.towerModel, h = M.mast / 2;
+  const ALL = []; for (const a of HZ.acts) if (a.kind !== 'untemp') for (const p of a.parts) for (const b of p.geo.boxes) ALL.push({ a, p, b });
+  const live = (e, t0, t1) => { const a0 = e.p.st != null ? e.p.st : e.a.start, a1 = e.a.kind === 'temp' && e.a.rm ? e.a.rm.end : 1e9; return !(a0 >= t1 || a1 <= t0); };
+  const slab = k => J.towerOpenings.some(s => k.startsWith(s)), base = k => J.towerBase.some(s => k.startsWith(s));
+  const segHit = (a, b, B, m) => { let t0 = 0, t1 = 1; for (let i = 0; i < 3; i++) { const d = b[i] - a[i], lo = B.min[i] - m, hi = B.max[i] + m; if (Math.abs(d) < 1e-9) { if (a[i] < lo || a[i] > hi) return false; } else { let u = (lo - a[i]) / d, v = (hi - a[i]) / d; if (u > v) [u, v] = [v, u]; t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) return false; } } return true; };
+  const fail = m => { console.log('FAIL check_crane: ' + m); process.exit(1); };
+  const lift0 = HZ.K.lift1 ? HZ.K.lift1.start : 1e9;
+  for (const T of J.towers) { const t0 = T.erect[0], t1 = T.remove[1], open = new Set();
+    if (t1 > lift0) fail(`${T.id} 拆除完成 ${t1} 晚于屋盖提升 lift1 ${lift0}`);
+    for (const e of ALL) { if (!live(e, t0, t1)) continue; const b = e.b;
+      if (b.max[0] > T.x - h && b.min[0] < T.x + h && b.max[2] > T.z - h && b.min[2] < T.z + h && b.min[1] < T.jy + 3 && b.max[1] > -1) {
+        if (e.p.grp) fail(`${T.id} 塔身与屋盖网架 ${e.a.key} 相交`); if (base(e.a.key)) continue; if (slab(e.a.key) && b.max[1] - b.min[1] <= 2.5) { open.add(e.a.key + '@' + b.max[1].toFixed(1)); continue; }
+        fail(`${T.id} 塔身与 ${e.a.name}（${e.a.key}）相交`); }
+      for (let q = 0; q < 72; q++) { const th = q / 72 * Math.PI * 2, ax = Math.cos(th), az = Math.sin(th);   // R9 同规则：臂底 jy+0.6，余量 1.5 m
+        if (segHit([T.x - ax * M.Lc, T.jy + 0.6, T.z - az * M.Lc], [T.x + ax * M.jib, T.jy + 0.6, T.z + az * M.jib], b, 1.5)) fail(`${T.id} 回转净空不足：${e.a.name}（顶 ${b.max[1].toFixed(1)} m）`); } }
+    for (const U of J.towers.concat(HZ.cranes.map(c => ({ id: c.key, x: c.x, z: c.z, L: c.L, erect: [HZ.K[c.key].start], remove: [0, HZ.K[c.key].rm.end] })))) { if (U === T || U.id === T.id) continue;
+      if (U.erect[0] >= t1 || U.remove[1] <= t0) continue; const d = Math.hypot(U.x - T.x, U.z - T.z), need = M.jib + (U.L || M.jib) + 2; if (d < need) fail(`${T.id} 与 ${U.id} 相距 ${d.toFixed(1)} m < ${need} m（同时在场、臂会打架）`); }
+    T.open = [...open]; }
+  console.log(`塔吊 ${J.towers.length} 台（${M.name}，臂 ${M.jib} m，臂底 ${J.towers[0].jy} m），塔位均已验：塔身只穿楼板预留洞、回转净空、塔吊间距、lift1 前退场`);
+  for (const T of J.towers) console.log(`  ${T.id} (${T.x},${T.z}) 在场 ${T.erect[0]}–${T.remove[1]} · 预留洞 ${T.open.join(' ')}`);
+  for (const a of HZ.acts) for (const p of a.parts) { if (p.crane !== -1 || p.towerD25) continue; let best = null, bd = 1e9;
+    for (const T of J.towers) { if (!(T.erect[1] <= p.st && T.remove[0] >= p.st + p.du)) continue; const d = Math.hypot(p.c[0] - T.x, p.c[2] - T.z); if (d <= M.jib && d > 4 && d < bd) { bd = d; best = T; } }
+    if (!best) continue; p.towerD25 = best.id; const { w } = pick(p), need = w * HOOK, c = bd < M.minR ? 0 : cap(M.chart, bd);
+    towerRows.push({ id: best.id, key: a.key, at: `(${p.c[0]},${p.c[2]})`, R: +bd.toFixed(1), W: +w.toFixed(1), need: +need.toFixed(1), cap: c, ok: need <= c }); }
+  console.table(towerRows);
+  const bad = towerRows.filter(r => !r.ok); if (bad.length) fail(`塔吊超载 ${bad.length} 吊（${bad.map(r => r.key + r.at).join(' ')}）`);
+  console.log(`改派塔吊 ${towerRows.length} 吊，均在额定内`);
+}
+const seen = new Set(), skipT = p => towersOn && p.towerD25, rows = [];
 for (const a of HZ.acts) for (const p of a.parts) {
-  if (p.crane !== -1 || seen.has(p)) continue; seen.add(p);   // 拆除工序（xx~rm）与安装共用同一构件与站位，按一次计
+  if (p.crane !== -1 || seen.has(p) || skipT(p)) continue; seen.add(p);   // 拆除工序（xx~rm）与安装共用同一构件与站位，按一次计
   if (!p.crawl) { rows.push({ a, p, R: NaN, W: 0 }); continue; }
   const R = Math.hypot(p.c[0] - p.crawl[0], p.c[2] - p.crawl[1]), { w } = pick(p), need = w * HOOK;
   rows.push({ a, p, R, W: w, need, c650: cap(C650, R), c1000: cap(C1000, R), cS: cap(C650S, R) });
@@ -66,6 +98,6 @@ const over = Object.entries(by).filter(([, b]) => b.超650 || b.超1000);
 if (over.length) { console.log('超限工序（R 上限 = 该工序最重一吊在表 1 中还能吊的最远吊距）：'); console.table(Object.fromEntries(over)); }
 for (const r of none.slice(0, 8)) console.log(`  超 1000 t 级：${r.a.key} @(${r.p.c[0].toFixed(0)},${r.p.c[2].toFixed(0)}) 站位(${r.p.crawl[0].toFixed(0)},${r.p.crawl[1].toFixed(0)}) R=${r.R.toFixed(0)} m W=${r.W.toFixed(0)} t 需 ${r.need.toFixed(1)} t > ${r.c1000} t`);
 const strict = process.argv.includes('--strict');
-if (relocate && n - ok650 - noSt) { console.log(`FAIL check_crane: 按新站位仍超 650 t 级 ${n - ok650 - noSt} 吊`); process.exit(1); }
+if ((relocate || towersOn) && n - ok650 - noSt) { console.log(`FAIL check_crane: 按新${towersOn ? '塔吊' : '站位'}仍超 650 t 级 ${n - ok650 - noSt} 吊`); process.exit(1); }
 if (strict && (none.length || noSt)) { console.log(`FAIL check_crane: ${none.length} 吊超出 1000 t 级包络，${noSt} 吊无站位`); process.exit(1); }
-console.log(`OK check_crane 吊次=${n} 超650=${n - ok650 - noSt} 超1000=${none.length} 需超起=${noSuper}${strict ? '' : '（报告模式）'}`);
+console.log(`OK check_crane 吊次=${n} 超650=${n - ok650 - noSt} 超1000=${none.length} 需超起=${noSuper}${towersOn ? ' 塔吊=' + towerRows.length : ''}${strict ? '' : '（报告模式）'}`);
