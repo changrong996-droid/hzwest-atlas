@@ -122,26 +122,26 @@
     for (const sx of [-1, 1]) { const xx = X(sx * (XS + 6)); g.strokeStyle = C.ink3; g.lineWidth = (0.7) * ZW; g.beginPath(); g.moveTo(xx, Z(L.zN)); g.lineTo(xx, Z(-2)); g.lineTo(xx - 3, Z(2)); g.lineTo(xx + 3, Z(6)); g.lineTo(xx, Z(10)); g.lineTo(xx, Z(L.zS)); g.stroke(); }
     // 1) 承轨层板（含引桥梁）：未建虚线 / 在建浅红 / 已建浅墨底
     for (const e of d.deck) { const st = stOf(e.p, t), r = rect(e.x0, e.x1, e.z0, e.z1);
-      if (st < 0) { g.setLineDash([2, 3]); g.strokeStyle = C.ghost; g.lineWidth = (0.5) * ZW; g.strokeRect(...r); g.setLineDash([]); continue; }
+      if (st < 0) continue;   // D-36：未建不画幽灵线
       if (st < 2) { g.fillStyle = C.red3; g.fillRect(...r); g.strokeStyle = C.red; g.lineWidth = (1) * ZW; g.strokeRect(...r); continue; }
       g.fillStyle = e.yk === 'S' ? '#e3dccf' : '#ebe5da'; g.fillRect(...r); g.strokeStyle = 'rgba(29,26,23,.35)'; g.lineWidth = (0.5) * ZW; g.strokeRect(...r); }
     // 2) 引桥墩
-    for (const e of d.piers) { const st = stOf(e.p, t), x = (X(e.x0) + X(e.x1)) / 2;
+    for (const e of d.piers) { const st = stOf(e.p, t), x = (X(e.x0) + X(e.x1)) / 2; if (st < 0) continue;   // D-36
       g.strokeStyle = st < 0 ? C.ghost : st < 2 ? C.red : 'rgba(29,26,23,.4)'; g.lineWidth = (st < 0 ? 0.6 : st < 2 ? 1.4 : 0.9) * ZW; if (st < 0) g.setLineDash([2, 2]);
       g.beginPath(); g.moveTo(x, Z(e.z0)); g.lineTo(x, Z(e.z1)); g.stroke(); g.setLineDash([]); }
     // 3) 站台
     for (const e of d.plat) { const st = stOf(e.p, t), r = rect(e.x0, e.x1, e.z0, e.z1);
-      if (st < 0) { g.setLineDash([3, 2]); g.strokeStyle = C.ghost; g.lineWidth = (0.5) * ZW; g.strokeRect(...r); g.setLineDash([]); continue; }
+      if (st < 0) continue;   // D-36：未建不画幽灵线
       g.fillStyle = st < 2 ? C.red3 : C.paper; g.fillRect(...r); g.strokeStyle = st < 2 ? C.red : YK[e.yk].ink; g.lineWidth = (0.9) * ZW; g.strokeRect(...r); }
     // 4) 股道：每段按自身时刻（铺轨规则已改为逐条股道，故整条线依次变黑）
     for (const e of d.track) { const st = stOf(e.p, t), z = Z(e.tz), xa = X(e.x0), xb = X(e.x1);
-      if (st < 0) { g.setLineDash([1.5, 3]); g.strokeStyle = C.ghost; g.lineWidth = (0.5) * ZW; g.beginPath(); g.moveTo(xa, z); g.lineTo(xb, z); g.stroke(); g.setLineDash([]); continue; }
+      if (st < 0) continue;   // D-36：未建不画幽灵线
       if (st < 2) { const out = Math.abs(e.x0) > Math.abs(e.x1) ? -1 : 1, from = out > 0 ? xa : xb, to = from + (xb - xa) * st * out;
         g.strokeStyle = C.red; g.lineWidth = (1.6) * ZW; g.beginPath(); g.moveTo(from, z); g.lineTo(to, z); g.stroke(); continue; }
       g.strokeStyle = YK[e.yk].ink; g.lineWidth = (YK[e.yk].w) * ZW; g.beginPath(); g.moveTo(xa, z); g.lineTo(xb, z); g.stroke(); }
     // 4b) 线下框架柱
     for (const e of d.cols) { const st = stOf(e.p, t), x = (X(e.x0) + X(e.x1)) / 2, z = (Z(e.z0) + Z(e.z1)) / 2, q = Math.max(1.4, 2.2 * s);
-      if (st < 0) { g.strokeStyle = C.ghost; g.lineWidth = (0.5) * ZW; g.strokeRect(x - q / 2, z - q / 2, q, q); continue; }
+      if (st < 0) continue;   // D-36
       g.fillStyle = st < 2 ? C.red : YK[e.yk].ink; g.fillRect(x - q / 2, z - q / 2, q, q); }
     // 5) 云谷
     g.strokeStyle = C.ink3; g.lineWidth = (0.5) * ZW; g.setLineDash([4, 2, 1, 2]); for (const z of [-P.gap, P.gap]) { g.beginPath(); g.moveTo(X(-XS), Z(z)); g.lineTo(X(XS), Z(z)); g.stroke(); } g.setLineDash([]);
@@ -265,5 +265,9 @@
 
   // 实物层记录（web/hzreal.js）若页面未加载，则按需补载一次（只读；已在 CLAIMS 请 hark-cr 在 hzwest.html 正式引入）
   if (G.document && G.document.createElement && !G.HZR && !G.__hzrLoading) { G.__hzrLoading = 1; const sc = G.document.createElement('script'); sc.src = 'hzreal.js'; (G.document.head || G.document.documentElement).appendChild(sc); }
-  (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push({ id: 'S-201', name: '承轨层', no: 'S-201-1', window: [T0, T1], big, draw, cam, stats, parts, info: (id, t) => { const F = data().byId.get(String(id).toUpperCase()); return F ? info(F, t) : null; } });
+  (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push({ id: 'S-201', name: '承轨层', no: 'S-201-1', window: [T0, T1], big, draw, cam, stats, parts,
+    // D-33：图纸范围 = 本图 12 道承轨层工序（与 d.keys 同源）；6 m 夹层 mezzS/mezzN 图上未画，不算本图
+    scope: () => ({ keys: data().keys.map(a => a.key) }),
+    // D-32：铺轨时红点落在正在铺的那一段股道上（取铺设前沿），其它时段返回 null
+    leadAt(t) { const d = data(); let best = null; for (const e of d.track) { const st = stOf(e.p, t); if (st >= 0 && st < 2 && (!best || e.p.st > best.p.st)) best = e; } if (!best) return null; const st = stOf(best.p, t), out = Math.abs(best.x0) > Math.abs(best.x1) ? -1 : 1, xs = out > 0 ? best.x0 : best.x1, x = xs + (best.x1 - best.x0) * st * out, L = d.byId.get(best.lid); return { p: [x, best.p.geo.max[1] + 0.3, best.tz], t1: '铺轨 · ' + (L ? L.id : '股道'), t2: `${best.yk === 'S' ? '南' : '北'}场 ${Math.round(st * 100)}%`, key: 'track' + best.yk }; }, info: (id, t) => { const F = data().byId.get(String(id).toUpperCase()); return F ? info(F, t) : null; } });
 })(typeof window !== 'undefined' ? window : globalThis);
