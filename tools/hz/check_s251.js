@@ -53,6 +53,34 @@ for (const k of P.cam) {
 const RC = P.realCmp(); if (RC.length < 2) fail('公开对照少于 2 条');
 for (const r of RC) { if (!Number.isFinite(r.dev)) fail(`公开对照 ${r.date} 算不出模型日期`); if (Math.abs(r.dev) > 20) fail(`公开对照 ${r.date} ${r.txt} 偏差 ${r.dev} 天，超过 ±20`); }
 const devTxt = RC.map(r => r.date + '=' + (r.dev > 0 ? '+' : '') + r.dev + 'd').join(' ');
+// ---- D-37 拼装面基座：胎架底 = 候车层楼面顶 P.floorTop；胎架下方楼板已建且在本图范围（宿主同款 PL.scopeMask，keys 声明）；楼板的柱也在范围 ----
+let baseTxt = '';
+{ const fs = require('fs'), path = require('path'), vm = require('vm'), src = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8');
+  const pm = /\/\/ <plugLink>[\s\S]*?\n([\s\S]*?)\/\/ <\/plugLink>/.exec(src); if (!pm) fail('hzview.js 缺 <plugLink> 段');
+  const PL = vm.runInContext('(() => {\n' + pm[1] + '\nreturn PL; })()', vm.createContext({ URLSearchParams, console }));
+  if (!P.scope || !Array.isArray(P.scope.keys)) fail('S-251 未声明 scope.keys（D-37）');
+  const its = [], iof = new Map(); for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!iof.has(p)) iof.set(p, its.length); its.push({ key: a.key, min: p.geo.min, max: p.geo.max, st: p.st, rm: p.rm, p }); } }
+  const [w0, w1] = P.window, parts = []; for (let i = 0; i <= 6; i++) for (const q of PL.safeParts(P, w0 + (w1 - w0) * i / 6, { w: 560, h: 420 })) parts.push(q);
+  const r = PL.scopeMask(P, its, { leadKeys: null, parts, midZ: HZ.P.midZ, t: w0, frag: true }); if (!r.on) fail('S-251 范围未启用');
+  const inScope = p => iof.has(p) && r.mask[iof.get(p)];
+  const FT = HZ.P.floorTop, FL = (P.floorKeys || []).flatMap(k => HZ.K[k] ? HZ.K[k].parts.map(p => ({ k, p })) : []); if (!FL.length) fail('S-251 floorKeys 为空');
+  let nj = 0;
+  for (const jk of ['jig1', 'jig2', 'jig3']) for (const j of (HZ.K[jk] || { parts: [] }).parts) { nj++;
+    if (Math.abs(j.geo.min[1] - FT) > 1e-6) fail(`${jk} 胎架底 ${j.geo.min[1]} ≠ 候车层楼面顶 ${FT}`);
+    if (!inScope(j)) fail(`${jk} 胎架不在 S-251 范围`);
+    const x = (j.geo.min[0] + j.geo.max[0]) / 2, z = (j.geo.min[2] + j.geo.max[2]) / 2;
+    const s = FL.find(e => e.p.geo.boxes.some(b => b.min[0] <= x && b.max[0] >= x && b.min[2] <= z && b.max[2] >= z && Math.abs(b.max[1] - FT) < 1e-6));
+    if (!s) fail(`${jk} 胎架 (${x.toFixed(1)}, ${z.toFixed(1)}) 下方没有楼板`);
+    if (!inScope(s.p)) fail(`${jk} 胎架下方楼板 ${s.k} 不在 S-251 范围（3D 会悬空）`);
+    if (s.p.st + s.p.du > j.st + 1e-6) fail(`${jk} 胎架第 ${j.st.toFixed(1)} 天开始，下方楼板 ${s.k} 第 ${(s.p.st + s.p.du).toFixed(1)} 天才建完`); }
+  for (const k of ['col24S', 'col24N']) if (HZ.K[k]) for (const p of HZ.K[k].parts) if (!inScope(p)) fail(`${k} 柱不在 S-251 范围（楼板会悬空）`);
+  // 二维轴测：零点 = floorTop，画出楼板基座
+  const calls = []; const ctx2 = new Proxy({ measureText: s => ({ width: String(s).length * 6 }) }, { get: (o, k) => (k in o ? o[k] : (...a) => { if (k === 'fillText') calls.push(String(a[0])); }), set: () => true });
+  P.draw(ctx2, 1100, 620, (w0 + w1) / 2, {}); if (!calls.some(s => s.startsWith('候车层楼面 ▽+' + FT.toFixed(2)))) fail('二维轴测未画候车层楼面基座');
+  // 报告（不判失败，宿主排程问题，已提接口请求）：整单元没有一个胎架、也没有一格落在楼板上的单元
+  const P2 = P.model(), noSup = P2.units.filter(u => !P2.jigs.some(j => u.cells.includes(j.p.jigOf)) && !u.cells.some(c => FL.some(e => e.p.geo.boxes.some(b => b.min[0] <= c.xc && b.max[0] >= c.xc && b.min[2] <= c.zc && b.max[2] >= c.zc)))).map(u => u.id);
+  if (noSup.length) console.log(`WARN check_s251: ${noSup.length} 个单元下方既无胎架也无楼板（${noSup.join(' ')}：中区在楼面开口上方，南北端在楼面以外），3D 悬空；见 CLAIMS 接口请求「S-251 中区开口上方单元的支承」`);
+  baseTxt = ` jigs_on_floor=${nj} unsupported_units=${noSup.length} scope=${r.n != null ? r.n : r.mask.filter(Boolean).length}`; }
 // ---- 3D 施工面模块 web/mods/s251.js：在拼单元数 = stateAt.live、红杆件根数 = 进度、每台汽车吊脚下有楼面且不压构件（暴力比对，不走模块网格）、耗时、opts.clip ----
 let faceTxt = '';
 { const MD = (G.HZ_MODS || []).find(m => m.id === 's251-face');
@@ -65,7 +93,7 @@ let faceTxt = '';
     const want = s.live.reduce((a, u) => a + Math.floor(u.rods * s.frac(u)), 0); if (L.rods !== want) fail(`t=${t} 红杆件 ${L.rods} ≠ 进度应有 ${want}`);
     if (L.cranes.length !== L.live.length) fail(`t=${t} 在拼单元 ${L.live.length} 个、汽车吊 ${L.cranes.length} 台`);
     for (const c of L.cranes) { const here = BX.filter(e => { const k = stOf(e.p, t); return k >= 0 && k < 3; });
-      if (!here.some(e => e.b.min[0] <= c.x && e.b.max[0] >= c.x && e.b.min[2] <= c.z && e.b.max[2] >= c.z && Math.abs(e.b.max[1] - c.y) < 0.6)) fail(`t=${t} 汽车吊 ${c.unit} 脚下没有楼面 (${c.x.toFixed(1)}, ${c.z.toFixed(1)})`);
+      if (!here.some(e => /^floor[SN]$/.test(e.a.key) && e.b.min[0] <= c.x && e.b.max[0] >= c.x && e.b.min[2] <= c.z && e.b.max[2] >= c.z && Math.abs(e.b.max[1] - c.y) < 0.6)) fail(`t=${t} 汽车吊 ${c.unit} 脚下没有楼面 (${c.x.toFixed(1)}, ${c.z.toFixed(1)})`);
       const hit = here.find(e => e.b.max[0] > c.x - 3.5 && e.b.min[0] < c.x + 3.5 && e.b.max[2] > c.z - 3.5 && e.b.min[2] < c.z + 3.5 && e.b.max[1] > c.y + 0.05 && e.b.min[1] < c.y + 4);
       if (hit) fail(`t=${t} 汽车吊 ${c.unit} 压在 ${hit.a.key} 上`); }
     nLive += L.live.length; nCr += L.cranes.length; nSeg = Math.max(nSeg, L.face.length / 6); }
@@ -79,4 +107,4 @@ let faceTxt = '';
   re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, med = re[re.length >> 1];   // 同 check_actors：60 帧/秒、1 天/秒播放
   if (avg > 2 || med > 2) fail(`update 平均 ${avg.toFixed(2)} ms、重算帧中位 ${med.toFixed(2)} ms，应 < 2 ms`);
   faceTxt = ` face=${nLive} cranes=${nCr} segmax=${nSeg} face_ms=${avg.toFixed(2)}`; }
-console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}${faceTxt}`);
+console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}${faceTxt}${baseTxt}`);
