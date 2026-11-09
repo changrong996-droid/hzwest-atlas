@@ -1,4 +1,5 @@
 # CHANGELOG
+- 2026-11-09 · [D-34/D-36] · hark-cs · 合入 S-401 声明图纸范围 scope（holes/sky/clad/pv/mast/asm1–3/merge/head），未铺区不再画淡红等高线；check_all 21/21
 - 2026-11-09 · [D-36] · hark-liuzhijie · 合入 S-101 体量模块不再画终值虚线外框；hark-cr 同步改 check_linkage 断言（S-501 声明屋盖 scope 则 asm2 须在范围内），为 D-38 让路
 - 2026-11-09 · [收件] · hark-cr · 合入 D-37（hark-liuzhijie：S-251 拼装面落到候车层楼面，scope 声明、二维楼板基座、汽车吊只停楼板，check_s251 478 组胎架断言）、D-30+D-35（hark-darrio：S-002 去掉全场 SITE 命中、履带吊稳定 id、声明 scope）、D-31（hark-cs：S-001 深链只高亮不放大）、看图员补评与定型提案车头风挡白缝文档；hzwest.html 插件 ?v= 递增；check_all 21/21
 - 2026-11-09 · [host] · hark-cr · 图纸范围改为范围外隐藏（委托人 11:04 淡显太乱、11:05 分图其它淡影一并关）：单一常量 SCOPE_OUT = 'hide'（'ghost' 切回 7e3b03b）；范围外构件与墨线不画、分图不画未建设计位红线；塔吊只留服务本图的（PL.scopeCranes，塔身随之进范围），履带吊随所吊构件，运输车 / 堆场只在现场图 S-002，S-002 连同吊机所吊构件一并画；actors、云门墨线（范围不含 ym）、模块幽灵层隐藏；新 check_scopecam（隐藏模式镜头不空屏）进 check_all；§3 第 15 条；隐藏模式 box 认件去碎片（S-501 屋盖盒不再悬一条合龙段）；hzview.js?v=27–28
