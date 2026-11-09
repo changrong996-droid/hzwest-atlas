@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-09 · [S-251] · hark-liuzhijie · 读落地胎架 jigL1..3，floorY=floorTop；端部 4 单元改履带吊吊装；check_s251 未支承单元 0；check_all 21/21
 2026-11-09 · [D-25] · hark-cr · 塔吊表落地：hzseq.js 新增 tcrane（HZ.TOWERS，4 台 Liebherr 1000 EC-B 100，臂 31.5 m / Lc 16 / 臂底 64 m，塔位 (±39,−40)(±45,42)，进场 580–590、拆除 614–624，lift1 前退场），进 HZ.cranes 下标 8–11；内侧 mast ×4、rig ×4 改派塔吊，check_crane 超650 0、超1000 0；塔身穿楼板预留洞（p.thru，A2 不计）；check_make 断言与 docs/rules/crane-stations.json 一致；同工序同日 ≤5 台未满足，--strict 不接入（超限清单见 status-blockers）；hzseq.js?v=12
 2026-11-09 · [host] · hark-cr · S-251 开口段 / 南北端 7 单元胎架落地（方案①，排程不动）：hzseq.js 新增 jigL1..3（74 组：U-M01..03 落地铁层底板顶 −9.20、U-S01/S02/N01/N02 落地坪 ±0.00 带埋入垫块），开工 / 拆除与本区 jig 同日，下方支承已建、不穿模；构件新字段 p.scopeWith = [工序 key]（hzview.js scopeMask 读，落地胎架与所站地铁层底板随 jig1..3 进 S-251 范围）；hzview.js?v=29；check_make 加断言；check_all 21/21
 

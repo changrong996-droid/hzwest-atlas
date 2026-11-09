@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-11-09T19:32:00+08:00",
+ "generated_at": "2026-11-09T21:33:00+08:00",
  "headline": {
-  "commits_total": 369,
-  "commits_today": 84,
+  "commits_total": 373,
+  "commits_today": 88,
   "files": 180,
   "items_done": 31,
   "items_total": 39,
-  "workflows_running": 11,
+  "workflows_running": 12,
   "dispatch_open": 6,
-  "live_claims": 5,
-  "pending_review": 0,
-  "blockers": 15,
-  "waiting_on_owner": 4
+  "live_claims": 6,
+  "pending_review": 1,
+  "blockers": 14,
+  "waiting_on_owner": 5
  },
  "roles": {
   "hark-cr": "集成人：审查、合并、派单、共用文件（唯一可合 main）",
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 197,
-   "today": 67
+   "total": 200,
+   "today": 70
   },
   {
    "agent": "hark-cs",
@@ -36,8 +36,8 @@
   },
   {
    "agent": "hark-liuzhijie",
-   "total": 30,
-   "today": 4
+   "total": 31,
+   "today": 5
   },
   {
    "agent": "—",
@@ -72,6 +72,30 @@
  ],
  "recent_commits": [
   {
+   "sha": "26bf761",
+   "at": "2026-11-09T13:29:41Z",
+   "subj": "合并 agent/hark-liuzhijie/S-251-jigL",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "37ec241",
+   "at": "2026-11-09T12:39:30Z",
+   "subj": "[S-251] 读落地胎架 jigL1..3 + 端部悬挑单元吊装（履带吊在楼面以外）",
+   "agent": "hark-liuzhijie"
+  },
+  {
+   "sha": "8aeb98b",
+   "at": "2026-11-09T12:18:18Z",
+   "subj": "[host] S-251 开口段/端部 7 单元胎架落地（jigL1..3）+ [D-25] 塔吊表落 hzseq.js（tcrane 4 台）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "20cb52c",
+   "at": "2026-11-09T11:32:32Z",
+   "subj": "[D-28] 合入实物图钉，info.js?v=2、CHANGELOG",
+   "agent": "hark-cr"
+  },
+  {
    "sha": "b4c5638",
    "at": "2026-11-09T11:30:20Z",
    "subj": "合并 agent/hark-cs/D-28-pins",
@@ -94,30 +118,6 @@
    "at": "2026-11-09T11:08:49Z",
    "subj": "[D-28] 实物图钉：挂有实物记录的构件在3D打图钉，点开弹信息卡",
    "agent": "hark-cs"
-  },
-  {
-   "sha": "88451ab",
-   "at": "2026-11-09T10:52:15Z",
-   "subj": "[D-21] ④ 深色卡「S-501」红字：宿主 #big .k b 未覆盖 lit 色，接口请求一行 CSS",
-   "agent": "hark-liuzhijie"
-  },
-  {
-   "sha": "7bdd438",
-   "at": "2026-11-09T10:49:32Z",
-   "subj": "[status] 看板刷新",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "792dc21",
-   "at": "2026-11-09T10:48:20Z",
-   "subj": "[D-20] S-101 3D 中央坑分层回筑与剖面一致（②）；mods/s101 缓冲复用、窗外直接返回（⑤）",
-   "agent": "hark-liuzhijie"
-  },
-  {
-   "sha": "7cde32b",
-   "at": "2026-11-09T10:36:09Z",
-   "subj": "[D-22] 合入标注四朵云后：s401.js?v=5、CHANGELOG、D-22 关单、看板刷新",
-   "agent": "hark-cr"
   }
  ],
  "dispatches_open": [
@@ -179,6 +179,10 @@
   {
    "item": "S-252 屋盖提升（提议）",
    "agent": "muse-tibo-cs"
+  },
+  {
+   "item": "Blender 终版精修",
+   "agent": "hark-cs"
   }
  ],
  "claimed_items": [
@@ -224,7 +228,9 @@
   }
  ],
  "free_items": [],
- "pending_review": [],
+ "pending_review": [
+  "agent/hark-fangyi/D-27-mobile"
+ ],
  "stale_locks": [],
  "blockers": [
   {
@@ -268,9 +274,9 @@
    "who": "hark-cr"
   },
   {
-   "kind": "集成",
-   "what": "D-25 塔吊表（4 台 1000 EC-B 100）落到 hzseq.js；同工序同日 ≤5 台履带吊分派后 check_cranecount --strict 接入 check_all",
-   "who": "hark-cr"
+   "kind": "待委托人",
+   "what": "D-25 塔吊表已落 hzseq.js（11-09，tcrane 4 台、内侧 8 吊改塔吊，超650=0）；同工序同日 ≤5 台履带吊未满足（frameS 369–397 最多 10 台、frameN 370–397 最多 8、ccolS 489–495、ccolN 495、col24S 556、rig 621–622 各 6），check_cranecount --strict 暂不接入，是否改排程削峰",
+   "who": "委托人"
   },
   {
    "kind": "协作者",
@@ -296,11 +302,6 @@
    "kind": "协作者",
    "what": "D-20 S-101 ②–⑤、D-36、D-38（D-22、D-30–D-35、D-37 已合入）",
    "who": "hark-liuzhijie、hark-cs"
-  },
-  {
-   "kind": "集成",
-   "what": "S-251 中区开口/南北端 7 个单元下方无胎架无楼板（check_s251 WARN）：采纳方案①，在 hzseq.js 把开口段胎架落到下层可见楼面，排程不动",
-   "who": "hark-cr"
   }
  ],
  "links": {
@@ -309,17 +310,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T19:32:32+08:00",
+  "generated_at": "2026-11-09T21:34:15+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794221372,
+    "last_at": 1794226698,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 42
+    "idle_min": 75
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -338,11 +339,11 @@
      "D-36"
     ],
     "done_today": 4,
-    "last_at": 1794222529,
+    "last_at": 1794227435,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 23
+    "idle_min": 63
    },
    {
     "name": "hark-darrio",
@@ -352,7 +353,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 500
+    "idle_min": 622
    },
    {
     "name": "hark-fangyi",
@@ -361,11 +362,11 @@
      "实物层记录库"
     ],
     "done_today": 4,
-    "last_at": 1794209784,
+    "last_at": 1794223865,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 235
+    "idle_min": 122
    },
    {
     "name": "hark-liuzhijie",
@@ -375,11 +376,11 @@
      "D-38"
     ],
     "done_today": 2,
-    "last_at": 1794221901,
+    "last_at": 1794227970,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 33
+    "idle_min": 54
    },
    {
     "name": "marvis",
@@ -393,7 +394,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1831
+    "idle_min": 1952
    },
    {
     "name": "muse-tibo-cs",
@@ -407,7 +408,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1518
+    "idle_min": 1640
    },
    {
     "name": "pi-t2",
@@ -445,7 +446,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1717
+    "idle_min": 1838
    }
   ],
   "jobs": [
@@ -481,11 +482,15 @@
     "stage": 4,
     "stages": {
      "派出": 1794112517,
+     "开工": 1794223865,
+     "交付": 1794223865,
      "关单": 1794118391
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-fangyi/D-02-note"
+    ],
+    "commits": 1,
     "wait": null,
     "done": true
    },
@@ -729,7 +734,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 1758,
+     "age_min": 1880,
      "level": "red"
     },
     "done": false
@@ -902,8 +907,8 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794222971,
-     "age_min": 15,
-     "level": "ok"
+     "age_min": 137,
+     "level": "amber"
     },
     "done": false
    },
@@ -1002,7 +1007,7 @@
      "hark-darrio"
     ],
     "kind": "派单",
-    "status": "完成 11-09（docs/rules/crane-stations.json 4 台 1000 EC-B 100 塔位 + check_crane --towers 复算超650=0；落到 hzseq.js 由 hark-cr 下一轮做）",
+    "status": "完成 11-09（docs/rules/crane-stations.json 4 台 1000 EC-B 100 塔位 + check_crane --towers 复算超650=0；11-09 hark-cr 已落到 hzseq.js：tcrane 4 台、内侧 8 吊改塔吊，check_crane 超650=0；同工序同日 ≤5 台未满足，--strict 未接入）",
     "stage": 4,
     "stages": {
      "派出": 1794125079,
@@ -1093,8 +1098,8 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794223820,
-     "age_min": 1,
-     "level": "ok"
+     "age_min": 123,
+     "level": "amber"
     },
     "done": false
    },
@@ -1117,7 +1122,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 1587,
+     "age_min": 1709,
      "level": "red"
     },
     "done": false
@@ -1294,8 +1299,8 @@
      "who": "hark-cr",
      "what": "交了，等审查合入",
      "since": 1794220827,
-     "age_min": 51,
-     "level": "ok"
+     "age_min": 173,
+     "level": "amber"
     },
     "done": false
    },
@@ -1347,8 +1352,8 @@
      "who": "hark-cr",
      "what": "交了，等审查合入",
      "since": 1794220827,
-     "age_min": 51,
-     "level": "ok"
+     "age_min": 173,
+     "level": "amber"
     },
     "done": false
    },
@@ -1409,7 +1414,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107679,
-     "交付": 1794209784,
+     "交付": 1794223865,
      "关单": 1794109194
     },
     "returned": false,
@@ -1418,7 +1423,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 13,
+    "commits": 14,
     "wait": null,
     "done": true
    },
@@ -1484,7 +1489,7 @@
     "stages": {
      "派出": 1794112344,
      "开工": 1794107769,
-     "交付": 1794221901,
+     "交付": 1794227970,
      "关单": 1794118391
     },
     "returned": false,
@@ -1493,7 +1498,7 @@
      "agent/hark-liuzhijie/cam-sweep2",
      "agent/hark-liuzhijie/proposals"
     ],
-    "commits": 28,
+    "commits": 29,
     "wait": null,
     "done": true
    },
@@ -1535,7 +1540,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107679,
-     "交付": 1794209784,
+     "交付": 1794223865,
      "关单": 1794118391
     },
     "returned": false,
@@ -1544,7 +1549,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 13,
+    "commits": 14,
     "wait": null,
     "done": true
    },
@@ -1641,7 +1646,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1859,
+     "age_min": 1981,
      "level": "red"
     },
     "done": false
@@ -1665,7 +1670,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1859,
+     "age_min": 1981,
      "level": "red"
     },
     "done": false
@@ -1720,7 +1725,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 557,
+     "age_min": 679,
      "level": "red"
     },
     "done": false
