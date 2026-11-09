@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-11-09T15:29:00+08:00",
+ "generated_at": "2026-11-09T15:52:00+08:00",
  "headline": {
-  "commits_total": 343,
-  "commits_today": 58,
+  "commits_total": 346,
+  "commits_today": 61,
   "files": 180,
   "items_done": 31,
   "items_total": 39,
-  "workflows_running": 15,
-  "dispatch_open": 10,
+  "workflows_running": 14,
+  "dispatch_open": 9,
   "live_claims": 5,
   "pending_review": 2,
-  "blockers": 16,
+  "blockers": 15,
   "waiting_on_owner": 4
  },
  "roles": {
@@ -26,8 +26,8 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 179,
-   "today": 49
+   "total": 181,
+   "today": 51
   },
   {
    "agent": "hark-cs",
@@ -46,8 +46,8 @@
   },
   {
    "agent": "hark-fangyi",
-   "total": 25,
-   "today": 0
+   "total": 26,
+   "today": 1
   },
   {
    "agent": "hark-darrio",
@@ -71,6 +71,24 @@
   }
  ],
  "recent_commits": [
+  {
+   "sha": "e448e84",
+   "at": "2026-11-09T07:48:03Z",
+   "subj": "合并 agent/hark-fangyi/D-32-33-36",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "67bd310",
+   "at": "2026-11-09T07:36:24Z",
+   "subj": "[D-32][D-33][D-36] S-201 leadAt 铺轨锚点、scope 声明（不含夹层）、二维未建幽灵线不画",
+   "agent": "hark-fangyi"
+  },
+  {
+   "sha": "c43fc94",
+   "at": "2026-11-09T07:30:17Z",
+   "subj": "[收件] 合入 D-34/D-36 S-401 scope；派单状态与看板刷新",
+   "agent": "hark-cr"
+  },
   {
    "sha": "9a7a3ec",
    "at": "2026-11-09T07:26:47Z",
@@ -99,24 +117,6 @@
    "sha": "5520030",
    "at": "2026-11-09T06:48:33Z",
    "subj": "标记已并入 D-31-nozoom（内容已在 main）",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "2b9c6d7",
-   "at": "2026-11-09T06:48:33Z",
-   "subj": "合并 agent/hark-liuzhijie/D-38-36",
-   "agent": "hark-cr"
-  },
-  {
-   "sha": "9398ad1",
-   "at": "2026-11-09T06:33:12Z",
-   "subj": "[D-36] S-101 体量模块不再画终值虚线外框；D-38 接口请求（check_linkage 断言冲突）",
-   "agent": "hark-liuzhijie"
-  },
-  {
-   "sha": "6d9ae31",
-   "at": "2026-11-09T06:27:30Z",
-   "subj": "[收件] 合入 D-37/D-30/D-35/D-31 与审计文档；派单关单、接口请求回复、看板刷新",
    "agent": "hark-cr"
   }
  ],
@@ -164,16 +164,10 @@
    "state": "待做"
   },
   {
-   "id": "D-34",
-   "agent": "hark-cs",
-   "item": "S-401 图纸范围声明",
-   "state": "待做"
-  },
-  {
    "id": "D-36",
    "agent": "hark-fangyi、hark-cs、hark-liuzhijie",
    "item": "分图二维图纸关掉未建幽灵线",
-   "state": "待做（S-101 mods/s101.js 虚线外框已合入 11-09，余 s201/s401/二维 s101/s501）"
+   "state": "待做（S-101 mods/s101.js 虚线外框已合入 11-09，S-401 未铺区淡红线已合入；余 s201/二维 s101/s501）"
   },
   {
    "id": "D-38",
@@ -182,7 +176,7 @@
    "state": "待做（check_linkage 断言已按声明改，可推）"
   }
  ],
- "dispatches_done": 28,
+ "dispatches_done": 29,
  "live_claims": [
   {
    "item": "实物层记录库",
@@ -249,8 +243,8 @@
  ],
  "free_items": [],
  "pending_review": [
-  "agent/hark-fangyi/D-19-s201-polish",
-  "agent/hark-fangyi/D-27-mobile"
+  "agent/hark-fangyi/D-27-mobile",
+  "agent/hark-liuzhijie/cam-sweep2"
  ],
  "stale_locks": [],
  "blockers": [
@@ -301,13 +295,8 @@
   },
   {
    "kind": "协作者",
-   "what": "D-33（S-201）声明 pl.scope（S-002 D-35、S-401 D-34 已合入；宿主默认与代填已生效，v27–28 起范围外隐藏）",
-   "who": "hark-fangyi"
-  },
-  {
-   "kind": "协作者",
-   "what": "D-36 二维图纸关掉未建幽灵虚线（S-401 已合入；余 S-201、S-101/S-501 二维）",
-   "who": "hark-fangyi、hark-liuzhijie"
+   "what": "D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；余 S-101/S-501 二维）",
+   "who": "hark-liuzhijie"
   },
   {
    "kind": "待委托人",
@@ -326,8 +315,8 @@
   },
   {
    "kind": "协作者",
-   "what": "D-20 S-101 ②–⑤、D-22 ⑦⑧、D-32、D-33、D-36、D-38（D-30、D-31、D-35、D-37 已合入）",
-   "who": "hark-liuzhijie、hark-cs、hark-fangyi"
+   "what": "D-20 S-101 ②–⑤、D-22 ⑦⑧、D-36、D-38（D-30–D-35、D-37 已合入）",
+   "who": "hark-liuzhijie、hark-cs"
   },
   {
    "kind": "集成",
@@ -341,17 +330,17 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-09T15:30:17+08:00",
+  "generated_at": "2026-11-09T15:53:12+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794208151,
+    "last_at": 1794209417,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 20
+    "idle_min": 22
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -368,27 +357,26 @@
     "active": [
      "D-22",
      "D-28",
-     "D-34",
      "D-36"
     ],
-    "done_today": 4,
-    "last_at": 1794207875,
+    "done_today": 3,
+    "last_at": 1794209851,
     "mine": [
      "D-22"
     ],
     "state": "working",
     "away": false,
-    "idle_min": 25
+    "idle_min": 15
    },
    {
     "name": "hark-darrio",
     "active": [],
-    "done_today": 7,
+    "done_today": 4,
     "last_at": 1794193891,
     "mine": [],
     "state": "idle",
     "away": false,
-    "idle_min": 258
+    "idle_min": 281
    },
    {
     "name": "hark-fangyi",
@@ -398,15 +386,12 @@
      "D-36",
      "实物层记录库"
     ],
-    "done_today": 3,
-    "last_at": 1794140957,
-    "mine": [
-     "D-32",
-     "D-33"
-    ],
-    "state": "stopped",
-    "away": true,
-    "idle_min": 1140
+    "done_today": 2,
+    "last_at": 1794209784,
+    "mine": [],
+    "state": "review",
+    "away": false,
+    "idle_min": 16
    },
    {
     "name": "hark-liuzhijie",
@@ -420,7 +405,7 @@
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 56
+    "idle_min": 79
    },
    {
     "name": "marvis",
@@ -434,7 +419,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1588
+    "idle_min": 1611
    },
    {
     "name": "muse-tibo-cs",
@@ -448,7 +433,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 1276
+    "idle_min": 1299
    },
    {
     "name": "pi-t2",
@@ -486,7 +471,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1474
+    "idle_min": 1497
    }
   ],
   "jobs": [
@@ -770,7 +755,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 1516,
+     "age_min": 1539,
      "level": "red"
     },
     "done": false
@@ -942,7 +927,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190446,
-     "age_min": 315,
+     "age_min": 338,
      "level": "red"
     },
     "done": false
@@ -996,7 +981,7 @@
      "who": "hark-cs",
      "what": "被退回，等修改",
      "since": 1794182717,
-     "age_min": 444,
+     "age_min": 467,
      "level": "red"
     },
     "done": false
@@ -1136,7 +1121,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190527,
-     "age_min": 314,
+     "age_min": 337,
      "level": "red"
     },
     "done": false
@@ -1160,7 +1145,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 1345,
+     "age_min": 1367,
      "level": "red"
     },
     "done": false
@@ -1222,19 +1207,24 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794191040
+     "派出": 1794191040,
+     "开工": 1794209784,
+     "交付": 1794209784,
+     "合入": 1794210483
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-fangyi/D-32-33-36"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-fangyi",
-     "what": "还没开工",
-     "since": 1794191040,
-     "age_min": 305,
-     "level": "red"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794210483,
+     "age_min": 4,
+     "level": "ok"
     },
     "done": false
    },
@@ -1246,19 +1236,24 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794192763
+     "派出": 1794192763,
+     "开工": 1794209784,
+     "交付": 1794209784,
+     "合入": 1794210483
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-fangyi/D-32-33-36"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-fangyi",
-     "what": "还没开工",
-     "since": 1794192763,
-     "age_min": 277,
-     "level": "red"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794210483,
+     "age_min": 4,
+     "level": "ok"
     },
     "done": false
    },
@@ -1269,27 +1264,22 @@
      "hark-cs"
     ],
     "kind": "派单",
-    "status": "待做",
-    "stage": 3,
+    "status": "完成 11-09（s401.js 声明 scope，同时关掉未铺区淡红等高线）",
+    "stage": 4,
     "stages": {
      "派出": 1794192763,
      "开工": 1794207875,
      "交付": 1794207875,
-     "合入": 1794209207
+     "合入": 1794209207,
+     "关单": 1794209417
     },
     "returned": false,
     "branches": [
      "agent/hark-cs/D-34-36-s401-scope"
     ],
     "commits": 1,
-    "wait": {
-     "who": "hark-cr",
-     "what": "合入了，等关单",
-     "since": 1794209207,
-     "age_min": 3,
-     "level": "ok"
-    },
-    "done": false
+    "wait": null,
+    "done": true
    },
    {
     "id": "D-35",
@@ -1324,25 +1314,26 @@
      "hark-liuzhijie"
     ],
     "kind": "派单",
-    "status": "待做（S-101 mods/s101.js 虚线外框已合入 11-09，余 s201/s401/二维 s101/s501）",
+    "status": "待做（S-101 mods/s101.js 虚线外框已合入 11-09，S-401 未铺区淡红线已合入；余 s201/二维 s101/s501）",
     "stage": 3,
     "stages": {
      "派出": 1794194970,
      "开工": 1794205992,
-     "交付": 1794207875,
-     "合入": 1794209207
+     "交付": 1794209784,
+     "合入": 1794210483
     },
     "returned": false,
     "branches": [
      "agent/hark-cs/D-34-36-s401-scope",
+     "agent/hark-fangyi/D-32-33-36",
      "agent/hark-liuzhijie/D-38-36"
     ],
-    "commits": 2,
+    "commits": 3,
     "wait": {
      "who": "hark-cr",
      "what": "合入了，等关单",
-     "since": 1794209207,
-     "age_min": 3,
+     "since": 1794210483,
+     "age_min": 4,
      "level": "ok"
     },
     "done": false
@@ -1395,7 +1386,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794206913,
-     "age_min": 41,
+     "age_min": 64,
      "level": "ok"
     },
     "done": false
@@ -1457,7 +1448,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107679,
-     "交付": 1794134206,
+     "交付": 1794209784,
      "关单": 1794109194
     },
     "returned": false,
@@ -1466,7 +1457,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 12,
+    "commits": 13,
     "wait": null,
     "done": true
    },
@@ -1584,7 +1575,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107679,
-     "交付": 1794134206,
+     "交付": 1794209784,
      "关单": 1794118391
     },
     "returned": false,
@@ -1593,7 +1584,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 12,
+    "commits": 13,
     "wait": null,
     "done": true
    },
@@ -1690,7 +1681,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1617,
+     "age_min": 1640,
      "level": "red"
     },
     "done": false
@@ -1714,7 +1705,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 1617,
+     "age_min": 1640,
      "level": "red"
     },
     "done": false
@@ -1769,7 +1760,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794190481,
-     "age_min": 315,
+     "age_min": 337,
      "level": "red"
     },
     "done": false
