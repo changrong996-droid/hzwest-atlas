@@ -1,17 +1,17 @@
 {
- "generated_at": "2026-11-08T17:51:00+08:00",
+ "generated_at": "2026-11-09T10:23:00+08:00",
  "headline": {
-  "commits_total": 240,
-  "commits_today": 212,
-  "files": 133,
-  "items_done": 30,
+  "commits_total": 313,
+  "commits_today": 28,
+  "files": 177,
+  "items_done": 31,
   "items_total": 39,
-  "workflows_running": 18,
-  "dispatch_open": 12,
+  "workflows_running": 20,
+  "dispatch_open": 14,
   "live_claims": 6,
   "pending_review": 0,
-  "blockers": 16,
-  "waiting_on_owner": 3
+  "blockers": 14,
+  "waiting_on_owner": 4
  },
  "roles": {
   "hark-cr": "集成人：审查、合并、派单、共用文件（唯一可合 main）",
@@ -26,43 +26,43 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 126,
-   "today": 126
+   "total": 157,
+   "today": 27
   },
   {
    "agent": "hark-cs",
-   "total": 27,
-   "today": 27
+   "total": 47,
+   "today": 1
   },
   {
    "agent": "—",
    "total": 27,
-   "today": 4
+   "today": 0
   },
   {
    "agent": "hark-liuzhijie",
-   "total": 23,
-   "today": 23
+   "total": 26,
+   "today": 0
   },
   {
    "agent": "hark-fangyi",
-   "total": 19,
-   "today": 19
+   "total": 25,
+   "today": 0
   },
   {
    "agent": "hark-darrio",
-   "total": 10,
-   "today": 10
+   "total": 19,
+   "today": 0
   },
   {
    "agent": "muse-tibo-cs",
-   "total": 4,
+   "total": 8,
    "today": 0
   },
   {
    "agent": "marvis",
    "total": 3,
-   "today": 3
+   "today": 0
   },
   {
    "agent": "traycer-cs",
@@ -72,51 +72,51 @@
  ],
  "recent_commits": [
   {
-   "sha": "077f1e9",
-   "at": "2026-11-08T09:50:56Z",
-   "subj": "[D-23][D-24] 云门墨线模块 + check_yunmen；真机 GPU 审计第二轮；Traycer 方向审查；traycer-cs 派单改由 har",
+   "sha": "b63d74f",
+   "at": "2026-11-09T02:22:20Z",
+   "subj": "[host] 插件引线锚点钩子 pl.leadAt(t)（D-22④/D-19③ 接口请求；hzview.js?v=23）；接口清单第 14 条",
    "agent": "hark-cr"
   },
   {
-   "sha": "a1646da",
-   "at": "2026-11-08T09:40:23Z",
-   "subj": "[status] 重新生成 docs/status.json",
+   "sha": "302bab6",
+   "at": "2026-11-09T02:20:28Z",
+   "subj": "[host] 采纳 shape-freeze 复兴号车头（HZ.makeTrain，屋面 skinTop 保持 null=57 m）；接线 mods/s251.",
    "agent": "hark-cr"
   },
   {
-   "sha": "b792fc9",
-   "at": "2026-11-08T09:39:52Z",
-   "subj": "[host] 委托人定：屋面 C 版「四朵云」上线（HZ.Wv 叠进覆面 Hc，hzseq.js?v=10）；地铁层镜头入口默认关闭（仅 #camcfg={\"u",
+   "sha": "7b0b52a",
+   "at": "2026-11-09T02:16:38Z",
+   "subj": "Merge agent/hark-cs/shape-freeze — 定型提案文档；车头补丁由 hark-cr 采纳",
    "agent": "hark-cr"
   },
   {
-   "sha": "0379e94",
-   "at": "2026-11-08T09:05:47Z",
-   "subj": "[status] 重新生成 docs/status.json",
+   "sha": "f62bcd8",
+   "at": "2026-11-09T02:16:38Z",
+   "subj": "Merge agent/hark-cs/team-kit — 仅文档，不采用区长制/三档放行（委托人 11-09 决定⑤）",
    "agent": "hark-cr"
   },
   {
-   "sha": "183c0f0",
-   "at": "2026-11-08T09:05:10Z",
-   "subj": "[plan] 清保留后更新规划与卡点；CHANGELOG",
+   "sha": "db05932",
+   "at": "2026-11-09T02:16:09Z",
+   "subj": "Merge agent/hark-cs/status-ui — 看板界面：只数本人手上的活、6 小时不在场",
    "agent": "hark-cr"
   },
   {
-   "sha": "1a014fd",
-   "at": "2026-11-08T09:04:38Z",
-   "subj": "[claims] 清保留：构件信息卡 + 实物图钉 → D-28 hark-cs（web/mods/info.js）；S-252 任务书 + D-29 muse",
+   "sha": "6ead3d3",
+   "at": "2026-11-09T02:15:47Z",
+   "subj": "Merge agent/hark-cs/S-001-v2 — 屋面工序各自 3D 盒",
    "agent": "hark-cr"
   },
   {
-   "sha": "5c17b86",
-   "at": "2026-11-08T09:04:38Z",
-   "subj": "[host] 剖切封面补网架杆件（含斜杆，181 根三角截面，随分区姿态 uG 变换）；HZ_MODS 只有 pick/unpick 的界面模块也收（build",
+   "sha": "a636ada",
+   "at": "2026-11-09T02:15:32Z",
+   "subj": "Merge agent/hark-darrio/S-002-cap",
    "agent": "hark-cr"
   },
   {
-   "sha": "6c0ab2f",
-   "at": "2026-11-08T08:54:57Z",
-   "subj": "[host] 3D 载荷标签：新增 HZ.jackLoad(t)（分区钢重按吊点平均分摊，合龙加嵌补、head 期线性卸载，推算），S-301 提升器标签显示「",
+   "sha": "30e59c2",
+   "at": "2026-11-09T02:15:32Z",
+   "subj": "Merge agent/hark-darrio/crane-daycap",
    "agent": "hark-cr"
   }
  ],
@@ -185,12 +185,24 @@
    "id": "D-28",
    "agent": "hark-cs",
    "item": "构件信息卡 + 实物图钉",
-   "state": "待做"
+   "state": "进行中：第一片（信息卡+检查）在分支 agent/hark-cs/D-28-info-card；下一轮做实物图钉 + 真机截图 2 张"
   },
   {
    "id": "D-29",
    "agent": "muse-tibo-cs",
    "item": "S-252 屋盖提升",
+   "state": "待做"
+  },
+  {
+   "id": "D-30",
+   "agent": "hark-darrio",
+   "item": "S-002 点空白取消选中",
+   "state": "待做"
+  },
+  {
+   "id": "D-31",
+   "agent": "hark-cs",
+   "item": "S-001 深链不放大",
    "state": "待做"
   }
  ],
@@ -248,11 +260,6 @@
    "state": "认领"
   },
   {
-   "item": "近景人员接线",
-   "agent": "hark-cr",
-   "state": "保留"
-  },
-  {
    "item": "构件信息卡",
    "agent": "hark-cs",
    "state": "派单 D-28"
@@ -299,27 +306,7 @@
   },
   {
    "kind": "协作者",
-   "what": "D-25 内侧 6 吊改塔吊方案（超650 仍 6 吊，check_crane 报告模式）",
-   "who": "hark-darrio"
-  },
-  {
-   "kind": "协作者",
-   "what": "D-26 S-201 北场铺轨注记（排程不动）",
-   "who": "hark-fangyi"
-  },
-  {
-   "kind": "协作者",
-   "what": "D-27 手机布局收紧（web/hzmobile.css）",
-   "who": "hark-darrio"
-  },
-  {
-   "kind": "集成",
-   "what": "S-201 镜头扫描 t=636 违反 1（屋盖排程校准后），check_all 暂为报告模式，等 D-26 加帧后改回",
-   "who": "hark-fangyi"
-  },
-  {
-   "kind": "协作者",
-   "what": "D-28 构件信息卡 + 实物图钉（web/mods/info.js）",
+   "what": "D-28 实物图钉 + 真机截图（信息卡第一片已合入接线）",
    "who": "hark-cs"
   },
   {
@@ -329,28 +316,38 @@
   },
   {
    "kind": "集成",
-   "what": "云门墨线模块 web/mods/yunmen.js 已合入未接线：hzwest.html 加载 + 隐藏 ymf/ym/ymc 体块 + check_yunmen 进 check_all，需真机看 3 张",
-   "who": "hark-cr"
-  },
-  {
-   "kind": "集成",
-   "what": "actors.js 真 GPU 注入测 60 fps、0 报错，可加 script 标签（近景小人画面本轮未截到）",
-   "who": "hark-cr"
-  },
-  {
-   "kind": "集成",
-   "what": "three.js 走 unpkg CDN，11-08 真机一次断连整页 90 s 卡加载；建议本地 vendor 优先（GPU 审计 #9）",
-   "who": "hark-cr"
-  },
-  {
-   "kind": "集成",
    "what": "S-301 focus=cut 默认侧视看不出剖切封面，需换斜俯视机位复看（GPU 审计 #12）",
    "who": "hark-cr"
   },
   {
+   "kind": "集成",
+   "what": "D-25 塔吊表（4 台 1000 EC-B 100）落到 hzseq.js；同工序同日 ≤5 台履带吊分派后 check_cranecount --strict 接入 check_all",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "集成",
+   "what": "复兴号车头（定型提案）、信息卡、S-251 施工面模块、leadAt 钩子未经真 GPU 看过（沙盒无浏览器）",
+   "who": "hark-cr"
+  },
+  {
+   "kind": "待委托人",
+   "what": "S-101 地下节拍偏早 4–5 个月（hark-fangyi #8）：重排 found 内部节拍还是只注记",
+   "who": "委托人 / hark-liuzhijie"
+  },
+  {
+   "kind": "待委托人",
+   "what": "屋面铺设顺序与影像相反（南先北后，hark-fangyi #9）：改排程还是注记",
+   "who": "委托人 / hark-cs"
+  },
+  {
+   "kind": "待委托人",
+   "what": "履带吊台数上限 14 / 同工序 5 是否作为硬约束改排程（hark-darrio 拟定）",
+   "who": "委托人"
+  },
+  {
    "kind": "协作者",
-   "what": "Traycer 审查：S-002 SITE 全场命中挡住点空白取消选中、S-001 缺 focusZoom:false（待派单）",
-   "who": "hark-darrio、hark-cs"
+   "what": "D-20 S-101 ②–⑤、D-22 ⑦⑧、D-30、D-31、D-32",
+   "who": "hark-liuzhijie、hark-cs、hark-darrio、hark-fangyi"
   }
  ],
  "links": {
@@ -359,22 +356,26 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-08T17:51:45+08:00",
+  "generated_at": "2026-11-09T10:23:55+08:00",
   "people": [
    {
     "name": "hark-cr",
     "active": [],
     "done_today": 0,
-    "last_at": 1794131456,
+    "last_at": 1794190940,
+    "mine": [],
     "state": "idle",
-    "idle_min": 0
+    "away": false,
+    "idle_min": 1
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
     "active": [],
     "done_today": 2,
     "last_at": null,
+    "mine": [],
     "state": "idle",
+    "away": true,
     "idle_min": null
    },
    {
@@ -382,23 +383,33 @@
     "active": [
      "D-17",
      "D-22",
-     "D-28"
+     "D-28",
+     "D-31"
     ],
     "done_today": 8,
-    "last_at": 1794126292,
-    "state": "overload",
-    "idle_min": 86
+    "last_at": 1794189891,
+    "mine": [
+     "D-31"
+    ],
+    "state": "working",
+    "away": false,
+    "idle_min": 18
    },
    {
     "name": "hark-darrio",
     "active": [
      "D-25",
-     "D-27"
+     "D-27",
+     "D-30"
     ],
     "done_today": 4,
-    "last_at": 1794128279,
-    "state": "working",
-    "idle_min": 53
+    "last_at": 1794150929,
+    "mine": [
+     "D-30"
+    ],
+    "state": "stopped",
+    "away": true,
+    "idle_min": 668
    },
    {
     "name": "hark-fangyi",
@@ -408,9 +419,11 @@
      "实物层记录库"
     ],
     "done_today": 6,
-    "last_at": 1794128110,
-    "state": "overload",
-    "idle_min": 55
+    "last_at": 1794140957,
+    "mine": [],
+    "state": "review",
+    "away": true,
+    "idle_min": 834
    },
    {
     "name": "hark-liuzhijie",
@@ -419,9 +432,11 @@
      "D-21"
     ],
     "done_today": 10,
-    "last_at": 1794126892,
-    "state": "working",
-    "idle_min": 76
+    "last_at": 1794134363,
+    "mine": [],
+    "state": "review",
+    "away": true,
+    "idle_min": 944
    },
    {
     "name": "marvis",
@@ -430,8 +445,12 @@
     ],
     "done_today": 1,
     "last_at": 1794114056,
+    "mine": [
+     "D-13"
+    ],
     "state": "stopped",
-    "idle_min": 290
+    "away": true,
+    "idle_min": 1282
    },
    {
     "name": "muse-tibo-cs",
@@ -440,9 +459,13 @@
      "D-29"
     ],
     "done_today": 4,
-    "last_at": 1794121839,
+    "last_at": 1794132797,
+    "mine": [
+     "D-29"
+    ],
     "state": "stopped",
-    "idle_min": 160
+    "away": true,
+    "idle_min": 970
    },
    {
     "name": "pi-t2",
@@ -451,7 +474,11 @@
     ],
     "done_today": 0,
     "last_at": null,
+    "mine": [
+     "公开数据核对"
+    ],
     "state": "stopped",
+    "away": true,
     "idle_min": null
    },
    {
@@ -461,7 +488,11 @@
     ],
     "done_today": 0,
     "last_at": null,
+    "mine": [
+     "小屏可读性检查"
+    ],
     "state": "stopped",
+    "away": true,
     "idle_min": null
    },
    {
@@ -469,8 +500,10 @@
     "active": [],
     "done_today": 0,
     "last_at": 1794120893,
+    "mine": [],
     "state": "idle",
-    "idle_min": 176
+    "away": true,
+    "idle_min": 1168
    }
   ],
   "jobs": [
@@ -671,19 +704,24 @@
     ],
     "kind": "派单",
     "status": "待做（15:30 改回 muse-tibo-cs：D-10 已由其完成）",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794114696
+     "派出": 1794114696,
+     "开工": 1794132109,
+     "交付": 1794132797,
+     "合入": 1794190447
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/muse-tibo-cs/blender-final"
+    ],
+    "commits": 2,
     "wait": {
-     "who": "muse-tibo-cs",
-     "what": "还没开工",
-     "since": 1794114696,
-     "age_min": 279,
-     "level": "red"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190447,
+     "age_min": 9,
+     "level": "ok"
     },
     "done": false
    },
@@ -754,8 +792,8 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 217,
-     "level": "amber"
+     "age_min": 1210,
+     "level": "red"
     },
     "done": false
    },
@@ -839,19 +877,24 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794119698
+     "派出": 1794119698,
+     "开工": 1794138830,
+     "交付": 1794138830,
+     "合入": 1794190447
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-cs/D-17-promo-page"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-cs",
-     "what": "还没开工",
-     "since": 1794119698,
-     "age_min": 196,
-     "level": "amber"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190447,
+     "age_min": 9,
+     "level": "ok"
     },
     "done": false
    },
@@ -891,19 +934,19 @@
     "stages": {
      "派出": 1794122454,
      "开工": 1794123733,
-     "交付": 1794123733
+     "交付": 1794133899
     },
     "returned": false,
     "branches": [
      "agent/hark-fangyi/D-19-s201-polish"
     ],
-    "commits": 2,
+    "commits": 3,
     "wait": {
      "who": "hark-cr",
      "what": "交了，等审查合入",
-     "since": 1794123733,
-     "age_min": 128,
-     "level": "amber"
+     "since": 1794133899,
+     "age_min": 952,
+     "level": "red"
     },
     "done": false
    },
@@ -915,11 +958,12 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 2,
+    "stage": 3,
     "stages": {
      "派出": 1794122454,
      "开工": 1794126892,
-     "交付": 1794126892
+     "交付": 1794126892,
+     "合入": 1794190446
     },
     "returned": false,
     "branches": [
@@ -928,9 +972,9 @@
     "commits": 1,
     "wait": {
      "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794126892,
-     "age_min": 76,
+     "what": "合入了，等关单",
+     "since": 1794190446,
+     "age_min": 9,
      "level": "ok"
     },
     "done": false
@@ -943,19 +987,24 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794122454
+     "派出": 1794122454,
+     "开工": 1794134363,
+     "交付": 1794134363,
+     "合入": 1794190481
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-liuzhijie/D-21-s501"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-liuzhijie",
-     "what": "还没开工",
-     "since": 1794122454,
-     "age_min": 150,
-     "level": "amber"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190481,
+     "age_min": 9,
+     "level": "ok"
     },
     "done": false
    },
@@ -971,19 +1020,21 @@
     "stages": {
      "派出": 1794122454,
      "开工": 1794126292,
-     "交付": 1794126292
+     "交付": 1794182717
     },
     "returned": false,
     "branches": [
-     "agent/hark-cs/D-22-s401-polish"
+     "agent/hark-cs/D-22-s401-polish2",
+     "agent/hark-cs/D-22-s401-window",
+     "agent/hark-cs/D-22-window-fix"
     ],
-    "commits": 2,
+    "commits": 7,
     "wait": {
      "who": "hark-cr",
      "what": "交了，等审查合入",
-     "since": 1794126292,
-     "age_min": 86,
-     "level": "ok"
+     "since": 1794182717,
+     "age_min": 138,
+     "level": "amber"
     },
     "done": false
    },
@@ -994,7 +1045,7 @@
      "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）"
     ],
     "kind": "派单",
-    "status": "完成 11-08（web/mods/yunmen.js + tools/hz/check_yunmen.js 合入；Traycer Gemini 4 起草、hark-cr 审：9506 段、门洞净空 0 穿插、包络与 ym 一致；**未接线**——hzwest.html 加载 + 隐藏 ymf/ym/ymc 体块是 hark-cr 下一步，需真机看基础/主体/完成 3 张；check_yunmen 未进 check_all，接线时一起加）",
+    "status": "完成 11-08（web/mods/yunmen.js + tools/hz/check_yunmen.js 合入；Traycer Gemini 4 起草、hark-cr 审：9506 段、门洞净空 0 穿插、包络与 ym 一致；11-08 晚已接线：hzwest.html 加载 mods/yunmen.js?v=1，墨线模式隐去旧 ymf/ym/ymc 体块（实景 / 结尾仍用体块），check_yunmen 进 check_all，hzview.js?v=21；真 GPU 0 报错、60 fps，S-002 / S-501 截图门洞读得出）",
     "stage": 4,
     "stages": {
      "派出": 1794122454,
@@ -1033,22 +1084,23 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 2,
+    "stage": 3,
     "stages": {
      "派出": 1794125079,
      "开工": 1794128279,
-     "交付": 1794128279
+     "交付": 1794147399,
+     "合入": 1794190532
     },
     "returned": false,
     "branches": [
      "agent/hark-darrio/D-25-towers"
     ],
-    "commits": 1,
+    "commits": 2,
     "wait": {
      "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794128279,
-     "age_min": 53,
+     "what": "合入了，等关单",
+     "since": 1794190532,
+     "age_min": 8,
      "level": "ok"
     },
     "done": false
@@ -1061,18 +1113,23 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794125716
+     "派出": 1794125716,
+     "开工": 1794134206,
+     "交付": 1794134206,
+     "合入": 1794190481
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-fangyi/D-26-north-note"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-fangyi",
-     "what": "还没开工",
-     "since": 1794125716,
-     "age_min": 95,
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190481,
+     "age_min": 9,
      "level": "ok"
     },
     "done": false
@@ -1085,18 +1142,23 @@
     ],
     "kind": "派单",
     "status": "待做（hzmobile.css 空文件与 link 已由 hark-cr 加好）",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794125716
+     "派出": 1794125716,
+     "开工": 1794130174,
+     "交付": 1794130174,
+     "合入": 1794190447
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-darrio/D-27-mobile"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-darrio",
-     "what": "还没开工",
-     "since": 1794125716,
-     "age_min": 95,
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190447,
+     "age_min": 9,
      "level": "ok"
     },
     "done": false
@@ -1108,19 +1170,25 @@
      "hark-cs"
     ],
     "kind": "派单",
-    "status": "待做",
-    "stage": 0,
+    "status": "进行中：第一片（信息卡+检查）在分支 agent/hark-cs/D-28-info-card；下一轮做实物图钉 + 真机截图 2 张",
+    "stage": 3,
     "stages": {
-     "派出": 1794128678
+     "派出": 1794128678,
+     "开工": 1794142605,
+     "交付": 1794189891,
+     "合入": 1794190527
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-cs/D-28-info-card",
+     "agent/hark-cs/D-28-note"
+    ],
+    "commits": 2,
     "wait": {
-     "who": "hark-cs",
-     "what": "还没开工",
-     "since": 1794128678,
-     "age_min": 46,
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794190527,
+     "age_min": 8,
      "level": "ok"
     },
     "done": false
@@ -1144,7 +1212,55 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 46,
+     "age_min": 1039,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-30",
+    "title": "S-002 点空白取消选中",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794190234
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-darrio",
+     "what": "还没开工",
+     "since": 1794190234,
+     "age_min": 13,
+     "level": "ok"
+    },
+    "done": false
+   },
+   {
+    "id": "D-31",
+    "title": "S-001 深链不放大",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 0,
+    "stages": {
+     "派出": 1794190234
+    },
+    "returned": false,
+    "branches": [],
+    "commits": 0,
+    "wait": {
+     "who": "hark-cs",
+     "what": "还没开工",
+     "since": 1794190234,
+     "age_min": 13,
      "level": "ok"
     },
     "done": false
@@ -1181,6 +1297,7 @@
      "派出": 1794105383,
      "开工": 1794107769,
      "交付": 1794126892,
+     "合入": 1794190446,
      "关单": 1794109194
     },
     "returned": false,
@@ -1205,7 +1322,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107679,
-     "交付": 1794123733,
+     "交付": 1794134206,
      "关单": 1794109194
     },
     "returned": false,
@@ -1214,7 +1331,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 10,
+    "commits": 12,
     "wait": null,
     "done": true
    },
@@ -1230,7 +1347,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107129,
-     "交付": 1794126292,
+     "交付": 1794182717,
      "关单": 1794109194
     },
     "returned": false,
@@ -1239,7 +1356,7 @@
      "agent/hark-cs/S-401-roof-plan",
      "agent/hark-cs/claim"
     ],
-    "commits": 9,
+    "commits": 15,
     "wait": null,
     "done": true
    },
@@ -1255,16 +1372,17 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794109143,
-     "交付": 1794117800,
-     "合入": 1794118174,
+     "交付": 1794134363,
+     "合入": 1794190481,
      "关单": 1794110640
     },
     "returned": false,
     "branches": [
+     "agent/hark-liuzhijie/D-21-s501",
      "agent/hark-liuzhijie/S-501-D09",
      "agent/hark-liuzhijie/S-501-draft2"
     ],
-    "commits": 5,
+    "commits": 6,
     "wait": null,
     "done": true
    },
@@ -1280,7 +1398,7 @@
     "stages": {
      "派出": 1794112344,
      "开工": 1794107769,
-     "交付": 1794126892,
+     "交付": 1794134363,
      "关单": 1794118391
     },
     "returned": false,
@@ -1289,7 +1407,7 @@
      "agent/hark-liuzhijie/cam-sweep2",
      "agent/hark-liuzhijie/proposals"
     ],
-    "commits": 21,
+    "commits": 22,
     "wait": null,
     "done": true
    },
@@ -1306,6 +1424,7 @@
      "派出": 1794110640,
      "开工": 1794107769,
      "交付": 1794126892,
+     "合入": 1794190446,
      "关单": 1794118391
     },
     "returned": false,
@@ -1330,7 +1449,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107679,
-     "交付": 1794123733,
+     "交付": 1794134206,
      "关单": 1794118391
     },
     "returned": false,
@@ -1339,7 +1458,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 10,
+    "commits": 12,
     "wait": null,
     "done": true
    },
@@ -1355,7 +1474,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107129,
-     "交付": 1794126292,
+     "交付": 1794182717,
      "关单": 1794118391
     },
     "returned": false,
@@ -1364,7 +1483,7 @@
      "agent/hark-cs/S-401-roof-plan",
      "agent/hark-cs/claim"
     ],
-    "commits": 9,
+    "commits": 15,
     "wait": null,
     "done": true
    },
@@ -1436,7 +1555,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 318,
+     "age_min": 1311,
      "level": "red"
     },
     "done": false
@@ -1460,7 +1579,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 318,
+     "age_min": 1311,
      "level": "red"
     },
     "done": false
@@ -1497,24 +1616,25 @@
     ],
     "kind": "认领",
     "status": "认领",
-    "stage": 2,
+    "stage": 3,
     "stages": {
      "派出": 1794105383,
      "开工": 1794110089,
-     "交付": 1794126442
+     "交付": 1794140957,
+     "合入": 1794190481
     },
     "returned": false,
     "branches": [
-     "agent/hark-fangyi/real-milestones",
      "agent/hark-fangyi/real-parts",
+     "agent/hark-fangyi/real-s101-underground",
      "agent/hark-fangyi/real-sat-yards"
     ],
-    "commits": 3,
+    "commits": 4,
     "wait": {
      "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794126442,
-     "age_min": 83,
+     "what": "合入了，等关单",
+     "since": 1794190481,
+     "age_min": 9,
      "level": "ok"
     },
     "done": false
@@ -1531,15 +1651,16 @@
     "stages": {
      "派出": 1794114613,
      "开工": 1794120661,
-     "交付": 1794120661,
-     "合入": 1794123902,
+     "交付": 1794157534,
+     "合入": 1794190547,
      "关单": 1794124097
     },
     "returned": false,
     "branches": [
-     "agent/hark-cs/S-001-gantt"
+     "agent/hark-cs/S-001-gantt",
+     "agent/hark-cs/S-001-v2"
     ],
-    "commits": 2,
+    "commits": 4,
     "wait": null,
     "done": true
    },
@@ -1578,9 +1699,9 @@
     "stage": 4,
     "stages": {
      "派出": 1794120694,
-     "开工": 1794123201,
-     "交付": 1794123201,
-     "合入": 1794123765,
+     "开工": 1794130974,
+     "交付": 1794130974,
+     "合入": 1794190569,
      "关单": 1794123848
     },
     "returned": false,
@@ -1592,16 +1713,6 @@
     "done": true
    }
   ],
-  "suggestions": [
-   {
-    "job": "D-28",
-    "from": "hark-cs",
-    "to": [
-     "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
-     "traycer-cs"
-    ],
-    "why": "hark-cs 手上 3 件，这件还没开工"
-   }
-  ]
+  "suggestions": []
  }
 }

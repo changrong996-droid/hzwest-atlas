@@ -1,4 +1,8 @@
 # CHANGELOG
+- 2026-11-09 · [收件] · hark-cr · 积压分支合入：S-251 施工面模块（接线 mods/s251.js?v=1）、D-20 S-101 图例、D-27 手机 CSS（hark-darrio）、D-11 Blender 终版、method / progress-heartbeat / promo-page / pilot / vision-review / team-kit（只文档）/ shape-freeze 文档、实物 R-0015…R-0026、D-19+D-26 S-201、D-21 S-501、D-22 S-401（D-22-fix）、D-28 信息卡第一片（接线 mods/info.js?v=1）、D-25 塔吊表、履带吊台数检查、S-002 上限线、S-001 v2、看板界面（flow.py 同步到 tools/status）
+- 2026-11-09 · [host] · hark-cr · 采纳定型提案车头：HZ.makeTrain 复兴号 8 编组（hzseq.js?v=11、hzview.js 旧 trainGeo 替换），屋面 skinTop 保持 null（委托人定 57 m）；插件引线锚点钩子 pl.leadAt(t)（hzview.js?v=23）；各插件 ?v= 递增
+- 2026-11-09 · [check] · hark-cr · check_all 加 check_info；S-201 镜头扫描回严格模式（D-26 后违反 0）；20/20 OK
+- 2026-11-09 · [claims] · hark-cr · 委托人 5 项决定记入；AGENTS 加交付附证据、同一办法失败两次就停、长单回执与每小时进度；派 D-32（S-201 leadAt）；关 D-11/17/19/21/25/26/27
 - 2026-11-08 · [屋面云纹实施] · hark-cr · 委托人定 C 版「四朵云」：hzseq.js 新增 HZ.Wv（P.wv：云 3.5 m、外圈波纹 0.5 m、天窗两侧 14 m 云缝），只叠进覆面 Hc，钢结构 / 吊顶 / 提升高度不变；check_make 加断言；hzseq.js?v=10
 - 2026-11-08 · [地铁层镜头入口] · hark-cr · 委托人定默认关闭：camCfg.ug 只在 #camcfg={"ug":1} 显式时开（hzview.js?v=20）；check_linkage 断言；镜头扫描 0 违反 0 卡住
 - 2026-11-08 · [host] · hark-cr · HZ_MODS 加可选 pick(part,{x,y},ctx) / unpick() 与空容器 #mod-ui（hzview.js?v=17–19，接口见 docs/hz-atlas-check.md 第三节 12–13）；剖切封面补网架杆件（含斜杆）；S-301 吊点标签显示载荷（新 HZ.jackLoad，推算）
