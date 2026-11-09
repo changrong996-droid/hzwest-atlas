@@ -21,6 +21,7 @@
   const REAL = [
     { date: '2021-05-31', kind: 'frac', v: 0.465, txt: '拼装累计 46.5%', src: '杭州网' },
     { date: '2021-06-28', kind: 'lift', txt: '整体提升完成（206 台提升器）', src: '央广网' }];
+  const SCOPE_KEYS = ['asm1', 'asm2', 'asm3', 'jig1', 'jig2', 'jig3', 'floorS', 'floorN', 'col24S', 'col24N', 'deckS', 'deckN', 'frameS', 'frameN', 'platS', 'platN'];
   const ZONES = [['asm1', 'jig1', 'lift1', 'S', '南区'], ['asm2', 'jig2', 'lift2', 'M', '中区'], ['asm3', 'jig3', 'lift3', 'N', '北区']];
   // 构件状态：-1 未开始 / 0..1 进行中 / 2 完成 / 3 已拆（同 hzsheet.js stOf）
   const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
@@ -96,6 +97,19 @@
     return { x0: 8, y0: 8, x1: w - 8, y1: y - 2 };
   }
 
+  // 拼装面基座（D-37）：窗口格子下方的楼板块（承托胎架、已建）、板下柱、在位胎架；全从 HZ 读
+  const FLOOR_KEYS = ['floorS', 'floorN'], COL_KEYS = ['col24S', 'col24N'];
+  function baseOf(HZ, m, cells, t) {
+    const K = HZ.K, xa = Math.min(...cells.map(c => c.xa)), xb = Math.max(...cells.map(c => c.xb)), za = Math.min(...cells.map(c => c.za)), zb = Math.max(...cells.map(c => c.zb)), pad = 7;
+    const X0 = xa - pad, X1 = xb + pad, Z0 = za - pad, Z1 = zb + pad, frame = [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]];
+    // 楼板 = 已建楼面构件盒与窗口的交（中区 |z| < 14 m 是楼面开口，没有板就不画，如实露出来）
+    const keys = new Set(), slabs = []; for (const k of FLOOR_KEYS) if (K[k]) for (const p of K[k].parts) { if (stOf(p, t) < 2) continue; for (const b of p.geo.boxes) { const a0 = Math.max(X0, b.min[0]), a1 = Math.min(X1, b.max[0]), c0 = Math.max(Z0, b.min[2]), c1 = Math.min(Z1, b.max[2]); if (a1 - a0 > 0.5 && c1 - c0 > 0.5) { slabs.push([[a0, c0], [a1, c0], [a1, c1], [a0, c1]]); keys.add(K[k].name); } } }
+    const under = cells.filter(c => slabs.some(q => q[0][0] <= c.xc && q[1][0] >= c.xc && q[0][1] <= c.zc && q[2][1] >= c.zc)).length;
+    const cols = []; for (const k of COL_KEYS) if (K[k]) for (const p of K[k].parts) { const x = (p.geo.min[0] + p.geo.max[0]) / 2, z = (p.geo.min[2] + p.geo.max[2]) / 2; if (x > xa - pad && x < xb + pad && z > za - pad && z < zb + pad) cols.push([x, z]); }
+    const cs = new Set(cells), jigs = m.jigs.filter(j => cs.has(j.p.jigOf) && (s => s >= 0 && s < 3)(stOf(j.p, t))).map(j => ({ x: j.x, z: j.z, y0: j.p.geo.min[1], y1: j.p.geo.max[1] }));
+    return { frame, slabs, cols, jigs, open: cells.length - under, slabKey: [...keys].join(' / ') || '无楼板' };
+  }
+
   let HITS = [], HITW = null;
   function draw(g, w, h, t, ctx) {
     const HZ = G.HZ; ctx = ctx || {};
@@ -134,6 +148,9 @@
         else { g.strokeStyle = live ? C.red : C.faint; g.lineWidth = live ? 0.6 : 0.4; g.strokeRect(x, y, cw, ch); } });
       if (live) { g.strokeStyle = C.red; g.lineWidth = 1.4; g.strokeRect(X(u.xa), Y(u.za), (u.xb - u.xa) * k, (u.zb - u.za) * k); }
     }
+    // 楼面基座（D-37）：候车层楼板块外框（淡墨）与板下柱位（小点），与 S-201 / S-301 同一轴网
+    g.strokeStyle = C.line; g.lineWidth = 0.5; for (const k of FLOOR_KEYS) if (HZ.K[k]) for (const p of HZ.K[k].parts) if (stOf(p, t) >= 2) for (const b of p.geo.boxes) g.strokeRect(X(b.min[0]), Y(b.min[2]), (b.max[0] - b.min[0]) * k, (b.max[2] - b.min[2]) * k);
+    g.fillStyle = C.ink3; for (const ck of COL_KEYS) if (HZ.K[ck]) for (const p of HZ.K[ck].parts) { const x = (p.geo.min[0] + p.geo.max[0]) / 2, z = (p.geo.min[2] + p.geo.max[2]) / 2; g.fillRect(X(x) - 1, Y(z) - 1, 2, 2); }
     // 胎架：在位的画成小方块（临时，橙）
     g.fillStyle = C.temp; const js = clamp(k * 1.2, 1.2, 3);
     for (const j of m.jigs) { const st = stOf(j.p, t); if (st < 0 || st >= 3) continue; g.fillRect(X(j.x) - js / 2, Y(j.z) - js / 2, js, js); }
@@ -156,14 +173,23 @@
       // 局部：只画正在焊的那几格（单元是 7 m 一格的长条，整条画出来只剩一根线）；正等轴测，竖向 ×2 看得出上下弦与腹杆
       const nCell = cur.cells.length, fC = s.frac(cur), cOn = t >= cur.en ? nCell : Math.floor(nCell * fC), NW = Math.min(4, nCell);
       const i0 = clamp(cOn - Math.floor(NW / 2), 0, nCell - NW), win = cur.cells.slice(i0, i0 + NW);
-      const c30 = Math.cos(Math.PI / 6), s30 = 0.5, KY = 2, P0 = (x, y, z) => [(x - z) * c30, (x + z) * s30 - KY * (y - m.floorY)];
-      const rods = [], onFlag = []; win.forEach((c, ci) => { const gi = i0 + ci, cf = gi < cOn ? 1 : gi === cOn && t < cur.en ? nCell * fC - cOn : 0; c.rods.forEach((r, ri) => { rods.push(r); onFlag.push(ri < Math.floor(c.rods.length * cf + 1e-9)); }); });
-      const pts = rods.flatMap(r => [P0(...r[0]), P0(...r[1])]);
+      // D-37：零点 = 候车层楼面顶 P.floorTop（S-201 楼面、S-301 提升起点同一标高）；杆件按当前位姿 HZ.xf(HZ.pose(t)) 落在胎架上（与 3D 同口径）
+      const c30 = Math.cos(Math.PI / 6), s30 = 0.5, KY = 2, FT = HZ.P.floorTop, FB = HZ.P.floorBot, P0 = (x, y, z) => [(x - z) * c30, (x + z) * s30 - KY * (y - FT)];
+      const ps = HZ.pose(t), rods = [], onFlag = []; win.forEach((c, ci) => { const gi = i0 + ci, cf = gi < cOn ? 1 : gi === cOn && t < cur.en ? nCell * fC - cOn : 0; c.rods.forEach((r, ri) => { rods.push([HZ.xf(ps, c.grp, r[0]), HZ.xf(ps, c.grp, r[1]), r[2]]); onFlag.push(ri < Math.floor(c.rods.length * cf + 1e-9)); }); });
+      const base = baseOf(HZ, m, win, t), pts = rods.flatMap(r => [P0(...r[0]), P0(...r[1])]).concat(base.frame.flatMap(q => [P0(q[0], FT, q[1]), P0(q[0], FB - 4, q[1])]));
       const bx = [Math.min(...pts.map(p => p[0])), Math.max(...pts.map(p => p[0]))], by = [Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[1]))];
       const kk = Math.min((ra.x1 - ra.x0) / (bx[1] - bx[0] || 1), (ra.y1 - ra.y0 - 34) / (by[1] - by[0] || 1));
       const ox2 = (ra.x0 + ra.x1) / 2 - (bx[0] + bx[1]) / 2 * kk, oy2 = (ra.y0 + 34 + ra.y1) / 2 - (by[0] + by[1]) / 2 * kk;
       const Q = v => { const p = P0(v[0], v[1], v[2]); return [ox2 + p[0] * kk, oy2 + p[1] * kk]; };
       const liveU = t >= cur.st && t < cur.en;
+      // 楼面基座：楼板（顶面 + 板厚）、板下候车层柱（断开画）、胎架（橙）
+      const poly = (vs, fill, stroke, lw) => { g.beginPath(); vs.forEach((v, i) => { const q = Q(v); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 0.8; g.stroke(); } };
+      for (const SL of base.slabs) { for (const [a0, a1] of [[1, 2], [2, 3]]) poly([[SL[a0][0], FT, SL[a0][1]], [SL[a1][0], FT, SL[a1][1]], [SL[a1][0], FB, SL[a1][1]], [SL[a0][0], FB, SL[a0][1]]], '#d9d0bf', C.ink2, 0.8);
+        poly(SL.map(q => [q[0], FT, q[1]]), '#ebe4d6', C.ink2, 0.9); }
+      g.setLineDash([3, 3]); poly(base.frame.map(q => [q[0], FT, q[1]]), null, C.line, 0.6); g.setLineDash([]);
+      g.strokeStyle = C.ink3; g.lineWidth = 1.2; for (const c of base.cols) { const a = Q([c[0], FB, c[1]]), b = Q([c[0], FB - 4, c[1]]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.moveTo(b[0] - 3, b[1] - 1); g.lineTo(b[0] + 3, b[1] + 1); g.stroke(); }
+      g.strokeStyle = C.temp; g.lineWidth = 1.4; for (const j of base.jigs) { const a = Q([j.x, j.y0, j.z]), b = Q([j.x, j.y1, j.z]); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); }
+      { const F = base.frame, q = Q([F[2][0], FT, F[2][1]]); label('候车层楼面 ▽+' + FT.toFixed(2) + '（' + base.slabKey + '）' + (base.open ? ' · 本段 ' + base.open + ' 格下方无楼板（开口或楼面外）' : ''), q[0] + 4, q[1] + 6, base.open ? C.red : C.ink2, { fs: 8 }); }
       rods.forEach((r, i) => { const a = Q(r[0]), b = Q(r[1]); g.strokeStyle = onFlag[i] ? (liveU ? C.red : C.ink) : C.line; g.lineWidth = r[2] >= 0.3 ? 1.6 : 0.8; g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); });
       const seen = new Set(); g.fillStyle = C.ink;
       rods.forEach((r, i) => { if (!onFlag[i]) return; for (const v of [r[0], r[1]]) { const key = v.map(q => q.toFixed(1)).join(); if (seen.has(key)) continue; seen.add(key); const q = Q(v); g.beginPath(); g.arc(q[0], q[1], 2.2, 0, 7); g.fill(); } });
@@ -173,7 +199,7 @@
       label('单元 ' + cur.id + ' · ' + cur.zn + ' · ' + nCell + ' 格 · ' + Math.round(cur.tons) + ' t', ra.x0, ra.y0, C.ink, { b: true });
       label('杆件 ' + nOn + ' / ' + rodsAll + ' 根 · 焊口 ' + nOn * 2 + ' / ' + rodsAll * 2, ra.x0, ra.y0 + 13, liveU ? C.red : C.ink2, {});
       label('局部：第 ' + (i0 + 1) + '–' + (i0 + NW) + ' 格（每格 7 m，竖向 ×' + KY + '）', ra.x0, ra.y0 + 26, C.ink3, { fs: 8 });
-      label('上弦粗线 · 腹杆细线 · 黑点 = 已焊节点', ra.x0, box.y1 - 30, C.ink3, { fs: 8 });
+      label('上弦粗线 · 腹杆细线 · 黑点 = 已焊节点 · 橙 = 胎架 ' + base.jigs.length + ' 组', ra.x0, box.y1 - 30, C.ink3, { fs: 8 });
     }
 
     // 左栏：大数字
@@ -231,6 +257,9 @@
     draw, parts,
     get cam() { return cams(G.HZ); },
     subject: () => ['asm1', 'asm2', 'asm3', 'jig1', 'jig2', 'jig3'],
+    // D-37 图纸范围：网架 + 胎架 + 托胎架的候车层楼面及其柱 + 下面的承轨层（框架柱、承轨层板、站台），与 S-201 末、S-301 起衔接
+    get scope() { const K = G.HZ && G.HZ.K || {}; return { keys: SCOPE_KEYS.filter(k => K[k]) }; },
+    floorKeys: FLOOR_KEYS,
     model: () => model(G.HZ), realCmp: () => realCmp(G.HZ), stateAt: t => stateAt(G.HZ, t),
   };
   (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push(plugin);
