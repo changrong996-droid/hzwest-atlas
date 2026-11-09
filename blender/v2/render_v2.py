@@ -22,6 +22,33 @@ SHOTS = {
     'night': dict(pos=(380, 300, 520), tgt=(0, 18, 20), lens=36, sun=(40, 140), night=True),   # r3：抬高、偏南，云门不再以黑侧面挡站房
 }
 S = dict(SHOTS[shot]); NIGHT = S['night']
+# ---------- 三版：定稿参数表（镜头 × 风格）----------
+# 每张定稿图的参数都写在这里，脚本直接复现（二版「roof_clay 要回 r2、night_ink 要回 r3」的问题由 src 条目解决）。
+# 开关：strands 提升段钢绞线束；real3 实景三版材质（屋面立缝/各向异性、玻璃反射、地面/道床/股道、物理天空曝光）；
+#       glow3 夜景发光十字描边 + 合成器辉光；clad_lines 屋面分格墨线（r3）；clay_wv 白模屋面云纹淡线（r2）；
+#       view/look/sun_e/sun 覆盖视图变换与太阳；cam=(pos, tgt, lens) 覆盖机位。V2_SET='k=v;k=v' 临时覆盖（试候选用）。
+DEF = dict(view=None, look=None, sun_e=None, sun=None, cam=None, exp=0.0, clad_lines=False, clay_wv=False,
+           clay_glass=(0.60, 0.62, 0.64), strands=True, strand_r=None, strand_wide=True, real3=True, glow3=True, src='v3')
+TABLE = {
+    ('roof', 'clay'): dict(view='AgX', look='None', sun_e=4.6, sun=(9, 45), clay_wv=True, clay_glass=(0.38, 0.40, 0.43), src='r2'),
+    ('night', 'ink'): dict(clad_lines=True, src='r3+glow3（r7）'),
+    ('train', 'ink'): dict(cam=None, src='r5'),   # 三版拉近机位后墨线版 6.5→5.0（被读成「驶离」），墨线版保持二版机位
+    ('lift', 'ink'): dict(strand_r=0.11, strand_wide=False, src='r7'),   # r7 6.5：24 组钢绞线、细线；r8 加粗 + 中间 8 台塔架也补线后 5.0
+    ('night', 'clay'): dict(glow3=False, src='r4'),   # glow3 两轮（r6 / r8）都 4.5 < 二版 5.0，白模夜景保持二版
+    # 其余：lift_clay / lift_real / night_real / train_real = r8，roof_real = r7，train_clay = r6，roof_ink = r4（三版未改）；roof_clay 的 r2 参数已核对：r6 复现图与 r2 定稿 MAE 0.003
+}
+TRAIN3 = ((-330, 75, -60), (-135, 14, 42), 30)   # 三版 S-501 机位：拉近 NW 机位 + 30 mm，列车约放大 1.6 倍，云门可见比例不降（候选 c16-G）
+for st_ in ('clay', 'ink', 'real'): TABLE.setdefault(('train', st_), {}).setdefault('cam', TRAIN3)
+# 三版实景日景：物理天空 + 4.8 日光在 AgX 下偏白，压曝光（lift 天空占画面多，压 1.0 档）
+for sh_, ev_ in (('lift', -1.0), ('roof', -0.7), ('train', -0.7)): TABLE.setdefault((sh_, 'real'), {}).setdefault('exp', ev_)
+TABLE.setdefault(('night', 'real'), {}).setdefault('exp', 0.4)   # r8：实景夜景提一点，夜空 / 地面读得出
+PR = dict(DEF); PR.update(TABLE.get((shot, style), {}))
+import ast
+for kv in filter(None, os.environ.get('V2_SET', '').split(';')):
+    k_, v_ = kv.split('=', 1); PR[k_.strip()] = ast.literal_eval(v_.strip())
+if PR['sun']: S['sun'] = tuple(PR['sun'])
+if PR['cam']: S['pos'], S['tgt'], S['lens'] = tuple(PR['cam'][0]), tuple(PR['cam'][1]), PR['cam'][2]
+print('V2_PARAMS', shot, style, json.dumps({k: PR[k] for k in PR if PR[k] != DEF.get(k)}))
 FINE = ('steel', 'red', 'yellow', 'jig', 'rail'); FINE_A = 0.9; FINE_T = 0.95; TRAIN_T = 2.6
 if os.environ.get('V2_CAM'):   # 候选机位：px,py,pz,tx,ty,tz,lens
     v = [float(x) for x in os.environ['V2_CAM'].split(',')]; S['pos'], S['tgt'], S['lens'] = tuple(v[0:3]), tuple(v[3:6]), v[6]
@@ -39,6 +66,9 @@ except Exception: pass
 if style == 'ink': sc.view_settings.view_transform = 'Standard'
 if style == 'clay' and not NIGHT:   # r4：AgX 把白模压成灰，换 Standard（太阳同时降到 3.2 免得过曝）
     sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'
+if PR['view']: sc.view_settings.view_transform = PR['view']
+if PR['look']: sc.view_settings.look = PR['look']
+sc.view_settings.exposure = PR['exp']
 
 bpy.ops.wm.obj_import(filepath=os.path.join(geo, 'scene.obj'), forward_axis='NEGATIVE_Z', up_axis='Y')
 objs = {}
@@ -88,13 +118,42 @@ def real_mat(key):
     if key == 'glass' and NIGHT: return principled('r_glass', c, 0.1, 0.2, (1.0, 0.86, 0.62), 3.5)
     if NIGHT and key in ('todG', 'ymG'): return principled('r_' + key, c, 0.1, 0.3, (1.0, 0.80, 0.55), 1.4)
     if NIGHT and key == 'plat': return principled('r_plat', c, 0.8, 0.0, (1.0, 0.85, 0.6), 1.6)
+    if key == 'clad' and PR['real3'] and not NIGHT: return clad_real3(c)
     if key == 'clad': return principled('r_clad', c, 0.62, 0.15)   # r4：压高光（r3 远端两朵云过曝）
+    if PR['real3'] and not NIGHT:
+        if key in ('glass', 'todG', 'ymG'): return principled('r3_' + key, lin((0.50, 0.60, 0.68) if key == 'glass' else (0.28, 0.36, 0.44)), 0.04, 0.9)   # 采光顶 / 幕墙：低粗糙金属感，反射天空
+        if key == 'rail': return principled('r3_rail', lin((0.58, 0.58, 0.60)), 0.22, 0.95)
+        if key == 'steel': return noisy(principled('r3_steel', lin((0.46, 0.48, 0.50)), 0.35, 0.8), 0.3, 0.12)   # r8：网架深灰金属（r7 被扣「塑料白模」）
+        if key in ('slab', 'conc', 'plat', 'found', 'ym', 'todB', 'soffit'):
+            return noisy(principled('r3_' + key, c, M.get('r', 0.8), min(M.get('m', 0), 0.6)), 0.08 if key != 'steel' else 0.3, 0.18)
     return principled('r_' + key, c, M.get('r', 0.8), min(M.get('m', 0), 0.6), tuple(LIGHT[i] * c[i] for i in range(3)) if e else None, e * 2.2)
+
+def noisy(m, scale, amt):
+    # 三版实景：底色乘一层大尺度噪声（±amt），去掉 CG 平涂感
+    nt = m.node_tree; b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'); tc = nt.nodes.new('ShaderNodeTexCoord')
+    nz = nt.nodes.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = scale; nz.inputs['Detail'].default_value = 6
+    nt.links.new(tc.outputs['Object'], nz.inputs['Vector']); mr = nt.nodes.new('ShaderNodeMapRange'); mr.inputs['To Min'].default_value = 1 - amt; mr.inputs['To Max'].default_value = 1 + amt
+    nt.links.new(nz.outputs['Fac'], mr.inputs['Value']); mx = nt.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'; mx.blend_type = 'MULTIPLY'; mx.inputs['Factor'].default_value = 1.0
+    mx.inputs['A'].default_value = b.inputs['Base Color'].default_value[:]; nt.links.new(mr.outputs[0], mx.inputs['B']); nt.links.new(mx.outputs['Result'], b.inputs['Base Color'])
+    return m
+def clad_real3(c):
+    # 三版实景屋面：铝镁锰立缝板（Wave 条带 ≈1.5 m 立缝 → 凹凸 + 粗糙度条纹）+ 大尺度噪声粗糙度 + 各向异性高光
+    m = principled('r3_clad', lin((0.80, 0.82, 0.84)), 0.32, 0.75); nt = m.node_tree; b = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    for nm, v in (('Anisotropic', 0.55), ('Anisotropic Rotation', 0.0)):
+        if nm in b.inputs: b.inputs[nm].default_value = v
+    tc = nt.nodes.new('ShaderNodeTexCoord'); wv = nt.nodes.new('ShaderNodeTexWave'); wv.wave_type = 'BANDS'; wv.bands_direction = 'X'
+    wv.inputs['Scale'].default_value = 0.16   # r7：立缝周期 ≈4 m，远景才读得出（r6 0.42 看不见）; wv.wave_profile = 'SAW'; nt.links.new(tc.outputs['Object'], wv.inputs['Vector'])
+    bp = nt.nodes.new('ShaderNodeBump'); bp.inputs['Strength'].default_value = 0.5; bp.inputs['Distance'].default_value = 0.12
+    nt.links.new(wv.outputs['Fac'], bp.inputs['Height']); nt.links.new(bp.outputs['Normal'], b.inputs['Normal'])
+    nz = nt.nodes.new('ShaderNodeTexNoise'); nz.inputs['Scale'].default_value = 0.03; nt.links.new(tc.outputs['Object'], nz.inputs['Vector'])
+    mr = nt.nodes.new('ShaderNodeMapRange'); mr.inputs['To Min'].default_value = 0.24; mr.inputs['To Max'].default_value = 0.46
+    nt.links.new(nz.outputs['Fac'], mr.inputs['Value']); nt.links.new(mr.outputs[0], b.inputs['Roughness'])
+    return m
 
 def clay_mat(key):
     base = (0.80, 0.79, 0.76)
     if key in ('red', 'yellow', 'jig'): c = lin({'red': (0.80, 0.20, 0.12), 'yellow': (0.85, 0.70, 0.40), 'jig': (0.82, 0.62, 0.40)}[key])
-    elif key in ('glass', 'todG', 'ymG'): c = (0.60, 0.62, 0.64)   # r4：云缝 / 幕墙浅灰（r3 深灰条被扣分）
+    elif key in ('glass', 'todG', 'ymG'): c = tuple(PR['clay_glass'])   # r4：云缝 / 幕墙浅灰（r3 深灰条被扣分）
     elif key in ('trainW', 'tr_blk'): c = (0.10, 0.11, 0.12)
     elif key in ('slab', 'rail') and shot == 'train': c = (0.45, 0.44, 0.42)   # r4：道床压暗，白车读得出
     elif key == 'pv': c = (0.30, 0.33, 0.38)
@@ -151,8 +210,14 @@ for key, o in objs.items():
 
 # ---------- 地面 ----------
 bpy.ops.mesh.primitive_plane_add(size=9000, location=(0, 0, -0.06)); gnd = bpy.context.active_object
-gcol = {'real': (0.20, 0.21, 0.19) if not NIGHT else (0.012, 0.014, 0.02), 'clay': (0.55, 0.54, 0.51) if not NIGHT else (0.10, 0.11, 0.14)}.get(style)
-gnd.data.materials.append(principled('ground', gcol, 0.95) if style != 'ink' else ink_mat('ground'))
+gcol = {'real': (0.20, 0.21, 0.19) if not NIGHT else ((0.035, 0.038, 0.045) if PR['real3'] else (0.012, 0.014, 0.02)), 'clay': (0.55, 0.54, 0.51) if not NIGHT else (0.10, 0.11, 0.14)}.get(style)
+if style == 'real' and not NIGHT and PR['real3']:   # 三版：地面 = 场地硬化 + 草地斑块（大尺度噪声混色）
+    gm = principled('ground3', lin((0.30, 0.30, 0.28)), 0.92); gt = gm.node_tree; gb = next(n for n in gt.nodes if n.type == 'BSDF_PRINCIPLED')
+    tc_ = gt.nodes.new('ShaderNodeTexCoord'); nz_ = gt.nodes.new('ShaderNodeTexNoise'); nz_.inputs['Scale'].default_value = 0.0012; nz_.inputs['Detail'].default_value = 8
+    gt.links.new(tc_.outputs['Object'], nz_.inputs['Vector']); cr_ = gt.nodes.new('ShaderNodeValToRGB'); cr_.color_ramp.elements[0].position = 0.45; cr_.color_ramp.elements[1].position = 0.6
+    cr_.color_ramp.elements[0].color = (*lin((0.36, 0.36, 0.34)), 1); cr_.color_ramp.elements[1].color = (*lin((0.30, 0.36, 0.22)), 1)
+    gt.links.new(nz_.outputs['Fac'], cr_.inputs[0]); gt.links.new(cr_.outputs[0], gb.inputs['Base Color']); gnd.data.materials.append(gm)
+else: gnd.data.materials.append(principled('ground', gcol, 0.95) if style != 'ink' else ink_mat('ground'))
 
 # ---------- 墨线（页面 Geo.L 同源段 + 屋面等高线）：ink 全画；clay/real 只画等高线淡痕（无）----------
 def read_lines():
@@ -176,9 +241,49 @@ if style == 'ink':
     if 'wv' in LG: add_lines('wv', LG['wv'], 0.17 if shot == 'roof' else 0.24, INK if not NIGHT else (0.62, 0.74, 0.90))
     if 'iso' in LG and shot == 'roof': add_lines('iso', LG['iso'], 0.07, (0.55, 0.53, 0.50) if not NIGHT else (0.3, 0.4, 0.55))
     # r3：页面同源墨线（Geo.L）里的屋面分格（clad）与采光顶格栅（glass）细线画上
-    for k_, r_ in (('glass', 0.07),):   # r4：去掉 clad 分格线（r3 加上后云纹读法反而降分），只留采光顶格栅
+    for k_, r_ in ((('clad', 0.055),) if PR['clad_lines'] else ()) + (('glass', 0.07),):   # r4：去掉 clad 分格线（r3 加上后云纹读法反而降分），只留采光顶格栅
         if k_ in LG and shot != 'lift': add_lines('L_' + k_, LG[k_], r_ * (1.0 if shot == 'roof' else 1.6), (0.35, 0.34, 0.32) if not NIGHT else (0.45, 0.55, 0.7))
 
+elif style == 'clay' and shot == 'roof' and 'wv' in LG and PR['clay_wv']:   # r2 定稿：白模屋面云纹淡线
+    add_lines('wv', LG['wv'], 0.09, (0.42, 0.41, 0.39), 1.0)
+
+# ---------- 三版：提升段钢绞线束（32 台提升器：红色构件按位置聚成 32 组，每组顶部向下射线找网架吊点，画 4 根竖向钢绞线）----------
+STRAND = []
+if shot == 'lift' and PR['strands'] and 'red' in objs and 'steel' in objs:
+    from mathutils.bvhtree import BVHTree
+    from mathutils import Vector
+    dg0 = bpy.context.evaluated_depsgraph_get(); so_ = objs['steel']; mw_ = so_.matrix_world   # 世界坐标建 BVH（FromObject 是物体局部坐标，导入带轴变换时会南北颠倒）
+    st_bvh = BVHTree.FromPolygons([mw_ @ v.co for v in so_.data.vertices], [tuple(pg.vertices) for pg in so_.data.polygons])
+    rv = [objs['red'].matrix_world @ v.co for v in objs['red'].data.vertices]; G_ = []
+    for p_ in rv:   # Blender 坐标：x 东、y 北、z 上
+        for g_ in G_:
+            if abs(g_[0] - p_.x) < 7 and abs(g_[1] - p_.y) < 7: g_[2].append(p_); break
+        else: G_.append([p_.x, p_.y, [p_]])
+    segs = []
+    for g_ in G_:
+        xs = [q.x for q in g_[2]]; ys = [q.y for q in g_[2]]; zt = max(q.z for q in g_[2])
+        cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+        # 网架是杆件（中间有空），单根射线常漏：在 ±3 m 内 13×13 采样，取最高命中 = 上弦吊点高度
+        zs_ = []
+        for R_, n_ in ((3, 13), (9, 19)) if PR['strand_wide'] else ((3, 13),):   # 中间 8 台塔架落在十字天窗缝上方，±3 m 内没有杆件 → 扩到 ±9 m 找缝边网架高度
+            for i_ in range(n_):
+                for j_ in range(n_):
+                    hit = st_bvh.ray_cast(Vector((cx - R_ + i_ * 2 * R_ / (n_ - 1), cy - R_ + j_ * 2 * R_ / (n_ - 1), zt - 0.4)), Vector((0, 0, -1)), 45.0)
+                    if hit[0] is not None: zs_.append(hit[0].z)
+            if zs_: break
+        if os.environ.get('V2_DBG'): print('SDBG %.1f %.1f zt=%.1f n=%d zmax=%s' % (cx, cy, zt, len(zs_), ('%.1f' % max(zs_)) if zs_ else '-'))
+        if not zs_ or zt - 0.4 - max(zs_) < 1.5: continue
+        zb = max(zs_)
+        for dx, dy in ((-0.45, -0.45), (0.45, -0.45), (-0.45, 0.45), (0.45, 0.45)):
+            segs += [cx + dx, zb, -(cy + dy), cx + dx, zt - 0.4, -(cy + dy)]   # 写回数据坐标（x, y 上, z 南）
+    print('STRANDS groups=%d strands=%d' % (len(G_), len(segs) // 6))
+    if segs:
+        scol = {'ink': INK, 'clay': (0.12, 0.12, 0.13), 'real': (0.05, 0.05, 0.055)}[style]
+        STRAND.append(add_lines('strand', segs, PR['strand_r'] or (0.16 if style == 'ink' else 0.12), scol, 1.0))   # r8：加粗（r7 被要求「加粗钢绞线墨线」）
+
+# ---------- 三版：夜景发光十字描边（采光顶格栅线 = 暖白高亮自发光，配合合成器辉光）----------
+if NIGHT and PR['glow3'] and 'glass' in LG:
+    add_lines('L_glow', LG['glass'], 0.16 if style == 'ink' else 0.12, (1.0, 0.86, 0.6), 2.2 if style == 'ink' else 6.0)
 
 # ---------- Freestyle（ink：轮廓 + 折棱 + 边界；clay 细淡线）----------
 if style in ('ink', 'clay'):
@@ -206,7 +311,7 @@ if style in ('ink', 'clay'):
 # ---------- 世界 / 灯光 ----------
 w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True; nt = w.node_tree; bg = nt.nodes['Background']
 if style == 'ink': bgc, bgs = ((0.955, 0.935, 0.89) if not NIGHT else (0.035, 0.06, 0.12)), 1.0
-elif NIGHT: bgc, bgs = (0.05, 0.08, 0.16), 1.0
+elif NIGHT: bgc, bgs = (0.05, 0.08, 0.16), (5.0 if (style == 'real' and PR['real3']) else 1.0)   # r7：实景夜空提亮（r6 被扣「纯黑虚空」）
 elif style == 'clay': bgc, bgs = (0.86, 0.84, 0.80), 0.55
 else: bgc, bgs = (0.52, 0.62, 0.78), 0.85
 if style != 'ink' and not NIGHT:
@@ -225,7 +330,7 @@ if style == 'real' and not NIGHT:   # r2：物理天空（失败则保留渐变�
         sk.sun_elevation = math.radians(max(S['sun'][0], 6)); sk.sun_rotation = math.radians(180 - S['sun'][1] + 90)
         try: sk.sun_disc = False
         except Exception: pass
-        nt.links.new(sk.outputs[0], bg.inputs['Color']); bg.inputs['Strength'].default_value = 0.25
+        nt.links.new(sk.outputs[0], bg.inputs['Color']); bg.inputs['Strength'].default_value = 0.35 if PR['real3'] else 0.25
     except Exception as ex: print('SKY_FAIL', ex)
 if style == 'clay' and not NIGHT:   # r3：相机直接看到的背景 = 暖白纸面，照明仍用较暗的环境光（灰底是 r1/r2 的共同扣分项）
     lp = nt.nodes.new('ShaderNodeLightPath'); bp = nt.nodes.new('ShaderNodeBackground'); bp.inputs['Color'].default_value = (0.93, 0.91, 0.87, 1); bp.inputs['Strength'].default_value = 1.0
@@ -238,6 +343,8 @@ so.rotation_euler = (math.radians(90 - el), 0, math.radians(180 - az))
 sd.energy = (0.45 if NIGHT else (4.2 if style == 'real' else 3.2)); sd.angle = math.radians(1.2)
 sd.color = (0.62, 0.72, 1.0) if NIGHT else (1.0, 0.96, 0.90)
 if style == 'ink': sd.energy = 3.0
+if style == 'real' and not NIGHT and PR['real3']: sd.energy = 4.8; sd.angle = math.radians(0.6)   # 三版：物理天空 + 硬一点的日光
+if PR['sun_e'] is not None: sd.energy = PR['sun_e']
 
 # ---------- 相机 ----------
 def B(p): return (p[0], -p[2], p[1])
@@ -263,7 +370,9 @@ if NIGHT:   # r2：夜景辉光（合成器 Glare；API 不同版本写法不同
         for nm, v in (('threshold', 1.0), ('size', 7), ('mix', -0.55)):
             try: setattr(gl, nm, v)
             except Exception: pass
-        for nm, v in (('Threshold', 1.0), ('Strength', 0.25), ('Size', 0.5)):
+        # r7：glow3 阈值 1.25，只让发光线 / 灯晕，不让白墨线与底色一起泛白（r6 阈值 0.85 时 night_ink 6.5→5.5）
+        GV = (('Threshold', 1.25), ('Strength', 0.6), ('Size', 0.65)) if PR['glow3'] else (('Threshold', 1.0), ('Strength', 0.25), ('Size', 0.5))
+        for nm, v in GV:
             if nm in gl.inputs: gl.inputs[nm].default_value = v
         tree.links.new(gi.outputs['Image'], gl.inputs['Image']); tree.links.new(gl.outputs['Image'], go.inputs[0]); print('GLOW_OK')
     except Exception as ex: print('GLOW_FAIL', ex)
