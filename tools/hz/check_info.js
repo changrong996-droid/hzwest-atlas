@@ -13,4 +13,6 @@ if (/data-a="t0"|data-a="t1"/.test(h)) fail('无 t0/t1 不应有按钮');
 h = M.html({ id: 'X', label: 'x', info: [], t0: 10, t1: 20 }, { sheet: 'S-401' }); if (!/data-a="t0"/.test(h) || !/data-a="t1"/.test(h)) fail('有 t0/t1 应有两按钮');
 if (G.HZR && G.HZR.forPart) { const R = G.HZR.forPart('S-201', 'G-N09'); h = M.html({ id: 'G-N09', label: 'g', info: [] }, { sheet: 'S-201' }); if (R.length && !h.includes(R[0].id)) fail('实物记录未挂接'); }
 M.pick({ id: 'X' }, { x: 1, y: 1 }, { root: null }); M.unpick();
+if (typeof M.update !== 'function' || typeof M.pinList !== 'function') fail('缺图钉 update/pinList');
+M.update(0, null); if (M.pinList('无此图', 0).length) fail('无此图应无图钉');
 console.log('OK check_info');
