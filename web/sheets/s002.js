@@ -128,12 +128,11 @@
       const r = Math.max(6, 3 * k); addHit(T.id, '塔吊 ' + T.id + '（' + T.name + '，臂长 ' + T.L + ' m）', [X(T.x) - r, Y(T.z) - r, 2 * r, 2 * r], [T.x - 1.3, -1, T.z - 1.3, T.x + 1.3, T.top, T.z + 1.3], clip); });
     // 文字只标超吊距的台和吊距最远的 6 台（同日履带吊可到 20 多台，全标会糊成一片）；每台都可点
     const farR = s.crane.map(c => Math.max(...c.lifts.map(l => l.R))).sort((a, b) => b - a)[Math.min(5, s.crane.length - 1)];
-    s.crane.forEach((c, i) => { const worst = c.lifts.slice().sort((a, b) => b.R - a.R)[0], over = c.lifts.some(l => l.over), id = 'C' + (i + 1);
-      if (!small && (over || worst.R >= farR)) label(id + ' ' + worst.key + ' R ' + Math.round(worst.R) + ' m' + (over ? ' 超' : ''), X(c.x) + 6, Y(c.z) + 8, over ? C.red : C.ink2, { fs: 8 });
+    s.crane.forEach((c, i) => { const worst = c.lifts.slice().sort((a, b) => b.R - a.R)[0], over = c.lifts.some(l => l.over), nm = 'C' + (i + 1), id = 'C@' + Math.round(c.x) + ',' + Math.round(c.z);   // 稳定 id 按站位（同日同站位归一台），显示序号 nm 随当日排序
+      if (!small && (over || worst.R >= farR)) label(nm + ' ' + worst.key + ' R ' + Math.round(worst.R) + ' m' + (over ? ' 超' : ''), X(c.x) + 6, Y(c.z) + 8, over ? C.red : C.ink2, { fs: 8 });
       const r = Math.max(6, 4 * k), pb = worst.p.geo;
-      addHit(id, '履带吊 ' + id + ' · 吊「' + worst.name + '」R ' + Math.round(worst.R) + ' m，需 ' + worst.need.toFixed(1) + ' t / 额定 ' + worst.cap + ' t' + (over ? '（超吊距）' : ''), [X(c.x) - r, Y(c.z) - r, 2 * r, 2 * r],
+      addHit(id, '履带吊 ' + nm + ' · 吊「' + worst.name + '」R ' + Math.round(worst.R) + ' m，需 ' + worst.need.toFixed(1) + ' t / 额定 ' + worst.cap + ' t' + (over ? '（超吊距）' : ''), [X(c.x) - r, Y(c.z) - r, 2 * r, 2 * r],
         pb && pb.min ? [pb.min[0], pb.min[1], pb.min[2], pb.max[0], pb.max[1], pb.max[2]] : [c.x - 3.6, 0, c.z - 2.8, c.x + 3.6, 6, c.z + 2.8], clip); });
-    addHit('SITE', '吊装区全场', [X(E.xa), Y(E.za), (E.xb - E.xa) * k, (E.zb - E.za) * k], [E.xa, 0, E.za, E.xb, 100, E.zb], clip);
     if (!small) { label('北 ↑', pa.x1 - 2, pa.y0 - 6, C.ink3, { al: 'r' });
       const sb = 100 * k; g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(pa.x0, pa.y1 + 8); g.lineTo(pa.x0 + sb, pa.y1 + 8); g.stroke(); label('100 m', pa.x0 + sb + 4, pa.y1 + 8, C.ink3, {});
       label('虚线圈：塔吊 = 臂长；履带吊 = 该台最重一吊在 650 t 级装超起表里的吊距上限 · 红 = 超吊距', pa.x0 + sb + 48, pa.y1 + 8, C.ink3, { fs: 8 }); }
@@ -205,6 +204,7 @@
 
   const plugin = {
     id: 'S-002', name: '吊装资源',
+    scope: { keys: ['crane', 'ycrane'], ids: [] },   // D-35：履带吊站位盒不按 box 认件，免得把脚下楼板认进范围
     get window() { return model(G.HZ).win; },
     big: t => big(G.HZ, t),
     draw, parts,
