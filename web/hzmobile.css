@@ -46,7 +46,7 @@
 
 /* 11-09 首访副标题：手机竖屏只留主句、一行（超长省略），不换行 */
 @media (max-width: 820px) and (orientation: portrait) {
-  #big .lede { font-size: 10px !important; letter-spacing: 0 !important; margin-bottom: 2px !important; }
+  #big .lede { font-size: 9px !important; letter-spacing: 0 !important; margin-bottom: 2px !important; }
   #big .lede .lx { display: none !important; }
 }
 body.port #big .lede .lx, body.narrow #big .lede .lx { display: none; }
