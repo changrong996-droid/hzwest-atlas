@@ -60,6 +60,8 @@ body.lit .num .v em{color:#ffb3a6}
 .chip{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}.chip.ok{color:#2f7a3a;border-color:rgba(47,122,58,.5)}.chip.ng{color:var(--red)}
 /* 次要信息 */
 #info{display:none;position:fixed;z-index:5;right:10px;top:10px;bottom:70px;width:min(580px,calc(100% - 20px));flex-direction:column;background:rgba(246,242,234,.98);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+#intro{display:none;position:fixed;z-index:5;left:8px;right:8px;bottom:70px;max-height:30vh;overflow:auto;padding:8px 40px 8px 12px;background:rgba(246,242,234,.97);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:0 10px 10px 0;box-shadow:0 6px 22px rgba(0,0,0,.14);font-family:var(--sans);font-size:12.5px;line-height:1.45;color:var(--ink)}
+#intro ol{margin:0;padding:0 0 0 18px}#intro li{margin:0 0 2px}#intro .ft{display:flex;justify-content:flex-end;margin-top:4px}#intro #in-more{height:28px;padding:0 10px;font-size:12px}#intro #in-x{position:absolute;right:6px;top:6px;width:28px;height:28px;padding:0}
 #info .hd{display:flex;align-items:center;gap:10px;padding:10px 14px 8px;border-bottom:1px solid var(--line)}#info .hd h2{margin:0;font-size:15px;letter-spacing:2px}#info .hd .btn{margin-left:auto;width:30px;height:30px;padding:0}
 #info .bd{overflow-y:auto;padding:4px 16px 16px;font-size:12.5px;line-height:1.55;color:var(--ink2)}
 #info h3{font-size:12px;letter-spacing:2px;color:var(--ink);margin:14px 0 4px}
@@ -164,6 +166,7 @@ body.port #ttl{display:none}
     </div>
   </div>
 </div>
+<div id="intro" class="ui" role="dialog" aria-label="说明（短版）"><button class="btn" id="in-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button><ol><li>这是杭州西站施工顺序的实时预演，工序由规则推导；</li><li>每一帧都在自检：支承、拆除先后、提升净空、吊装覆盖；</li><li>拖动看、点下方图号切换；「完整说明」按钮打开原面板。</li></ol><div class="ft"><button class="btn" id="in-more">完整说明</button></div></div>
 <div id="info" class="ui">
   <div class="hd"><h2>说明</h2><span class="chip wait" id="i-chip">自检中</span><button class="btn" id="i-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button></div>
   <div class="bd">
@@ -193,6 +196,6 @@ body.port #ttl{display:none}
 <script src="mods/yunmen.js?v=1"></script>
 <script src="mods/actors.js?v=1"></script>
 <script src="mods/info.js?v=2"></script>
-<script src="hzview.js?v=30"></script>
+<script src="hzview.js?v=31"></script>
 </body>
 </html>

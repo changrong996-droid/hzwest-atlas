@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-09 · [host] · hark-cr · 竖屏 / 窄屏（宽 ≤ 600，或 ≤ 820 且 portrait）首访不再展开整块说明，改为底部三行短版浮卡 #intro（≤ 30vh，贴控制条上沿，不挡 #big）：①这是杭州西站施工顺序的实时预演，工序由规则推导 ②每一帧都在自检：支承、拆除先后、提升净空、吊装覆盖 ③拖动看、点下方图号切换；「完整说明」按钮打开原面板；✕ / Esc 记 hz.introSeen，桌面与跳过条件不变；hzview.js?v=31；check_all 21/21
 2026-11-09 · [claims] · hark-cr · CLAIMS.md 拆分：顶部索引表 + docs/decisions.md（决定记录）+ docs/dispatch-archive.md（已关单派单）+ docs/claims-archive.md（已回复接口请求）；gen.py / flow.py 合并读取归档，status.json 加 headline.decisions
 2026-11-09 · [host] · hark-cr · 首访引导：#big 顶部加一行副标题「杭州西站施工顺序预演：工序由规则推导，每一帧都在自检（支承 · 拆除先后 · 提升净空 · 吊装覆盖）」（竖屏只留主句、9 px 单行）；说明面板首访自动展开一次（localStorage hz.introSeen，hash 带 sheet= / fv=、?noIntro、navigator.webdriver 时不开）；three 加载去掉 4 s HEAD 探测，直接用 vendor/three.module.min.js（r160）+ modulepreload，import 失败回退 unpkg（importmap scopes 保证同一实例）；hzview.js?v=30、hzmobile.css?v=4；check_all 21/21
 2026-11-09 · [S-251] · hark-liuzhijie · 读落地胎架 jigL1..3，floorY=floorTop；端部 4 单元改履带吊吊装；check_s251 未支承单元 0；check_all 21/21

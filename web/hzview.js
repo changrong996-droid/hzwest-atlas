@@ -887,9 +887,16 @@
     // 11-09 首访引导：说明面板首次访问自动展开一次，关闭后记 localStorage hz.introSeen 不再自动开；深链（hash 带 sheet= / fv=）、?noIntro、自动化（navigator.webdriver）不开
     const INTRO_K = 'hz.introSeen', lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return '1'; } }, seenIntro = () => { try { localStorage.setItem(INTRO_K, '1'); } catch (e) { } };
     const closeInfo = () => { if (S.st.info) seenIntro(); openInfo(false); };
-    $('b-info').onclick = () => S.st.info ? closeInfo() : openInfo(true); $('i-x').onclick = closeInfo;
+    // 11-09 竖屏 / 窄屏首访：不展开整块说明（几乎铺满、看不到 3D），改为底部三行短版浮卡（#intro，≤ 30vh，贴控制条上沿，不挡左上 #big）；✕ 同样记 hz.introSeen，「完整说明」打开原面板
+    const intro = $('intro'), introNarrow = () => innerWidth <= 600 || (innerWidth <= 820 && matchMedia('(orientation: portrait)').matches);
+    const fitIntro = () => { const r = $('bar').getBoundingClientRect(); intro.style.bottom = (innerHeight - r.top + 6) + 'px'; };
+    const openIntro = o => { S.st.intro = o; if (o) fitIntro(); intro.style.display = o ? 'block' : 'none'; };
+    const closeIntro = () => { if (S.st.intro) seenIntro(); openIntro(false); };
+    S.fitInfo = () => { fitInfo(); if (S.st.intro) fitIntro(); };
+    $('in-x').onclick = closeIntro; $('in-more').onclick = () => { closeIntro(); openInfo(true); };
+    $('b-info').onclick = () => { if (S.st.intro) closeIntro(); S.st.info ? closeInfo() : openInfo(true); }; $('i-x').onclick = closeInfo;
     S.introAuto = !lsGet(INTRO_K) && !/(^|[#&])(sheet|fv)=/.test(location.hash) && !/[?&]noIntro\b/.test(location.search) && !navigator.webdriver;
-    if (S.introAuto) setTimeout(() => { if (!S.st.info) openInfo(true); }, 0);
+    if (S.introAuto) setTimeout(() => { if (S.st.info || S.st.intro) return; if (introNarrow()) openIntro(true); else openInfo(true); }, 0);
     S.opt = o => { if (o.play != null) setPlay(o.play); if (o.auto != null) { S.st.auto = o.auto; if (o.auto) placeCam(camKey(S.st.t)); } if (o.info != null) openInfo(o.info); if (o.mode) setMode(o.mode); dirty = true; };
     ctl.addEventListener('start', () => { FLY = null; S.flying = false; S.st.auto = false; $('b-home').classList.add('on'); });
     ctl.addEventListener('change', () => { dirty = true; });
@@ -897,7 +904,7 @@
       tr.addEventListener('pointerdown', e => { const sg = e.target.closest && e.target.closest('.seg.go'); if (sg) { location.hash = 'sheet=' + sg.dataset.go; return; } drag = true; tr.setPointerCapture(e.pointerId); S.st.play = false; at(e); }); tr.addEventListener('pointermove', e => { if (drag) at(e); }); tr.addEventListener('pointerup', e => { drag = false; try { tr.releasePointerCapture(e.pointerId); } catch (x) { } }); }
     addEventListener('keydown', e => { if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
       if (e.code === 'Space') { e.preventDefault(); setPlay(!S.st.play); } else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { e.preventDefault(); S.st.play = false; const du = (e.shiftKey ? 0.05 : 0.01) * (e.code === 'ArrowRight' ? 1 : -1), u = Math.max(0, Math.min(1, S.st.u + du)); setT(TL.u2t(u), u); }
-      else if (e.code === 'Escape') { if (S.st.info) openInfo(false); else if (PLUG[SHEET] && (PV.focus || PV.pend || PV.k > 1.001)) $('b-home').onclick(); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
+      else if (e.code === 'Escape') { if (S.st.intro) closeIntro(); else if (S.st.info) openInfo(false); else if (PLUG[SHEET] && (PV.focus || PV.pend || PV.k > 1.001)) $('b-home').onclick(); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
 
     // ---------------- 次要信息 ----------------
     function fillInfo(au) { const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
