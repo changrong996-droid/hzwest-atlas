@@ -124,18 +124,18 @@
     g.restore();
 
     // 标注与可点
-    s.tw.forEach(T => { if (!small) label(T.id, X(T.x) + 5, Y(T.z) - 7, C.ink2, { mono: true, fs: 8 });
+    s.tw.forEach(T => { if (!small) label(T.id, X(T.x) + 5, Y(T.z) - 7, C.ink2, { mono: true, fs: 9 });
       const r = Math.max(6, 3 * k); addHit(T.id, '塔吊 ' + T.id + '（' + T.name + '，臂长 ' + T.L + ' m）', [X(T.x) - r, Y(T.z) - r, 2 * r, 2 * r], [T.x - 1.3, -1, T.z - 1.3, T.x + 1.3, T.top, T.z + 1.3], clip); });
     // 文字只标超吊距的台和吊距最远的 6 台（同日履带吊可到 20 多台，全标会糊成一片）；每台都可点
     const farR = s.crane.map(c => Math.max(...c.lifts.map(l => l.R))).sort((a, b) => b - a)[Math.min(5, s.crane.length - 1)];
     s.crane.forEach((c, i) => { const worst = c.lifts.slice().sort((a, b) => b.R - a.R)[0], over = c.lifts.some(l => l.over), nm = 'C' + (i + 1), id = 'C@' + Math.round(c.x) + ',' + Math.round(c.z);   // 稳定 id 按站位（同日同站位归一台），显示序号 nm 随当日排序
-      if (!small && (over || worst.R >= farR)) label(nm + ' ' + worst.key + ' R ' + Math.round(worst.R) + ' m' + (over ? ' 超' : ''), X(c.x) + 6, Y(c.z) + 8, over ? C.red : C.ink2, { fs: 8 });
+      if (!small && (over || worst.R >= farR)) label(nm + ' ' + worst.key + ' R ' + Math.round(worst.R) + ' m' + (over ? ' 超' : ''), X(c.x) + 6, Y(c.z) + 8, over ? C.red : C.ink2, { fs: 9 });
       const r = Math.max(6, 4 * k), pb = worst.p.geo;
       addHit(id, '履带吊 ' + nm + ' · 吊「' + worst.name + '」R ' + Math.round(worst.R) + ' m，需 ' + worst.need.toFixed(1) + ' t / 额定 ' + worst.cap + ' t' + (over ? '（超吊距）' : ''), [X(c.x) - r, Y(c.z) - r, 2 * r, 2 * r],
         pb && pb.min ? [pb.min[0], pb.min[1], pb.min[2], pb.max[0], pb.max[1], pb.max[2]] : [c.x - 3.6, 0, c.z - 2.8, c.x + 3.6, 6, c.z + 2.8], clip); });
     if (!small) { label('北 ↑', pa.x1 - 2, pa.y0 - 6, C.ink3, { al: 'r' });
       const sb = 100 * k; g.strokeStyle = C.ink2; g.lineWidth = 1; g.beginPath(); g.moveTo(pa.x0, pa.y1 + 8); g.lineTo(pa.x0 + sb, pa.y1 + 8); g.stroke(); label('100 m', pa.x0 + sb + 4, pa.y1 + 8, C.ink3, {});
-      label('虚线圈：塔吊 = 臂长；履带吊 = 该台最重一吊在 650 t 级装超起表里的吊距上限 · 红 = 超吊距', pa.x0 + sb + 48, pa.y1 + 8, C.ink3, { fs: 8 }); }
+      label('虚线圈 = 吊得到的范围（塔吊臂长 / 履带吊最重一吊）· 红 = 够不着', pa.x0 + sb + 48, pa.y1 + 8, C.ink3, { fs: 9 }); }
 
     // 底部横条：每天在场台数（塔吊墨灰、履带吊墨黑叠加；有超吊距的天底下红点），竖线 = 当天
     if (stripH) {
@@ -152,7 +152,7 @@
       if (CAP <= nMax) { const yc = sa.y1 - CAP * hy; g.strokeStyle = C.red; g.lineWidth = 0.6; g.setLineDash([3, 2]); g.beginPath(); g.moveTo(sa.x0, yc); g.lineTo(sa.x1, yc); g.stroke(); g.setLineDash([]);
         label('履带吊上限 ' + CAP + ' 台', sa.x1, yc - 5, C.red, { fs: 8, al: 'r' }); }
       const xt = sx(clamp(t, W0, W1)); g.strokeStyle = C.red; g.lineWidth = 1.2; g.beginPath(); g.moveTo(xt, sa.y0); g.lineTo(xt, sa.y1 + 6); g.stroke();
-      label('每天在场吊机台数（深 = 履带吊，浅 = 塔吊；红段 = 履带吊超上限，红点 = 当天有超吊距）· 最多 ' + nMax + ' 台', sa.x0, sa.y0 + 2, C.ink3, { fs: 8 });
+      label('每天在场吊机台数（深 = 履带吊，浅 = 塔吊，红 = 超上限或够不着）· 最多 ' + nMax + ' 台', sa.x0, sa.y0 + 2, C.ink3, { fs: 9 });
       label('第 ' + W0 + ' 天', sa.x0, sa.y1 + 9, C.ink3, { fs: 8, mono: true }); label('第 ' + W1 + ' 天', sa.x1, sa.y1 + 9, C.ink3, { fs: 8, mono: true, al: 'r' });
     }
 
@@ -161,16 +161,15 @@
     if (!small) {
       const colW = tall ? Math.round(BW * 0.48) : gut, FS = tall ? clamp(Math.round(BW / 15), 30, 48) : clamp(Math.round(gut / 4.2), 24, 40);
       let cx = box.x0 + 8;
-      g.textBaseline = 'alphabetic'; g.fillStyle = C.ink; g.font = `600 ${FS}px ${MONO}`; g.fillText(String(B.num), cx, box.y0 + 12 + FS);
-      g.font = `600 ${Math.round(FS * 0.36)}px ${SANS}`; g.fillStyle = C.ink2; g.fillText(B.unit, cx, box.y0 + 26 + FS + Math.round(FS * 0.2));
-      let ly = box.y0 + 46 + FS + Math.round(FS * 0.2);
-      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > colW - 10) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; } };
-      wrap(B.label, s.over ? C.red : C.ink2); wrap(dayTxt, C.ink3, 9); ly += 4;
+      // 大数字只在宿主浮层显示（big()），图纸内不再重复（视觉评审 S-002 ②：一屏两个主数字）；左栏只放当天分项
+      g.textBaseline = 'alphabetic'; let ly = box.y0 + 20; void FS;
+      const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of String(txt).match(/\d[\d.,]*(?:\s?(?:m|t|台|吊|天|%))?|[A-Za-z]+|./g) || []) { if (line0 && g.measureText(line0 + ch).width > colW - 10) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch.trimStart(); } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; } };
+      wrap(dayTxt, C.ink3, 10); ly += 2;
       if (tall) { cx = box.x0 + 8 + colW + 12; ly = box.y0 + 22; }
       const keys = {}; for (const l of s.live) { const q = keys[l.key] || (keys[l.key] = { n: 0, Rm: 0, over: 0, name: l.name.replace(/\s*拆除$/, '') }); q.n++; q.Rm = Math.max(q.Rm, l.R); if (l.over) q.over++; }
       const ks = Object.values(keys).sort((a, b) => b.over - a.over || b.n - a.n);
-      if (ks.length) wrap('当天履带吊在吊', C.ink3, 8);
-      for (const q of ks.slice(0, 4)) wrap('▸ ' + q.name + ' ' + q.n + ' 吊 · 最远 ' + Math.round(q.Rm) + ' m' + (q.over ? ' · ' + q.over + ' 超' : ''), q.over ? C.red : C.ink2, 9);
+      if (ks.length) wrap('当天履带吊在吊', C.ink3, 10);
+      for (const q of ks.slice(0, 4)) wrap('▸ ' + q.name + ' ' + q.n + ' 吊 · 最远 ' + Math.round(q.Rm) + ' m' + (q.over ? ' · ' + q.over + ' 超' : ''), q.over ? C.red : C.ink2, 10);
       ly += 4; wrap('全工期履带吊 ' + m.lifts.length + ' 吊，超吊距 ' + m.nOver + ' 吊（650 t 级装超起表）', m.nOver ? C.red : C.ink3, 8);
     } else {
       label(B.num + ' ' + B.unit + ' · ' + B.label, box.x0 + 6, box.y0 + 9, s.over ? C.red : C.ink, { b: true, fs: 11 });
@@ -190,15 +189,21 @@
   // 镜头主体：这张图是全场资源图，主体 = 当天已开工的全部构筑工序（在建 + 已完工；吊机服务的就是它们）
   function subjKeys(HZ, t) { const ks = []; for (const a of HZ.acts) if (a.kind !== 'milestone' && a.kind !== 'untemp' && a.kind !== 'temp' && t >= a.start) ks.push(a.key); return ks; }
   // 镜头：每 10 天一帧，框住主体工序的构件外包（目标 = 外包中心，距离按 28° 视场让外包对角线约占画面），从东南高处俯看
-  let CAM = null;
+  let CAM = null; const CRF = 0.62;   // 吊机外包对角线占画面比例系数（俯 50°，16:9）
   function cams(HZ) {
     const m = model(HZ); if (CAM && CAM.sig === m.sig) return CAM.k;
     const out = [], [W0, W1] = m.win;
     for (let t = W0; t <= W1 + 1e-9; t += 10) { const ks = new Set(subjKeys(HZ, t + 0.5)), mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
       for (const a of HZ.acts) if (ks.has(a.key)) for (const p of a.parts) if (p.geo && p.geo.min) for (let i = 0; i < 3; i++) { mn[i] = Math.min(mn[i], p.geo.min[i]); mx[i] = Math.max(mx[i], p.geo.max[i]); }
+      // 这张图讲的是吊机：塔身与当天履带吊站位也要在画内（视觉评审 S-002 t=315：塔吊全在画外）。吊机外包单独算距离，取两者大者
+      const st = stateAt(HZ, t + 0.5, m), cx0 = [1e9, 1e9], cx1 = [-1e9, -1e9], ct = [];
+      for (const T of st.tw) ct.push([T.x, T.z]); for (const c of st.crane) ct.push([c.x, c.z]);
+      for (const [x, z] of ct) { cx0[0] = Math.min(cx0[0], x); cx1[0] = Math.max(cx1[0], x); cx0[1] = Math.min(cx0[1], z); cx1[1] = Math.max(cx1[1], z); }
+      const dCr = ct.length ? Math.hypot(cx1[0] - cx0[0], cx1[1] - cx0[1]) * CRF / Math.tan(14 * Math.PI / 180) / 2 : 0;
       if (mn[0] > mx[0]) { mn[0] = mn[2] = -200; mx[0] = mx[2] = 200; mn[1] = 0; mx[1] = 40; }
+      if (ct.length) for (let i = 0; i < 2; i++) { const j = i * 2; mn[j] = Math.min(mn[j], cx0[i]); mx[j] = Math.max(mx[j], cx1[i]); }   // 目标取两者合包中心
       const tg = [(mn[0] + mx[0]) / 2, Math.max(2, (Math.max(0, mn[1]) + mx[1]) / 2), (mn[2] + mx[2]) / 2], dg = Math.hypot(mx[0] - mn[0], mx[2] - mn[2], Math.max(0, mx[1] - Math.max(0, mn[1])));
-      out.push({ t, target: tg.map(v => Math.round(v)), az: 150, el: 50, dist: Math.round(clamp(dg * 0.45 / Math.tan(14 * Math.PI / 180) / 2, 120, 1100)) }); }
+      out.push({ t, target: tg.map(v => Math.round(v)), az: 150, el: 50, dist: Math.round(clamp(Math.max(dg * 0.45 / Math.tan(14 * Math.PI / 180) / 2, dCr), 120, 1100)) }); }
     CAM = { sig: m.sig, k: out }; return out;
   }
 
