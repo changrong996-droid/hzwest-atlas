@@ -1,5 +1,8 @@
 # 终版精修二版（hark-cs）：4 镜头 × 3 风格（clay 白模 / ink 墨线 / real 实景）
 # 用法：Blender -b --factory-startup -P blender/v2/render_v2.py -- <geoDir> <out.png> <shot> <style> [W H]
+# style 另有控制图（给扩散模型 ControlNet 用，11-09 细节加强版）：depth 深度 / normal 相机空间法线 / seg 物体材质分割 / line 白底黑线稿；
+#   控制图输出 <out 去扩展名>.exr（float32 原始值）+ 8 位 PNG（depth 另出 _16.png；normal 出 _cn / _gl 两种红色约定；seg 出纯色 PNG）+ _cam.json
+# V2_SET='detail="on"' 打开几何细节加强（棱边倒角、屋面直立锁边、采光顶 / 幕墙竖梃、网架圆管杆件 + 螺栓球）
 # geoDir 由 blender/v2/export_v2.js 生成（scene.obj + lines.bin + meta.json）；坐标 = 页面 three.js（米，Y 向上），导入 forward -Z / up Y。
 # 镜头参数在 SHOTS；每轮迭代改这里（文档记录每轮改了什么）。环境变量 V2_SPP 改采样数。
 import bpy, sys, os, math, json, struct, time
@@ -28,7 +31,10 @@ S = dict(SHOTS[shot]); NIGHT = S['night']
 #       glow3 夜景发光十字描边 + 合成器辉光；clad_lines 屋面分格墨线（r3）；clay_wv 白模屋面云纹淡线（r2）；
 #       view/look/sun_e/sun 覆盖视图变换与太阳；cam=(pos, tgt, lens) 覆盖机位。V2_SET='k=v;k=v' 临时覆盖（试候选用）。
 DEF = dict(view=None, look=None, sun_e=None, sun=None, cam=None, exp=0.0, clad_lines=False, clay_wv=False,
-           clay_glass=(0.60, 0.62, 0.64), strands=True, strand_r=None, strand_wide=True, real3=True, glow3=True, src='v3')
+           clay_glass=(0.60, 0.62, 0.64), strands=True, strand_r=None, strand_wide=True, real3=True, glow3=True, src='v3',
+           detail='off', bevel_w=0.15, seam_w=0.5, seam_step=1.0, seam_h=0.08, seam_t=0.06, mull_r=0.09, cw_u=1.5, cw_z=4.5,
+           chord_r=0.12, web_r=0.07, ball_r=0.22, d_parts='bevel,seam,mull,steel')
+CTRL = style in ('depth', 'normal', 'seg', 'line'); INKLIKE = style in ('ink', 'line')
 TABLE = {
     ('roof', 'clay'): dict(view='AgX', look='None', sun_e=4.6, sun=(9, 45), clay_wv=True, clay_glass=(0.38, 0.40, 0.43), src='r2'),
     ('night', 'ink'): dict(clad_lines=True, src='r3+glow3（r7）'),
@@ -63,7 +69,7 @@ for k, v in (('use_shadows', True), ('use_raytracing', True), ('use_gtao', True)
     except Exception: pass
 try: sc.view_settings.view_transform = 'AgX'; sc.view_settings.look = 'AgX - Medium High Contrast' if style == 'real' else 'None'
 except Exception: pass
-if style == 'ink': sc.view_settings.view_transform = 'Standard'
+if INKLIKE or CTRL: sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'
 if style == 'clay' and not NIGHT:   # r4：AgX 把白模压成灰，换 Standard（太阳同时降到 3.2 免得过曝）
     sc.view_settings.view_transform = 'Standard'; sc.view_settings.look = 'None'
 if PR['view']: sc.view_settings.view_transform = PR['view']
@@ -83,6 +89,147 @@ for o in list(sc.objects):
     if smooth:
         try: me.set_sharp_from_angle(angle=math.radians(35))
         except Exception: pass
+
+
+# ---------- 11-09 几何细节加强（detail=on）：同一份页面几何上自动加细节，不改导出 ----------
+# ① 棱边倒角（混凝土 / 楼板 / 站台 / 基础 / 云门体块，角度 > 30° 的棱倒 bevel_w）
+# ② 屋面直立锁边：沿南北向（Blender +y，与实景立缝纹理同向）每 seam_w（0.5 m）一条锁边肋，竖直向下射线贴屋面，
+#    遇采光顶 / 光伏 / 屋面边缘断开；肋截面 seam_t × seam_h（60 × 80 mm）
+# ③ 采光顶竖梃：页面同源采光顶格栅线（Geo.L glass）→ 圆管 mull_r；幕墙（todG / ymG）按立面平面每 cw_u 竖梃、每 cw_z 横梁
+# ④ 网架杆件：页面同源网架中心线（Geo.L steel，与网格同一份）→ 弦杆（近水平）chord_r、腹杆 web_r 圆管 + 节点螺栓球 ball_r，替换原三棱柱
+DETAIL = str(PR['detail']).lower() in ('on', '1', 'true'); DSTAT = {}
+def LGraw():
+    b = open(os.path.join(geo, 'lines.bin'), 'rb').read(); i = 0; G = {}
+    while i < len(b):
+        n = b[i]; name = b[i + 1:i + 1 + n].decode(); i += 1 + n; cnt = struct.unpack_from('<I', b, i)[0]; i += 4
+        G[name] = struct.unpack_from('<%df' % (cnt * 6), b, i); i += cnt * 24
+    return G
+def tube_obj(name, segs_b, r, res=1):
+    # segs_b：Blender 坐标线段列表 [(x0,y0,z0,x1,y1,z1), ...] → 圆管曲线物体（材质另配）
+    cu = bpy.data.curves.new(name, 'CURVE'); cu.dimensions = '3D'; cu.bevel_depth = r; cu.bevel_resolution = res; cu.use_fill_caps = True
+    for s_ in segs_b:
+        sp = cu.splines.new('POLY'); sp.points.add(1); sp.points[0].co = (s_[0], s_[1], s_[2], 1); sp.points[1].co = (s_[3], s_[4], s_[5], 1)
+    ob = bpy.data.objects.new(name, cu); sc.collection.objects.link(ob); return ob
+if DETAIL:
+    from mathutils.bvhtree import BVHTree
+    from mathutils import Vector
+    LGd = LGraw(); TD = time.time()
+    def wbvh(o_):
+        mw_ = o_.matrix_world; V_ = [mw_ @ v.co for v in o_.data.vertices]
+        return V_, BVHTree.FromPolygons(V_, [tuple(pg.vertices) for pg in o_.data.polygons])
+    # ①
+    DP = PR['d_parts'].split(','); nb = 0
+    for k_ in ('conc', 'slab', 'plat', 'found', 'ym', 'todB', 'metro'):
+        if k_ in objs and 'bevel' in DP:
+            md = objs[k_].modifiers.new('bev', 'BEVEL'); md.width = PR['bevel_w']; md.segments = 2; md.limit_method = 'ANGLE'
+            md.angle_limit = math.radians(30); md.use_clamp_overlap = True; nb += 1
+    DSTAT['bevel_objs'] = nb
+    # ②
+    # 实测：Freestyle 风格（ink / line）加锁边肋后几何从 11.7 万面涨到约 100 万面，Freestyle 建视图图 > 5 分钟未完；
+    # 锁边肋在本机位只有约 2 px 一条，墨线 / 线稿不加锁边肋（白模 detail=on 关掉 Freestyle 淡线、照加；实景与 depth / normal / seg 照加）
+    if 'clad' in objs and 'seam' in DP and style not in ('ink', 'line'):
+        o_ = objs['clad']; V_, bvh = wbvh(o_); me_ = o_.data
+        pvp = [False] * len(me_.polygons)   # 光伏所在面（顶点色 r = HZ.pvMask > 0.5）不加锁边：光伏板盖在上面
+        ca = me_.color_attributes.get('Color') if hasattr(me_, 'color_attributes') else None
+        if ca is not None:
+            if ca.domain == 'POINT':
+                vr = [d.color[0] for d in ca.data]; pvp = [sum(vr[v] for v in pg.vertices) / len(pg.vertices) > 0.5 for pg in me_.polygons]
+            else:
+                lr = [d.color[0] for d in ca.data]; pvp = [sum(lr[l] for l in pg.loop_indices) / pg.loop_total > 0.5 for pg in me_.polygons]
+        xs_ = [v.x for v in V_]; ys_ = [v.y for v in V_]; zt_ = max(v.z for v in V_) + 5
+        sw, stp, sh_, hw = PR['seam_w'], PR['seam_step'], PR['seam_h'], PR['seam_t'] / 2
+        verts, faces = [], []; nseam = 0
+        def emit(run):
+            global nseam
+            if len(run) < 2: return
+            b0 = len(verts)
+            for j, (p_, n_) in enumerate(run):
+                t_ = (run[min(j + 1, len(run) - 1)][0] - run[max(j - 1, 0)][0]).normalized(); s_ = t_.cross(n_).normalized()
+                q = p_ - n_ * 0.01
+                verts.extend([tuple(q + s_ * hw), tuple(q + s_ * hw + n_ * sh_), tuple(q - s_ * hw + n_ * sh_), tuple(q - s_ * hw)])
+            for j in range(len(run) - 1):
+                a_, c_ = b0 + 4 * j, b0 + 4 * (j + 1)
+                for e in range(3): faces.append((a_ + e, c_ + e, c_ + e + 1, a_ + e + 1))
+            faces.append((b0, b0 + 1, b0 + 2, b0 + 3)); e_ = b0 + 4 * (len(run) - 1); faces.append((e_ + 3, e_ + 2, e_ + 1, e_))
+            nseam += 1
+        x_ = min(xs_) + sw / 2; ymin, ymax = min(ys_), max(ys_)
+        while x_ < max(xs_):
+            run = []; y_ = ymin
+            while y_ <= ymax:
+                loc, nor, idx, dist = bvh.ray_cast(Vector((x_, y_, zt_)), Vector((0, 0, -1)), zt_ + 80)
+                ok = loc is not None and not pvp[idx]
+                if ok:
+                    n_ = nor if nor.z > 0 else -nor
+                    ok = n_.z > 0.3
+                if ok and run and abs(loc.z - run[-1][0].z) > 1.0: emit(run); run = []
+                if ok: run.append((loc, n_.normalized()))
+                else: emit(run); run = []
+                y_ += stp
+            emit(run); x_ += sw
+        sm = bpy.data.meshes.new('seam'); sm.from_pydata(verts, [], faces); sm.update()
+        so_ = bpy.data.objects.new('seam', sm); sc.collection.objects.link(so_); objs['seam'] = so_
+        DSTAT['seams'] = nseam; DSTAT['seam_verts'] = len(verts)
+    # ③
+    msegs = []
+    if 'glass' in LGd and 'mull' in DP:
+        g_ = LGd['glass']
+        for k in range(0, len(g_), 6): msegs.append((g_[k], -g_[k + 2], g_[k + 1] + 0.05, g_[k + 3], -g_[k + 5], g_[k + 4] + 0.05))
+    DSTAT['sky_mullions'] = len(msegs); ncw = 0
+    for k_ in ('todG', 'ymG'):
+        if k_ not in objs: continue
+        V_, bvh = wbvh(objs[k_]); mw3 = objs[k_].matrix_world.to_3x3(); grp = {}
+        for pg in objs[k_].data.polygons:
+            n_ = (mw3 @ pg.normal).normalized()
+            if abs(n_.z) > 0.2: continue
+            hn = Vector((n_.x, n_.y, 0)).normalized()
+            if hn.x < -1e-6 or (abs(hn.x) <= 1e-6 and hn.y < 0): hn = -hn
+            key = (round(math.atan2(hn.y, hn.x), 1), round(hn.dot(V_[pg.vertices[0]]), 0))
+            grp.setdefault(key, [hn, set()])[1].update(pg.vertices)
+        for key, (hn, vi) in grp.items():
+            u_ = Vector((-hn.y, hn.x, 0)); us = [u_.dot(V_[i]) for i in vi]; zs = [V_[i].z for i in vi]; d_ = key[1]
+            def on(p_): return bvh.find_nearest(p_)[3] is not None and bvh.find_nearest(p_)[3] < 0.3
+            uu = min(us) + PR['cw_u']
+            while uu < max(us) - 0.3:   # 竖梃：1 m 一段，段中点在幕墙面上才留
+                z_ = min(zs)
+                while z_ < max(zs):
+                    z1 = min(z_ + 1.0, max(zs)); a_ = hn * d_ + u_ * uu
+                    if on(a_ + Vector((0, 0, (z_ + z1) / 2))): msegs.append((a_.x, a_.y, z_, a_.x, a_.y, z1)); ncw += 1
+                    z_ = z1
+                uu += PR['cw_u']
+            z_ = min(zs) + PR['cw_z']
+            while z_ < max(zs) - 0.3:   # 横梁
+                uu = min(us)
+                while uu < max(us):
+                    u1 = min(uu + 1.0, max(us)); a_ = hn * d_ + u_ * uu; b_ = hn * d_ + u_ * u1
+                    if on((a_ + b_) / 2 + Vector((0, 0, z_))): msegs.append((a_.x, a_.y, z_, b_.x, b_.y, z_)); ncw += 1
+                    uu = u1
+                z_ += PR['cw_z']
+    DSTAT['wall_mullion_pieces'] = ncw
+    if msegs: objs['mull'] = tube_obj('mull', msegs, PR['mull_r'], 1)
+    # ④
+    if 'steel' in objs and 'steel' in LGd and 'steel' in DP:
+        s_ = LGd['steel']; ch, wb = [], []; deg = {}
+        for k in range(0, len(s_), 6):
+            a_ = (s_[k], -s_[k + 2], s_[k + 1]); b_ = (s_[k + 3], -s_[k + 5], s_[k + 4]); L_ = math.dist(a_, b_)
+            if L_ < 0.05: continue
+            (ch if abs(b_[2] - a_[2]) / L_ < 0.2 else wb).append(a_ + b_)
+            for p_ in (a_, b_): kk = tuple(round(c, 1) for c in p_); deg[kk] = deg.get(kk, 0) + 1
+        bpy.data.objects.remove(objs.pop('steel'))
+        FS_ = style in ('ink', 'line')   # Freestyle 风格：4 边管、不加螺栓球（实测 6 边管 + 2949 个球让 Freestyle > 4 分钟）
+        objs['steelC'] = tube_obj('steelC', ch, PR['chord_r'], 0 if FS_ else 1); objs['steelW'] = tube_obj('steelW', wb, PR['web_r'], 0 if FS_ else 1)
+        nodes = [] if FS_ else [p_ for p_, c in deg.items() if c >= 3]
+        import bmesh
+        bm = bmesh.new(); bmesh.ops.create_icosphere(bm, subdivisions=1, radius=PR['ball_r'])
+        iv = [tuple(v.co) for v in bm.verts]; iff = [tuple(v.index for v in f.verts) for f in bm.faces]; bm.free()
+        bv, bf = [], []
+        for p_ in nodes:
+            o0 = len(bv); bv.extend([(p_[0] + v[0], p_[1] + v[1], p_[2] + v[2]) for v in iv]); bf.extend([tuple(o0 + i for i in f) for f in iff])
+        bmm = bpy.data.meshes.new('steelB'); bmm.from_pydata(bv, [], bf); bmm.update(); [setattr(pg, 'use_smooth', True) for pg in bmm.polygons]
+        if nodes: bo = bpy.data.objects.new('steelB', bmm); sc.collection.objects.link(bo); objs['steelB'] = bo
+        DSTAT.update(chords=len(ch), webs=len(wb), balls=len(nodes))
+    DSTAT['sec'] = round(time.time() - TD, 1)
+    print('DETAIL', json.dumps(DSTAT))
+FINE = FINE + ('steelC', 'steelW', 'steelB', 'mull')
 
 def lin(c): return tuple(((x / 12.92) if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4) for x in c)
 def node_mat(name):
@@ -183,7 +330,36 @@ def ink_mat(key):
     if key == 'tr_red': return toon('i_trred', (0.92, 0.55, 0.50), (0.78, 0.42, 0.38))
     return toon('i_' + key, paper, shade)
 
-FN = {'real': real_mat, 'clay': clay_mat, 'ink': ink_mat}[style]
+# ---------- 11-09 控制图材质（全部自发光、无光照，渲 EXR 原始值；后处理见文件末）----------
+# 分割配色（sRGB 8 位，纯色；颜色 → 材质对照表同 docs/handoff/2026-11-09-s401-ai-render.md）
+SEG = {'clad': (230, 25, 75), 'seam': (230, 25, 75), 'pv': (245, 130, 48), 'glass': (0, 130, 200), 'mull': (250, 190, 212),
+       'todG': (70, 240, 240), 'ymG': (70, 240, 240), 'steel': (240, 50, 230), 'steelC': (240, 50, 230), 'steelW': (240, 50, 230), 'steelB': (240, 50, 230),
+       'soffit': (145, 30, 180), 'conc': (128, 128, 128), 'slab': (170, 110, 40), 'plat': (255, 225, 25), 'found': (128, 0, 0),
+       'metro': (0, 0, 128), 'ym': (210, 245, 60), 'todB': (170, 255, 195), 'rail': (60, 180, 75), 'ground': (255, 250, 200),
+       'red': (0, 128, 128), 'yellow': (0, 128, 128), 'jig': (0, 128, 128), 'sky': (6, 230, 230), 'other': (220, 190, 255)}
+def emis_mat(name):
+    m, nt, o = node_mat(name); e = nt.nodes.new('ShaderNodeEmission'); e.inputs['Strength'].default_value = 1.0; nt.links.new(e.outputs[0], o.inputs[0]); return m, nt, e
+def seg_mat(key):
+    c = tuple(v / 255 for v in SEG.get(key, SEG['other'])); m, nt, e = emis_mat('s_' + key); e.inputs['Color'].default_value = (*c, 1)
+    if key == 'clad':   # 光伏：顶点色 r 硬阈值 0.5
+        at = nt.nodes.new('ShaderNodeAttribute'); at.attribute_name = 'Color'; sp = nt.nodes.new('ShaderNodeSeparateColor'); gt = nt.nodes.new('ShaderNodeMath'); gt.operation = 'GREATER_THAN'
+        gt.inputs[1].default_value = 0.5; nt.links.new(at.outputs['Color'], sp.inputs[0]); nt.links.new(sp.outputs[0], gt.inputs[0])
+        mx = nt.nodes.new('ShaderNodeMix'); mx.data_type = 'RGBA'; nt.links.new(gt.outputs[0], mx.inputs['Factor'])
+        mx.inputs['A'].default_value = (*c, 1); mx.inputs['B'].default_value = (*[v / 255 for v in SEG['pv']], 1); nt.links.new(mx.outputs['Result'], e.inputs['Color'])
+    return m
+def depth_mat(key):
+    m, nt, e = emis_mat('d_' + key); cd_ = nt.nodes.new('ShaderNodeCameraData'); nt.links.new(cd_.outputs['View Z Depth'], e.inputs['Color']); return m
+def normal_mat(key):
+    # 世界空间法线（背面翻向相机）×0.5+0.5 → 后处理转相机空间
+    m, nt, e = emis_mat('n_' + key); g = nt.nodes.new('ShaderNodeNewGeometry')
+    f = nt.nodes.new('ShaderNodeMath'); f.operation = 'MULTIPLY_ADD'; f.inputs[1].default_value = -2.0; f.inputs[2].default_value = 1.0; nt.links.new(g.outputs['Backfacing'], f.inputs[0])
+    sv = nt.nodes.new('ShaderNodeVectorMath'); sv.operation = 'SCALE'; nt.links.new(g.outputs['Normal'], sv.inputs[0]); nt.links.new(f.outputs[0], sv.inputs['Scale'])
+    ma = nt.nodes.new('ShaderNodeVectorMath'); ma.operation = 'MULTIPLY_ADD'; nt.links.new(sv.outputs[0], ma.inputs[0])
+    ma.inputs[1].default_value = (0.5, 0.5, 0.5); ma.inputs[2].default_value = (0.5, 0.5, 0.5); nt.links.new(ma.outputs[0], e.inputs['Color']); return m
+def line_mat(key):
+    m, nt, e = emis_mat('l_' + key); e.inputs['Color'].default_value = (1, 1, 1, 1); return m
+
+FN = {'real': real_mat, 'clay': clay_mat, 'ink': ink_mat, 'seg': seg_mat, 'depth': depth_mat, 'normal': normal_mat, 'line': line_mat}[style]
 def with_pv(m, pvc):
     # 光伏（顶点色 r = HZ.pvMask）：在 clad 材质的最终颜色上按 0.45–0.55 硬边混入光伏色，边界随网格平滑、不再锯齿
     nt = m.node_tree; at = nt.nodes.new('ShaderNodeAttribute'); at.attribute_name = 'Color'
@@ -202,10 +378,17 @@ def with_pv(m, pvc):
         mu = nt.nodes.new('ShaderNodeMix'); mu.data_type = 'RGBA'; mu.blend_type = 'MULTIPLY'; mu.inputs['Factor'].default_value = 1.0
         nt.links.new(cr.outputs[0], mu.inputs['A']); nt.links.new(mx.outputs['Result'], mu.inputs['B']); nt.links.new(mu.outputs['Result'], em.inputs['Color'])
     return m
-PVC = {'real': lin((0.10, 0.14, 0.26)), 'clay': (0.30, 0.33, 0.38), 'ink': ((0.72, 0.74, 0.78) if not NIGHT else (0.6, 0.7, 0.9))}[style]
+PVC = {'real': lin((0.10, 0.14, 0.26)), 'clay': (0.30, 0.33, 0.38), 'ink': ((0.72, 0.74, 0.78) if not NIGHT else (0.6, 0.7, 0.9))}.get(style)
+DBASE = {'seam': 'clad', 'steelC': 'steel', 'steelW': 'steel', 'steelB': 'steel'}   # 细节物体沿用母材质（分割图 seg 用自己的表）
+def mull_mat():
+    if style == 'real': return principled('r_mull', lin((0.36, 0.37, 0.39)), 0.38, 0.85)
+    if style == 'clay': return clay_mat('mull')
+    if style == 'ink': return toon('i_mull', (0.80, 0.79, 0.76), (0.62, 0.61, 0.58))
+    return FN('mull')
 for key, o in objs.items():
-    o.data.materials.clear(); m_ = FN(key)
-    if key == 'clad': m_ = with_pv(m_, PVC)
+    o.data.materials.clear(); m_ = FN(key) if (style == 'seg' or key not in DBASE) else FN(DBASE[key])
+    if key == 'mull': m_ = mull_mat()
+    if key == 'clad' and PVC is not None and not (style == 'real' and False): m_ = with_pv(m_, PVC)
     o.data.materials.append(m_)
 
 # ---------- 地面 ----------
@@ -217,6 +400,7 @@ if style == 'real' and not NIGHT and PR['real3']:   # 三版：地面 = 场地�
     gt.links.new(tc_.outputs['Object'], nz_.inputs['Vector']); cr_ = gt.nodes.new('ShaderNodeValToRGB'); cr_.color_ramp.elements[0].position = 0.45; cr_.color_ramp.elements[1].position = 0.6
     cr_.color_ramp.elements[0].color = (*lin((0.36, 0.36, 0.34)), 1); cr_.color_ramp.elements[1].color = (*lin((0.30, 0.36, 0.22)), 1)
     gt.links.new(nz_.outputs['Fac'], cr_.inputs[0]); gt.links.new(cr_.outputs[0], gb.inputs['Base Color']); gnd.data.materials.append(gm)
+elif CTRL: gnd.data.materials.append(FN('ground'))
 else: gnd.data.materials.append(principled('ground', gcol, 0.95) if style != 'ink' else ink_mat('ground'))
 
 # ---------- 墨线（页面 Geo.L 同源段 + 屋面等高线）：ink 全画；clay/real 只画等高线淡痕（无）----------
@@ -236,20 +420,21 @@ def add_lines(name, segs, radius, col, es=1.0):
     cu.materials.append(m); return ob
 LG = read_lines()
 INK = (0.075, 0.068, 0.06) if not NIGHT else (0.78, 0.86, 0.95)
-if style == 'ink':
+if style == 'line': INK = (0.0, 0.0, 0.0)
+if INKLIKE:
     # r2：主线 = 云纹 Wv 等值线（四朵云各自闭合）；Hc 2 m 等高线降为淡细线
     if 'wv' in LG: add_lines('wv', LG['wv'], 0.17 if shot == 'roof' else 0.24, INK if not NIGHT else (0.62, 0.74, 0.90))
-    if 'iso' in LG and shot == 'roof': add_lines('iso', LG['iso'], 0.07, (0.55, 0.53, 0.50) if not NIGHT else (0.3, 0.4, 0.55))
+    if 'iso' in LG and shot == 'roof' and style == 'ink': add_lines('iso', LG['iso'], 0.07, (0.55, 0.53, 0.50) if not NIGHT else (0.3, 0.4, 0.55))
     # r3：页面同源墨线（Geo.L）里的屋面分格（clad）与采光顶格栅（glass）细线画上
     for k_, r_ in ((('clad', 0.055),) if PR['clad_lines'] else ()) + (('glass', 0.07),):   # r4：去掉 clad 分格线（r3 加上后云纹读法反而降分），只留采光顶格栅
-        if k_ in LG and shot != 'lift': add_lines('L_' + k_, LG[k_], r_ * (1.0 if shot == 'roof' else 1.6), (0.35, 0.34, 0.32) if not NIGHT else (0.45, 0.55, 0.7))
+        if k_ in LG and shot != 'lift': add_lines('L_' + k_, LG[k_], r_ * (1.0 if shot == 'roof' else 1.6), INK if style == 'line' else (0.35, 0.34, 0.32) if not NIGHT else (0.45, 0.55, 0.7))
 
 elif style == 'clay' and shot == 'roof' and 'wv' in LG and PR['clay_wv']:   # r2 定稿：白模屋面云纹淡线
     add_lines('wv', LG['wv'], 0.09, (0.42, 0.41, 0.39), 1.0)
 
 # ---------- 三版：提升段钢绞线束（32 台提升器：红色构件按位置聚成 32 组，每组顶部向下射线找网架吊点，画 4 根竖向钢绞线）----------
 STRAND = []
-if shot == 'lift' and PR['strands'] and 'red' in objs and 'steel' in objs:
+if shot == 'lift' and PR['strands'] and style not in ('depth', 'normal', 'seg') and 'red' in objs and 'steel' in objs:
     from mathutils.bvhtree import BVHTree
     from mathutils import Vector
     dg0 = bpy.context.evaluated_depsgraph_get(); so_ = objs['steel']; mw_ = so_.matrix_world   # 世界坐标建 BVH（FromObject 是物体局部坐标，导入带轴变换时会南北颠倒）
@@ -278,22 +463,22 @@ if shot == 'lift' and PR['strands'] and 'red' in objs and 'steel' in objs:
             segs += [cx + dx, zb, -(cy + dy), cx + dx, zt - 0.4, -(cy + dy)]   # 写回数据坐标（x, y 上, z 南）
     print('STRANDS groups=%d strands=%d' % (len(G_), len(segs) // 6))
     if segs:
-        scol = {'ink': INK, 'clay': (0.12, 0.12, 0.13), 'real': (0.05, 0.05, 0.055)}[style]
+        scol = {'ink': INK, 'line': INK, 'clay': (0.12, 0.12, 0.13), 'real': (0.05, 0.05, 0.055)}.get(style, INK)
         STRAND.append(add_lines('strand', segs, PR['strand_r'] or (0.16 if style == 'ink' else 0.12), scol, 1.0))   # r8：加粗（r7 被要求「加粗钢绞线墨线」）
 
 # ---------- 三版：夜景发光十字描边（采光顶格栅线 = 暖白高亮自发光，配合合成器辉光）----------
-if NIGHT and PR['glow3'] and 'glass' in LG:
+if NIGHT and PR['glow3'] and not CTRL and 'glass' in LG:
     add_lines('L_glow', LG['glass'], 0.16 if style == 'ink' else 0.12, (1.0, 0.86, 0.6), 2.2 if style == 'ink' else 6.0)
 
 # ---------- Freestyle（ink：轮廓 + 折棱 + 边界；clay 细淡线）----------
-if style in ('ink', 'clay'):
+if style in ('ink', 'line') or (style == 'clay' and not DETAIL):   # 白模 detail=on 不画 Freestyle 淡线（百万面几何下 Freestyle 太慢）
     sc.render.use_freestyle = True; sc.render.line_thickness_mode = 'ABSOLUTE'; sc.render.line_thickness = 1.0
     vl = sc.view_layers[0]; vl.use_freestyle = True; fs = vl.freestyle_settings; fs.crease_angle = math.radians(134)
     # 三组线：主体 / 细杆（网架 steel、提升器 red/yellow，免得 1 万根杆件三棱柱的折棱糊成黑块）/ 列车（加粗，远景也读得出）
-    CO = {n: bpy.data.collections.new(n) for n in ('mainc', 'fine', 'trainc')}
+    CO = {n: bpy.data.collections.new(n) for n in ('mainc', 'fine', 'trainc', 'nolines')}   # nolines：锁边肋只遮挡、不出线（否则屋面被几百条肋线涂黑）
     for c_ in CO.values(): sc.collection.children.link(c_)
     for key_, o_ in objs.items():
-        cn = 'fine' if key_ in FINE else 'trainc' if (key_.startswith('tr_') or key_ == 'trainW') else 'mainc'
+        cn = 'nolines' if key_ == 'seam' else 'fine' if key_ in FINE else 'trainc' if (key_.startswith('tr_') or key_ == 'trainW') else 'mainc'
         CO[cn].objects.link(o_); sc.collection.objects.unlink(o_)
     CO['mainc'].objects.link(gnd); sc.collection.objects.unlink(gnd)
     for ls in list(fs.linesets): fs.linesets.remove(ls)
@@ -305,16 +490,18 @@ if style in ('ink', 'clay'):
         lst = ls.linestyle; lst.color = col or (INK if style == 'ink' else (0.30, 0.29, 0.27)); lst.thickness = th; lst.alpha = alpha
         return ls
     k = (W / 1920.0)
-    if style == 'ink': lineset('mainc', 1.35 * k + 0.2, 1.0, True); lineset('fine', FINE_T * k + 0.15, FINE_A, False); lineset('trainc', TRAIN_T * k, 1.0, True)
+    if INKLIKE: lineset('mainc', 1.35 * k + 0.2, 1.0, True); lineset('fine', FINE_T * k + 0.15, FINE_A, False); lineset('trainc', TRAIN_T * k, 1.0, True)
     else: lineset('mainc', 0.7 * k + 0.1, 0.5, True); lineset('fine', 0.5 * k + 0.1, 0.25, False); lineset('trainc', 1.2 * k, 0.8, True)
 
 # ---------- 世界 / 灯光 ----------
 w = bpy.data.worlds.new('w'); sc.world = w; w.use_nodes = True; nt = w.node_tree; bg = nt.nodes['Background']
-if style == 'ink': bgc, bgs = ((0.955, 0.935, 0.89) if not NIGHT else (0.035, 0.06, 0.12)), 1.0
+if style == 'line': bgc, bgs = (1.0, 1.0, 1.0), 1.0
+elif CTRL: bgc, bgs = (0.0, 0.0, 0.0), 0.0
+elif style == 'ink': bgc, bgs = ((0.955, 0.935, 0.89) if not NIGHT else (0.035, 0.06, 0.12)), 1.0
 elif NIGHT: bgc, bgs = (0.05, 0.08, 0.16), (5.0 if (style == 'real' and PR['real3']) else 1.0)   # r7：实景夜空提亮（r6 被扣「纯黑虚空」）
 elif style == 'clay': bgc, bgs = (0.86, 0.84, 0.80), 0.55
 else: bgc, bgs = (0.52, 0.62, 0.78), 0.85
-if style != 'ink' and not NIGHT:
+if style != 'ink' and not CTRL and not NIGHT:
     tc = nt.nodes.new('ShaderNodeTexCoord'); sep = nt.nodes.new('ShaderNodeSeparateXYZ'); ramp = nt.nodes.new('ShaderNodeValToRGB')
     nt.links.new(tc.outputs['Generated'], sep.inputs[0]); nt.links.new(sep.outputs['Z'], ramp.inputs[0])
     r = ramp.color_ramp; r.elements[0].position = 0.5; r.elements[0].color = (*[c * 0.9 for c in bgc], 1); r.elements[1].position = 0.75
@@ -377,6 +564,15 @@ if NIGHT:   # r2：夜景辉光（合成器 Glare；API 不同版本写法不同
         tree.links.new(gi.outputs['Image'], gl.inputs['Image']); tree.links.new(gl.outputs['Image'], go.inputs[0]); print('GLOW_OK')
     except Exception as ex: print('GLOW_FAIL', ex)
 sc.render.image_settings.file_format = 'PNG'; sc.render.filepath = out
+if CTRL and style != 'line':   # 控制图：自发光、无 AA 混色（seg 1 采样保证纯色）、透明天空、float32 EXR
+    sc.render.film_transparent = True; sc.render.filter_size = 0.0 if style == 'seg' else 1.0
+    sc.eevee.taa_render_samples = 1 if style == 'seg' else 64   # 64 采样：亚像素锁边肋（0.5 m ≈ 2 px）充分平均，减轻摩尔纹
+    for k_ in ('use_raytracing', 'use_gtao', 'use_shadows', 'use_bloom'):
+        try: setattr(sc.eevee, k_, False)
+        except Exception: pass
+    sd.energy = 0.0
+    sc.render.image_settings.file_format = 'OPEN_EXR'; sc.render.image_settings.color_mode = 'RGBA'; sc.render.image_settings.color_depth = '32'
+    sc.render.filepath = os.path.splitext(out)[0] + '.exr'
 if shot == 'train':   # 同框核查：列车 / 云门顶点抽样 → 在画框内的比例、从相机射线首个命中是否就是它（未被遮挡）的比例
     from bpy_extras.object_utils import world_to_camera_view
     dg = bpy.context.evaluated_depsgraph_get(); bpy.context.view_layer.update()
@@ -394,4 +590,38 @@ if shot == 'train':   # 同框核查：列车 / 云门顶点抽样 → 在画框
                 if hit and (ho.name.split('.')[0] in grp or (loc - p_).length < 1.5): vis += 1
         print('FRAMECHECK %s n=%d inframe=%.2f visible=%.2f' % ('+'.join(grp), len(pts), inf / max(1, len(pts)), vis / max(1, len(pts))))
 bpy.ops.render.render(write_still=True)
+# ---------- 11-09 控制图后处理：EXR 原始值 → ControlNet 用 PNG（自带 PNG 编码，不依赖 PIL）----------
+if CTRL and style != 'line':
+    import numpy as np, zlib
+    def png_write(path, a):
+        a = np.ascontiguousarray(a[::-1]); h, w_ = a.shape[:2]; ch = 1 if a.ndim == 2 else a.shape[2]
+        bd = 16 if a.dtype == np.uint16 else 8; ct = {1: 0, 3: 2, 4: 6}[ch]
+        raw = a.astype('>u2').tobytes() if bd == 16 else a.astype(np.uint8).tobytes(); rl = w_ * ch * (bd // 8)
+        data = b''.join(b'\x00' + raw[i * rl:(i + 1) * rl] for i in range(h))
+        def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+        open(path, 'wb').write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', w_, h, bd, ct, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(data, 6)) + chunk(b'IEND', b''))
+    base_ = os.path.splitext(out)[0]; exr = base_ + '.exr'
+    im = bpy.data.images.load(exr); px = np.empty(W * H * 4, np.float32); im.pixels.foreach_get(px); px = px.reshape(H, W, 4)
+    al = px[..., 3]; msk = al > 0.5; rgb = px[..., :3] / np.maximum(al, 1e-6)[..., None]   # 反预乘（边缘抗锯齿像素）
+    dg_ = bpy.context.evaluated_depsgraph_get(); ce = co.evaluated_get(dg_); R3 = np.array(ce.matrix_world.to_3x3())
+    info = dict(shot=shot, style=style, W=W, H=H, lens=S['lens'], sensor_width=36, pos_data=S['pos'], tgt_data=S['tgt'],
+                cam_matrix_world=[list(r) for r in ce.matrix_world], detail=DETAIL, coverage=round(float(msk.mean()), 4))
+    if style == 'depth':
+        z = rgb[..., 0]; zv = z[msk]; zn = float(np.percentile(zv, 0.5)); zf = float(min(np.percentile(zv, 99.9), 3000.0))
+        inv = (1.0 / np.maximum(z, 1e-3) - 1.0 / zf) / (1.0 / zn - 1.0 / zf); inv = np.clip(inv, 0, 1); inv[~msk] = 0
+        png_write(base_ + '.png', (inv * 255 + 0.5).astype(np.uint8)); png_write(base_ + '_16.png', (inv * 65535 + 0.5).astype(np.uint16))
+        info.update(depth='逆深度（视差）归一化：v = (1/z − 1/zf) / (1/zn − 1/zf)，近白远黑，天空 0', z_near_m=round(zn, 2), z_far_m=round(zf, 2), z_min_m=round(float(zv.min()), 2), z_max_m=round(float(zv.max()), 2))
+    elif style == 'normal':
+        nw = rgb * 2 - 1; nc = nw @ R3   # 世界 → 相机：n_cam = Rᵀ n_world（相机看 −Z，Y 上，X 右）
+        nc /= np.maximum(np.linalg.norm(nc, axis=2, keepdims=True), 1e-6)
+        cn = np.stack([-nc[..., 0], nc[..., 1], nc[..., 2]], -1); gl = nc   # cn：红 = 朝左、绿 = 朝上、蓝 = 朝向相机（ControlNet 1.1 NormalBAE 约定）；gl：红 = 朝右
+        for nm_, a_ in (('_cn', cn), ('_gl', gl)):
+            u8 = ((a_ * 0.5 + 0.5) * 255 + 0.5).clip(0, 255).astype(np.uint8); u8[~msk] = 0; png_write(base_ + nm_ + '.png', u8)
+        info.update(normal='相机空间；_cn 红=左 绿=上 蓝=朝相机（ControlNet 1.1 normalbae）；_gl 红=右；天空 (0,0,0)')
+    elif style == 'seg':
+        u8 = (rgb * 255 + 0.5).clip(0, 255).astype(np.uint8); u8[~msk] = SEG['sky']; png_write(base_ + '.png', u8)
+        cols, cnt = np.unique(u8.reshape(-1, 3), axis=0, return_counts=True); inv_ = {v: k for k, v in SEG.items()}
+        tab = sorted([(int(c_), inv_.get(tuple(int(x) for x in cl), '?'), tuple(int(x) for x in cl)) for cl, c_ in zip(cols, cnt)], reverse=True)
+        info.update(seg_palette=SEG, seg_pixels=[t for t in tab if t[0] >= 50], seg_colors_total=len(cols), seg_colors_unlisted_px=int(sum(t[0] for t in tab if t[1] == '?')))
+    json.dump(info, open(base_ + '_cam.json', 'w'), ensure_ascii=False, indent=1); print('CTRL_OUT', base_, json.dumps({k: info[k] for k in info if k not in ('seg_palette', 'cam_matrix_world')}, ensure_ascii=False)[:600])
 print('V2_RENDER %s %s %s %dx%d %.1fs' % (shot, style, out, W, H, time.time() - T0))
