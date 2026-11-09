@@ -47,7 +47,36 @@
     function hashWith(h, focus) { const q = new URLSearchParams(String(h || '').replace(/^#/, '')); if (focus) q.set('focus', focus); else q.delete('focus'); return q.toString().replace(/%2C/g, ',').replace(/%3A/g, ':'); }
     // HZ_MODS 可选钩子（pick / unpick 等）：逐个调 m[name](...args)，没有该方法跳过；抛错只 warn 一次（每模块每钩子），不停用、不连坐；返回实际调用数
     function modsCall(list, name, args, warn) { let n = 0; for (const m of list || []) { if (!m || typeof m[name] !== 'function') continue; try { m[name](...(args || [])); n++; } catch (e) { const w = m.__plWarn || (m.__plWarn = {}); if (warn && !w[name]) { w[name] = 1; warn('[hzview] HZ_MODS ' + m.id + '.' + name + '() 抛异常，已忽略：' + (e && e.message || e)); } } } return n; }
-    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith, modsCall };
+    // 图纸范围（11-09，委托人：S-201 三维与图纸对不上）：插件图纸激活时，本图内容在 3D 里照常画，其余淡显成幽灵。
+    // items = [{ key, min:[x,y,z], max:[x,y,z], st, rm }]（宿主的构件表，一项一个 HZ part）；返回 { on, mask(1 = 本图内容), n, live, src, keys }。
+    // 范围 = pl.scope.keys ∪ (pl.leadKeys 或宿主 LEAD_KEYS) 的工序 ∪ parts(t) 各 box 紧包的构件（一个 box 至多认 16 件、每件至少占盒体积 2%，免得「全场」「分区」大盒把整站认进来）
+    //        ∪ pl.scope.levels（标高带 [[y0, y1]]，可与 zones 取交）∪ pl.scope.zones（'ZS' / 'ZM' / 'ZN'，按构件中心 z）∪ pl.scope.boxes；
+    // 只认本图时间窗内出现过的构件。pl.scope === false 或 { all: true } → 全显；推不出任何构件或已占在场构件 ≥ 90% → 全显（宁可不淡）。
+    function scopeMask(pl, items, o) { o = o || {}; const n = items.length, m = new Uint8Array(n); let sc = pl ? pl.scope : null;
+      if (typeof sc === 'function') { try { sc = sc(o.t); } catch (e) { sc = null; } }
+      const all = src => ({ on: false, mask: m.fill(1), n, live: n, src, keys: [] });
+      if (!pl || sc === false || (sc && sc.all)) return all('all');
+      sc = sc && typeof sc === 'object' ? sc : {};
+      const W = Array.isArray(pl.window) ? pl.window : [-Infinity, Infinity], src = [];
+      const live = it => it.st != null && it.st <= W[1] && !(it.rm && it.rm[0] >= 0 && it.rm[0] + it.rm[1] <= W[0]);
+      const keys = new Set([].concat(sc.keys || [], Array.isArray(pl.leadKeys) ? pl.leadKeys : (o.leadKeys || [])).map(k => String(k).replace(/~rm$/, '')));
+      if (keys.size) { src.push('keys'); for (let i = 0; i < n; i++) if (keys.has(items[i].key)) m[i] = 1; }
+      const ids = Array.isArray(sc.ids) ? new Set(sc.ids.map(String)) : null, CAP = o.cap || 16, tol = 0.6;
+      const vol0 = b => (Math.abs(b[3] - b[0]) + 0.2) * (Math.abs(b[4] - b[1]) + 0.2) * (Math.abs(b[5] - b[2]) + 0.2);   // box 认件只认「占这个盒子一块」的构件（≥ 2% 体积），细高的塔吊盒不顺带认进楼板碎块
+      const inside = (it, b, e) => { for (let k = 0; k < 3; k++) if (it.min[k] < Math.min(b[k], b[k + 3]) - e || it.max[k] > Math.max(b[k], b[k + 3]) + e) return false; return true; };
+      let nb = 0; for (const p of o.parts || []) { if (!okBox(p) || (ids && !ids.has(String(p.id)))) continue; const hit = [];
+        const bv = vol0(p.box); for (let i = 0; i < n && hit.length <= CAP; i++) { const it = items[i]; if (live(it) && inside(it, p.box, tol) && vol0([...it.min, ...it.max]) >= 0.02 * bv) hit.push(i); }
+        if (hit.length && hit.length <= CAP) { nb++; for (const i of hit) m[i] = 1; } }
+      if (nb) src.push('parts');
+      const lv = (sc.levels || []).filter(b => Array.isArray(b) && b.length === 2 && b.every(Number.isFinite)), zs = (sc.zones || []).map(String), bx = (sc.boxes || []).filter(b => okBox({ box: b })), mz = o.midZ == null ? 17 : o.midZ;
+      const zoneOf = it => { const z = (it.min[2] + it.max[2]) / 2; return Math.abs(z) <= mz + 3.5 ? 'ZM' : z > 0 ? 'ZS' : 'ZN'; };
+      if (lv.length || zs.length) { src.push('band'); for (let i = 0; i < n; i++) { const it = items[i]; if (!live(it)) continue;
+        if (lv.length && !lv.some(b => it.min[1] >= Math.min(b[0], b[1]) - 0.5 && it.max[1] <= Math.max(b[0], b[1]) + 0.5)) continue; if (zs.length && !zs.includes(zoneOf(it))) continue; m[i] = 1; } }
+      if (bx.length) { src.push('boxes'); for (let i = 0; i < n; i++) if (live(items[i]) && bx.some(b => inside(items[i], b, tol))) m[i] = 1; }
+      let k = 0, L = 0; const ks = new Set(); for (let i = 0; i < n; i++) { if (m[i]) ks.add(items[i].key); if (!live(items[i])) continue; L++; if (m[i]) k++; }
+      if (!k) return all('none'); if (k >= 0.9 * L) return all('most');
+      return { on: true, mask: m, n: k, live: L, src: src.join('+'), keys: [...ks] }; }
+    return { KMIN, KMAX, apply, fwd, inv, clamp, zoomAt, centerOn, center, hitPart, pickBox, inBox, vol, okBox, okHit, safeParts, byId, parseHash, hashWith, modsCall, scopeMask };
   })();
   // </plugLink>
   S.plugLink = PL;
@@ -129,16 +158,17 @@
     // ---------------- 构件：1 个网格（实景 / 墨线两套材质）+ 1 组墨线 ----------------
     const U = { uT: { value: 0 }, uG: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Matrix4()) }, uGlowDays: { value: 6 }, uGlowCol: { value: new THREE.Vector3(1.0, 0.58, 0.26).multiplyScalar(0.6) }, uLights: { value: 0 }, uPV: { value: 0 }, uPVs: { value: 0 }, uRoofLift: { value: 0 }, uWave: { value: 0 }, uLightCol: { value: new THREE.Vector3(1.0, 0.78, 0.5) },
       uPaper: { value: new THREE.Color('#efe9dd') }, uRed: { value: new THREE.Color('#b3202a') }, uInk: { value: new THREE.Color('#1d1a17') }, uTemp: { value: new THREE.Color('#c46a12') }, uSun2: { value: new THREE.Vector3(-0.45, 0.8, 0.4).normalize() }, uLA: { value: 1 }, uGhost: { value: 1 }, uMv: { value: [0, 0, 0, 0, 0, 0] }, uCam: { value: new THREE.Vector3() }, uCut: { value: -1e9 },
-      uYm: { value: 0 }, uRake: { value: 0 }, uRakeDir: { value: new THREE.Vector3() }, uRakeK: { value: 1.5 } };   // uYm：云门模块 web/mods/yunmen.js 生效时墨线模式隐去旧云门体块（aF = 3）；uRake：屋面低角度掠射光（四朵云读得出）
+      uYm: { value: 0 }, uRake: { value: 0 }, uRakeDir: { value: new THREE.Vector3() }, uRakeK: { value: 1.5 }, uScope: { value: 0 }, uGhP: { value: 0 } };   // uYm：云门模块 web/mods/yunmen.js 生效时墨线模式隐去旧云门体块（aF = 3）；uRake：屋面低角度掠射光（四朵云读得出）
     // set2c：统一剖切平面 x = 39 m（切掉 x < 39）。自定义着色器用 uCut（-1e9 = 不切）；内置材质常驻 clippingPlanes=[CUTP]，关闭时把平面推到 1e7 外 → 切换不重新编译
     const CUTP = new THREE.Plane(new THREE.Vector3(1, 0, 0), 1e7); renderer.localClippingEnabled = true; S.CUTP = CUTP;
-    const VDEF = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute vec4 aM;
-      uniform float uT, uGlowDays; uniform mat4 uG[6]; varying vec4 vM; varying float vGlow; varying vec3 vWq; mat4 hzM; vec3 hzP;
+    const VDEF = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute vec4 aM; attribute float aGh;
+      uniform float uT, uGlowDays, uScope, uGhP; uniform mat4 uG[6]; varying vec4 vM; varying float vGlow; varying vec3 vWq; mat4 hzM; vec3 hzP;
       void hzCalc() { float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0;
         if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
         float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; q.y = aY.x + (q.y - aY.x) * k;
         hzM = uG[int(aG + 0.5)]; hzP = (hzM * vec4(q, 1.0)).xyz; if (uT < s || k < 1e-4) hzP = vec3(0.0, -1e5, 0.0);
-        vGlow = uT >= s ? (1.0 - smoothstep(s + d, s + d + uGlowDays, uT)) * (aR.x >= 0.0 && uT > aR.x ? 0.0 : 1.0) : 0.0; vM = aM; vWq = q; }
+        vGlow = uT >= s ? (1.0 - smoothstep(s + d, s + d + uGlowDays, uT)) * (aR.x >= 0.0 && uT > aR.x ? 0.0 : 1.0) : 0.0; vM = aM; vWq = q;
+        if (uScope > 0.5 && abs(step(0.5, aGh) - uGhP) > 0.5) hzP = vec3(0.0, -1e5, 0.0); }   /* 图纸范围：主网格塌掉范围外构件（aGh = 1），幽灵网格（uGhP = 1）只留它们；没有 aGh 的几何默认 0 = 范围内 */
 `;
     const PK = HZ.PVK, PP = HZ.P;
     const PVGLSL = `varying vec4 vM; varying float vGlow; varying vec3 vWq; uniform vec3 uGlowCol, uLightCol; uniform float uLights, uPV, uPVs, uRoofLift, uWave;
@@ -167,13 +197,14 @@
           if (l < 0.08 && n.y < 0.5) col *= 1.0 - 0.07 * step(0.75, fract((gl_FragCoord.x - gl_FragCoord.y) / 4.0));
           if (vCur > 0.5 && vTmp < 0.5) col = mix(col, uRed, 0.5); if (vMv > 1.5 && vTmp < 0.5) col = mix(col, uRed, 0.5); else if (vMv > 0.5 && vTmp < 0.5) col = mix(col, uRed, 0.28); { ` + PVINK + ` col = mix(col, vec3(0.27, 0.33, 0.45), 0.6 * hzPV); } /* GPU 审计 #8：墨线也画光伏条带，与 S-401 图纸对上 */ gl_FragColor = vec4(col, 1.0); }` });
     // 墨线：未建 = 设计位幽灵（淡红）/ 在建 = 红 / 已建 = 墨 / 临时 = 橙；随姿态矩阵移动
-    const LVS = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute float aF; uniform float uT, uGlowDays; uniform mat4 uG[6]; uniform float uMv[6], uYm; uniform vec3 uCam; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
-      void main() { vMv = uMv[int(aG + 0.5)]; float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0; if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
+    const LVS = `attribute vec4 aK; attribute vec2 aR; attribute vec2 aY; attribute float aG; attribute float aF; uniform float uT, uGlowDays; uniform mat4 uG[6]; uniform float uMv[6], uYm; uniform vec3 uCam; attribute float aGh; varying float vGh; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
+      void main() { vGh = aGh; vMv = uMv[int(aG + 0.5)]; float s = aK.x, d = max(aK.y, 1e-3), p = clamp((uT - s) / d, 0.0, 1.0), r = 1.0; if (aR.x >= 0.0) r = 1.0 - clamp((uT - aR.x) / max(aR.y, 1e-3), 0.0, 1.0);
         float k = p * r; k = k * k * (3.0 - 2.0 * k); vec3 q = position; mat4 M = uG[int(aG + 0.5)];
         if (uT < s) { vS = -1.0; M = mat4(1.0); } else { q.y = aY.x + (q.y - aY.x) * k; vS = uT < s + d + 2.0 ? 0.5 : 2.0; if (k < 1e-4) vS = -3.0; }
         vec4 w = M * vec4(q, 1.0); vWx = w.x; vF = aF; if (aF > 2.5) { vF = 0.0; if (uYm > 0.5) vS = -3.0; } vD = distance(w.xyz, uCam); gl_Position = projectionMatrix * viewMatrix * w; }`;
-    const LFS = `uniform vec3 uInk, uRed, uTemp; uniform float uLA, uGhost, uCut; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
+    const LFS = `uniform vec3 uInk, uRed, uTemp; uniform float uLA, uGhost, uCut, uScope; varying float vGh; varying float vS; varying float vF; varying float vD; varying float vMv; varying float vWx;
       void main() { if (vS < -2.0 || vWx < uCut) discard; float fade = 1.0 - 0.55 * smoothstep(900.0, 3000.0, vD);
+        if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0) discard; gl_FragColor = vec4(uInk, 0.11 * uLA * fade); return; }   /* 图纸范围外：已建构件只留淡墨线（与设计位幽灵同一量级），未建 / 在建不画 */
         if (vS < 0.0) { if (uGhost < 0.5 || vF > 0.5) discard; gl_FragColor = vec4(uRed, 0.085 * uLA * fade); return; }
         if (vS < 1.0) { gl_FragColor = vec4(uRed, uLA); return; }
         if (vMv > 1.5 && vF < 0.5) { gl_FragColor = vec4(uRed, uLA); return; } if (vMv > 0.5 && vF < 0.5) { gl_FragColor = vec4(mix(uInk, uRed, 0.8), 0.85 * uLA); return; } gl_FragColor = vec4(vF > 0.5 ? uTemp : uInk, (vF > 1.5 ? 0.55 : 0.72) * uLA * fade); }`;
@@ -184,15 +215,15 @@
     const { g: trainGeo, gw: trainWGeo } = HZ.makeTrain();
     const YMK = new Set(['ymf', 'ym', 'ymc']);   // 旧云门体块（hzseq.js 第 11 节）：顶点 / 线 aF 记 3，uYm = 1 时墨线模式塌缩（实景照旧用体块）
     function compile() {
-      const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0, ym: YMK.has(a.key) }); }
-      items.push({ p: { geo: trainGeo, mat: 'train', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
-      items.push({ p: { geo: trainWGeo, mat: 'trainW', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
+      const items = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) items.push({ p, key: a.key, st: p.st, du: p.du, rm: p.rm, temp: a.kind === 'temp' ? 1 : 0, ym: YMK.has(a.key) }); }
+      items.push({ key: 'train', p: { geo: trainGeo, mat: 'train', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
+      items.push({ key: 'train', p: { geo: trainWGeo, mat: 'trainW', grp: 5 }, st: -20, du: 0.01, rm: [-1, 0], temp: 0 });
       let nv = 0, nl = 0; for (const it of items) { nv += it.p.geo.P.length / 3; nl += it.p.geo.L.length / 3; }
       const MF = new Float32Array(nv), Pp = new Float32Array(nv * 3), N = new Float32Array(nv * 3), C = new Float32Array(nv * 3), Kk = new Float32Array(nv * 4), R = new Float32Array(nv * 2), Y = new Float32Array(nv * 2), Gp = new Float32Array(nv), M = new Float32Array(nv * 4);
       const LP = new Float32Array(nl * 3), LK = new Float32Array(nl * 4), LR = new Float32Array(nl * 2), LY = new Float32Array(nl * 2), LG = new Float32Array(nl), LF = new Float32Array(nl);
       const col = new THREE.Color(); let iv = 0, il = 0;
       const SMV = [];   // 金属屋面顶面顶点（下面按位置平均法线 → 掠射光下四朵云是连续明暗而不是 3.5 m 三角碎面）
-      for (const it of items) { const g = it.p.geo, mt = HZ.MAT[it.p.mat], y0 = g.min[1], gg = it.p.grp || 0; if (it.p.mat === 'clad') SMV.push([iv, iv + g.P.length / 3]);
+      for (const it of items) { const g = it.p.geo, mt = HZ.MAT[it.p.mat], y0 = g.min[1], gg = it.p.grp || 0; if (it.p.mat === 'clad') SMV.push([iv, iv + g.P.length / 3]); it.v = [iv, iv + g.P.length / 3]; it.l = [il, il + g.L.length / 3];
         for (let i = 0; i < g.P.length / 3; i++, iv++) { for (let k = 0; k < 3; k++) { Pp[iv * 3 + k] = g.P[i * 3 + k]; N[iv * 3 + k] = g.N[i * 3 + k]; }
           col.setRGB(g.C[i * 3], g.C[i * 3 + 1], g.C[i * 3 + 2], THREE.SRGBColorSpace); C[iv * 3] = col.r; C[iv * 3 + 1] = col.g; C[iv * 3 + 2] = col.b;
           Kk[iv * 4] = it.st; Kk[iv * 4 + 1] = it.du; R[iv * 2] = it.rm[0]; R[iv * 2 + 1] = it.rm[1]; Y[iv * 2] = y0; Y[iv * 2 + 1] = g.max[1]; Gp[iv] = gg; M[iv * 4] = mt.r; M[iv * 4 + 1] = mt.m; M[iv * 4 + 2] = mt.e || 0; M[iv * 4 + 3] = mt.k || 0; MF[iv] = it.ym ? 3 : it.temp; }
@@ -203,15 +234,20 @@
         for (const [a, b] of SMV) for (let i = a; i < b; i++) { if (N[i * 3 + 1] < 0.5) continue; const v = acc.get(key(i)), l = Math.hypot(v[0], v[1], v[2]) || 1; N[i * 3] = v[0] / l; N[i * 3 + 1] = v[1] / l; N[i * 3 + 2] = v[2] / l; } S.roofSmooth = acc.size; }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(Pp, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
-      geo.setAttribute('aK', new THREE.BufferAttribute(Kk, 4)); geo.setAttribute('aR', new THREE.BufferAttribute(R, 2)); geo.setAttribute('aY', new THREE.BufferAttribute(Y, 2)); geo.setAttribute('aG', new THREE.BufferAttribute(Gp, 1)); geo.setAttribute('aM', new THREE.BufferAttribute(M, 4)); geo.setAttribute('aF', new THREE.BufferAttribute(MF, 1));
+      geo.setAttribute('aK', new THREE.BufferAttribute(Kk, 4)); geo.setAttribute('aR', new THREE.BufferAttribute(R, 2)); geo.setAttribute('aY', new THREE.BufferAttribute(Y, 2)); geo.setAttribute('aG', new THREE.BufferAttribute(Gp, 1)); geo.setAttribute('aM', new THREE.BufferAttribute(M, 4)); geo.setAttribute('aF', new THREE.BufferAttribute(MF, 1)); geo.setAttribute('aGh', new THREE.BufferAttribute(new Float32Array(nv), 1));
       geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 30, 0), 1500);
       const litMat = patchStd(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.9, clippingPlanes: [CUTP], clipShadows: true })); envMats.push(litMat);
       const mesh = new THREE.Mesh(geo, litMat); mesh.castShadow = mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.userData.lit = litMat;
       mesh.customDepthMaterial = patchDepth(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide, clippingPlanes: [CUTP], clipShadows: true }));
-      const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(LP, 3)); lg.setAttribute('aK', new THREE.BufferAttribute(LK, 4)); lg.setAttribute('aR', new THREE.BufferAttribute(LR, 2)); lg.setAttribute('aY', new THREE.BufferAttribute(LY, 2)); lg.setAttribute('aG', new THREE.BufferAttribute(LG, 1)); lg.setAttribute('aF', new THREE.BufferAttribute(LF, 1));
+      const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(LP, 3)); lg.setAttribute('aK', new THREE.BufferAttribute(LK, 4)); lg.setAttribute('aR', new THREE.BufferAttribute(LR, 2)); lg.setAttribute('aY', new THREE.BufferAttribute(LY, 2)); lg.setAttribute('aG', new THREE.BufferAttribute(LG, 1)); lg.setAttribute('aF', new THREE.BufferAttribute(LF, 1)); lg.setAttribute('aGh', new THREE.BufferAttribute(new Float32Array(nl), 1));
       const lines = new THREE.LineSegments(lg, lineMat); lines.frustumCulled = false; lines.renderOrder = 2;
-      S.tris = nv / 3; S.segs = nl / 2; return { mesh, lines }; }
-    const { mesh: MESH, lines: LINES } = compile(); scene.add(MESH, LINES);
+      S.tris = nv / 3; S.segs = nl / 2; return { mesh, lines, items }; }
+    const { mesh: MESH, lines: LINES, items: ITEMS } = compile(); scene.add(MESH, LINES);
+    // 图纸范围幽灵（11-09）：与 MESH 共用同一份几何，只画 aGh = 1（范围外）的构件：纸色上淡墨半透明、不写深度、不投影、不拾取；墨线另由 LFS 降为淡墨
+    const ghostMat = new THREE.ShaderMaterial({ uniforms: Object.assign({}, U, { uGhP: { value: 1 }, uGhA: { value: 0.16 } }), side: THREE.DoubleSide, transparent: true, depthWrite: false,
+      vertexShader: VDEF + `attribute float aF; uniform float uYm; varying vec3 vN; varying float vWx; void main() { hzCalc(); if (aF > 2.5 && uYm > 0.5) hzP = vec3(0.0, -1e5, 0.0); vWx = hzP.x; vN = mat3(hzM) * normal; gl_Position = projectionMatrix * viewMatrix * vec4(hzP, 1.0); }`,
+      fragmentShader: `uniform vec3 uPaper, uInk, uSun2; uniform float uCut, uGhA; varying vec3 vN; varying float vWx; void main() { if (vWx < uCut) discard; float l = abs(dot(normalize(vN), uSun2)); gl_FragColor = vec4(mix(uPaper, uInk, 0.16 + 0.10 * (1.0 - l)), uGhA); }` });
+    const GHOST = new THREE.Mesh(MESH.geometry, ghostMat); GHOST.frustumCulled = false; GHOST.renderOrder = 1; GHOST.visible = false; scene.add(GHOST); S.GHOST = GHOST;
 
     // ---------------- set2d：剖切封面（x = 39 m 截面多边形；与构件同一套 aK/aR/aY 生长、未建不显示；uCut 关 = 顶点塌缩，切换不重新编译）----------------
     // 11-08：网架杆件（含斜杆，p.cells 的 rods，三棱柱）也封面——每根穿过 x = SX 的杆截出一个三角形；随分区姿态 uG[aG] 变换（分区只绕平行 x 的轴转 + 竖移，截面仍在 x = SX 上）
@@ -811,7 +847,7 @@
     const lerpT = (a, b, k) => { if (Array.isArray(a)) return b == null ? a : a.map((v, i) => lerpT(v, b[i], k)); if (typeof a === 'number') return b == null ? a : a + (b - a) * k; if (a && typeof a === 'object') { const o = {}; for (const key in a) o[key] = lerpT(a[key], b ? b[key] : null, k); return o; } return a; };
     let duskK = 0, duskQ = -1; const sunEl0 = look.sunEl;
     function setDusk(k, fk) { const q = Math.round(k * 12) * 100 + Math.round((FV.se !== sunEl0 ? fk : 0) * 12); if (q === duskQ) return; duskQ = q; duskK = Math.round(k * 12) / 12; const e0 = sunEl0 + (FV.se - sunEl0) * (q % 100) / 12; Object.assign(T, lerpT(TG, BH, duskK)); look.sunEl = e0 + (BH.el - e0) * duskK; hemi.intensity = 1.05 * (1 - 0.55 * duskK); applyLook(); }
-    function setT(t, fromU) { t = Math.max(TL.t0, Math.min(TL.t1, t)); S.st.t = t; S.st.u = fromU != null ? fromU : TL.t2u(t); U.uT.value = Math.min(t, TL.OPEN + 0.001);
+    function setT(t, fromU) { t = Math.max(TL.t0, Math.min(TL.t1, t)); S.st.t = t; S.st.u = fromU != null ? fromU : TL.t2u(t); U.uT.value = Math.min(t, TL.OPEN + 0.001); scopeAt(t);
       const ps = HZ.pose(t); for (const g of [1, 2, 3, 4]) U.uG.value[g].fromArray(HZ.mat(ps, g)); S.pose = ps;
       zoneTint(t, ps);   // set1：S-301 正在动的分区染淡红；set2b：选中分区 = 2（加深）
       const rig = K.rig, sv = t >= rig.start + rig.dur * 0.6 && t < rig.rm.start + rig.rm.dur * 0.3; STR.visible = sv; STR.material.uniforms.uA.value = sv ? 1 : 0;
@@ -956,9 +992,9 @@
     let lastNow = performance.now();
     const GL2 = (() => { const g = renderer.getContext(); return typeof WebGL2RenderingContext !== 'undefined' && g instanceof WebGL2RenderingContext && !hp.has('nofence') ? g : null; })(), FEN = [];
     { const az = THREE.MathUtils.degToRad(232), el = THREE.MathUtils.degToRad(12); U.uRakeDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); }   // 掠射光方向：与实景太阳同方位（西南 232°），高 12°
-    function renderInk(la) { CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
+    function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.16; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = true; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
       U.uLA.value = la; renderer.setRenderTarget(null); renderer.setClearColor(0xefe9dd, 1); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); }
-    function renderLit() { CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
+    function renderLit() { ghostMat.uniforms.uGhA.value = 0.3; CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 1);
       shadowAge++; if (shadowWant && (!S.st.play || shadowAge >= (S.pose && S.pose.lifting ? SPL : SP))) { renderer.shadowMap.needsUpdate = true; shadowWant = false; shadowAge = 0; lastShadowT = S.st.t; }
       if (POST.level > 0) POST.render(scene, cam, postOpts()); else { renderer.setRenderTarget(null); renderer.render(scene, cam); } }
@@ -984,6 +1020,20 @@
     const OBSEL = '#big,#rd .r,#fin,#calc';
     // <leadPick> 引线标注按当前图号取材（check_callouts 在 vm 里求值本段，须保持纯函数、不引用外部变量）
     const LEAD_KEYS = { 'S-101': ['found'], 'S-201': ['frameS', 'frameN', 'pierS', 'pierN', 'deckS', 'deckN', 'platS', 'platN', 'deckapS', 'deckapN', 'trackS', 'trackN'], 'S-251': ['jig1', 'jig2', 'jig3', 'asm1', 'asm2', 'asm3'], 'S-401': ['holes', 'sky', 'clad', 'pv'], 'S-501': ['ymf', 'ycrane', 'ym', 'ymc', 'tod', 'ycrane~rm', 'crane~rm', 'open'] };
+    // 图纸范围（11-09）：插件图纸激活时，本图内容照常画、其余淡显（PL.scopeMask；接口见 docs/hz-atlas-check.md §3 第 15 条）。按图缓存，切图时写一次 aGh。
+    // 总图 S-000 / S-301 不用；收官（开通前 12 天起，与实景渐显同一时刻）全显。
+    const SCOPES = {}, SCOPE_ALL = new Set(['S-001']), SCOPE_HOST = { 'S-002': { keys: ['crane', 'ycrane'], ids: [] } }; let scopeSheet = null;   // SCOPE_HOST：插件未声明 pl.scope 时宿主代填（S-002 履带吊 C-* 盒是站位区，会顺带认进脚下楼板，故只认塔吊工序；已派单请作者自己声明）   // S-001 总进度横道图讲的就是全部工序：视同总图全显（插件可用 pl.scope 覆盖除此之外的默认）
+    function scopeOf(sheet) { if (SCOPES[sheet]) return SCOPES[sheet]; const pl = PLUG[sheet]; let r;
+      if (!pl || SCOPE_ALL.has(sheet)) r = { on: false, mask: null, n: 0, live: 0, src: 'host', keys: [] };
+      else { const its = ITEMS.map(it => ({ key: it.key, min: it.p.geo.min, max: it.p.geo.max, st: it.st, rm: it.rm })), parts = [], [a, b] = pl.window || [0, 0];
+        for (let i = 0; i <= 6; i++) for (const p of PL.safeParts(pl, a + (b - a) * i / 6, plugCtx(), pwarn)) parts.push(p);
+        r = PL.scopeMask(pl.scope === undefined && SCOPE_HOST[sheet] ? Object.assign(Object.create(pl), { scope: SCOPE_HOST[sheet] }) : pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD_KEYS[sheet], parts, midZ: P.midZ, t: a }); }
+      return (SCOPES[sheet] = r); }
+    function scopeAt(t) { const sc = scopeOf(SHEET); if (scopeSheet !== SHEET) { scopeSheet = SHEET;
+        const ga = MESH.geometry.getAttribute('aGh'), la = LINES.geometry.getAttribute('aGh'); ga.array.fill(0); la.array.fill(0);
+        if (sc.on) ITEMS.forEach((it, i) => { if (sc.mask[i]) return; ga.array.fill(1, it.v[0], it.v[1]); la.array.fill(1, it.l[0], it.l[1]); });
+        ga.needsUpdate = la.needsUpdate = true; }
+      const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on; S.scope = { sheet: SHEET, on, n: sc.n, live: sc.live, src: sc.src, keys: sc.keys }; }
     function leadOwn(sheet, pl) { if (pl && Array.isArray(pl.leadKeys)) return pl.leadKeys.slice(); if (pl) return LEAD_KEYS[sheet] || []; return null; }   // null = 总图（不过滤）；插件图没登记 → 空表 → 宁缺毋串
     const leadOwns = (own, k) => !own || own.indexOf(k) >= 0;
     function leadAct(K, own, t, capAct) { if (!own) return capAct && capAct.parts && capAct.parts.length && capAct.parts.some(p => p.st <= t) ? capAct : null;
@@ -1042,7 +1092,7 @@
     // 云门：web/mods/yunmen.js 生效 → 墨线模式隐去旧体块（uYm），模块墨线只在墨线模式显示；实景 / 结尾仍用体块
     const YMM = MODS.find(m => m.id === 'yunmen'), YMON = !!YMM, YMO = YMM ? YMM.__nodes : []; S.yunmen = YMON;   // pick / unpick 走 S.modsList（build 失败的不在内；update 抛错停用的同步移出）
     tabs(); applyLook(); layout();
-    { STR.visible = true; renderer.compile(scene, cam); MESH.material = inkMat; renderer.compile(scene, cam); MESH.material = MESH.userData.lit; STR.visible = false; }
+    { STR.visible = true; GHOST.visible = true; renderer.compile(scene, cam); MESH.material = inkMat; renderer.compile(scene, cam); MESH.material = MESH.userData.lit; STR.visible = false; GHOST.visible = false; }
     // 预热：实景 / 墨线两条管线在“施工中（塔吊、履带吊、运输车、钢绞线在场）”与“竣工”各画一帧，着色器与阴影深度材质在加载时编译（Mac 实测：首次在施工中切实景卡 2.6 s）
     tabs(); S.sheet = SHEET;
     if (!hp.has('nowarm')) { const pref = S.st.pref, TLk = TL; TL = TLF; for (const [tw, m] of [[K.lift1.start + 1, 'lit'], [K.asm1.start + 10, 'lit'], [TL.Tmax, 'lit'], [K.lift1.start + 1, 'ink']]) { S.st.pref = m; setT(tw); dynKey = ''; rebuildDyn(tw); STR.visible = true; shadowWant = true; if (m === 'lit') renderLit(); else renderInk(1); } S.st.pref = 'lit'; S.st.auto = false; setT(TL.Tmax); for (const az of [0, 45, 90, 135, 180, 225, 270, 315, look.sunAz - 180]) { placeCam({ az, el: az === look.sunAz - 180 ? 3 : 9, d: 900, tx: 0, ty: 30, tz: 0 }); cam.lookAt(0, 30, 0); cam.updateMatrixWorld(); shadowWant = true; renderLit(); } S.st.auto = true;   // 正对太阳：光束（god rays）后处理第一次启用时也会现场编译（Mac 实测转向太阳卡 2.2 s）

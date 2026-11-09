@@ -142,4 +142,25 @@ if (!/#mod-ui\{position:absolute;inset:0;[^}]*pointer-events:none\}/.test(html))
 if (!/hzview\.js\?v=(\d+)/.test(html) || +/hzview\.js\?v=(\d+)/.exec(html)[1] < 21) fail('hzview.js 接云门 / three 本地 / 掠射光后版本号应 ≥ 21');
 has("ug: 0 }, JSON.parse(hp.get('camcfg') || '{}'))", '镜头参数默认 ug 0（不进地铁层）');
 has('CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;', '地铁层镜头入口只在 #camcfg 显式 ug 1 时开（委托人 11-08 定默认关）');
+// 图纸范围（11-09，委托人：S-201 三维显示全工程、图纸只画承轨层）：插件图纸激活时范围外构件淡显（PL.scopeMask + aGh 幽灵）
+{ const { load } = require('./harness.js'), L = load({ extra: ['web/hzreal.js', 'web/sheets/s001.js', 'web/sheets/s201.js', 'web/sheets/s501.js'] }), HZ = L.HZ; HZ.make();
+  const PLG = {}; for (const q of L.G.HZ_SHEET_PLUGINS) PLG[q.id] = q;
+  const lk = /const LEAD_KEYS = (\{[^\n]*?\});/.exec(src); if (!lk) fail('hzview.js 缺 LEAD_KEYS 字面'); const LEAD = vm.runInContext('(' + lk[1] + ')', vm.createContext({}));
+  const its = []; for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) its.push({ key: a.key, min: p.geo.min, max: p.geo.max, st: p.st, rm: p.rm }); }
+  const scopeFor = (id, pl) => { pl = pl || PLG[id]; const [a, b] = pl.window, parts = []; for (let i = 0; i <= 6; i++) for (const q of PL.safeParts(pl, a + (b - a) * i / 6, { w: 560, h: 420 })) parts.push(q); return PL.scopeMask(pl, its, { leadKeys: Array.isArray(pl.leadKeys) ? null : LEAD[id], parts, midZ: HZ.P.midZ, t: a }); };
+  const vis = (it, t) => t >= it.st && !(it.rm && it.rm[0] >= 0 && t >= it.rm[0] + it.rm[1]);
+  const s2 = scopeFor('S-201'), tm = (PLG['S-201'].window[0] + PLG['S-201'].window[1]) / 2; if (!s2.on) fail('S-201 应启用图纸范围 ' + s2.src);
+  const own = new Set(['frameS', 'frameN', 'pierS', 'pierN', 'deckS', 'deckN', 'platS', 'platN', 'deckapS', 'deckapN', 'trackS', 'trackN']); let gh = 0, sc = 0;
+  its.forEach((it, i) => { if (!vis(it, tm)) return; if (own.has(it.key)) { if (!s2.mask[i]) fail(`S-201 t=${tm} 承轨层构件 ${it.key} 被淡显了`); sc++; } else { if (s2.mask[i]) fail(`S-201 t=${tm} 范围外构件 ${it.key} 没有淡显`); gh++; } });
+  if (!sc || gh < 100) fail(`S-201 中点在场构件：本图 ${sc}、淡显 ${gh}（淡显应 ≥ 100：候车层、雨棚、网架等）`);
+  has("SCOPE_ALL = new Set(['S-001'])", 'S-001 总进度横道图全显'); if (!scopeFor('S-501').on) fail('S-501 开通前应只突出云门 / 上盖');
+  const F = { id: 'S-999', window: [0, 2000], parts: () => [] };
+  if (PL.scopeMask(Object.assign({ scope: false }, F), its, {}).on) fail('pl.scope = false 应全显');
+  const lv = PL.scopeMask(Object.assign({ scope: { levels: [[-1, 12]], zones: ['ZS'] } }, F), its, { midZ: HZ.P.midZ }); if (!lv.on || its.some((it, i) => lv.mask[i] && (it.max[1] > 12.5 || (it.min[2] + it.max[2]) / 2 <= HZ.P.midZ + 3.5))) fail('pl.scope.levels/zones 取交不对');
+  if (!PL.scopeMask(Object.assign({ scope: { keys: ['canopyS'] } }, F), its, {}).keys.includes('canopyS')) fail('pl.scope.keys 应进范围');
+  runs++; }
+has('if (uScope > 0.5 && abs(step(0.5, aGh) - uGhP) > 0.5) hzP = vec3(0.0, -1e5, 0.0);', '主网格塌掉范围外 / 幽灵网格只留范围外');
+has('if (uScope > 0.5 && vGh > 0.5) { if (vS < 1.0) discard;', '范围外墨线降为淡墨');
+has('const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on;', '收官（开通前 12 天起）全显');
+has('U.uT.value = Math.min(t, TL.OPEN + 0.001); scopeAt(t);', 'setT 更新图纸范围');
 console.log('OK check_linkage runs=' + runs);

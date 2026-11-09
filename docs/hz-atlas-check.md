@@ -98,6 +98,10 @@ node tools/hz/check_real.js
 13. **模块 DOM 容器 `#mod-ui`**：`hzwest.html` 在 `#v3` 末尾放一个空的 `<div id="mod-ui"></div>`（`position:absolute; inset:0; z-index:3; pointer-events:none`，其直接子元素 `pointer-events:auto`）。宿主永远不往里放东西；模块的卡片、图钉等 DOM 只挂这里，自行绝对定位，不要铺满整个容器（会挡住 3D 拖拽）。id 不改。
     检查：`check_linkage` 在 vm 里测 `PL.modsCall`（跳过无方法的模块、抛错只 warn 一次、顺序与参数），并对源码断言 pick / unpick 接线、`#mod-ui` 容器与 `hzview.js?v` ≥ 17。
 14. **插件引线锚点 `pl.leadAt(t)`（可选，11-09 起，hzview.js?v=23）**：插件图上、未选中构件时，宿主先调 `leadAt(t)`，返回 `{ p: [x, y, z], t1, t2, key? }` 即以 `p` 为红点、`t1 / t2` 为两行字；返回 null 或抛错则回落到默认（本图工序里最新开工构件）。S-401 已实现；S-201（D-19 ③ 请求的 `leadAnchor`）请改用同名 `leadAt`。
+15. **图纸范围 `pl.scope`（可选，11-09 起，hzview.js?v=24）**：插件图纸激活时，3D 只把本图内容照常画，其余构件淡显成幽灵（纸色上 16% 淡墨半透明填充、不写深度；墨线只留已建构件的 11% 淡墨，未建 / 在建不画红幽灵；不进引线）。镜头不变。总图 S-000、S-301、S-001 总进度横道图全显；任何图在开通前 12 天起（与实景渐显同一时刻，即 S-501 收官）全显。
+    - 声明：`pl.scope = { keys?: [工序 key], ids?: [part id], levels?: [[y0, y1], …], zones?: ['ZS'|'ZM'|'ZN'], boxes?: [[x0,y0,z0,x1,y1,z1], …] }`，也可以是 `scope(t0)` 函数；`false` 或 `{ all: true }` = 全显。`keys` 整道工序进范围；`levels` 按构件外包标高带（±0.5 m），与 `zones`（按构件中心 z：|z| ≤ midZ+3.5 为 ZM）同给时取交；`ids` 限定只用哪些 part 的 box 认件（`[]` = 不按 box 认）。
+    - 不声明时的默认：`pl.leadKeys`（没有则宿主 `LEAD_KEYS[图号]`）的工序 ∪ 时间窗内 7 个采样时刻 `parts(t)` 各 `box` 紧包的构件（容差 0.6 m；一个 box 至多认 16 件，每件至少占盒体积 2%，免得「全场」「分区」大盒把整站认进来）。只认本图时间窗内出现过的构件；认不出任何构件、或已占在场构件 ≥ 90% 时全显。宿主代填：S-002 未声明时只认 `crane / ycrane`（履带吊 C-* 站位盒会顺带认进脚下楼板）。
+    - 宿主状态：`__pv.scope = { sheet, on, n, live, src, keys }`。检查：`check_linkage` 断言 S-201 中点在场构件里承轨层 12 道工序全部照常、其余（≥ 100 件）全部淡显，S-501 开通前启用、`scope:false` / `levels+zones` / `keys` 三种声明，以及着色器接线与收官全显。
 
 ## 四、图号规则与映射表
 
