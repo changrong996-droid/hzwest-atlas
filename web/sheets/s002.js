@@ -209,7 +209,7 @@
 
   const plugin = {
     id: 'S-002', name: '吊装资源',
-    scope: { keys: ['crane', 'ycrane'], ids: [] },   // D-35：履带吊站位盒不按 box 认件，免得把脚下楼板认进范围
+    scope: { keys: ['crane', 'ycrane', 'tcrane'], ids: [] },   // tcrane = D-25 内侧塔吊（11-09 落 hzseq）；D-35：履带吊站位盒不按 box 认件，免得把脚下楼板认进范围
     get window() { return model(G.HZ).win; },
     big: t => big(G.HZ, t),
     draw, parts,
