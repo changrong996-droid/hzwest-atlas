@@ -6,7 +6,9 @@
 // 4) 所有段端点在包络 x∈[-92,92]、y∈[-1.5,80.5]、z∈[176,240] 内；
 // 5) 门洞内无段：对每条线段采样 9 点，任何一点落在门洞内部空间（|x|<37.5, 0.5<y<49.5, z∈(178,238)）即失败；
 // 6) 完成时的线段包围盒与现有云门 ym 构件包围盒一致（各方向差 ≤ 2.5 m）；
-// 7) update 100 次平均 < 1 ms（不传 THREE 时）。
+// 7) update 100 次平均 < 1 ms（不传 THREE 时）；
+// 8) D-41 示意线型：S-000 用 schem、其它图 detail；示意段 t<ymf.start 为 0、单调不减、只含长划（9 m）与点（0.8 m）两种段长、
+//    在包络内、不穿门洞、完成态包围盒与 ym 一致；__pv.sheet=S-000 时 update 只画示意段、细化段为 0；注记含「示意」。
 const { load } = require('./harness');
 const { G, HZ } = load({ extra: ['web/mods/yunmen.js'] });
 HZ.make();
@@ -147,5 +149,42 @@ for (let i = 0; i < 100; i++) {
 }
 const avgMs = Number(process.hrtime.bigint() - tStart) / 1e6 / 100;
 if (avgMs >= 1) fail(`update 100 次平均耗时 ${avgMs.toFixed(3)} ms >= 1 ms`);
+
+// 8. D-41 示意线型（S-000 总图）
+{
+  if (typeof M.schemLines !== 'function' || typeof M.modeFor !== 'function') fail('缺 schemLines / modeFor');
+  if (M.modeFor('S-000') !== 'schem') fail('S-000 应为示意线型');
+  for (const s of ['S-501', 'S-002', 'S-401', undefined]) if (M.modeFor(s) !== 'detail') fail(`${s} 应为细化墨线`);
+  if (!(M.LABEL || []).join('').includes('示意')) fail('注记缺「示意」');
+  if (M.schemLines(HZ, ymf.start - 1).length) fail('示意段在 ymf.start 前应为 0');
+  let pv = 0;
+  for (let t = ymf.start - 5; t <= HZ.P.OPEN + 5; t += 2.5) { const n = M.schemLines(HZ, t).length / 6; if (n < pv) fail(`示意段 t=${t} 倒退`); pv = n; }
+  const S = M.schemLines(HZ, HZ.P.OPEN), ns = S.length / 6;
+  if (ns < 100) fail(`示意段过少：${ns}`);
+  if (M.schemLines(HZ, ymf.start + 1).length / 6 >= ns) fail('示意段应随主体施工往上长');
+  const sMin = [Infinity, Infinity, Infinity], sMax = [-Infinity, -Infinity, -Infinity];
+  let dash = 0, dots = 0;
+  for (let i = 0; i < ns; i++) {
+    const o = i * 6, a = [S[o], S[o + 1], S[o + 2]], b = [S[o + 3], S[o + 4], S[o + 5]];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    if (len > 9 + 1e-3) fail(`示意段 #${i} 长 ${len.toFixed(2)} m，超过长划 9 m（不是虚线）`);
+    if (Math.abs(len - 0.8) < 1e-3) dots++; else if (Math.abs(len - 9) < 1e-3) dash++;
+    for (const [x, y, z] of [a, b]) {
+      if (x < -92 || x > 92 || y < -1.5 || y > 80.5 || z < 176 || z > 240) fail(`示意段 #${i} 越出包络`);
+      for (let d = 0; d < 3; d++) { const v = [x, y, z][d]; if (v < sMin[d]) sMin[d] = v; if (v > sMax[d]) sMax[d] = v; }
+    }
+    for (let k = 0; k <= 8; k++) { const u = k / 8, x = a[0] + (b[0] - a[0]) * u, y = a[1] + (b[1] - a[1]) * u, z = a[2] + (b[2] - a[2]) * u;
+      if (Math.abs(x) < 37.5 && y > 0.5 && y < 49.5 && z > 178 && z < 238) fail(`示意段 #${i} 穿过门洞`); }
+  }
+  if (dots < dash * 1.5) fail(`双点画线应每个长划配两点：长划 ${dash}、点 ${dots}`);
+  for (let d = 0; d < 3; d++) if (Math.abs(sMin[d] - ymMin[d]) > 2.5 || Math.abs(sMax[d] - ymMax[d]) > 2.5) fail(`示意轮廓轴 ${'xyz'[d]} 与 ym 包围盒偏差超 2.5 m`);
+  // update 跟随 __pv.sheet
+  G.__pv = { sheet: 'S-000' }; M.build(null, HZ); M.update(HZ.P.OPEN);
+  if (M.mode !== 'schem' || M.stats.segs !== 0 || M.stats.schem !== ns) fail(`S-000 update 应只画示意段（mode=${M.mode} segs=${M.stats.segs} schem=${M.stats.schem}）`);
+  G.__pv.sheet = 'S-501'; M.update(HZ.P.OPEN);
+  if (M.mode !== 'detail' || M.stats.schem !== 0 || !(M.stats.segs > 0)) fail('S-501 update 应画细化墨线');
+  delete G.__pv; M.build(null, HZ);
+  console.log(`  示意线型：段 ${ns}（长划 ${dash} · 点 ${dots}）`);
+}
 
 console.log(`OK check_yunmen segs=${keyCounts.join('->')} bbox=[${lMin.join(',')}..${lMax.join(',')}] avg=${avgMs.toFixed(4)}ms`);

@@ -2,6 +2,8 @@
 // 用途：将杭州西站南侧「云门」（180×60×80 m，中间门洞）由简模灰盒细化为分阶段生长的建筑墨线模型（基础→主体→幕墙），全部用线段绘制，不画实体面。
 // 数据来源：杭州市政府网 2022-09-20（云门长 180 m、宽 60 m、高 80 m，中间门洞）；包络与排程同 web/hzseq.js 第 303–313 行（HZ.K.ymf / HZ.K.ym / HZ.K.ymc）。
 // 接口：window.HZ_MODS.push({ id:'yunmen', build(scene, HZ, THREE, opts), update(t, cam), lines(HZ, t) })；支持 opts.clip（THREE.Plane[]）剖切平面。
+// D-41（11-10，hark-cs 接手）：S-000 总图上云门改为示意线型——只画外轮廓与门洞轮廓的双点画线（长划 + 两点），旁注「云门 · 示意」；
+//   其余图纸（如 S-501）仍用细化墨线。总图判断读 window.__pv.sheet（运行中切图也跟着换）。schemLines(HZ, t) 给出示意线段。
 // 检查：node tools/hz/check_yunmen.js（登记、opts.clip、随 t 单调生长、包络越界、门洞净空 9 点采样、与 ym 包围盒一致、update 耗时 < 1 ms）。
 (function () {
   'use strict';
@@ -280,12 +282,73 @@
     return m === 0 ? new Float32Array(0) : C.coords.subarray(0, m * 6);
   }
 
+
+  // ---------- D-41 示意线型（S-000 总图）：双点画线 = 长划 9 m · 空 2 m · 点 0.8 m · 空 2 m · 点 0.8 m · 空 2 m ----------
+  const SCHEM_SHEETS = ['S-000'];
+  const DASH = [[0, 9], [11, 11.8], [13.8, 14.6]], PERIOD = 16.6;
+  function compileSchem(HZ) {
+    const ymf = HZ.K.ymf, ym = HZ.K.ym;
+    const key = `${ymf.start},${ym.start},${ym.dur}`;
+    if (HZ._yunmenSchem && HZ._yunmenSchem.key === key) return HZ._yunmenSchem;
+    const list = [];
+    // 出现时刻：贴地（y = 0）的轮廓在基础开工时出现，往上的线按主体施工进度到达该高度时出现（只示意位置与大致轮廓）
+    const tAt = y => y <= 0.01 ? ymf.start : ym.start + ym.dur * Math.min(1, y / YT);
+    const edge = (x0, y0, z0, x1, y1, z1) => {
+      const len = Math.hypot(x1 - x0, y1 - y0, z1 - z0); if (len < 1e-6) return;
+      for (let s0 = 0; s0 < len; s0 += PERIOD) for (const [a, b] of DASH) {
+        const u0 = (s0 + a) / len, u1 = Math.min(len, s0 + b) / len; if (u0 >= 1) break;
+        const ax = x0 + (x1 - x0) * u0, ay = y0 + (y1 - y0) * u0, az = z0 + (z1 - z0) * u0;
+        const bx = x0 + (x1 - x0) * u1, by = y0 + (y1 - y0) * u1, bz = z0 + (z1 - z0) * u1;
+        list.push({ t: tAt(Math.max(ay, by)), c: [ax, ay, az, bx, by, bz] });
+      }
+    };
+    // 南北两立面：外框 + 门洞（门洞底不画线，通道是空的）
+    for (const z of [ZA, ZB]) {
+      edge(X0, 0, z, -XP, 0, z); edge(XP, 0, z, X1, 0, z);
+      edge(X0, 0, z, X0, YT, z); edge(X1, 0, z, X1, YT, z); edge(X0, YT, z, X1, YT, z);
+      edge(-XP, 0, z, -XP, YP, z); edge(XP, 0, z, XP, YP, z); edge(-XP, YP, z, XP, YP, z);
+    }
+    // 两立面之间的进深棱线：四角、门洞四角
+    for (const [x, y] of [[X0, 0], [X0, YT], [X1, 0], [X1, YT], [-XP, 0], [XP, 0], [-XP, YP], [XP, YP]]) edge(x, y, ZA, x, y, ZB);
+    list.sort((a, b) => a.t - b.t);
+    const n = list.length, tOns = new Float64Array(n), coords = new Float32Array(n * 6);
+    for (let i = 0; i < n; i++) { tOns[i] = list[i].t; coords.set(list[i].c, i * 6); }
+    return (HZ._yunmenSchem = { key, t0: ymf.start, n, tOns, coords });
+  }
+  function schemLines(HZ, t) {
+    const C = compileSchem(HZ), m = countAt(C, t);
+    return m === 0 ? new Float32Array(0) : C.coords.subarray(0, m * 6);
+  }
+  const LABEL = ['云门 · 示意', '双点画线＝示意轮廓，未建模'];
+  // 注记：画布文字做成精灵，挂在示意线对象下（宿主只管顶层节点的显隐，注记显隐由本模块自己管）
+  function makeLabel(THREE, clip) {
+    if (!THREE.Sprite || !THREE.CanvasTexture || typeof document === 'undefined' || !document.createElement) return null;
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
+    const g = cv.getContext && cv.getContext('2d'); if (!g) return null;
+    g.fillStyle = 'rgba(250,248,240,0.92)'; g.fillRect(4, 4, 504, 120);
+    g.strokeStyle = '#1c1a17'; g.lineWidth = 2; g.setLineDash && g.setLineDash([18, 5, 3, 5, 3, 5]); g.strokeRect(4, 4, 504, 120);
+    g.fillStyle = '#1c1a17'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold 44px "Noto Serif CJK SC","Songti SC",serif'; g.fillText(LABEL[0], 256, 46);
+    g.font = '26px "Noto Sans CJK SC","PingFang SC",sans-serif'; g.fillText(LABEL[1], 256, 96);
+    const tex = new THREE.CanvasTexture(cv);
+    const mat = new THREE.SpriteMaterial(Object.assign({ map: tex, transparent: true, depthTest: false, sizeAttenuation: false }, clip ? { clippingPlanes: clip } : {}));
+    const sp = new THREE.Sprite(mat); sp.center && sp.center.set(0.5, 0); sp.scale.set(0.16, 0.04, 1);
+    sp.position.set(0, YT + 18, (ZA + ZB) / 2); sp.renderOrder = 1000; sp.name = 'hz-yunmen-label'; sp.visible = false;
+    return sp;
+  }
+
   const MOD = {
     id: 'yunmen',
     COL,
     MAXSEG,
     lines,
-    stats: { segs: 0 },
+    schemLines,
+    SCHEM_SHEETS,
+    LABEL,
+    mode: 'detail',
+    // 当前图纸 → 'schem'（总图示意线型）或 'detail'（细化墨线）
+    modeFor(sheet) { return SCHEM_SHEETS.includes(sheet) ? 'schem' : 'detail'; },
+    stats: { segs: 0, schem: 0 },
     build(scene, HZ, THREE, opts) {
       opts = opts || {};
       this.clip = Array.isArray(opts.clip) && opts.clip.length ? opts.clip : null;
@@ -296,6 +359,8 @@
       this.n = 0;
       this.key = null;
       this.obj = null;
+      this.sobj = null;
+      this.label = null;
       THREE = THREE || ROOT.THREE;
       if (THREE && scene) {
         const g = new THREE.BufferGeometry();
@@ -312,22 +377,37 @@
         this.obj.renderOrder = 5;
         this.obj.name = 'hz-yunmen';
         scene.add(this.obj);
+        // 示意线型对象（D-41）：缓冲一次写满，update 只改绘制范围
+        this.SC = compileSchem(HZ);
+        const g2 = new THREE.BufferGeometry();
+        g2.setAttribute('position', new THREE.BufferAttribute(this.SC.coords, 3));
+        g2.setDrawRange(0, 0);
+        this.sobj = new THREE.LineSegments(g2, new THREE.LineBasicMaterial(Object.assign({ color: COL, transparent: true, opacity: 0.9 }, this.clip ? { clippingPlanes: this.clip } : {})));
+        this.sobj.frustumCulled = false; this.sobj.renderOrder = 5; this.sobj.name = 'hz-yunmen-schem';
+        // 被站房 / 承轨层挡住的那段：同一几何再画一遍浅灰线（不做深度测试、最后画），示意轮廓始终看得出完整位置，被挡处是浅灰
+        const hid = new THREE.LineSegments(g2, new THREE.LineBasicMaterial(Object.assign({ color: 0x857f75, depthTest: false, depthWrite: false }, this.clip ? { clippingPlanes: this.clip } : {})));
+        hid.frustumCulled = false; hid.renderOrder = 999; hid.name = 'hz-yunmen-schem-hidden'; this.shid = hid; scene.add(hid);
+        this.label = makeLabel(THREE, this.clip); if (this.label && this.sobj.add) this.sobj.add(this.label);
+        scene.add(this.sobj);
       }
       return this;
     },
     update(t, cam) {
       if (!this.HZ) return 0;
-      const key = Math.floor(t * 4);
+      const pv = ROOT.__pv, mode = this.modeFor(pv && pv.sheet);
+      const key = mode + ':' + Math.floor(t * 4);
       if (key === this.key) return this.n;
-      this.key = key;
+      this.key = key; this.mode = mode;
       const C = this.C || (this.C = compile(this.HZ));
-      const n = Math.min(countAt(C, t), MAXSEG);
-      this.n = n;
-      this.stats.segs = n;
-      if (this.obj) {
-        this.obj.geometry.setDrawRange(0, n * 2);   // 缓冲在 build 时一次写满（按出现时刻排序），这里只改绘制范围，不重传
-      }
-      return n;
+      const SC = this.SC || (this.SC = compileSchem(this.HZ));
+      const n = mode === 'detail' ? Math.min(countAt(C, t), MAXSEG) : 0;
+      const ns = mode === 'schem' ? countAt(SC, t) : 0;
+      this.n = n || ns;
+      this.stats.segs = n; this.stats.schem = ns;
+      if (this.obj) this.obj.geometry.setDrawRange(0, n * 2);   // 缓冲在 build 时一次写满（按出现时刻排序），这里只改绘制范围，不重传
+      if (this.sobj) this.sobj.geometry.setDrawRange(0, ns * 2);
+      if (this.label) this.label.visible = ns > 0;
+      return this.n;
     },
   };
 
