@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 8 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 9 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 36 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 10 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 30 |
@@ -83,6 +83,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-40 | muse-tibo-cs | 9×4 形态覆盖矩阵（小活） | 委托人 11-10 10:32 批准（Fable 5.2 备忘录 docs/hz-fable52-review-2026-11-10.md）。出 docs/audit/form-matrix.md ：九图（S-000、S-001、S-002、S-101、S-201、S-251、S-301、S-401、S-501）× 四形态（图纸 / 生长 / 成品 / 实物），每格填 有 / 无 / 不适用 + 一句理由（指向文件、R-编号或页签）；另列 12 张 Blender 海报，各标图号与时刻 t（或日期）。只新增该文件，不改代码。验收：36 格齐全、每格有依据；12 张海报全部归号 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-41 | hark-cr（执行：Traycer CLI on Mac；web/mods/yunmen.js 作者，见 D-23） | S-000 总图云门改示意线型 | 委托人 11-10 10:32 定云门拼案：短期 S-000 总图用示意线型止血，成品态正式建模排入后续阶段。请把 S-000 总图上的云门改为示意线型：双点画线 + 注「示意」。只改其插件文件 web/mods/yunmen.js（及其 tools/hz/check_yunmen.js 断言），不碰宿主与 hzseq.js。验收：check_all 全 OK；附 S-000 总图云门前后截图 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-44 | hark-cs | 信息卡显示构件关系两层（info.js 读 ctx.rel） | 委托人 2026-11-10 批准「点一个构件，上下游在图纸和三维同时亮起」，并要求分层。宿主侧已合入 main（3059c14：web/hzrel.js 的 HZ.rel、2D/3D 高亮、modsPick 传 ctx.rel、__pv.rel/relOf，合同见 docs/tasks/relations.md 与 docs/hz-atlas-check.md §3 第 16 条）。请在 web/mods/info.js（及 tools/hz/check_info.js）实现：第 2 层，卡片最多三行：靠谁撑着 counts.hold 件 · 等谁先装 counts.wait 件 · 吊车 crane.name（站位）；无数据的行不显示；第 3 层，按钮「更多」展开：up/down 列表（label + whyText，level=act 标「工序级」）、所在图纸 sheets、HZR.forPart 实物记录。默认收起，不新增数字到首屏。验收：S-201 构件（如 D-S05 或 G-S03，t≈800）截图，含卡片与高亮；check_all 全 OK。只改 info.js 与 check_info.js。 | 待做 | 11-10 hark-cr（委托人批准关系高亮） |
+| D-45 | hark-cs | 实物图钉太密、数字看不懂：按记录聚合，默认收起 | 委托人 2026-11-10 15:45 反馈（S-201 截图，2020-09-16 线下框架柱处）：一排几十个红色图钉、上面写 2、5，很碍眼，也看不出什么意思。原因：web/mods/info.js 每个挂了实物记录的构件打一个钉，数字是该构件挂的记录条数，多个构件共用同一批记录就重复成排。请改（只改 info.js 与 check_info.js）：① 按记录聚合，同一组记录只打一个钉，放在这些构件包围盒中心；② 钉上不写裸数字，改成一个相机小图标，悬停或点开才显示「现场照片 2 张 · 卫星影像 1 张」这类带单位的说明；③ 每张图同屏最多 5 个钉，重叠（屏幕距离 < 24 px）的合并；④ 默认收起：图上只在左下角显示一个小按钮「实物 N」（N = 本图记录数），点开才显示钉；选中构件时，信息卡照常列出其记录。验收：S-201 t≈180（2020-09-16）与 t≈800 截图，钉数 ≤ 5 且无裸数字；check_all 全 OK。 | 待做 | 11-10 hark-cr（委托人 15:45 反馈） |
 
 ## 接口请求
 
