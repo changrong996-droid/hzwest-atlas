@@ -44,9 +44,9 @@ if (relocate) {   // D-18：替换站位前先验可行：ground = HZ.crawlClash
   console.log(`按 docs/rules/crane-stations.json 替换站位 ${moved} 吊（均已验可行）`);
 }
 const towersOn = process.argv.includes('--towers'), towerRows = [];
-if (towersOn) {   // D-25：内侧 6 吊改塔吊
+if (towersOn) {   // D-25：内侧 6 吊改塔吊（11-09 起塔吊已落 hzseq，key tcrane：本段复核时跳过 tcrane 自身，免把自己当障碍、和自己比间距）
   const J = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../../docs/rules/crane-stations.json'), 'utf8')), M = J.towerModel, h = M.mast / 2;
-  const ALL = []; for (const a of HZ.acts) if (a.kind !== 'untemp') for (const p of a.parts) for (const b of p.geo.boxes) ALL.push({ a, p, b });
+  const ALL = []; for (const a of HZ.acts) if (a.kind !== 'untemp' && a.key !== 'tcrane') for (const p of a.parts) for (const b of p.geo.boxes) ALL.push({ a, p, b });
   const live = (e, t0, t1) => { const a0 = e.p.st != null ? e.p.st : e.a.start, a1 = e.a.kind === 'temp' && e.a.rm ? e.a.rm.end : 1e9; return !(a0 >= t1 || a1 <= t0); };
   const slab = k => J.towerOpenings.some(s => k.startsWith(s)), base = k => J.towerBase.some(s => k.startsWith(s));
   const segHit = (a, b, B, m) => { let t0 = 0, t1 = 1; for (let i = 0; i < 3; i++) { const d = b[i] - a[i], lo = B.min[i] - m, hi = B.max[i] + m; if (Math.abs(d) < 1e-9) { if (a[i] < lo || a[i] > hi) return false; } else { let u = (lo - a[i]) / d, v = (hi - a[i]) / d; if (u > v) [u, v] = [v, u]; t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) return false; } } return true; };
@@ -60,7 +60,7 @@ if (towersOn) {   // D-25：内侧 6 吊改塔吊
         fail(`${T.id} 塔身与 ${e.a.name}（${e.a.key}）相交`); }
       for (let q = 0; q < 72; q++) { const th = q / 72 * Math.PI * 2, ax = Math.cos(th), az = Math.sin(th);   // R9 同规则：臂底 jy+0.6，余量 1.5 m
         if (segHit([T.x - ax * M.Lc, T.jy + 0.6, T.z - az * M.Lc], [T.x + ax * M.jib, T.jy + 0.6, T.z + az * M.jib], b, 1.5)) fail(`${T.id} 回转净空不足：${e.a.name}（顶 ${b.max[1].toFixed(1)} m）`); } }
-    for (const U of J.towers.concat(HZ.cranes.map(c => ({ id: c.key, x: c.x, z: c.z, L: c.L, erect: [HZ.K[c.key].start], remove: [0, HZ.K[c.key].rm.end] })))) { if (U === T || U.id === T.id) continue;
+    for (const U of J.towers.concat(HZ.cranes.filter(c => c.key !== 'tcrane').map(c => ({ id: c.key, x: c.x, z: c.z, L: c.L, erect: [HZ.K[c.key].start], remove: [0, HZ.K[c.key].rm.end] })))) { if (U === T || U.id === T.id) continue;
       if (U.erect[0] >= t1 || U.remove[1] <= t0) continue; const d = Math.hypot(U.x - T.x, U.z - T.z), need = M.jib + (U.L || M.jib) + 2; if (d < need) fail(`${T.id} 与 ${U.id} 相距 ${d.toFixed(1)} m < ${need} m（同时在场、臂会打架）`); }
     T.open = [...open]; }
   console.log(`塔吊 ${J.towers.length} 台（${M.name}，臂 ${M.jib} m，臂底 ${J.towers[0].jy} m），塔位均已验：塔身只穿楼板预留洞、回转净空、塔吊间距、lift1 前退场`);
