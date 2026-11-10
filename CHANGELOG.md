@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-10 · [copy] · hark-cr · 委托人批准的分层文案上线：#intro 短卡改 L0 粗体一句 + L1 三行（第 2 行用关系高亮上线前版本）；#info 改 L2（一屏不滚动，README 链接），原操作说明 / 计算读数 / 自检 / 事实 / 来源收进折叠「操作、计算读数、规则自检、事实与来源」（id 全保留）；README 顶部 L0 + L1，正文为 L3 全文，原技术段移到「参与与技术说明」
 2026-11-10 · [D-42/D-43] · hark-cr · 委托人 13:18 批准光伏铺设改南先北后（与金属屋面一致）：hzview.js 着色器已改在分支 agent/hark-cr/pv-south-first（f4ca2ff，未合 main）；派 D-42 给 hark-cs 同步 S-401 pvFront（175 − 345·u，z ≥ 前沿为已铺），交付后两边一起合入；派 D-43 给 hark-darrio 更新 crane-count.md 现状段（在吊峰值 14 / 超 14 天数 0，在场峰值 16 / 超 14 天数 22）
 2026-11-10 · [D-39] · hark-liuzhijie · S-101 信息卡加地下节拍注记（推演 vs 实景）
 2026-11-10 · [docs] · muse-tibo-cs · Fable 5.2 第二轮审查文档（fable52-round2）

@@ -67,6 +67,7 @@ body.lit .num .v em{color:#ffb3a6}
 #info h3{font-size:12px;letter-spacing:2px;color:var(--ink);margin:14px 0 4px}
 #info table{border-collapse:collapse;width:100%}#info td{padding:3px 6px 3px 0;vertical-align:top;border-bottom:1px solid var(--line2)}#info td:first-child{color:var(--ink);padding-right:12px;width:42%}
 #info .ok{color:#2f7a3a}#info .ng{color:var(--red)}#info .sm{font-size:11.5px}
+#info .l0,#intro .l0{margin:8px 0 6px;font-weight:700;color:var(--ink);font-size:13.5px;line-height:1.5}#intro .l0{margin:0 0 4px;font-size:13px}#info ul.l2{margin:4px 0;padding:0 0 0 18px}#info ul.l2 li{margin:0 0 3px}#info a.rm{margin:6px 0 2px}#info details{margin-top:10px;border-top:1px solid var(--line2);padding-top:6px}#info summary{cursor:pointer;color:var(--ink);font-size:12px;letter-spacing:1px}
 #info a{display:block;color:var(--red);text-decoration:none;font-size:12px;padding:2px 0}#info a:hover{text-decoration:underline}
 /* 实景时：3D 上的文字换成深色底 */
 body.lit #ttl,body.lit .num,body.lit #calc{background:rgba(18,20,26,.62);border-color:rgba(255,255,255,.16);color:#f4efe6}
@@ -166,16 +167,25 @@ body.port #ttl{display:none}
     </div>
   </div>
 </div>
-<div id="intro" class="ui" role="dialog" aria-label="说明（短版）"><button class="btn" id="in-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button><ol><li>这是杭州西站施工顺序的实时预演，工序由规则推导；</li><li>每一帧都在自检：支承、拆除先后、提升净空、吊装覆盖；</li><li>拖动看、点下方图号切换；「完整说明」按钮打开原面板。</li></ol><div class="ft"><button class="btn" id="in-more">完整说明</button></div></div>
+<div id="intro" class="ui" role="dialog" aria-label="说明（短版）"><button class="btn" id="in-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button><p class="l0">每个构件都知道靠谁撑着、等谁先装——所以这座站能自己长出来、自己查错。</p><ol><li>这不是动画：施工顺序由构件之间的关联推出来，违规就报红。</li><li>点图上的构件，三维会飞过去。</li><li>拖动看生长，点下方图号切换；先看 S-301 屋盖提升。</li></ol><div class="ft"><button class="btn" id="in-more">完整说明</button></div></div>
 <div id="info" class="ui">
   <div class="hd"><h2>说明</h2><span class="chip wait" id="i-chip">自检中</span><button class="btn" id="i-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button></div>
   <div class="bd">
-    <p>顺序不是手排的：每个构件按“压在谁上面（支承）、谁要先拆（临时设施）、提升时会不会碰（净空）、塔吊够不够得着（吊装）”推出先后，再按工程量估工期排程。左下角的数字是页面后台（Web Worker）真的做过的检查次数，按时间累计；右边三张图纸与 3D 用同一份构件与姿态，每个时刻重新出图。左键拖动旋转（在屋盖下才可仰视），<b>右键</b>或 <b>Shift + 左键</b>拖动平移（含上下，可降到站台下，不进地下），滚轮推近（最近 9 m；镜头碰到构件会停在外侧，转开后回到原距离，外拉总有效），卡住时按 <b>Esc</b> 或<b>双击空白处</b>回到上一个开阔视角，<b>空格</b>播放 / 暂停，<b>← →</b>逐段，<b>C</b>墨线 / 实景。S-301 右侧千斤顶平面：滚轮或双指缩放（1–8 倍）、拖拽平移、双击复位；点吊点 J01–J32，镜头飞到该提升器近景并标出行程与同步偏差，<b>⌂</b> 复位。</p>
-    <h3>计算读数</h3><div id="i-calc"></div>
-    <h3>规则自检</h3><div id="i-audit"></div>
-    <h3>公开事实</h3><div id="i-facts"></div>
-    <h3>推算假设</h3><div id="i-assume"></div>
-    <h3>来源</h3><div id="i-src"></div>
+    <p class="l0">每个构件都知道靠谁撑着、等谁先装——所以这座站能自己长出来、自己查错。</p>
+    <h3>和动画、图纸有什么不同</h3>
+    <p>动画里构件只是画面，图纸上只是线条；这里每个构件都挂着关联：状态、支承、先后、拆除、吊车站位、所在图纸、实物证据。</p>
+    <h3>关联带来的三件事</h3>
+    <ul class="l2"><li><b>顺序是推出来的</b>：先有支承才能装，装好才能拆临时支撑，吊车够得着才能吊。</li><li><b>每帧自查错</b>：支承、拆除先后、提升净空、吊装覆盖，破一条就报红。</li><li><b>改一处全跟着变</b>：例如屋面按卫星影像改成南先北后，屋面图、三维、进度图一起变。</li></ul>
+    <p><b>底线</b>：有实证按实证；查不到的，图上标「推演」。</p>
+    <a class="rm" href="https://github.com/changrong996-droid/hzwest-atlas#readme" target="_blank" rel="noopener">查看项目说明 → README</a>
+    <details id="i-more"><summary>操作、计算读数、规则自检、事实与来源</summary>
+      <p>顺序不是手排的：每个构件按“压在谁上面（支承）、谁要先拆（临时设施）、提升时会不会碰（净空）、塔吊够不够得着（吊装）”推出先后，再按工程量估工期排程。左下角的数字是页面后台（Web Worker）真的做过的检查次数，按时间累计；右边三张图纸与 3D 用同一份构件与姿态，每个时刻重新出图。左键拖动旋转（在屋盖下才可仰视），<b>右键</b>或 <b>Shift + 左键</b>拖动平移（含上下，可降到站台下，不进地下），滚轮推近（最近 9 m；镜头碰到构件会停在外侧，转开后回到原距离，外拉总有效），卡住时按 <b>Esc</b> 或<b>双击空白处</b>回到上一个开阔视角，<b>空格</b>播放 / 暂停，<b>← →</b>逐段，<b>C</b>墨线 / 实景。S-301 右侧千斤顶平面：滚轮或双指缩放（1–8 倍）、拖拽平移、双击复位；点吊点 J01–J32，镜头飞到该提升器近景并标出行程与同步偏差，<b>⌂</b> 复位。</p>
+      <h3>计算读数</h3><div id="i-calc"></div>
+      <h3>规则自检</h3><div id="i-audit"></div>
+      <h3>公开事实</h3><div id="i-facts"></div>
+      <h3>推算假设</h3><div id="i-assume"></div>
+      <h3>来源</h3><div id="i-src"></div>
+    </details>
   </div>
 </div>
 <script src="core/seq.js?v=6"></script>
