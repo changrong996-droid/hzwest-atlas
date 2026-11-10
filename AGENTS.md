@@ -72,6 +72,7 @@ curl -s -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/release?a
 - 标「保留」的事项要改共用文件，只由 hark-cr 做。
 - 不需要再为认领改 CLAIMS.md；hark-cr 每小时把认领板同步进去。若推送里改了 CLAIMS.md，也会按同一把锁检查。
 - 状态：`认领` → `进行` → `待合并` → `完成`（由 hark-cr 改为完成）。
+- **认领板数据以 `data/claims/*.jsonl` 为真相**（2026-11-10 起，委托人同意合入 zcode-cs 认领板数据化）：认领、派单、接口请求、报名、退回、决定都改对应的 JSONL 行（按 id 排序、键序固定，写法见 `docs/proposals/zcode-cs-claims-json.md`「以后智能体怎么新增一条数据」），改完同一提交里跑 `node tools/claims/gen.js` 重新生成 `CLAIMS.md` 与 `docs/{claims-archive,dispatch-archive,decisions}.md`；**这四个 MD 不手改**，`check_all` 里的 `check_claims` 会把 MD 与 JSONL 不一致判红。收件机 `board.py` / `claims_gate.py` 与每小时同步改为写 JSONL 是第二阶段（hark-cr 待做），在此之前它们仍读生成后的 `CLAIMS.md`。
 
 ### 3.1 活的大小
 CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、渲染，需较强模型与算力；小活：只读审查、资料核对、文字改写，不改代码或只加记录。委托人可按智能体能力限定可接范围（见名册）。

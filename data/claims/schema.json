@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "hzwest.claims/2",
+  "title": "hzwest 认领板数据（canonical，JSONL）",
+  "description": "唯一真相：data/claims/ 下六个实体文件，每行一条、按 id 排序、键序固定（tools/claims/lib/model.js KEYS）。CLAIMS.md 与三个归档全部由 tools/claims/gen.js 生成，不反向手改。校验：tools/hz/check_claims.js 按 $defs 里与文件同名的定义逐行校验。state: open=活板 / closed=归档（仅 enrollments、dispatches、requests、rejections 有归档语义）。claims.lock 为实时认领锁第二阶段的落点（本轮只定义，不写值）。",
+  "$defs": {
+    "enrollments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "seq", "state", "name", "identity", "channel_text", "date"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{3,24}$" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["open", "closed"] },
+        "name": { "type": "string", "minLength": 1 },
+        "identity": { "type": "string" },
+        "channel_text": { "type": "string", "minLength": 1 },
+        "date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "seq", "title", "desc", "owner", "status", "status_text", "claimed_at", "notes", "evidence_refs", "dispatch_refs", "sheet_refs", "doc_refs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^claim:(sheet|cross):\\S+$" },
+        "category": { "enum": ["sheet", "cross"] },
+        "seq": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "desc": { "type": "string" },
+        "owner": { "type": ["string", "null"] },
+        "status": { "enum": ["open", "claimed", "dispatched", "done", "other"] },
+        "status_text": { "type": "string", "minLength": 1 },
+        "claimed_at": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "notes": { "type": ["string", "null"] },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "pattern": "^R-\\d{4}$" } },
+        "dispatch_refs": { "type": "array", "items": { "type": "string", "pattern": "^D-\\d{2,3}$" } },
+        "sheet_refs": { "type": "array", "items": { "type": "string", "pattern": "^S-\\d{3}$" } },
+        "doc_refs": { "type": "array", "items": { "type": "string" } },
+        "lock": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["agent", "claimed_at", "ttl_days"],
+          "properties": {
+            "agent": { "type": "string", "pattern": "^[a-z0-9-]{3,24}$" },
+            "claimed_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$" },
+            "ttl_days": { "type": "integer", "minimum": 1 },
+            "released_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$" }
+          }
+        }
+      }
+    },
+    "dispatches": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "seq", "state", "assignees", "title", "body", "status", "status_text", "issued_text", "evidence_refs", "dispatch_refs", "sheet_refs", "doc_refs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^D-\\d{2,3}$" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["open", "closed"] },
+        "assignees": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" },
+        "status": { "enum": ["todo", "in_progress", "done", "cancelled", "other"] },
+        "status_text": { "type": "string", "minLength": 1 },
+        "issued_text": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "pattern": "^R-\\d{4}$" } },
+        "dispatch_refs": { "type": "array", "items": { "type": "string", "pattern": "^D-\\d{2,3}$" } },
+        "sheet_refs": { "type": "array", "items": { "type": "string", "pattern": "^S-\\d{3}$" } },
+        "doc_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "requests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "seq", "state", "label", "date", "from", "ask", "reason", "reply", "status", "evidence_refs", "dispatch_refs", "sheet_refs", "doc_refs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^req:\\d{4}-\\d{2}-\\d{2}:[0-9a-f]{8}$" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["open", "closed"] },
+        "label": { "type": "string", "minLength": 1 },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "from": { "type": "string", "minLength": 1 },
+        "ask": { "type": "string", "minLength": 1 },
+        "reason": { "type": ["string", "null"] },
+        "reply": { "type": ["string", "null"] },
+        "status": { "enum": ["open", "replied", "pending_decision"] },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "pattern": "^R-\\d{4}$" } },
+        "dispatch_refs": { "type": "array", "items": { "type": "string", "pattern": "^D-\\d{2,3}$" } },
+        "sheet_refs": { "type": "array", "items": { "type": "string", "pattern": "^S-\\d{3}$" } },
+        "doc_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "rejections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "seq", "state", "date", "branch", "reason", "evidence_refs", "dispatch_refs", "doc_refs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^rej:\\d{4}-\\d{2}-\\d{2}:[0-9a-f]{8}$" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "state": { "enum": ["open", "closed"] },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "branch": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "pattern": "^R-\\d{4}$" } },
+        "dispatch_refs": { "type": "array", "items": { "type": "string", "pattern": "^D-\\d{2,3}$" } },
+        "doc_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "seq", "at", "decision", "basis", "landed", "evidence_refs", "dispatch_refs", "doc_refs"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^dec:\\d{4}-\\d{2}-\\d{2}:[0-9a-f]{8}$" },
+        "seq": { "type": "integer", "minimum": 1 },
+        "at": { "type": "string", "minLength": 1 },
+        "decision": { "type": "string", "minLength": 1 },
+        "basis": { "type": "string" },
+        "landed": { "type": "string" },
+        "evidence_refs": { "type": "array", "items": { "type": "string", "pattern": "^R-\\d{4}$" } },
+        "dispatch_refs": { "type": "array", "items": { "type": "string", "pattern": "^D-\\d{2,3}$" } },
+        "doc_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

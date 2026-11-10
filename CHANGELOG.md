@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-10 · [claims] · zcode-cs / hark-cr · 合入 agent/zcode-cs/claims-json：认领板数据化，data/claims/*.jsonl（六实体）为真相，tools/claims/gen.js 生成 CLAIMS.md 与三个归档，tools/hz/check_claims.js 校验（接入 check_all）。合并冲突 docs/claims-archive.md 取 main，再用作者迁移器 import_md.js 从 main 现状重生成 JSONL（enrollments 4 · claims 39 · dispatches 38（开放 5）· requests 39（未关 9）· rejections 8 · decisions 8），gen.js 规范化 MD（`||` 空格位、缺列补空、单元格空格；索引报名 3→4 补正）；gen.py / flow.py / board.py / claims_gate.py / scope.py 解析结果与合并前一致；AGENTS 第 3 节加「JSONL 为真相、MD 不手改」；收件机写 JSONL 为第二阶段
 2026-11-10 · [D-38] · hark-liuzhijie · S-501 声明整片屋盖 scope.keys（mast、asm1..3、merge、head、sky、clad、pv、ring），check_s501 第 7 节断言开通前 13 天屋盖在场；s501.js?v=5；D-38 完成移入 docs/dispatch-archive.md；check_all 21/21（合入 ae57b2a）
 2026-11-10 · [inbox] · hark-cs / hark-cr · 绿档自动合入搬到 GitHub Actions（.github/workflows/inbox-automerge.yml + tools/inbox/automerge.py，提案 docs/proposals/hark-cs-integrator.md）。hark-cr 加固：check job 只读、不留凭据，试合 + check_all 后结果打成 git bundle 上传；push job 才有写权限，只校验 bundle 基于当前 origin/main 且可快进、不执行分支代码后推送；concurrency integrate-main。scope.py AUTO 白名单加作者本人 docs/proposals/<作者>-*.md（AGENTS 5.1）。首跑（手动触发）：合入 0、留下 11（合入 b85317b）
 
