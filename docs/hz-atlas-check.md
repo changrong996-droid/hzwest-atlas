@@ -108,6 +108,7 @@ node tools/hz/check_real.js
     - 不声明时的默认：`pl.leadKeys`（没有则宿主 `LEAD_KEYS[图号]`）的工序 ∪ 时间窗内 7 个采样时刻 `parts(t)` 各 `box` 紧包的构件（容差 0.6 m；一个 box 至多认 16 件，每件至少占盒体积 2%，免得「全场」「分区」大盒把整站认进来）。只认本图时间窗内出现过的构件；认不出任何构件、或已占在场构件 ≥ 90% 时全显。宿主代填（插件声明 `pl.scope` 后即让位）：S-002 只认 `crane / ycrane`（履带吊 C-* 站位盒会顺带认进脚下楼板）；S-401 另认 `mast / asm1–3 / merge / head`（屋面铺在网架上，网架是它的底）。
     - 3D 模块：声明 `m.sheet`（或 id 形如 `s251-face` → S-251）的分图模块，范围启用且当前不是它那张图时，宿主在 `update` 后把它的 3D 节点隐藏；云门模块墨线在本图范围不含 `ym` 时降到 15% 透明度；S-301 提升钢绞线不画。
     - 宿主状态：`__pv.scope = { sheet, on, n, live, src, keys, mode, hide, cranes, site }`，`__pv.scopeHidden = { ym, actors }`。检查：`check_linkage` 断言 S-201 中点在场构件里承轨层 12 道工序全部照常、范围外（≥ 100 件）隐藏模式下画出 0 件，塔吊显隐与是否服务本图一致且留下的塔身在范围内（S-201 不留 ycrane、S-501 留），S-501 开通前启用、`scope:false` / `levels+zones` / `keys` 三种声明，单一常量 `SCOPE_OUT`、着色器接线与收官全显；`check_scopecam` 断言隐藏模式下 S-201 中点 / 末尾、S-101、S-401、S-251、S-002 中点、S-501 收官前镜头里画出的构件 ≥ 2% 画面，且各图全窗口无 > 6 天的空屏段。
+16. **构件上下游关系 `HZ.rel` 与 `ctx.rel`（11-10 起，hzview.js?v=33、hzrel.js?v=1、hzseq.js?v=15）**：`web/hzrel.js`（在 `hzseq.js` 之后、`hzview.js` 之前加载）提供纯函数 `HZ.rel(sheet, partId, t, { parts? })`，返回 `{ up, down, counts:{hold, wait, carry, next, rmWait, rmNext}, crane, cranes, sheets, acts, records, n, nested }` 或 `null`；契约见 `docs/tasks/relations.md`。宿主在选中插件构件时算好放进 `__pv.rel`，`HZ_MODS` 的 `pick(part, xy, ctx)` 的 `ctx` 多一个只读字段 `rel`（可能为 `null`）；其余 ctx 字段不变。宿主同时在图纸（插件 `draw` 之后叠层）与 3D（顶点属性 `aRl` + `uRel`）高亮：选中黄、上游蓝、下游绿、其余变淡；点图纸空白也取消选中（11-10 新增，原先只有 3D 空白 / ⌂ / Esc）。引擎构件新增 `p.supP`（supRule 同一判定记下的支承构件，排程不读）。检查：`check_rel`。
 
 ## 四、图号规则与映射表
 

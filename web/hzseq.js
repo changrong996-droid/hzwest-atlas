@@ -498,8 +498,8 @@ function supRule(acts) { let n = 0; const ALL = [];
           const oy = Math.min(b.max[1], e.b.max[1]) - Math.max(b.min[1], e.b.min[1]), side = p.side && oy > 0.5 && ((oz > 0.05 && ox > -1.3 && ox < 0.05) || (ox > 0.05 && oz > -1.3 && oz < 0.05));
           const host = p.host && e.p === p.host;
           if (e.a === a && e.p === p) continue;
-          if (e.a === a && touch) { p.sup.add('self'); continue; }
-          if ((touch || side || host) && e.a.kind !== 'untemp') { p.sup.add(e.a.key); if (e.a.kind !== 'temp' || a.kind === 'temp') n += SEQ.link(a, e.a, 'R1'); } }
+          if (e.a === a && touch) { p.sup.add('self'); (p.supP || (p.supP = new Set())).add(e.p); continue; }   // supP（11-10 relations）：同一 R1 判定记到构件级——谁撑着这一件（含同工序内的上下层），HZ.rel 读它，排程不读
+          if ((touch || side || host) && e.a.kind !== 'untemp') { p.sup.add(e.a.key); (p.supP || (p.supP = new Set())).add(e.p); if (e.a.kind !== 'temp' || a.kind === 'temp') n += SEQ.link(a, e.a, 'R1'); } }
         // 同一活动内：上层盒子落在本构件下层盒子上（例如墩身落在承台上）
         for (const b2 of p.geo.boxes) if (b2 !== b && Math.abs(b2.max[1] - b.min[1]) < 0.05) p.sup.add('self'); }
     }
