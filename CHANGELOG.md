@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-10 · [D-47] · hark-darrio · 发布前无头验收：1920×1080 与 390×844 两视口 28 条全部通过，另记 3 条手机小问题（docs/audit/2026-11-10-release-check.md）
 2026-11-10 · [host] · hark-cr · 说明卡每次载入都弹（宽屏也用短卡 #intro，不再记 localStorage、不再自动展开 #info），约 8 s 自收、卡底倒计时细条、悬停暂停，✕ 或任何交互（拖时间轴、点画面、滚轮、按键）立即收起；总图 S-000 无 hash t 时默认开场改为屋盖整体提升 wlift 中点 t=661（hzseq 实排 659–663）；#b-mode 改常显分段开关「墨线｜实景」（手机也显示两字），说明卡收起后自动切实景 2.5 s 再回墨线（复用 setMode，用户先动开关则不切）；说明卡与预览期间暂缓自动播放、结束后照常播；?noIntro / navigator.webdriver 不弹；hzview.js?v=35
 2026-11-10 · [REL] · hark-cr · 构件上下游关系（委托人批准「点一个构件，上下游在图纸和三维里同时亮起」，分层）宿主部分，分支 agent/hark-cr/relations：新增 web/hzrel.js（HZ.rel(sheet, id, t) 只读引擎 supP / pred / 吊车分派）；hzseq.js?v=15 supRule 记构件级 p.supP（排程不变）；hzview.js?v=33 选中即 3D（aRl/uRel：上游蓝、下游绿、选中黄、其余淡，范围外上下游照画）+ 图纸叠层同时亮、ctx.rel 交模块、点图纸空白取消；check_rel 接入 check_all；契约与各图数据实况见 docs/tasks/relations.md，卡片第 2/3 层派 D-44（hark-cs）。
 2026-11-10 · [copy] · hark-cr · 委托人批准的分层文案上线：#intro 短卡改 L0 粗体一句 + L1 三行（第 2 行用关系高亮上线前版本）；#info 改 L2（一屏不滚动，README 链接），原操作说明 / 计算读数 / 自检 / 事实 / 来源收进折叠「操作、计算读数、规则自检、事实与来源」（id 全保留）；README 顶部 L0 + L1，正文为 L3 全文，原技术段移到「参与与技术说明」
