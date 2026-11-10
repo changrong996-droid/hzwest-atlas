@@ -11,7 +11,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js', 'check_info.js', 'check_scopecam.js', 'check_claims.js'];
+const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js', 'check_info.js', 'check_scopecam.js', 'check_claims.js', 'check_rel.js'];
 // 带参数跑的检查：check_cranecount --strict（履带吊全场同日在吊 ≤ 14 台；hzseq 同工序同日 ≤ 5 台限流后接入，11-10）
 const STRICT = [['check_cranecount.js', '--strict']];
 const CAMS = ['S-001', 'S-002', 'S-101', 'S-201', 'S-251', 'S-401', 'S-501'];
