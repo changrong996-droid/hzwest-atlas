@@ -2,6 +2,7 @@
 # 用法：Blender -b --factory-startup -P blender/v2/render_v2.py -- <geoDir> <out.png> <shot> <style> [W H]
 # style 另有控制图（给扩散模型 ControlNet 用，11-09 细节加强版）：depth 深度 / normal 相机空间法线 / seg 物体材质分割 / line 白底黑线稿；
 #   控制图输出 <out 去扩展名>.exr（float32 原始值）+ 8 位 PNG（depth 另出 _16.png；normal 出 _cn / _gl 两种红色约定；seg 出纯色 PNG）+ _cam.json
+# V2_SET='site="on"' 加工地设备（提升架 / 塔吊 / 履带吊 / 堆料 / 板房，S-401 给 AI 补照片用，默认 off）
 # V2_SET='detail="on"' 打开几何细节加强（棱边倒角、屋面直立锁边、采光顶 / 幕墙竖梃、网架圆管杆件 + 螺栓球）
 # geoDir 由 blender/v2/export_v2.js 生成（scene.obj + lines.bin + meta.json）；坐标 = 页面 three.js（米，Y 向上），导入 forward -Z / up Y。
 # 镜头参数在 SHOTS；每轮迭代改这里（文档记录每轮改了什么）。环境变量 V2_SPP 改采样数。
@@ -33,7 +34,7 @@ S = dict(SHOTS[shot]); NIGHT = S['night']
 DEF = dict(view=None, look=None, sun_e=None, sun=None, cam=None, exp=0.0, clad_lines=False, clay_wv=False,
            clay_glass=(0.60, 0.62, 0.64), strands=True, strand_r=None, strand_wide=True, real3=True, glow3=True, src='v3',
            detail='off', bevel_w=0.15, seam_w=0.5, seam_step=1.0, seam_h=0.08, seam_t=0.06, mull_r=0.09, cw_u=1.5, cw_z=4.5,
-           chord_r=0.12, web_r=0.07, ball_r=0.22, d_parts='bevel,seam,mull,steel')
+           chord_r=0.12, web_r=0.07, ball_r=0.22, d_parts='bevel,seam,mull,steel', site='off')
 CTRL = style in ('depth', 'normal', 'seg', 'line'); INKLIKE = style in ('ink', 'line')
 TABLE = {
     ('roof', 'clay'): dict(view='AgX', look='None', sun_e=4.6, sun=(9, 45), clay_wv=True, clay_glass=(0.38, 0.40, 0.43), src='r2'),
@@ -89,6 +90,157 @@ for o in list(sc.objects):
     if smooth:
         try: me.set_sharp_from_angle(angle=math.radians(35))
         except Exception: pass
+
+# ---------- 11-09 工地设备（site=on，默认 off；hark-cs）：S-401 屋面合拢阶段补施工设备，给 AI 补成照片用 ----------
+# ① 提升架 liftf：原黄色提升柱中靠屋盖四角的 4 根（±170, ±150/160，高 71 m）改成格构柱 + 缀条 + 柱顶平台 + 伸向屋面的悬挑桁架梁 + 竖向钢绞线落到屋面
+# ② 塔吊 crane：原远处 4 根黄柱（x ±260 / z 262）补成完整塔吊（原位，塔身加高到屋面最高点上 ~27 m），另加 3 台屋面外圈塔吊；履带吊 2 台（混凝土平台边）
+# ③ 堆料 stock（H 型钢束 / 钢板垛 / 钢管垛）、板房 cabin（集装箱板房，两层 + 外挂楼梯），放在股道两侧的 25 m 混凝土平台上（不压股道层 12.5 m）
+# 几何全部是方截面杆件网格（无 Freestyle 负担的低面数），落地高度用竖直射线贴现有几何
+SITE = str(PR.get('site', 'off')).lower() in ('on', '1', 'true'); SSTAT = {}
+if SITE:
+    from mathutils.bvhtree import BVHTree as _BV
+    from mathutils import Vector as _V
+    TS = time.time(); SG = {}   # key -> (verts, faces)
+    def _wb(keys):
+        V_, F_ = [], []
+        for k_ in keys:
+            o_ = objs.get(k_)
+            if not o_: continue
+            mw_ = o_.matrix_world; b0 = len(V_); V_ += [mw_ @ v.co for v in o_.data.vertices]; F_ += [tuple(b0 + i for i in pg.vertices) for pg in o_.data.polygons]
+        return _BV.FromPolygons(V_, F_)
+    GB = _wb(('conc', 'slab', 'plat', 'found', 'ym', 'metro')); RB = _wb(('clad', 'glass', 'steel'))
+    def gz(x, y, top=200.0):   # Blender x, y → 地面 / 平台顶高度
+        h = GB.ray_cast(_V((x, y, top)), _V((0, 0, -1)), top + 50); return h[0].z if h[0] is not None else 0.0
+    def beam(key, a, b, w, d=None):   # a→b 方截面杆件（宽 w，高 d）
+        V_, F_ = SG.setdefault(key, ([], [])); a = _V(a); b = _V(b); t = b - a
+        if t.length < 1e-4: return
+        t.normalize(); u = t.cross(_V((0, 0, 1)))
+        if u.length < 1e-3: u = t.cross(_V((1, 0, 0)))
+        u.normalize(); v = u.cross(t).normalized(); hw, hd = w / 2, (d or w) / 2; b0 = len(V_)
+        for p_ in (a, b):
+            for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1)): V_.append(tuple(p_ + u * su * hw + v * sv * hd))
+        F_ += [(b0, b0 + 1, b0 + 2, b0 + 3), (b0 + 7, b0 + 6, b0 + 5, b0 + 4)] + [(b0 + i, b0 + 4 + i, b0 + 4 + (i + 1) % 4, b0 + (i + 1) % 4) for i in range(4)]
+    def box(key, c, sx, sy, sz, rot=0.0):   # 中心 c、尺寸、绕 z 转 rot（弧度）
+        V_, F_ = SG.setdefault(key, ([], [])); b0 = len(V_); cr, sr = math.cos(rot), math.sin(rot)
+        for dz in (-sz / 2, sz / 2):
+            for dx, dy in ((-sx / 2, -sy / 2), (sx / 2, -sy / 2), (sx / 2, sy / 2), (-sx / 2, sy / 2)):
+                V_.append((c[0] + dx * cr - dy * sr, c[1] + dx * sr + dy * cr, c[2] + dz))
+        F_ += [(b0 + 3, b0 + 2, b0 + 1, b0), (b0 + 4, b0 + 5, b0 + 6, b0 + 7)] + [(b0 + i, b0 + (i + 1) % 4, b0 + 4 + (i + 1) % 4, b0 + 4 + i) for i in range(4)]
+    def lattice_col(key, cx, cy, z0, z1, hs, ch=0.32, la=0.16, pan=2.5):   # 方格构柱：4 根主肢 + 每 pan 一圈缀条 + 每面斜缀条
+        C_ = [(cx - hs, cy - hs), (cx + hs, cy - hs), (cx + hs, cy + hs), (cx - hs, cy + hs)]
+        for (x_, y_) in C_: beam(key, (x_, y_, z0), (x_, y_, z1), ch)
+        n = max(1, int((z1 - z0) / pan)); dz = (z1 - z0) / n
+        for k in range(n + 1):
+            z_ = z0 + k * dz
+            for i in range(4): beam(key, (*C_[i], z_), (*C_[(i + 1) % 4], z_), la)
+            if k < n:
+                for i in range(4):
+                    a_, b_ = (C_[i], C_[(i + 1) % 4]) if k % 2 == 0 else (C_[(i + 1) % 4], C_[i])
+                    beam(key, (*a_, z_), (*b_, z_ + dz), la)
+    def truss(key, a, b, up, half, h, ch=0.3, la=0.16, pan=3.0, tri=True):   # 平面 / 三角桁架：a→b 下弦两根（±half），上弦（tri：中间一根；否则两根）高 h
+        a = _V(a); b = _V(b); t = (b - a); L_ = t.length; t.normalize(); s = t.cross(_V(up)).normalized(); U = _V(up)
+        lo = [(a + s * half, b + s * half), (a - s * half, b - s * half)]
+        hi = [(a + U * h, b + U * h)] if tri else [(a + s * half + U * h, b + s * half + U * h), (a - s * half + U * h, b - s * half + U * h)]
+        for p_, q_ in lo + hi: beam(key, p_, q_, ch)
+        n = max(1, int(L_ / pan))
+        for k in range(n + 1):
+            f = k / n; P0 = a + (b - a) * f; P1 = a + (b - a) * min(1, (k + 1) / n)
+            l0, l1 = P0 + s * half, P0 - s * half; beam(key, l0, l1, la)
+            for hh in ([P0 + U * h] if tri else [P0 + s * half + U * h, P0 - s * half + U * h]):
+                beam(key, l0 if (hh - l0).length < (hh - l1).length + 1e-6 or tri else l1, hh, la)
+                if tri: beam(key, l1, hh, la)
+            if k < n:
+                for side in (half, -half): beam(key, P0 + s * side, P1 + U * h + (s * side if not tri else _V((0, 0, 0))), la)
+    def tower_crane(x, y, top, jib_deg, jl=50.0, cl=15.0, base=None):
+        zb = gz(x, y) if base is None else base; K = 'crane'; hs = 1.0
+        box(K, (x, y, zb + 0.6), 7.0, 7.0, 1.2)                                   # 基础压重
+        lattice_col(K, x, y, zb + 1.2, top, hs, 0.34, 0.17, 2.5)                    # 塔身
+        box(K, (x, y, top + 1.0), 3.4, 3.4, 2.0)                                     # 回转支承 / 上下支座
+        a = math.radians(jib_deg); dx, dy = math.cos(a), math.sin(a); zj = top + 2.0
+        box(K, (x - dy * 2.4 + dx * 1.0, y + dx * 2.4 + dy * 1.0, top + 1.6), 2.4, 2.0, 2.6, a)   # 司机室
+        apex = (x, y, zj + 10.0)
+        for sx_, sy_ in ((-1, -1), (1, -1), (1, 1), (-1, 1)): beam(K, (x + sx_ * 1.2, y + sy_ * 1.2, zj), apex, 0.32)   # 塔帽
+        tip = (x + dx * jl, y + dy * jl, zj); truss(K, (x, y, zj), tip, (0, 0, 1), 0.8, 1.7, 0.3, 0.16, 2.5, True)      # 起重臂
+        ce = (x - dx * cl, y - dy * cl, zj); truss(K, (x, y, zj), ce, (0, 0, 1), 1.1, 0.0001, 0.34, 0.2, 3.0, False)   # 平衡臂（平面）
+        for k in range(3): box(K, (x - dx * (cl - 1.2 - k * 1.3), y - dy * (cl - 1.2 - k * 1.3), zj - 0.4), 1.1, 2.6, 2.6, a)   # 配重块
+        box(K, (x - dx * (cl - 6.5), y - dy * (cl - 6.5), zj + 0.7), 2.4, 1.8, 1.2, a)   # 起升机构
+        for f in (0.45, 0.85): beam(K, apex, (x + dx * jl * f, y + dy * jl * f, zj + 1.7), 0.12)   # 拉杆
+        beam(K, apex, (ce[0], ce[1], zj + 0.2), 0.12)
+        tr = (x + dx * jl * 0.62, y + dy * jl * 0.62, zj); box(K, (tr[0], tr[1], zj - 0.4), 1.6, 1.6, 0.6, a)   # 变幅小车
+        hz_ = max(zb + 6, zj - 30); beam(K, (tr[0], tr[1], zj - 0.7), (tr[0], tr[1], hz_), 0.12); box(K, (tr[0], tr[1], hz_ - 0.6), 0.8, 0.8, 1.2)   # 吊钩
+        return dict(x=round(x, 1), y=round(y, 1), base=round(zb, 1), top=round(zj + 10, 1), jib=jib_deg)
+    def crawler(x, y, head_deg, L=42.0, el=68.0):
+        zb = gz(x, y); K = 'crane'; a = math.radians(head_deg); dx, dy = math.cos(a), math.sin(a)
+        for sd in (-2.3, 2.3): box(K, (x - dy * sd, y + dx * sd, zb + 0.6), 8.0, 1.0, 1.2, a)   # 履带
+        box(K, (x, y, zb + 1.5), 4.0, 3.6, 0.8, a); box(K, (x - dx * 1.0, y - dy * 1.0, zb + 3.2), 6.0, 3.4, 2.6, a)   # 车身 / 上车
+        box(K, (x - dx * 4.6, y - dy * 4.6, zb + 2.8), 1.8, 3.2, 1.8, a)   # 配重
+        e = math.radians(el); b0 = (x + dx * 1.6, y + dy * 1.6, zb + 2.6); bt = (b0[0] + dx * L * math.cos(e), b0[1] + dy * L * math.cos(e), b0[2] + L * math.sin(e))
+        nrm = (-dx * math.sin(e), -dy * math.sin(e), math.cos(e)); truss(K, b0, bt, nrm, 0.7, 1.4, 0.26, 0.14, 2.5, False)   # 主臂（方格构）
+        mt = (x - dx * 2.5, y - dy * 2.5, zb + 9.0); beam(K, (x - dx * 1.5, y - dy * 1.5, zb + 4.5), mt, 0.3); beam(K, mt, bt, 0.1); beam(K, mt, (x - dx * 4.6, y - dy * 4.6, zb + 3.6), 0.1)   # 人字架 + 拉索
+        hz_ = zb + 8; beam(K, bt, (bt[0], bt[1], hz_), 0.1); box(K, (bt[0], bt[1], hz_ - 0.6), 0.8, 0.8, 1.2)
+        return dict(x=round(x, 1), y=round(y, 1), base=round(zb, 1), tip=round(bt[2], 1))
+    def lift_frame(cx, cy, z1):
+        K = 'liftf'; zb = gz(cx, cy, z1 - 1.0); hs = 1.3
+        box(K, (cx, cy, zb + 0.5), 5.0, 5.0, 1.0)
+        lattice_col(K, cx, cy, zb + 1.0, z1, hs, 0.36, 0.18, 3.0)                              # 格构柱（原位、原截面 2.6 m）
+        for k in range(1, int((z1 - zb) / 12)): box(K, (cx, cy, zb + k * 12.0), 3.4, 3.4, 0.35)   # 缀板（每 12 m）
+        box(K, (cx, cy, z1 + 0.4), 8.0, 8.0, 0.8)                                               # 柱顶提升平台
+        for sx_, sy_ in ((-1, -1), (1, -1), (1, 1), (-1, 1)): beam(K, (cx + sx_ * 4, cy + sy_ * 4, z1 + 0.8), (cx + sx_ * 4, cy + sy_ * 4, z1 + 2.0), 0.1)
+        for i, (p_, q_) in enumerate((((-4, -4), (4, -4)), ((4, -4), (4, 4)), ((4, 4), (-4, 4)), ((-4, 4), (-4, -4)))):
+            beam(K, (cx + p_[0], cy + p_[1], z1 + 2.0), (cx + q_[0], cy + q_[1], z1 + 2.0), 0.1)   # 栏杆
+        # 悬挑桁架梁：在 ±60° 扇区内找离屋面边最近的方向（屋盖四角是圆角），到屋面上方再进 4 m 为吊点（第一版沿对角线 75–81 m 太长、前景那根压到檐口）
+        a0 = math.atan2(-cy, -cx); hp = None; best = 1e9
+        for da in range(-60, 61, 5):
+            d_ = _V((math.cos(a0 + math.radians(da)), math.sin(a0 + math.radians(da)), 0)); r_ = None
+            for k in range(1, 140):
+                if k >= best: break
+                p_ = _V((cx, cy, 0)) + d_ * k; h = RB.ray_cast(_V((p_.x, p_.y, z1 + 5)), _V((0, 0, -1)), 200)
+                if h[0] is not None:
+                    if r_ is None: r_ = k
+                    if k >= r_ + 4: hp = h[0]; best = k; break
+        if hp is None: return dict(x=cx, y=cy, err='no roof hit')
+        tipb = (hp.x, hp.y, z1 + 0.8); truss(K, (cx, cy, z1 + 0.8), tipb, (0, 0, 1), 0.9, 2.4, 0.34, 0.18, 3.0, False)
+        box(K, (hp.x, hp.y, z1 + 0.2), 3.0, 3.0, 1.2)                                         # 液压提升器
+        for ox, oy in ((-0.45, -0.45), (0.45, -0.45), (-0.45, 0.45), (0.45, 0.45)): beam(K, (hp.x + ox, hp.y + oy, z1 - 0.4), (hp.x + ox, hp.y + oy, hp.z + 0.6), 0.14)   # 钢绞线
+        box(K, (hp.x, hp.y, hp.z + 0.6), 1.6, 1.6, 1.0)                                       # 下吊点（屋面网格）
+        return dict(x=round(cx, 1), y=round(cy, 1), base=round(zb, 1), top=z1, arm=round((tipb[0] - cx) ** 2 + (tipb[1] - cy) ** 2, 0) ** 0.5, hang_z=round(hp.z, 1))
+    def stock_beams(x, y, rot, n=3):   # H 型钢束（12 m × 2.4 m × 0.9 m 一捆，枕木垫高）
+        for i in range(n):
+            for j in range(2):
+                c_ = (x + math.cos(rot + math.pi / 2) * i * 3.0, y + math.sin(rot + math.pi / 2) * i * 3.0, gz(x, y) + 0.25 + 0.45 + j * 1.0); box('stock', c_, 12.0, 2.4, 0.9, rot)
+    def stock_plates(x, y, rot, n=4):  # 钢板 / 屋面板垛（6 × 2.5 m，层层错开）
+        for i in range(n):
+            h_ = 0.8 + 0.4 * (i % 3); c_ = (x + math.cos(rot) * i * 7.0, y + math.sin(rot) * i * 7.0, gz(x, y) + h_ / 2 + 0.2); box('stock', c_, 6.0, 2.6, h_, rot)
+    def stock_tubes(x, y, rot):   # 钢管 / 网架杆件垛：三角码放
+        z0_ = gz(x, y); c, s_ = math.cos(rot), math.sin(rot)
+        for row, cnt in enumerate((6, 5, 4, 3)):
+            for k in range(cnt):
+                o_ = (k - (cnt - 1) / 2) * 0.9; zz = z0_ + 0.45 + row * 0.78
+                p0 = (x - s_ * o_ - c * 5, y + c * o_ - s_ * 5, zz); p1 = (x - s_ * o_ + c * 5, y + c * o_ + s_ * 5, zz); beam('stock', p0, p1, 0.8)
+    def cabins(x, y, rot, n=4, floors=2):   # 集装箱板房（6 × 2.5 × 2.7 m）+ 外挂楼梯
+        c, s_ = math.cos(rot), math.sin(rot); z0_ = gz(x + c * n * 3.1, y + s_ * n * 3.1)
+        for f in range(floors):
+            for k in range(n):
+                box('cabin', (x + c * (k * 6.2 + 3.1), y + s_ * (k * 6.2 + 3.1), z0_ + 1.35 + f * 2.8), 6.0, 2.5, 2.7, rot)
+        if floors > 1:
+            beam('cabin', (x + c * n * 6.2 + s_ * 1.6, y + s_ * n * 6.2 - c * 1.6, z0_ + 0.1), (x + c * (n * 6.2 - 4) + s_ * 1.6, y + s_ * (n * 6.2 - 4) - c * 1.6, z0_ + 2.8), 1.0, 0.25)   # 楼梯
+            box('cabin', (x + c * n * 3.1 + s_ * 1.7, y + s_ * n * 3.1 - c * 1.7, z0_ + 2.75), n * 6.2, 0.9, 0.12, rot)   # 二层走廊
+    # —— 布置（数据坐标 x 东、z 南 → Blender x, y = -z）——
+    if 'yellow' in objs: bpy.data.objects.remove(objs.pop('yellow'))   # 原黄柱整体替换（同位置重建）
+    L_ = PR.get('site_lift', [(-170, -150), (170, -150), (-170, 160), (170, 160)])
+    SSTAT['liftf'] = [lift_frame(x_, -z_, 71.0) for x_, z_ in L_]
+    TC = PR.get('site_cranes', [(-260, 0, 82, 180), (260, 0, 82, 0), (-60, 262, 82, 200), (60, 262, 82, -20),   # 原 4 根远处黄柱 → 完整塔吊（原位）
+                                (155, -70, 82, 110), (-155, 70, 82, 200), (-40, -190, 82, 160)])               # 新增 3 台：东北平台 / 西南平台 / 北侧场地
+    SSTAT['crane'] = [tower_crane(x_, -z_, t_, a_) for x_, z_, t_, a_ in TC]
+    SSTAT['crawler'] = [crawler(x_, -z_, a_) for x_, z_, a_ in PR.get('site_crawler', [(205, 50, 180), (195, -100, 120)])]
+    for x_, z_, r_ in ((190, 35, 0.0), (-175, 40, 0.0)): stock_beams(x_, -z_, r_)
+    for x_, z_, r_ in ((150, 55, 0.0), (175, -35, 0.0)): stock_plates(x_, -z_, r_, 3)
+    for x_, z_, r_ in ((185, 66, 0.0), (-195, -50, math.pi / 2)): stock_tubes(x_, -z_, r_)
+    for x_, z_, r_, n_ in ((148, 30, 0.0, 4), (150, -25, 0.0, 3), (-205, 30, 0.0, 3)): cabins(x_, -z_, r_, n_)
+    for k_, (V_, F_) in SG.items():
+        me_ = bpy.data.meshes.new(k_); me_.from_pydata(V_, [], F_); me_.update(); o_ = bpy.data.objects.new(k_, me_); sc.collection.objects.link(o_); objs[k_] = o_
+        SSTAT['faces_' + k_] = len(F_)
+    SSTAT['sec'] = round(time.time() - TS, 1); print('SITE', json.dumps(SSTAT, ensure_ascii=False))
 
 
 # ---------- 11-09 几何细节加强（detail=on）：同一份页面几何上自动加细节，不改导出 ----------
@@ -229,7 +381,7 @@ if DETAIL:
         DSTAT.update(chords=len(ch), webs=len(wb), balls=len(nodes))
     DSTAT['sec'] = round(time.time() - TD, 1)
     print('DETAIL', json.dumps(DSTAT))
-FINE = FINE + ('steelC', 'steelW', 'steelB', 'mull')
+FINE = FINE + ('steelC', 'steelW', 'steelB', 'mull', 'crane', 'liftf')
 
 def lin(c): return tuple(((x / 12.92) if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4) for x in c)
 def node_mat(name):
@@ -336,7 +488,8 @@ SEG = {'clad': (230, 25, 75), 'seam': (230, 25, 75), 'pv': (245, 130, 48), 'glas
        'todG': (70, 240, 240), 'ymG': (70, 240, 240), 'steel': (240, 50, 230), 'steelC': (240, 50, 230), 'steelW': (240, 50, 230), 'steelB': (240, 50, 230),
        'soffit': (145, 30, 180), 'conc': (128, 128, 128), 'slab': (170, 110, 40), 'plat': (255, 225, 25), 'found': (128, 0, 0),
        'metro': (0, 0, 128), 'ym': (210, 245, 60), 'todB': (170, 255, 195), 'rail': (60, 180, 75), 'ground': (255, 250, 200),
-       'red': (0, 128, 128), 'yellow': (0, 128, 128), 'jig': (0, 128, 128), 'sky': (6, 230, 230), 'other': (220, 190, 255)}
+       'red': (0, 128, 128), 'yellow': (0, 128, 128), 'jig': (0, 128, 128), 'sky': (6, 230, 230), 'other': (220, 190, 255),
+       'crane': (0, 255, 0), 'liftf': (0, 0, 255), 'stock': (128, 128, 0), 'cabin': (255, 128, 128)}   # site=on 新增：塔吊 + 履带吊 / 提升架 / 堆料 / 板房
 def emis_mat(name):
     m, nt, o = node_mat(name); e = nt.nodes.new('ShaderNodeEmission'); e.inputs['Strength'].default_value = 1.0; nt.links.new(e.outputs[0], o.inputs[0]); return m, nt, e
 def seg_mat(key):
@@ -379,7 +532,7 @@ def with_pv(m, pvc):
         nt.links.new(cr.outputs[0], mu.inputs['A']); nt.links.new(mx.outputs['Result'], mu.inputs['B']); nt.links.new(mu.outputs['Result'], em.inputs['Color'])
     return m
 PVC = {'real': lin((0.10, 0.14, 0.26)), 'clay': (0.30, 0.33, 0.38), 'ink': ((0.72, 0.74, 0.78) if not NIGHT else (0.6, 0.7, 0.9))}.get(style)
-DBASE = {'seam': 'clad', 'steelC': 'steel', 'steelW': 'steel', 'steelB': 'steel'}   # 细节物体沿用母材质（分割图 seg 用自己的表）
+DBASE = {'seam': 'clad', 'steelC': 'steel', 'steelW': 'steel', 'steelB': 'steel', 'crane': 'yellow', 'liftf': 'yellow', 'stock': 'steel', 'cabin': 'conc'}   # 细节 / 工地物体沿用母材质（分割图 seg 用自己的表）
 def mull_mat():
     if style == 'real': return principled('r_mull', lin((0.36, 0.37, 0.39)), 0.38, 0.85)
     if style == 'clay': return clay_mat('mull')
