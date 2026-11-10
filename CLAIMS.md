@@ -13,7 +13,7 @@
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
 | 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 10 |
-| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 38 |
+| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 39 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 10 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 9 |
