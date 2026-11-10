@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 9 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 10 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 36 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 10 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 30 |
@@ -84,6 +84,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-41 | hark-cr（执行：Traycer CLI on Mac；web/mods/yunmen.js 作者，见 D-23） | S-000 总图云门改示意线型 | 委托人 11-10 10:32 定云门拼案：短期 S-000 总图用示意线型止血，成品态正式建模排入后续阶段。请把 S-000 总图上的云门改为示意线型：双点画线 + 注「示意」。只改其插件文件 web/mods/yunmen.js（及其 tools/hz/check_yunmen.js 断言），不碰宿主与 hzseq.js。验收：check_all 全 OK；附 S-000 总图云门前后截图 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-44 | hark-cs | 信息卡显示构件关系两层（info.js 读 ctx.rel） | 委托人 2026-11-10 批准「点一个构件，上下游在图纸和三维同时亮起」，并要求分层。宿主侧已合入 main（3059c14：web/hzrel.js 的 HZ.rel、2D/3D 高亮、modsPick 传 ctx.rel、__pv.rel/relOf，合同见 docs/tasks/relations.md 与 docs/hz-atlas-check.md §3 第 16 条）。请在 web/mods/info.js（及 tools/hz/check_info.js）实现：第 2 层，卡片最多三行：靠谁撑着 counts.hold 件 · 等谁先装 counts.wait 件 · 吊车 crane.name（站位）；无数据的行不显示；第 3 层，按钮「更多」展开：up/down 列表（label + whyText，level=act 标「工序级」）、所在图纸 sheets、HZR.forPart 实物记录。默认收起，不新增数字到首屏。验收：S-201 构件（如 D-S05 或 G-S03，t≈800）截图，含卡片与高亮；check_all 全 OK。只改 info.js 与 check_info.js。 | 待做 | 11-10 hark-cr（委托人批准关系高亮） |
 | D-45 | hark-cs | 实物图钉太密、数字看不懂：按记录聚合，默认收起 | 委托人 2026-11-10 15:45 反馈（S-201 截图，2020-09-16 线下框架柱处）：一排几十个红色图钉、上面写 2、5，很碍眼，也看不出什么意思。原因：web/mods/info.js 每个挂了实物记录的构件打一个钉，数字是该构件挂的记录条数，多个构件共用同一批记录就重复成排。请改（只改 info.js 与 check_info.js）：① 按记录聚合，同一组记录只打一个钉，放在这些构件包围盒中心；② 钉上不写裸数字，改成一个相机小图标，悬停或点开才显示「现场照片 2 张 · 卫星影像 1 张」这类带单位的说明；③ 每张图同屏最多 5 个钉，重叠（屏幕距离 < 24 px）的合并；④ 默认收起：图上只在左下角显示一个小按钮「实物 N」（N = 本图记录数），点开才显示钉；选中构件时，信息卡照常列出其记录。验收：S-201 t≈180（2020-09-16）与 t≈800 截图，钉数 ≤ 5 且无裸数字；check_all 全 OK。 | 待做 | 11-10 hark-cr（委托人 15:45 反馈） |
+| D-46 | hark-fangyi | 哨兵二号记录的来源链接打不开：换成人能看的证据 | 委托人 2026-11-10 15:48 反馈：实物记录里哨兵二号的来源链接打不开。核实：web/hzreal.js 中 8 条（R-0015、R-0016、R-0021 及 R-0022…R-0026 等）src.url 指向 earth-search.aws.element84.com 的 STAC 接口，返回的是 GeoJSON 元数据，浏览器里只是一串 JSON，看不到影像；国内访问 AWS 也慢或不通。请改（只改 web/hzreal.js，及新增的证据图片）：① 每条从该景 TCI.tif（STAC assets.visual.href）裁出车站周边约 3×3 km、10 m 原分辨率的 PNG/JPEG（≤ 150 KB），放 web/real/s2/<景名>.jpg，src 增加 img 字段指向它，信息卡可直接显示；② src.url 改为人能打开的页面：Copernicus Browser 定位到车站经纬度与该日期的链接（先自己在浏览器验证能打开）；原 STAC 地址保留为 src.raw 供核对；③ 标题里写清「卫星影像 · 日期 · 看什么（如：北场尚无轨道）」。验收：8 条记录的 img 都能在页面上打开、能看到车站；url 在浏览器能打开（附截图）；check_all 全 OK。注意：hzreal.js 只放字面量，不执行代码。 | 待做 | 11-10 hark-cr（委托人 15:48 反馈） |
 
 ## 接口请求
 
