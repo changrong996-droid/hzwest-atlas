@@ -655,6 +655,25 @@ HZ.assignCranes = function () { const K = HZ.K, out = { tower: 0, crawler: 0, no
   for (const [k, cx, cz, x, z] of [['mast', -77, 46.5, -99, 141], ['mast', 77, 46.5, 99, 141], ['rig', -77, 24.5, -99, 141], ['rig', 77, 24.5, 99, 141]]) {
     const p = K[k] && K[k].parts.find(q => q.crane === -1 && Math.abs(q.c[0] - cx) < 0.2 && Math.abs(q.c[2] - cz) < 0.2);
     if (p && !clashAt(x, z, p.st - 0.5, p.st + p.du + 0.5)) { p.crawl = [x, z]; p.crawlY = 0; } }
+  // 同一工序同日在吊 ≤ 5 台（hark-darrio docs/rules/crane-count.md 选项 2，委托人 2026-11-10 批准）：工期不变，按开工先后逐吊派站位，
+  // 某天同工序已有 5 个站位（30 m 内记一台，与 check_cranecount / S-002 同口径）而本吊站位不在其中时，改用同工序当天已在用的站位
+  // （该站位过 clashAt 净空、离构件 ≥ 6 m、650 t 级在该吊距够得着），即同一台吊机当天转吊；取吊距最近的。找不到则保持原站位（计入 out.perOver）。
+  { const PER = 5, SAME = 30, HOOK = 1.1, PICK = { conc: 8, plat: 8, found: 8, ym: 8, ymG: 10, todG: 10, todB: 10, glass: 6, steel: 20, red: 20 };
+    const C650 = [[20, 397], [24, 335], [30, 265], [36, 215], [40, 191], [44, 170], [48, 153], [52, 138], [56, 125], [60, 114], [64, 104], [68, 94], [72, 85], [76, 78], [80, 72], [84, 66], [88, 60], [92, 54], [96, 49.4], [100, 44.3], [104, 39.9], [108, 35.5], [112, 30.8], [116, 27], [120, 22.7], [124, 19.4], [128, 16.6], [132, 14.1], [136, 11.3], [140, 7.9]];
+    const capAt = R => { if (R <= C650[0][0]) return C650[0][1]; for (const [r, c] of C650) if (R <= r) return c; return 0; };
+    const need = p => (p.tons || (PICK[p.mat] != null ? PICK[p.mat] : 10)) * HOOK;
+    const fixed = new Set(['mast', 'rig']), byKey = new Map(), seen = new Set();   // mast / rig 是 D-18 / D-25 定过的站位，不动
+    for (const a of HZ.acts) for (const p of a.parts) { if (p.crane !== -1 || !p.crawl || seen.has(p)) continue; seen.add(p); const k = a.key.replace(/~rm$/, ''); if (fixed.has(k)) continue; if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(p); }
+    let moved = 0, over = 0;
+    for (const L of byKey.values()) { L.sort((a, b) => a.st - b.st); const placed = [];
+      const centers = d => { const cl = []; for (const q of placed) { if (!(q.st < d + 1 && q.st + q.du > d)) continue; if (!cl.some(c => Math.hypot(c[0] - q.crawl[0], c[1] - q.crawl[1]) <= SAME)) cl.push(q.crawl); } return cl; };
+      for (const p of L) { const d0 = Math.floor(p.st), d1 = Math.ceil(p.st + p.du) - 1, days = []; for (let d = d0; d <= d1; d++) days.push(centers(d));
+        const fits = s => days.every(cl => cl.length < PER || cl.some(c => Math.hypot(c[0] - s[0], c[1] - s[1]) <= SAME));
+        if (!fits(p.crawl)) { let best = null, bd = 1e9; const t0 = p.st - 0.5, t1 = p.st + p.du + 0.5, w = need(p);
+          for (const cl of days) for (const c of cl) { const R = Math.hypot(p.c[0] - c[0], p.c[2] - c[1]); if (R >= bd || R < 6 || capAt(R) < w || !fits(c) || clashAt(c[0], c[1], t0, t1)) continue; bd = R; best = c; }
+          if (best) { p.crawl = [best[0], best[1]]; p.crawlY = 0; moved++; } else over++; }
+        placed.push(p); } }
+    out.perMoved = moved; out.perOver = over; HZ.CRAWL_PER = PER; }
   HZ.crawlHits = bad; out.crawlBad = bad;
   HZ.lift = out; return out; };
 
