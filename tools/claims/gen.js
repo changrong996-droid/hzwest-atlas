@@ -24,7 +24,7 @@ const TPL = path.join(DATA, 'tpl');
 const SEP = (n) => '|' + Array(n).fill('---').join('|') + '|';
 // 单元格内出现的 | 一律转义成 \|：保证 GitHub 表格渲染不破列；
 // 迁移时解析器已把 \| 还原为字面 |，这里再转义回去，与源文件的 \|x\| 写法逐字节一致。
-const cell = (c) => (c == null ? '' : String(c)).replace(/\|/g, '\\|');
+const cell = (c) => (c == null ? '' : String(c)).replace(/\|/g, '\\|').replace(/\s*\n\s*/g, '　');
 const row = (cells) => '| ' + cells.map(cell).join(' | ') + ' |';
 
 function table(headerCells, rows) {
