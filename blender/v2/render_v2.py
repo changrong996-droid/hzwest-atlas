@@ -22,6 +22,8 @@ SHOTS = {
     # S-501 首趟列车 + 云门同框：geo = t1131f64（开通后、列车按页面同一进站曲线 f=0.64，鼻尖 x=-59.4 已进屋盖；r3/r4 用 f=0.58 鼻尖 -127.6；
     # 停靠位 x=109.5 在屋盖下、四角上盖开发 47 m 体量挡住云门，任何机位都无法同框，见审计文档）
     'train': dict(pos=(-400, 90, -120), tgt=(-200, 10, 40), lens=28, sun=(30, 210), night=False),   # r5：geo t1131f64（鼻尖已进屋盖 60 m，尾部在露天 → 读成驶入站房；r3/r4 尾车流线头被误读为车头背离）；射线核查列车入框 1.00 / 可见 0.92、云门入框 1.00 / 可见 0.68
+    # 11-09 S-501 近景（不改原 train）：北侧低机位 30 m、28 mm，列车占画宽约 80%、车头驶向屋盖下，左上屋盖西缘 + 右侧云门一角；同机位出 R1 t=1100（无车）/ R2 t=1131f64（有车）
+    'train_near': dict(pos=(-185, 30, -25), tgt=(-80, 20, 60), lens=28, sun=(30, 210), night=False),   # 960 预览：FRAMECHECK 列车入框 0.52（尾部出右框）/ 可见 0.48，云门入框 1.00 / 可见 0.47
     # 夜景亮灯全景 t=1131
     'night': dict(pos=(380, 300, 520), tgt=(0, 18, 20), lens=36, sun=(40, 140), night=True),   # r3：抬高、偏南，云门不再以黑侧面挡站房
 }
@@ -47,7 +49,7 @@ TABLE = {
 TRAIN3 = ((-330, 75, -60), (-135, 14, 42), 30)   # 三版 S-501 机位：拉近 NW 机位 + 30 mm，列车约放大 1.6 倍，云门可见比例不降（候选 c16-G）
 for st_ in ('clay', 'ink', 'real'): TABLE.setdefault(('train', st_), {}).setdefault('cam', TRAIN3)
 # 三版实景日景：物理天空 + 4.8 日光在 AgX 下偏白，压曝光（lift 天空占画面多，压 1.0 档）
-for sh_, ev_ in (('lift', -1.0), ('roof', -0.7), ('train', -0.7)): TABLE.setdefault((sh_, 'real'), {}).setdefault('exp', ev_)
+for sh_, ev_ in (('lift', -1.0), ('roof', -0.7), ('train', -0.7), ('train_near', -0.7)): TABLE.setdefault((sh_, 'real'), {}).setdefault('exp', ev_)
 TABLE.setdefault(('night', 'real'), {}).setdefault('exp', 0.4)   # r8：实景夜景提一点，夜空 / 地面读得出
 PR = dict(DEF); PR.update(TABLE.get((shot, style), {}))
 import ast
@@ -237,6 +239,10 @@ if SITE:
     for x_, z_, r_ in ((150, 55, 0.0), (175, -35, 0.0)): stock_plates(x_, -z_, r_, 3)
     for x_, z_, r_ in ((185, 66, 0.0), (-195, -50, math.pi / 2)): stock_tubes(x_, -z_, r_)
     for x_, z_, r_, n_ in ((148, 30, 0.0, 4), (150, -25, 0.0, 3), (-205, 30, 0.0, 3)): cabins(x_, -z_, r_, n_)
+    # 11-09 S-301 P3b 前景堆场（site_fore，默认空）：t ≥ 683 提升完成、屋面围护 clad 693 起，站房南侧地面堆屋面板垛 / 檩条钢管垛 / H 型钢束 + 板房 + 1 台吊装屋面材料的履带吊（AI 成图前景原为一片平地 → 发虚）
+    _FK = dict(plates=lambda x, y, r, n: stock_plates(x, y, r, n), tubes=lambda x, y, r, n: stock_tubes(x, y, r), beams=lambda x, y, r, n: stock_beams(x, y, r, n), cabins=lambda x, y, r, n: cabins(x, y, r, n), crawler=lambda x, y, r, n: SSTAT.setdefault('crawler', []).append(crawler(x, y, r)))
+    for k_, x_, z_, r_, n_ in PR.get('site_fore', []): _FK[k_](x_, -z_, r_, n_)
+    SSTAT['fore'] = len(PR.get('site_fore', []))
     for k_, (V_, F_) in SG.items():
         me_ = bpy.data.meshes.new(k_); me_.from_pydata(V_, [], F_); me_.update(); o_ = bpy.data.objects.new(k_, me_); sc.collection.objects.link(o_); objs[k_] = o_
         SSTAT['faces_' + k_] = len(F_)
@@ -509,7 +515,7 @@ def clay_mat(key):
     if key in ('red', 'yellow', 'jig'): c = lin({'red': (0.80, 0.20, 0.12), 'yellow': (0.85, 0.70, 0.40), 'jig': (0.82, 0.62, 0.40)}[key])
     elif key in ('glass', 'todG', 'ymG'): c = tuple(PR['clay_glass'])   # r4：云缝 / 幕墙浅灰（r3 深灰条被扣分）
     elif key in ('trainW', 'tr_blk'): c = (0.10, 0.11, 0.12)
-    elif key in ('slab', 'rail') and shot == 'train': c = (0.45, 0.44, 0.42)   # r4：道床压暗，白车读得出
+    elif key in ('slab', 'rail') and shot in ('train', 'train_near'): c = (0.45, 0.44, 0.42)   # r4：道床压暗，白车读得出
     elif key == 'pv': c = (0.30, 0.33, 0.38)
     elif key == 'mount': c = (0.60, 0.61, 0.59)   # env：远山压暗一档，和纸白天空分开
     elif key == 'tr_red': c = lin((0.82, 0.12, 0.08))
@@ -783,7 +789,7 @@ if CTRL and style != 'line':   # 控制图：自发光、无 AA 混色（seg 1 �
     sd.energy = 0.0
     sc.render.image_settings.file_format = 'OPEN_EXR'; sc.render.image_settings.color_mode = 'RGBA'; sc.render.image_settings.color_depth = '32'
     sc.render.filepath = os.path.splitext(out)[0] + '.exr'
-if shot == 'train':   # 同框核查：列车 / 云门顶点抽样 → 在画框内的比例、从相机射线首个命中是否就是它（未被遮挡）的比例
+if shot in ('train', 'train_near'):   # 同框核查：列车 / 云门顶点抽样 → 在画框内的比例、从相机射线首个命中是否就是它（未被遮挡）的比例
     from bpy_extras.object_utils import world_to_camera_view
     dg = bpy.context.evaluated_depsgraph_get(); bpy.context.view_layer.update()
     for grp in (('tr_sil', 'tr_red', 'tr_blk'), ('ym', 'ymG')):
