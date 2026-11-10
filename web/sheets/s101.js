@@ -375,6 +375,7 @@
       const wrap = (txt, col, fsz) => { g.font = `${fsz || 10}px ${SANS}`; g.fillStyle = col; let line0 = ''; for (const ch of txt) { if (g.measureText(line0 + ch).width > colW - 6) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 4; line0 = ch; } else line0 += ch; } if (line0) { g.fillText(line0, cx, ly); ly += (fsz || 10) + 6; } };
       wrap(B.label, C.ink2); wrap(dayTxt, C.ink3, 9);
       { const tk = trucks(HZ, t); if (tk.cum > 0) wrap(tk.day > 0 ? '今天约 ' + tk.day + ' 车出土 · 累计 ' + (tk.cum / 1e4).toFixed(1) + ' 万车' : '出土共 ' + (tk.cum / 1e4).toFixed(1) + ' 万车（每车约 ' + TRUCK + ' m³）', C.temp, 9); }
+      wrap('注：地下中间节拍为推演；实景桩基 2020-05-15 完成、土方 2020-07-20 基本挖完，终点 2020-09-15 吻合（R-0017…R-0021）', C.ink3, 9);
       ly += 4;
       for (const n of s.cur.slice(0, 3)) wrap('▸ ' + n, C.red, 10);
       if (!s.cur.length && t >= m.win[1]) wrap('地下结构封顶，转入地上', '#2f7a3a', 10);
