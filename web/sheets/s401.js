@@ -51,14 +51,14 @@
     return D;
   }
   const stOf = (p, t) => (p.st == null || t < p.st ? -1 : t < p.st + p.du ? (t - p.st) / p.du : 2);
-  // 光伏铺设前沿：与 hzview.js 着色器同式 mix(-170, 175, uPV)，从北往南
-  const pvFront = (K, t) => { const u = Math.max(0, Math.min(1, (t - K.pv.start) / K.pv.dur)); return t < K.pv.start ? -1e9 : -170 + 345 * u; };
+  // 光伏铺设前沿：与 hzview.js 着色器同式 step(mix(175, -170, uPV), z)，从南往北，z ≥ 前沿为已铺
+  const pvFront = (K, t) => { const u = Math.max(0, Math.min(1, (t - K.pv.start) / K.pv.dur)); return t < K.pv.start ? 1e9 : 175 - 345 * u; };
 
   // ---------- 统计（大数字与检查共用）----------
   function stats(t) {
     const d = data(), K = d.K; let shut = 0, cur = 0, pvA = 0; const front = pvFront(K, t);
     for (const q of d.tiles) { const s = stOf(q.part, t); if (s >= 2) shut += q.a; else if (s >= 0) cur++;   // 封闭率只算铺完的块（在铺不折算），与图上纸白 / 浅蓝面积一致（D-22 ③）
-      if (q.pv && s >= 2 && q.zc < front) pvA += q.a * (2 * PV_W); }
+      if (q.pv && s >= 2 && q.zc > front) pvA += q.a * (2 * PV_W); }
     let holesOpen = 0; for (const h of d.holes) if (stOf(h.p, t) < 2) holesOpen++;
     // 光伏面积口径与 HZ.pvArea（≈1.5 万 m²，按公开报道标定）一致：按已铺条带占比折算
     const pvTot = G.HZ.pvArea || d.pvTot;
@@ -201,7 +201,7 @@
     for (const q of d.tiles) {
       const k = stOf(q.part, t); if (k < 0) { if (t >= K.sky.start) unl.push(q); continue; }
       const px = X(q.za), py = Y(q.xa + S), sz = S * s;
-      if (k < 2) { g.fillStyle = C.red2; g.fillRect(px, py, sz + 0.3, sz + 0.3); if (!q.sky) curZ = q.za; continue; }
+      if (k < 2) { g.fillStyle = C.red2; g.fillRect(px, py, sz + 0.3, sz + 0.3); if (!q.sky) curZ = curZ == null ? q.za : Math.min(curZ, q.za); continue; }   // 金属屋面南先北后（7ed5848）：前沿取在铺块最北
       g.fillStyle = q.sky ? C.sky : C.clad; g.fillRect(px, py, sz + 0.3, sz + 0.3);
     }
     // 未铺（屋面已开铺后）：淡墨 45° 斜线，表示还是裸网架——与纸白的已铺面一眼分开（D-22 ③）
@@ -215,11 +215,11 @@
       for (const q of d.tiles) { if (q.sky || stOf(q.part, t) < 2) continue; const px = X(q.za), py = Y(q.xa + S); if (q.j % 4 === 0) { g.moveTo(px, py); g.lineTo(px, py + sz); } if (q.i % 4 === 0) { g.moveTo(px, py + sz); g.lineTo(px + sz, py + sz); } }
       g.stroke();
     }
-    // 2 光伏：顺轨条带（常 z 的竖条），只铺在已完成的金属屋面上、按进度从北往南
+    // 2 光伏：顺轨条带（常 z 的竖条），只铺在已完成的金属屋面上、按进度从南往北
     if (t >= K.pv.start) {
       g.fillStyle = C.pv;
       for (const q of d.tiles) {
-        if (!q.pv || q.zc >= front || stOf(q.part, t) < 2) continue;
+        if (!q.pv || q.zc <= front || stOf(q.part, t) < 2) continue;
         const k0 = Math.floor(q.za / PV_P), k1 = Math.floor((q.za + S) / PV_P);
         for (let k = k0; k <= k1; k++) { const c = (k + 0.5) * PV_P, a = Math.max(q.za, c - PV_W * PV_P), b = Math.min(q.za + S, c + PV_W * PV_P); if (b > a) g.fillRect(X(a), Y(q.xa + S), (b - a) * s + 0.2, S * s + 0.3); }
       }
@@ -248,7 +248,7 @@
     const fp = ctx.focus ? partsData().byId.get(ctx.focus) : null;
     if (fp && fp.tiles) { g.save(); rimPath(); g.clip(); g.fillStyle = 'rgba(240,190,20,.32)'; for (const q of fp.tiles) g.fillRect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.restore(); }
     g.restore();   // 结束旋转：以下用画面坐标
-    if (frontAt) label(g, Ly.rot ? '铺设 ↓南' : '铺设 →南', frontAt[0] + (Ly.rot ? 4 : 4), frontAt[1] + (Ly.rot ? 10 : 2), C.red, box, { fs: 8.5, sans: true, b: true });
+    if (frontAt) label(g, Ly.rot ? '铺设 ↑北' : '铺设 ←北', frontAt[0] + (Ly.rot ? 4 : 4), frontAt[1] + (Ly.rot ? 10 : 2), C.red, box, { fs: 8.5, sans: true, b: true });
     if (fp) { const YEL = '#e0a800', hb = hitOf(fp, Ly);
       g.strokeStyle = YEL; g.lineWidth = 2; g.strokeRect(hb[0] - 1, hb[1] - 1, hb[2] + 2, hb[3] + 2);
       const ly2 = hb[1] - 7 > box.y0 + 16 ? hb[1] - 7 : hb[1] + hb[3] + 8;
@@ -288,8 +288,8 @@
     stats,
     // 3D 引线锚点（D-22 ④，待宿主接 pl.leadAt，见 CLAIMS 接口请求）：铺金属屋面 / 光伏时落在当前铺设前沿、离开十字采光顶的东侧屋面板上
     leadAt(t) { const d = data(), K = d.K, HZ = G.HZ; let z = null, t1, t2;
-      if (t >= K.clad.start && t < K.clad.end) { let zf = null; for (const q of d.tiles) { if (q.sky) continue; const k = stOf(q.part, t); if (k >= 0 && k < 2) zf = zf == null ? q.zc : Math.max(zf, q.zc); } z = zf; t1 = KIND.clad; t2 = '铺设前沿 · 由北向南'; }
-      else if (t >= K.pv.start && t < K.pv.end) { z = pvFront(K, t) - 4; t1 = KIND.pv; t2 = '铺设前沿 · 由北向南'; }
+      if (t >= K.clad.start && t < K.clad.end) { let zf = null; for (const q of d.tiles) { if (q.sky) continue; const k = stOf(q.part, t); if (k >= 0 && k < 2) zf = zf == null ? q.zc : Math.min(zf, q.zc); } z = zf; t1 = KIND.clad; t2 = '铺设前沿 · 由南向北'; }
+      else if (t >= K.pv.start && t < K.pv.end) { z = pvFront(K, t) + 4; t1 = KIND.pv; t2 = '铺设前沿 · 由南向北'; }
       if (z == null) return null;
       for (const x of [55, 70, 40, 85]) if (HZ.rho(x, z) < 0.95 && !HZ.inSky(x, z) && (t < K.pv.start || HZ.pvMask(x, z) > 0.5)) return { p: [x, HZ.Hc(x, z) + 1, z], t1, t2 };
       return null; },
