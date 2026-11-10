@@ -34,7 +34,7 @@ S = dict(SHOTS[shot]); NIGHT = S['night']
 DEF = dict(view=None, look=None, sun_e=None, sun=None, cam=None, exp=0.0, clad_lines=False, clay_wv=False,
            clay_glass=(0.60, 0.62, 0.64), strands=True, strand_r=None, strand_wide=True, real3=True, glow3=True, src='v3',
            detail='off', bevel_w=0.15, seam_w=0.5, seam_step=1.0, seam_h=0.08, seam_t=0.06, mull_r=0.09, cw_u=1.5, cw_z=4.5,
-           chord_r=0.12, web_r=0.07, ball_r=0.22, d_parts='bevel,seam,mull,steel', site='off')
+           chord_r=0.12, web_r=0.07, ball_r=0.22, d_parts='bevel,seam,mull,steel', site='off', env='off', env_seed=401)
 CTRL = style in ('depth', 'normal', 'seg', 'line'); INKLIKE = style in ('ink', 'line')
 TABLE = {
     ('roof', 'clay'): dict(view='AgX', look='None', sun_e=4.6, sun=(9, 45), clay_wv=True, clay_glass=(0.38, 0.40, 0.43), src='r2'),
@@ -241,6 +241,61 @@ if SITE:
         me_ = bpy.data.meshes.new(k_); me_.from_pydata(V_, [], F_); me_.update(); o_ = bpy.data.objects.new(k_, me_); sc.collection.objects.link(o_); objs[k_] = o_
         SSTAT['faces_' + k_] = len(F_)
     SSTAT['sec'] = round(time.time() - TS, 1); print('SITE', json.dumps(SSTAT, ensure_ascii=False))
+
+# ---------- 11-09 环境（env=on，默认 off；hark-cs）：S-401 AI 补照片被扣「背景空白」后加 ----------
+# ① 城市楼群 city：距站房中心 0.8–3 km 的街区格（街区 150 m、每 4 格留 1 条 30 m 宽主街），每格 1–3 栋简单体块，高 20–120 m（东侧 / 东北更高、往外渐低），
+#    股道走廊 |z| < 220 m 不放；② 低山 mount：3–8 km 环带高度场，西侧丘陵 100–300 m、东侧 ≤ 90 m（杭州西侧丘陵，推断的示意轮廓，非实测地形）；
+# ③ 道路 road：站外环路（z = −300 / +330，x = ±760，宽 24 m）+ 城市主街（宽 30 m，0.8–3 km）。地面在 env=on 时扩到 20 km。全部是地面以上的体块，
+#    在站房 0.8 km 以外，不遮挡屋面与塔吊（塔吊在 ±260 m 内）。
+ENV = str(PR.get('env', 'off')).lower() in ('on', '1', 'true'); ESTAT = {}
+if ENV:
+    import random; TE = time.time(); rnd = random.Random(int(PR.get('env_seed', 401))); EG = {'city': ([], []), 'road': ([], []), 'mount': ([], [])}
+    def ebox(key, cx, cy, z0, sx, sy, sz, rot=0.0):   # Blender 坐标中心 (cx, cy)，底 z0
+        V_, F_ = EG[key]; b0 = len(V_); c_, s_ = math.cos(rot), math.sin(rot)
+        for dz in (0, sz):
+            for dx, dy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+                px, py = dx * sx / 2, dy * sy / 2; V_.append((cx + px * c_ - py * s_, cy + px * s_ + py * c_, z0 + dz))
+        F_ += [(b0, b0 + 3, b0 + 2, b0 + 1), (b0 + 4, b0 + 5, b0 + 6, b0 + 7)] + [(b0 + i, b0 + (i + 1) % 4, b0 + 4 + (i + 1) % 4, b0 + 4 + i) for i in range(4)]
+    CELL = 150.0; n_ = int(3000 // CELL) + 1; nb_ = 0
+    for i in range(-n_, n_ + 1):
+        for j in range(-n_, n_ + 1):
+            if i % 4 == 0 or j % 4 == 0: continue   # 主街
+            x_, z_ = i * CELL, j * CELL; r_ = math.hypot(x_, z_)
+            if r_ < 800 or r_ > 3000 or abs(z_) < 220: continue
+            if rnd.random() < 0.06 + 0.22 * (r_ - 800) / 2200: continue   # 往外渐稀
+            az = math.atan2(-z_, x_)   # 东 = 0，北 = +90°
+            hmax = 120 * (0.55 + 0.45 * max(0.0, math.cos(az - math.radians(20)))) * (1.0 - 0.45 * (r_ - 800) / 2200)
+            for k in range(rnd.choice((1, 2, 2, 3, 3))):
+                sx, sy = rnd.uniform(22, 55), rnd.uniform(22, 55); ox, oy = rnd.uniform(-(CELL - 30 - sx) / 2, (CELL - 30 - sx) / 2), rnd.uniform(-(CELL - 30 - sy) / 2, (CELL - 30 - sy) / 2)
+                h_ = max(20.0, min(120.0, rnd.uniform(0.25, 1.0) * hmax)); ebox('city', x_ + ox, -(z_ + oy), 0.0, sx, sy, h_); nb_ += 1
+    ESTAT['city_blocks'] = nb_
+    for i in range(-n_, n_ + 1):   # 主街（街区格每 4 格），0.8–3 km 段
+        if i % 4: continue
+        c_ = i * CELL
+        for a0, a1 in ((-3000, -800), (800, 3000)):
+            ebox('road', (a0 + a1) / 2, -c_, 0.0, a1 - a0, 30, 0.25)   # 东西向（Blender x）
+            ebox('road', c_, -(a0 + a1) / 2, 0.0, 30, a1 - a0, 0.25)   # 南北向
+    for z_ in (-300.0, 330.0): ebox('road', 0, -z_, 0.0, 1560, 24, 0.25)   # 站外环路
+    for x_ in (-760.0, 760.0): ebox('road', x_, 15, 0.0, 24, 654, 0.25)
+    # 低山：极坐标高度场
+    NA, NR = 360, 26; V_, F_ = EG['mount']
+    def ridge(a):   # 方位 a（Blender，东 = 0、逆时针）：西侧高、东侧低，叠几组正弦当山脊起伏
+        west = 0.5 - 0.5 * math.cos(a)   # 西 = 1、东 = 0
+        n1 = 0.5 + 0.25 * math.sin(3 * a + 1.3) + 0.15 * math.sin(7 * a + 0.4) + 0.1 * math.sin(13 * a + 2.1)
+        return (90 + 210 * west) * (0.55 + 0.45 * n1)
+    for ia in range(NA):
+        a = 2 * math.pi * ia / NA; pk = ridge(a); rp = 4700 + 900 * math.sin(2 * a + 0.7)
+        for ir in range(NR):
+            r_ = 3000 + 5000 * ir / (NR - 1)
+            prof = math.exp(-((r_ - rp) / (1300 if r_ < rp else 1900)) ** 2) * (1 - math.exp(-((r_ - 3000) / 500) ** 2))
+            V_.append((r_ * math.cos(a), r_ * math.sin(a), pk * prof - 0.3))
+    for ia in range(NA):
+        for ir in range(NR - 1):
+            a0_, a1_ = ia * NR + ir, ((ia + 1) % NA) * NR + ir; F_.append((a0_, a1_, a1_ + 1, a0_ + 1))
+    for k_, (V_, F_) in EG.items():
+        me_ = bpy.data.meshes.new(k_); me_.from_pydata(V_, [], F_); me_.update(); o_ = bpy.data.objects.new(k_, me_); sc.collection.objects.link(o_); objs[k_] = o_
+        ESTAT['faces_' + k_] = len(F_)
+    ESTAT['sec'] = round(time.time() - TE, 1); print('ENV', json.dumps(ESTAT, ensure_ascii=False))
 
 
 # ---------- 11-09 几何细节加强（detail=on）：同一份页面几何上自动加细节，不改导出 ----------
@@ -456,6 +511,7 @@ def clay_mat(key):
     elif key in ('trainW', 'tr_blk'): c = (0.10, 0.11, 0.12)
     elif key in ('slab', 'rail') and shot == 'train': c = (0.45, 0.44, 0.42)   # r4：道床压暗，白车读得出
     elif key == 'pv': c = (0.30, 0.33, 0.38)
+    elif key == 'mount': c = (0.60, 0.61, 0.59)   # env：远山压暗一档，和纸白天空分开
     elif key == 'tr_red': c = lin((0.82, 0.12, 0.08))
     elif key == 'tr_sil': c = (0.95, 0.95, 0.95)
     else: c = base
@@ -489,7 +545,8 @@ SEG = {'clad': (230, 25, 75), 'seam': (230, 25, 75), 'pv': (245, 130, 48), 'glas
        'soffit': (145, 30, 180), 'conc': (128, 128, 128), 'slab': (170, 110, 40), 'plat': (255, 225, 25), 'found': (128, 0, 0),
        'metro': (0, 0, 128), 'ym': (210, 245, 60), 'todB': (170, 255, 195), 'rail': (60, 180, 75), 'ground': (255, 250, 200),
        'red': (0, 128, 128), 'yellow': (0, 128, 128), 'jig': (0, 128, 128), 'sky': (6, 230, 230), 'other': (220, 190, 255),
-       'crane': (0, 255, 0), 'liftf': (0, 0, 255), 'stock': (128, 128, 0), 'cabin': (255, 128, 128)}   # site=on 新增：塔吊 + 履带吊 / 提升架 / 堆料 / 板房
+       'crane': (0, 255, 0), 'liftf': (0, 0, 255), 'stock': (128, 128, 0), 'cabin': (255, 128, 128),   # site=on 新增：塔吊 + 履带吊 / 提升架 / 堆料 / 板房
+       'city': (180, 120, 120), 'mount': (143, 255, 140), 'road': (140, 140, 140)}   # env=on 新增（取 ADE20K 的 building / mountain / road 色，ControlNet seg 认得）
 def emis_mat(name):
     m, nt, o = node_mat(name); e = nt.nodes.new('ShaderNodeEmission'); e.inputs['Strength'].default_value = 1.0; nt.links.new(e.outputs[0], o.inputs[0]); return m, nt, e
 def seg_mat(key):
@@ -532,20 +589,20 @@ def with_pv(m, pvc):
         nt.links.new(cr.outputs[0], mu.inputs['A']); nt.links.new(mx.outputs['Result'], mu.inputs['B']); nt.links.new(mu.outputs['Result'], em.inputs['Color'])
     return m
 PVC = {'real': lin((0.10, 0.14, 0.26)), 'clay': (0.30, 0.33, 0.38), 'ink': ((0.72, 0.74, 0.78) if not NIGHT else (0.6, 0.7, 0.9))}.get(style)
-DBASE = {'seam': 'clad', 'steelC': 'steel', 'steelW': 'steel', 'steelB': 'steel', 'crane': 'yellow', 'liftf': 'yellow', 'stock': 'steel', 'cabin': 'conc'}   # 细节 / 工地物体沿用母材质（分割图 seg 用自己的表）
+DBASE = {'seam': 'clad', 'steelC': 'steel', 'steelW': 'steel', 'steelB': 'steel', 'crane': 'yellow', 'liftf': 'yellow', 'stock': 'steel', 'cabin': 'conc', 'city': 'conc', 'road': 'slab', 'mount': 'conc'}   # 细节 / 工地物体沿用母材质（分割图 seg 用自己的表）
 def mull_mat():
     if style == 'real': return principled('r_mull', lin((0.36, 0.37, 0.39)), 0.38, 0.85)
     if style == 'clay': return clay_mat('mull')
     if style == 'ink': return toon('i_mull', (0.80, 0.79, 0.76), (0.62, 0.61, 0.58))
     return FN('mull')
 for key, o in objs.items():
-    o.data.materials.clear(); m_ = FN(key) if (style == 'seg' or key not in DBASE) else FN(DBASE[key])
+    o.data.materials.clear(); m_ = FN(key) if (style == 'seg' or key not in DBASE or (style == 'clay' and key == 'mount')) else FN(DBASE[key])
     if key == 'mull': m_ = mull_mat()
     if key == 'clad' and PVC is not None and not (style == 'real' and False): m_ = with_pv(m_, PVC)
     o.data.materials.append(m_)
 
 # ---------- 地面 ----------
-bpy.ops.mesh.primitive_plane_add(size=9000, location=(0, 0, -0.06)); gnd = bpy.context.active_object
+bpy.ops.mesh.primitive_plane_add(size=(20000 if ENV else 9000), location=(0, 0, -0.06)); gnd = bpy.context.active_object
 gcol = {'real': (0.20, 0.21, 0.19) if not NIGHT else ((0.035, 0.038, 0.045) if PR['real3'] else (0.012, 0.014, 0.02)), 'clay': (0.55, 0.54, 0.51) if not NIGHT else (0.10, 0.11, 0.14)}.get(style)
 if style == 'real' and not NIGHT and PR['real3']:   # 三版：地面 = 场地硬化 + 草地斑块（大尺度噪声混色）
     gm = principled('ground3', lin((0.30, 0.30, 0.28)), 0.92); gt = gm.node_tree; gb = next(n for n in gt.nodes if n.type == 'BSDF_PRINCIPLED')
@@ -760,7 +817,7 @@ if CTRL and style != 'line':
     info = dict(shot=shot, style=style, W=W, H=H, lens=S['lens'], sensor_width=36, pos_data=S['pos'], tgt_data=S['tgt'],
                 cam_matrix_world=[list(r) for r in ce.matrix_world], detail=DETAIL, coverage=round(float(msk.mean()), 4))
     if style == 'depth':
-        z = rgb[..., 0]; zv = z[msk]; zn = float(np.percentile(zv, 0.5)); zf = float(min(np.percentile(zv, 99.9), 3000.0))
+        z = rgb[..., 0]; zv = z[msk]; zn = float(np.percentile(zv, 0.5)); zf = float(min(np.percentile(zv, 99.9), 9000.0 if ENV else 3000.0))
         inv = (1.0 / np.maximum(z, 1e-3) - 1.0 / zf) / (1.0 / zn - 1.0 / zf); inv = np.clip(inv, 0, 1); inv[~msk] = 0
         png_write(base_ + '.png', (inv * 255 + 0.5).astype(np.uint8)); png_write(base_ + '_16.png', (inv * 65535 + 0.5).astype(np.uint16))
         info.update(depth='逆深度（视差）归一化：v = (1/z − 1/zf) / (1/zn − 1/zf)，近白远黑，天空 0', z_near_m=round(zn, 2), z_far_m=round(zf, 2), z_min_m=round(float(zv.min()), 2), z_max_m=round(float(zv.max()), 2))
