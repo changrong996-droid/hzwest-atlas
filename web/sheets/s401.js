@@ -248,7 +248,7 @@
     const fp = ctx.focus ? partsData().byId.get(ctx.focus) : null;
     if (fp && fp.tiles) { g.save(); rimPath(); g.clip(); g.fillStyle = 'rgba(240,190,20,.32)'; for (const q of fp.tiles) g.fillRect(X(q.za), Y(q.xa + S), S * s + 0.3, S * s + 0.3); g.restore(); }
     g.restore();   // 结束旋转：以下用画面坐标
-    if (frontAt) label(g, Ly.rot ? '铺设 ↓北' : '铺设 →北', frontAt[0] + (Ly.rot ? 4 : 4), frontAt[1] + (Ly.rot ? 10 : 2), C.red, box, { fs: 8.5, sans: true, b: true });
+    if (frontAt) label(g, Ly.rot ? '铺设 ↑北' : '铺设 ←北', frontAt[0] + (Ly.rot ? 4 : 4), frontAt[1] + (Ly.rot ? 10 : 2), C.red, box, { fs: 8.5, sans: true, b: true });
     if (fp) { const YEL = '#e0a800', hb = hitOf(fp, Ly);
       g.strokeStyle = YEL; g.lineWidth = 2; g.strokeRect(hb[0] - 1, hb[1] - 1, hb[2] + 2, hb[3] + 2);
       const ly2 = hb[1] - 7 > box.y0 + 16 ? hb[1] - 7 : hb[1] + hb[3] + 8;

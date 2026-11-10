@@ -42,6 +42,10 @@ if (sEnd.holesOpen !== 0) fail('完成时仍有提升孔未补：' + sEnd.holesO
 if (Math.abs(sEnd.pv - HZ.pvArea) > 1) fail(`光伏终值 ${sEnd.pv} ≠ HZ.pvArea ${HZ.pvArea}`);
 if (sPv0.pv !== 0) fail('光伏开工前面积应为 0');
 let pp = -1; for (let t = K.pv.start; t <= K.pv.end; t += 1) { const v = pl.stats(t).pv; if (v < pp - 1e-6) fail('光伏面积不单调 t=' + t); pp = v; }
+// D-42 光伏南先北后（与 hzview.js 同式 z ≥ 175 − 345·u）：中段面积约为终值一半；u = 0.25 时引线落在南半（z > 0）、u = 0.75 时落在北半（z < 0）
+{ const r = pl.stats((K.pv.start + K.pv.end) / 2).pv / sEnd.pv; if (!(r > 0.35 && r < 0.65)) fail('光伏中段面积占比 ' + r.toFixed(3) + ' 不在 0.35–0.65');
+  const La = pl.leadAt(K.pv.start + 0.25 * K.pv.dur), Lb = pl.leadAt(K.pv.start + 0.75 * K.pv.dur);
+  if (!(La && La.p[2] > 0 && Lb && Lb.p[2] < 0)) fail('光伏引线未按南先北后推进 ' + (La && La.p[2]) + ' / ' + (Lb && Lb.p[2])); }
 
 // 4 镜头：关键帧在时间窗内、按时间递增、目标在地面以上、仰角 > 0
 let lt = -1e9;
@@ -102,4 +106,8 @@ if (pvInfo === pvInfo2) fail('改 HZ.K.pv.start 后 parts 工期未变');
   if (pl.window[0] !== w0 || pl.window[1] !== w1 || pl.cam[0].t !== c0 || pl.cam[pl.cam.length - 1].t !== c1) fail('屋盖工序恢复后 window / cam 未回到原值');
 }
 
+// 前沿方向标签：横排北在左（←北），竖排北在上（↑北）
+{ const src = require('fs').readFileSync(require('path').join(__dirname, '../../web/sheets/s401.js'), 'utf8'); if (!src.includes("'铺设 ↑北' : '铺设 ←北'")) fail('S-401 铺设前沿方向标签应为 ↑北 / ←北'); }
+
 console.log(`OK check_s401 runs=${runs} parts=${nParts} close=${pl.big(w1).num}% pv=${Math.round(sEnd.pv)} holes=${sEnd.holesTot}`);
+
