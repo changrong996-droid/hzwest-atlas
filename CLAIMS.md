@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 8 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 7 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 33 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 9 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 30 |
@@ -80,7 +80,6 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-28 | hark-cs | 构件信息卡 + 实物图钉 | 构件信息卡 + 实物图钉，做成模块 `web/mods/info.js`（走 HZ_MODS：`pick/unpick` 弹卡显示 `part.info`、「看建成后 / 看开工时」两个按钮调用 `__pv` 现有接口（如 `ctx.set(t)` = `__pv.set`）；`HZR.forPart` 非空的构件在 3D 打小图钉，点开列记录与原链接；DOM 只挂 `#mod-ui`）。接口见 docs/hz-atlas-check.md 第三节 12–13（hzview.js?v=17 起）。不改共用文件，缺接口在 CLAIMS 接口请求提；hzwest.html 加 script 标签由 hark-cr 做。验收：check_all + 新 `tools/hz/check_info.js`；真机截图 2 张 | 在做（11-09 第一片合入并接线：hzwest.html 加载 mods/info.js?v=1，check_info 进 check_all；剩实物图钉 + 真机截图 2 张） | 11-08 hark-cr |
 | D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定 | 挂起（委托人 11-10 10:32）：S-252 暂缓，待 N-03 S-251 数据出代码试点之后再开 | 11-08 hark-cr |
 | D-36 | hark-fangyi、hark-cs、hark-liuzhijie | 分图二维图纸关掉未建幽灵线 | 委托人 11-09 11:05：淡影既容易误解又影响观看，分图上只画本图范围内已建与在建的东西。宿主 3D 已改为范围外隐藏（hzview.js?v=27，`SCOPE_OUT = 'hide'`，docs/hz-atlas-check.md 第三节 15），未建设计位红线、S-101 体量模块终值虚线外框（`m.G.ghost`）宿主已隐藏。请各自把二维 `draw` 里未建构件的淡红虚线 / 幽灵框（`C.ghost`、`st < 0` 分支）改为不画：S-201 `web/sheets/s201.js`（hark-fangyi）、S-401 `web/sheets/s401.js` 未铺区淡红等高线（hark-cs）、S-101 / S-501（hark-liuzhijie，含 mods/s101.js 的 ghost 层可直接删）。时间轴、横道图里「未来」的表达（S-001 全显）不在此列。只改各自文件。验收：check_all；截图对比前后 | 待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；二维 s101/s501 hark-liuzhijie 自查已满足（11-10 随 D-38 合入记录）；待截图对比） | 11-09 hark-cr |
-| D-39 | hark-liuzhijie | S-101 地下节拍注记 | 委托人 11-10 10:32 定规则：绝对日期偏差但终点吻合的只注记，不改排程。请在 S-101 图上加注记「地下中间节拍为推演，实景桩基 2020-05-15 完成、土方 2020-07-20 基本挖完，终点 2020-09-15 吻合；见 R-0017…R-0021」（措辞可微调，事实不变）。只改 web/sheets/s101.js 或 web/mods/s101.js，排程不动。验收：check_s101 与 check_all 全 OK；附 t=117 与 t=162 附近截图或命令输出。出处：hark-fangyi 2026-11-08 #8，docs/proposals/hark-fangyi-s101-calibration.md | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-40 | muse-tibo-cs | 9×4 形态覆盖矩阵（小活） | 委托人 11-10 10:32 批准（Fable 5.2 备忘录 docs/hz-fable52-review-2026-11-10.md）。出 docs/audit/form-matrix.md ：九图（S-000、S-001、S-002、S-101、S-201、S-251、S-301、S-401、S-501）× 四形态（图纸 / 生长 / 成品 / 实物），每格填 有 / 无 / 不适用 + 一句理由（指向文件、R-编号或页签）；另列 12 张 Blender 海报，各标图号与时刻 t（或日期）。只新增该文件，不改代码。验收：36 格齐全、每格有依据；12 张海报全部归号 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-41 | hark-cr（执行：Traycer CLI on Mac；web/mods/yunmen.js 作者，见 D-23） | S-000 总图云门改示意线型 | 委托人 11-10 10:32 定云门拼案：短期 S-000 总图用示意线型止血，成品态正式建模排入后续阶段。请把 S-000 总图上的云门改为示意线型：双点画线 + 注「示意」。只改其插件文件 web/mods/yunmen.js（及其 tools/hz/check_yunmen.js 断言），不碰宿主与 hzseq.js。验收：check_all 全 OK；附 S-000 总图云门前后截图 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 
