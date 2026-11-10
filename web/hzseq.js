@@ -410,13 +410,14 @@ function build() {
         const area = SEQ.quadArea(...top);
         const tg = sky ? g1 : pv ? g4 : g2; tg.quad(top[0], top[3], top[2], top[1]); if (sky) skyA += area; if (pv) { pvA += area; g2.quad([top[0][0], top[0][1] - 0.15, top[0][2]], [top[3][0], top[3][1] - 0.15, top[3][2]], [top[2][0], top[2][1] - 0.15, top[2][2]], [top[1][0], top[1][1] - 0.15, top[1][2]]); }
         if (!sky) g3.quad(bot[0], bot[1], bot[2], bot[3]);
+        // 金属屋面 + 吊顶南先北后（sweep = −z，z > 0 为南）：实物 R-0022…R-0025 哨兵二号影像，白色面层南先北后（委托人 2026-11-10 批准）；东先西后待行内拆块
         // 墨线：采光顶逐块分格；金属屋面每 4 块一条分格线
         if (sky) { tg.line(top[0], top[1]); tg.line(top[0], top[3]); } else { if (j % 4 === 0) g2.line(top[0], top[1]); if (i % 4 === 0) g2.line(top[0], top[3]); }
         for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (rho(q[k][0], q[k][1]) > 0.995 && rho(q[k2][0], q[k2][1]) > 0.995) { g2.line(top[k], top[k2]); g2.line(bot[k], bot[k2]); } }
         // 外缘封边（云的厚边）：格子有顶点被裁到轮廓上时，沿轮廓画竖向封边
         for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (rho(q[k][0], q[k][1]) > 0.995 && rho(q[k2][0], q[k2][1]) > 0.995) g2.quad(top[k], top[k2], bot[k2], bot[k]); }
       }
-      if (g1.P.length) skyP.push(part(g1, { sweep: Math.abs(-P.roofB + j * s) })); if (g2.P.length) clP.push(part(g2, { sweep: -P.roofB + j * s })); if (g3.P.length) soP.push(part(g3, { sweep: -P.roofB + j * s })); if (g4.P.length) pvP.push(part(g4, { sweep: -P.roofB + j * s }));
+      if (g1.P.length) skyP.push(part(g1, { sweep: Math.abs(-P.roofB + j * s) })); if (g2.P.length) clP.push(part(g2, { sweep: P.roofB - j * s })); if (g3.P.length) soP.push(part(g3, { sweep: P.roofB - j * s })); if (g4.P.length) pvP.push(part(g4, { sweep: -P.roofB + j * s }));
     }
     HZ.skyArea = Math.round(skyA); HZ.pvArea = Math.round(pvA); HZ.isPV = isPV;
     A({ key: 'sky', name: '十字采光顶（拱形天窗）', stage: 'sky', dur: 40, parts: skyP, res: { skin: 1 }, cap: '十字采光顶' });
