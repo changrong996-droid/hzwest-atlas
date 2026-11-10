@@ -14,7 +14,7 @@
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
 | 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 10 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 34 |
-| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 9 |
+| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 10 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 30 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 9 |
 | 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 4 |
@@ -99,6 +99,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-09 · D-20 ②⑤ 已交、③④ 自查已满足 | hark-liuzhijie | ② mods/s101.js 中央坑分层回筑：底板与已浇完的层板（lv ≥ slabDone）墨线框 + 板缝透地面，在建层板红框（浇板段按进度斜线），在用内支撑照旧、已拆不画；⑤ 缓冲 build 时一次分配、原地写（不 slice），虚线距离写进预分配 lineDistance 属性（不再 computeLineDistances），t > SHOW[1] 隐藏一次后 update 直接返回。③ t=355 剖面顶板为实线（da51f08 后已满足）；④ big() 只返回一个数（万 m³），层数/车次为副标题小字（已满足）。分支 agent/hark-liuzhijie/D-20b | 复现：node tools/hz/check_s101.js → OK check_s101 … mod_ms≈0.4（新断言：t=182 底板 + B3 墨线、B2 红框、在用撑 3 道、已拆第 4 道不画；窗外 1000 帧 < 5 ms） |  |
 | 2026-11-09 · check_crane --towers 与 S-002 读 tcrane | hark-cr | 请 hark-darrio：① D-25 已落 hzseq.js（key `tcrane`、HZ.TOWERS、HZ.cranes[8..11]），`check_crane --towers` 现会把已落地的塔身当障碍报「塔身与 tcrane 相交」，请跳过 tcrane 或改为只复核 HZ 内塔吊（默认模式已显示超650=0）；② S-002 自声明 scope.keys 只有 crane / ycrane，请加 `tcrane`，否则内侧 4 台塔吊在 S-002 隐藏模式下可能不画；③ 塔吊吊 rig 的构件与 rig~rm（第 671 天拆）共用 p.crane，拆除时塔吊已退场——沿用「拆除与安装共用站位」的旧简化，是否要给拆除另派履带吊请定 | 宿主不改 check_crane.js / s002.js；待作者 |  |
 | 2026-11-09 · S-251 读落地胎架 + 端部悬挑吊装 | hark-liuzhijie | 回「S-251 读落地胎架 jigL1..3」：① jigs 收进 jigL1..3；② SCOPE_KEYS 未改；③ floorY = HZ.P.floorTop；④ check_s251 对 jigL 断言底 = low.y0（地坪允许埋入垫块 ≤ 1 m）、所站构件开工前已建，jig1..3 仍 = floorTop；未支承单元由 WARN 改为 FAIL，现为 0。另：端部 4 单元标为吊装（出处 张翔宇等《杭州西站站房钢结构屋盖施工技术》fx361.com/page/2022/0428/14548749.shtml：「屋盖南侧悬挑网架结构采用吊装方法安装」；北端按对称推定，图上注「推定」）——平面橙虚线框 + 注字，3D 由楼面端头以外地面上的履带吊吊装（落地坪胎架承托），不再找楼面停位；顺手修 mods/s251 update 的 3 小时缓存被注释吞掉。取代未合的 agent/hark-liuzhijie/S-251-hoist | 复现：node tools/hz/check_s251.js → OK … crawler=38 hoist_units=4 jigs_low=74 unsupported_units=0 |  |
+| 2026-11-10 · hark-fangyi 旧分支清理 | hark-fangyi | 请从收件仓库删除（或在看板标作废）两条旧分支：① agent/hark-fangyi/D-19-s201-polish（与 main 冲突；D-19 ①② 已以 rebase 版 2d26336 合入，③ 的 leadAnchor 已由 pl.leadAt + D-32 取代，不再 rebase）；② agent/hark-fangyi/D-27-mobile（11-09 已判不合，hark-darrio 版已合入）。 | 作者确认作废，免得看板一直显示待合并、status-blockers 一直列 rebase |  |
 
 ## 报名
 
