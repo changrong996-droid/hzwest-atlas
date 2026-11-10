@@ -870,7 +870,7 @@
       if (fin && AU && !finEl._done) { finEl._done = 1; $('f-n').innerHTML = `<b>${fmt(TL.OPEN)}</b> 天 · <b>${HZ.acts.length}</b> 道工序 · <b>${fmt(Object.values(HZ.counts).reduce((a, b) => a + b, 0))}</b> 条依赖<br><b>${fmt(AU.ev.lift.reduce((s, r) => s + r.tests, 0) + supTot() + clipTot() + AU.r9.tests)}</b> 次几何检查 · 冲突 <b>${AU.zero ? 0 : '✕'}</b>`; }
       segHi(); knob.style.transform = 'translateX(' + (S.st.u * trackW).toFixed(1) + 'px)'; fill.style.transform = 'scaleX(' + S.st.u.toFixed(5) + ')';
       if (playIcon !== S.st.play) { playIcon = S.st.play; $('b-play').innerHTML = icon(S.st.play ? 'pause' : 'play'); $('b-play').setAttribute('aria-label', S.st.play ? '暂停' : '播放'); }
-      const mt = S.st.pref === 'ink' ? '墨线' : '实景'; put($('b-mode').querySelector('span'), mt); }
+    }
     let playIcon = null, trackW = 1, logN = 2; const finEl = $('fin');
     const SEGS = { 'S-000': [['地下', 0, K.deckS.start], ['承轨层', K.deckS.start, K.jig1.start], ['拼装', K.jig1.start, K.lift1.start], ['提升', K.lift1.start, K.head.end, 'S-301'], ['屋面', K.head.end, K.pv.end], ['开通', K.pv.end, TLF.Tmax]],
       'S-301': [['南区旋转', K.lift1.start, K.lift1.end], ['中区脱胎', K.lift2.start, K.lift2.end], ['北区旋转', K.lift3.start, K.lift3.end], ['合龙', K.merge.start, K.merge.end], ['整体提升', K.wlift.start, K.wlift.end], ['卸载', K.head.start, K.head.end]] };
@@ -913,23 +913,43 @@
     const setPlay = p => { S.st.play = p; if (p && S.st.t >= TL.t1 - 0.01) setT(TL.t0); lastNow = performance.now(); hud(); dirty = true; };
     $('b-play').onclick = () => setPlay(!S.st.play);
     $('b-home').onclick = () => { clearFocus(); if (SV.k > 1.001 && SHEETS[0].pm) svAnimTo(1, 0, 0); if (PV.k > 1.001) plugSheetAnim(1, PV.w / 2, PV.h / 2); S.st.auto = true; placeCam(camKey(S.st.t)); ctl.update(); $('b-home').classList.remove('on'); dirty = true; };
-    const setMode = m => { S.st.pref = m; setT(S.st.t, S.st.u); shadowWant = true; $('b-mode').classList.toggle('on', m === 'lit'); };
-    $('b-mode').onclick = () => setMode(S.st.pref === 'ink' ? 'lit' : 'ink');
+    // 11-10「墨线｜实景」常显分段开关（#b-mode 改为两段，当前段高亮；手机也显示两字）；点段 = 切到该段，无段目标（C 键）= 切换
+    let modeTouched = false;   // 用户动过开关（点段、C 键）→ 载入后不再自动预览实景
+    const modeUI = () => { for (const b of $('b-mode').querySelectorAll('[data-m]')) { const on = b.dataset.m === S.st.pref; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); } };
+    const setMode = m => { S.st.pref = m; setT(S.st.t, S.st.u); shadowWant = true; modeUI(); };
+    $('b-mode').onclick = e => { const sg = e && e.target && e.target.closest ? e.target.closest('[data-m]') : null; userMode(); setMode(sg ? sg.dataset.m : S.st.pref === 'ink' ? 'lit' : 'ink'); };
     const info = $('info'); const fitInfo = () => { const r = $('bar').getBoundingClientRect(); info.style.bottom = (innerHeight - r.top + 8) + 'px'; }; S.fitInfo = fitInfo;
     const openInfo = o => { S.st.info = o; if (o) fitInfo(); info.style.display = o ? 'flex' : 'none'; $('b-info').classList.toggle('on', o); };
-    // 11-09 首访引导：说明面板首次访问自动展开一次，关闭后记 localStorage hz.introSeen 不再自动开；深链（hash 带 sheet= / fv=）、?noIntro、自动化（navigator.webdriver）不开
-    const INTRO_K = 'hz.introSeen', lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return '1'; } }, seenIntro = () => { try { localStorage.setItem(INTRO_K, '1'); } catch (e) { } };
-    const closeInfo = () => { if (S.st.info) seenIntro(); openInfo(false); };
-    // 11-09 竖屏 / 窄屏首访：不展开整块说明（几乎铺满、看不到 3D），改为底部三行短版浮卡（#intro，≤ 30vh，贴控制条上沿，不挡左上 #big）；✕ 同样记 hz.introSeen，「完整说明」打开原面板
-    const intro = $('intro'), introNarrow = () => innerWidth <= 600 || (innerWidth <= 820 && matchMedia('(orientation: portrait)').matches);
+    // 11-10 说明卡（委托人 11-10）：每次载入都弹短版 #intro（宽屏也用短卡，不再自动展开 #info；不再记 localStorage）；约 8 s 自动收起，卡底倒计时细条（鼠标悬停卡片暂停）；
+    // ✕ / 「完整说明」/ 任何交互（拖时间轴、点画面、滚轮、按键，卡片内部除外）立即收起；?noIntro、自动化（navigator.webdriver）不弹（自动化截图可在页面脚本前把 webdriver 置 false）
+    // 收起后自动切实景约 2.5 s 再回墨线（复用 setMode，与手动切换同一路径）；用户先动过开关就不自动切。弹卡与预览期间暂缓自动播放（否则 S-000 开场时刻在 10 s 内就播过提升段），预览结束照常播放；用户自己动过播放 / 时间轴则不代播
+    const closeInfo = () => openInfo(false);
+    const intro = $('intro'), INTRO_LIT_MS = 2500;
     const fitIntro = () => { const r = $('bar').getBoundingClientRect(); intro.style.bottom = (innerHeight - r.top + 6) + 'px'; };
-    const openIntro = o => { S.st.intro = o; if (o) fitIntro(); intro.style.display = o ? 'block' : 'none'; };
-    const closeIntro = () => { if (S.st.intro) seenIntro(); openIntro(false); };
+    // 倒计时以 JS 计时为准（INTRO_MS，悬停暂停 / 移开续上），细条 CSS 动画只负责画（同样悬停暂停）；不靠 animationend（GPU 忙、掉帧时动画事件会迟到）
+    const INTRO_MS = 8000; let inTimer = 0, inLeft = 0, inAt = 0;
+    const inRun = () => { clearTimeout(inTimer); inAt = performance.now(); inTimer = setTimeout(closeIntro, inLeft); };
+    const openIntro = o => { S.st.intro = o; if (o) fitIntro(); intro.style.display = o ? 'block' : 'none'; intro.classList.remove('cd'); clearTimeout(inTimer); if (o) { void intro.offsetWidth; intro.classList.add('cd'); inLeft = INTRO_MS; if (intro.matches(':hover')) inAt = 0; else inRun(); } };
+    intro.addEventListener('mouseenter', () => { if (!S.st.intro || !inAt) return; clearTimeout(inTimer); inLeft = Math.max(0, inLeft - (performance.now() - inAt)); inAt = 0; });
+    intro.addEventListener('mouseleave', () => { if (S.st.intro && !inAt) inRun(); });
+    const SEQ0 = S.introSeq = { auto: false, lit: 'off', hold: false, playTouched: false };   // lit: wait（等卡收起）→ on（实景预览中）→ done；off = 本次不预览
+    let litTimer = 0;
+    const releaseHold = () => { if (!SEQ0.hold) return; SEQ0.hold = false; if (S._wantPlay && !SEQ0.playTouched && !S.st.play) setPlay(true); };
+    const litEnd = back => { clearTimeout(litTimer); if (SEQ0.lit === 'on' && back && S.st.pref === 'lit') setMode('ink'); SEQ0.lit = 'done'; releaseHold(); };
+    function userMode() { modeTouched = true; if (SEQ0.lit === 'wait') SEQ0.lit = 'done'; else if (SEQ0.lit === 'on') litEnd(false); }
+    const afterIntro = () => { if (SEQ0.lit !== 'wait') { releaseHold(); return; } if (modeTouched || S.st.pref === 'lit') { SEQ0.lit = 'done'; releaseHold(); return; }
+      SEQ0.lit = 'on'; setMode('lit'); litTimer = setTimeout(() => litEnd(true), INTRO_LIT_MS); };
+    const closeIntro = () => { if (!S.st.intro) return; openIntro(false); afterIntro(); };
     S.fitInfo = () => { fitInfo(); if (S.st.intro) fitIntro(); };
     $('in-x').onclick = closeIntro; $('in-more').onclick = () => { closeIntro(); openInfo(true); };
     $('b-info').onclick = () => { if (S.st.intro) closeIntro(); S.st.info ? closeInfo() : openInfo(true); }; $('i-x').onclick = closeInfo;
-    S.introAuto = !lsGet(INTRO_K) && !/(^|[#&])(sheet|fv)=/.test(location.hash) && !/[?&]noIntro\b/.test(location.search) && !navigator.webdriver;
-    if (S.introAuto) setTimeout(() => { if (S.st.info || S.st.intro) return; if (introNarrow()) openIntro(true); else openInfo(true); }, 0);
+    { const act = e => { const tg = e.target, cl = s => tg && tg.closest && tg.closest(s); if (cl('#intro')) return;
+        if (e.type === 'keydown') { if (/INPUT|TEXTAREA/.test(tg && tg.tagName || '')) return; if (/^(Space|Arrow)/.test(e.code)) SEQ0.playTouched = true; if (e.key === 'c') modeTouched = true; }
+        else { if (cl('#b-play') || cl('#track')) SEQ0.playTouched = true; if (cl('#b-mode')) modeTouched = true; }
+        if (S.st.intro) { e._hzIntro = 1; closeIntro(); } };
+      for (const ev of ['pointerdown', 'wheel', 'keydown', 'touchstart']) addEventListener(ev, act, { capture: true, passive: true }); }
+    S.introAuto = SEQ0.auto = !/[?&]noIntro\b/.test(location.search) && !navigator.webdriver;
+    if (S.introAuto) { SEQ0.hold = true; SEQ0.lit = S.st.pref === 'lit' ? 'off' : 'wait'; setTimeout(() => { if (S.st.intro) return; if (SEQ0.hold && !S.st.info) openIntro(true); else afterIntro(); }, 0); }
     S.opt = o => { if (o.play != null) setPlay(o.play); if (o.auto != null) { S.st.auto = o.auto; if (o.auto) placeCam(camKey(S.st.t)); } if (o.info != null) openInfo(o.info); if (o.mode) setMode(o.mode); dirty = true; };
     ctl.addEventListener('start', () => { FLY = null; S.flying = false; S.st.auto = false; $('b-home').classList.add('on'); });
     ctl.addEventListener('change', () => { dirty = true; });
@@ -937,7 +957,7 @@
       tr.addEventListener('pointerdown', e => { const sg = e.target.closest && e.target.closest('.seg.go'); if (sg) { location.hash = 'sheet=' + sg.dataset.go; return; } drag = true; tr.setPointerCapture(e.pointerId); S.st.play = false; at(e); }); tr.addEventListener('pointermove', e => { if (drag) at(e); }); tr.addEventListener('pointerup', e => { drag = false; try { tr.releasePointerCapture(e.pointerId); } catch (x) { } }); }
     addEventListener('keydown', e => { if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
       if (e.code === 'Space') { e.preventDefault(); setPlay(!S.st.play); } else if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') { e.preventDefault(); S.st.play = false; const du = (e.shiftKey ? 0.05 : 0.01) * (e.code === 'ArrowRight' ? 1 : -1), u = Math.max(0, Math.min(1, S.st.u + du)); setT(TL.u2t(u), u); }
-      else if (e.code === 'Escape') { if (S.st.intro) closeIntro(); else if (S.st.info) openInfo(false); else if (PLUG[SHEET] && (PV.focus || PV.pend || PV.k > 1.001)) $('b-home').onclick(); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
+      else if (e.code === 'Escape') { if (S.st.intro || e._hzIntro) closeIntro(); else if (S.st.info) openInfo(false); else if (PLUG[SHEET] && (PV.focus || PV.pend || PV.k > 1.001)) $('b-home').onclick(); else escapeView(); } else if (e.key === 'i') openInfo(!S.st.info); else if (e.key === 'c') $('b-mode').onclick(); });
 
     // ---------------- 次要信息 ----------------
     function fillInfo(au) { const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1172,7 +1192,8 @@
     tabs(); S.sheet = SHEET;
     if (!hp.has('nowarm')) { const pref = S.st.pref, TLk = TL; TL = TLF; for (const [tw, m] of [[K.lift1.start + 1, 'lit'], [K.asm1.start + 10, 'lit'], [TL.Tmax, 'lit'], [K.lift1.start + 1, 'ink']]) { S.st.pref = m; setT(tw); dynKey = ''; rebuildDyn(tw); STR.visible = true; shadowWant = true; if (m === 'lit') renderLit(); else renderInk(1); } S.st.pref = 'lit'; S.st.auto = false; setT(TL.Tmax); for (const az of [0, 45, 90, 135, 180, 225, 270, 315, look.sunAz - 180]) { placeCam({ az, el: az === look.sunAz - 180 ? 3 : 9, d: 900, tx: 0, ty: 30, tz: 0 }); cam.lookAt(0, 30, 0); cam.updateMatrixWorld(); shadowWant = true; renderLit(); } S.st.auto = true;   // 正对太阳：光束（god rays）后处理第一次启用时也会现场编译（Mac 实测转向太阳卡 2.2 s）
       S.st.pref = pref; TL = TLk; WK.key = ''; dynKey = ''; renderer.getContext().finish(); }
-    const t0 = hp.has('t') ? +hp.get('t') : (SHEET === 'S-301' || PLUG[SHEET]) ? TL.t0 : K.lift1.start + K.lift1.dur * 0.7; setT(t0); S.st.play = hp.get('play') !== '0'; if (S.st.pref === 'lit') $('b-mode').classList.add('on'); hud(); ctl.update();
+    // 11-10 总图默认开场 = 屋盖整体提升（wlift，合龙后三区一起顶到位）的中点：hzseq 实排 wlift 659–663 → t = 661，屋盖正在升；只改无 hash t 时的默认（hash 带 t 照旧，S-301 / 插件图照旧从窗口起点）
+    const t0 = hp.has('t') ? +hp.get('t') : (SHEET === 'S-301' || PLUG[SHEET]) ? TL.t0 : K.wlift.start + K.wlift.dur * 0.5; setT(t0); S._wantPlay = hp.get('play') !== '0'; S.st.play = S._wantPlay && !(S.introSeq && S.introSeq.hold); modeUI(); hud(); ctl.update();
     requestAnimationFrame(frame);
     Object.assign(S, { calcText, cumOf, evAt, v3, applyLook, cam, ctl, render: () => { dirty = true; }, TL, TLF, loadMs: Math.round(performance.now() - T0), SHEETS, layout });
     applyFocusHash();

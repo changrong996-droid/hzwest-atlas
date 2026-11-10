@@ -128,6 +128,21 @@ body.port #big{max-width:78%;padding:5px 10px 6px 8px}body.port #big .k{font-siz
 body.port #ttl{display:none}
 </style>
 <link rel="stylesheet" href="hzmobile.css?v=4">
+<style>
+/* 11-10 墨线｜实景 分段开关（常显，手机也显示两字；压过 hzmobile.css 对 #b-mode 的 font-size:0 / 定宽） */
+.mseg{display:flex;flex:none;align-items:center;height:32px;padding:2px;border:1px solid var(--line);border-radius:16px;background:#fbf9f5;user-select:none;-webkit-user-select:none}
+.mseg button{height:100%;border:0;margin:0;background:transparent;color:var(--ink2);font-family:var(--sans);font-size:12.5px;line-height:1;letter-spacing:1px;padding:0 10px;border-radius:14px;cursor:pointer;white-space:nowrap}
+.mseg button:hover{color:var(--ink)}.mseg button.on{background:var(--ink);color:#fff;cursor:default}
+#ctrl #b-mode.mseg{width:auto!important;min-width:0!important;padding:2px!important;gap:0!important;font-size:12.5px!important}
+@media (max-width:820px){#ctrl #b-mode.mseg{height:32px!important}#ctrl #b-mode.mseg button{padding:0 8px;font-size:12px;letter-spacing:0}}
+@media (orientation:landscape) and (max-height:500px){#ctrl #b-mode.mseg{height:30px!important}}
+/* 11-10 说明卡：宽屏不铺满整行；卡底 8 s 倒计时细条，悬停暂停 */
+@media (min-width:821px){#intro{right:auto;width:min(540px,calc(100% - 16px))}}
+#intro .cdb{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(179,32,42,.12);overflow:hidden}
+#intro .cdb i{display:block;height:100%;background:var(--red);transform-origin:0 50%;transform:scaleX(1)}
+#intro.cd .cdb i{animation:hzIntroCd 8s linear forwards}#intro:hover .cdb i{animation-play-state:paused}
+@keyframes hzIntroCd{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+</style>
 </head>
 <body>
 <div id="app">
@@ -161,13 +176,13 @@ body.port #ttl{display:none}
       <button class="btn" id="b-play" aria-label="播放"></button>
       <div id="track"><div class="rail"></div><div id="slow"></div><div id="fill"></div><div id="knob"></div></div>
       <div id="tabs"></div>
-      <button class="btn" id="b-mode" title="墨线 / 实景（C）" aria-label="墨线或实景"><svg class="i" viewBox="0 0 14 14"><path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1zm0 1.6v8.8a4.4 4.4 0 0 1 0-8.8z"/></svg><span>墨线</span></button>
+      <div class="mseg" id="b-mode" role="group" title="墨线 / 实景（C）" aria-label="墨线或实景"><button type="button" data-m="ink" class="on" aria-pressed="true">墨线</button><button type="button" data-m="lit" aria-pressed="false">实景</button></div>
       <button class="btn" id="b-home" title="复位视角" aria-label="复位视角"><svg class="i" viewBox="0 0 14 14"><path d="M7 1.2 1 6.3h1.8V12.8h3.4V9h1.6v3.8h3.4V6.3H13z"/></svg></button>
       <button class="btn" id="b-info" title="说明 / 来源 / 自检" aria-label="说明"><svg class="i" viewBox="0 0 14 14"><path d="M7 .8a6.2 6.2 0 1 0 0 12.4A6.2 6.2 0 0 0 7 .8zm.9 9.9H6.1V5.9h1.8zM7 4.9a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z"/></svg></button>
     </div>
   </div>
 </div>
-<div id="intro" class="ui" role="dialog" aria-label="说明（短版）"><button class="btn" id="in-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button><p class="l0">每个构件都知道靠谁撑着、等谁先装——所以这座站能自己长出来、自己查错。</p><ol><li>这不是动画：施工顺序由构件之间的关联推出来，违规就报红。</li><li>点图上的构件，三维会飞过去。</li><li>拖动看生长，点下方图号切换；先看 S-301 屋盖提升。</li></ol><div class="ft"><button class="btn" id="in-more">完整说明</button></div></div>
+<div id="intro" class="ui" role="dialog" aria-label="说明（短版）"><button class="btn" id="in-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button><p class="l0">每个构件都知道靠谁撑着、等谁先装——所以这座站能自己长出来、自己查错。</p><ol><li>这不是动画：施工顺序由构件之间的关联推出来，违规就报红。</li><li>点图上的构件，三维会飞过去。</li><li>拖动看生长，点下方图号切换；先看 S-301 屋盖提升。</li></ol><div class="ft"><button class="btn" id="in-more">完整说明</button></div><div class="cdb" aria-hidden="true"><i></i></div></div>
 <div id="info" class="ui">
   <div class="hd"><h2>说明</h2><span class="chip wait" id="i-chip">自检中</span><button class="btn" id="i-x" aria-label="关闭"><svg class="i" viewBox="0 0 14 14"><path d="M2.6 1.2 7 5.6l4.4-4.4 1.4 1.4L8.4 7l4.4 4.4-1.4 1.4L7 8.4l-4.4 4.4-1.4-1.4L5.6 7 1.2 2.6z"/></svg></button></div>
   <div class="bd">
@@ -207,6 +222,6 @@ body.port #ttl{display:none}
 <script src="mods/yunmen.js?v=1"></script>
 <script src="mods/actors.js?v=1"></script>
 <script src="mods/info.js?v=2"></script>
-<script src="hzview.js?v=34"></script>
+<script src="hzview.js?v=35"></script>
 </body>
 </html>
