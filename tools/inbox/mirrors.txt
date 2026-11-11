@@ -1,0 +1,3 @@
+# 收件镜像（AGENTS.md 6B）。顺序 = 先试哪个；当前主镜像以任一镜像的 /health 为准
+https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech
+https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech

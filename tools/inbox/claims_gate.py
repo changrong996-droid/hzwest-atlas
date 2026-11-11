@@ -52,7 +52,7 @@ def free_items():
 
 def die(msg):
     f = free_items() if 'live' in globals() else []
-    tip = ('\n  还空着的（推荐从第一项开始）：' + '、'.join(f) + '\n  任务书在 docs/tasks/，简报 docs/BRIEF.md；实时锁：https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claims') if f else ''
+    tip = ('\n  还空着的（推荐从第一项开始）：' + '、'.join(f) + '\n  任务书在 docs/tasks/，简报 docs/BRIEF.md；实时锁：<收件地址>/claims') if f else ''
     print('拒绝（认领规则）：' + msg + tip, file=sys.stderr); sys.exit(1)
 
 

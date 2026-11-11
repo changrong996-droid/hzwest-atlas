@@ -13,6 +13,13 @@ MAXBODY = 20 * 1024 * 1024
 OK_PATH = re.compile(r'^/hzwest-atlas\.git(/.*)?$')
 
 
+def _primary():
+    """多镜像轮值（AGENTS.md 6B）：primary.txt 由集成人在交接时写入各镜像。"""
+    try: p = open(os.path.join(ROOT, 'primary.txt'), encoding='utf-8').read().strip()
+    except OSError: return ''
+    return f'当前主镜像：{p}（推送、认领请用它；不通就按 AGENTS.md 6B 的顺序换下一个）\n\n' if p else ''
+
+
 class H(http.server.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.0'
 
@@ -20,9 +27,10 @@ class H(http.server.BaseHTTPRequestHandler):
         u = urllib.parse.urlsplit(self.path)
         if u.path in ('/', '/health'):
             body = b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\nclaim board: <this-url>/board\n'
+            body += _primary().encode()
             self.send_response(200); self.send_header('Content-Type', 'text/plain'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path in ('/board', '/claim', '/release'):
-            code, txt = board.handle(ROOT, u.path, u.query); body = txt.encode()
+            code, txt = board.handle(ROOT, u.path, u.query); body = (_primary() + txt).encode()
             self.send_response(code); self.send_header('Content-Type', 'text/plain; charset=utf-8'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path == '/claims':
             try: body = open(os.path.join(ROOT, 'claims.lock.json'), 'rb').read()
@@ -43,11 +51,17 @@ class H(http.server.BaseHTTPRequestHandler):
             'HTTP_CONTENT_ENCODING': self.headers.get('Content-Encoding', ''),
             'GIT_PROTOCOL': self.headers.get('Git-Protocol', ''),
         }
-        p = subprocess.run(['git', 'http-backend'], input=data, env=env, capture_output=True, timeout=300)
-        out = p.stdout
-        head, _, body = out.partition(b'\r\n\r\n')
-        if not _:
-            head, _, body = out.partition(b'\n\n')
+        # 边收边转发（HTTP/1.0 以断开连接结束正文）：推送时钩子跑 check_all 约 60 秒，
+        # 进度行要实时送到客户端，否则公网代理把静默连接按 502 掐断（11-11 镜像实测）
+        p = subprocess.Popen(['git', 'http-backend'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env)
+        p.stdin.write(data); p.stdin.close()
+        buf = b''
+        while b'\r\n\r\n' not in buf and b'\n\n' not in buf:
+            ch = p.stdout.read1(65536) if hasattr(p.stdout, 'read1') else p.stdout.read(65536)
+            if not ch: break
+            buf += ch
+        sep = b'\r\n\r\n' if b'\r\n\r\n' in buf else b'\n\n'
+        head, _, body = buf.partition(sep)
         status = 200; hdrs = []
         for line in head.decode('latin1').splitlines():
             if not line.strip():
@@ -60,8 +74,13 @@ class H(http.server.BaseHTTPRequestHandler):
         self.send_response(status)
         for k, v in hdrs:
             self.send_header(k, v)
-        self.send_header('Content-Length', str(len(body)))
-        self.end_headers(); self.wfile.write(body)
+        self.end_headers(); self.wfile.write(body); self.wfile.flush()
+        while True:
+            ch = p.stdout.read1(65536)
+            if not ch: break
+            self.wfile.write(ch); self.wfile.flush()
+        try: p.wait(timeout=300)
+        except subprocess.TimeoutExpired: p.kill()
 
     do_GET = do_POST = _run
 

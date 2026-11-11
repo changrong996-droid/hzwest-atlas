@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Auto-merge tier (AGENTS.md 5.1): exit 0 if branch only touches files in its author's claimed scope.
 usage: scope.py <repo> <branch inbox/agent/<name>/...> <claims.json path or ->"""
-import sys, subprocess, json, re, urllib.request
+import os, sys, subprocess, json, re, urllib.request
 repo, br = sys.argv[1], sys.argv[2]
 agent = br.split('/')[2]
 g = lambda *a: subprocess.run(['git', '-C', repo] + list(a), capture_output=True, text=True).stdout
-try: lock = json.load(urllib.request.urlopen('https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claims', timeout=30))
-except Exception: lock = {}
+lock = {}
+for _u in [l.strip() for l in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mirrors.txt')) if l.startswith('https://')]:   # 多镜像：合并各镜像的认领锁
+    try: lock = {**json.load(urllib.request.urlopen(_u + '/claims', timeout=8)), **lock}
+    except Exception: pass
 items = {k for k, v in lock.items() if v['a'] == agent}
 for ln in g('show', 'main:CLAIMS.md').splitlines():
     c = [x.strip() for x in ln.strip().strip('|').split('|')]

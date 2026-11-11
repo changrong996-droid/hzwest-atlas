@@ -5,7 +5,7 @@ import json, re, subprocess, sys, urllib.request, datetime, os
 R = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 g = lambda *a: subprocess.run(['git', '-C', R, *a], capture_output=True, text=True).stdout
 args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
-board = args.get('--board', 'https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech')
+board = args.get('--board') or (open('/workspace/work/inbox/primary.json').read().split('"url": "')[1].split('"')[0] if os.path.exists('/workspace/work/inbox/primary.json') else 'https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech')   # 当前主镜像
 tz = datetime.timezone(datetime.timedelta(hours=8)); now = datetime.datetime.now(tz)
 # 提交
 log = g('log', 'main', '--format=%H%x1f%cI%x1f%s%x1f%B%x1e').split('\x1e')

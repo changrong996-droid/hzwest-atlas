@@ -15,9 +15,9 @@ import os, subprocess, sys, time, datetime
 
 repo = os.path.abspath(sys.argv[1])
 DRY = '--dry-run' in sys.argv
-INBOX = 'https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/hzwest-atlas.git'
+INBOXES = [u + '/hzwest-atlas.git' for u in [l.strip() for l in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mirrors.txt')) if l.startswith('https://')]]   # 多镜像（AGENTS.md 6B）
 if '--inbox' in sys.argv:
-    INBOX = sys.argv[sys.argv.index('--inbox') + 1]
+    INBOXES = [sys.argv[sys.argv.index('--inbox') + 1]]
 HERE = os.path.dirname(os.path.abspath(__file__))
 BOT = ['-c', 'user.name=inbox-bot', '-c', 'user.email=inbox-bot@hzwest.invalid']
 SKIP = ('/join', )                      # 报名分支走人工
@@ -34,7 +34,7 @@ def git(*a, check=True, cwd=None):
 # 收件机会休眠：第一次请求可能要 10–30 秒唤醒，失败隔 30 秒重试
 for i in range(4):
     try:
-        git('fetch', '-q', '--prune', INBOX, '+refs/heads/agent/*:refs/remotes/inbox/agent/*')
+        for INBOX in INBOXES: git('fetch', '-q', INBOX, '+refs/heads/agent/*:refs/remotes/inbox/agent/*')   # 各镜像取并集；不 --prune，免得一台没有的分支被删
         break
     except RuntimeError as e:
         if i == 3:

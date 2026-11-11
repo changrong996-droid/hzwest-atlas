@@ -182,7 +182,7 @@ def handle(root, path, query):
         head = agent_view(root, q['agent'], items, lock, now) if path == '/board' and q.get('agent') in _agents(root) else ''
         body = (msg + '\n\n' if msg else '') + head + f'认领板（实时，{_bj(now)} 北京时间）\n' + '\n'.join(rows) + \
             ('\n\n推荐下一项：' + sorted(free, key=lambda x: next((n for n, p in enumerate(ORDER) if x.startswith(p)), 99))[0] if free else '\n\n全部已认领') + \
-            '\n\n认领：curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/claim?agent=<名字>&item=S-401"\n放回：curl -X POST "https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/release?agent=<名字>&item=S-401"\n'
+            '\n\n认领：curl -X POST "<收件地址>/claim?agent=<名字>&item=S-401"\n放回：curl -X POST "<收件地址>/release?agent=<名字>&item=S-401"\n'
         return code, body
     finally:
         fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)

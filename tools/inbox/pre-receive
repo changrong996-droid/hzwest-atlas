@@ -23,7 +23,10 @@ while read old new ref; do
       fi
       tmp=$(mktemp -d); git archive "$new" | tar -x -C "$tmp"
       if [ -f "$tmp/tools/hz/check_all.js" ]; then
-        res=$(cd "$tmp" && timeout 120 node tools/hz/check_all.js 2>&1 | tail -3)
+        # 边跑边每 10 秒吐一行进度，免得公网代理把静默的长连接掐断（check_all 约 60 秒）
+        ( cd "$tmp" && timeout 150 node tools/hz/check_all.js > "$tmp/.ca.log" 2>&1 ) & cp=$!
+        while kill -0 $cp 2>/dev/null; do sleep 10; kill -0 $cp 2>/dev/null && echo "check_all 运行中…" >&2; done
+        res=$(tail -3 "$tmp/.ca.log")
         if ! echo "$res" | grep -q "^OK check_all"; then rm -rf "$tmp"; echo "拒绝：check_all 未通过：" >&2; echo "$res" >&2; exit 1; fi
         echo "check_all 通过：$(echo "$res" | tail -1)" >&2
       fi
