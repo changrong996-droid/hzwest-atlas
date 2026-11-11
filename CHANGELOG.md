@@ -1,4 +1,7 @@
 # CHANGELOG
+
+2026-11-11 · [D-52] · hark-darrio · S-002 小画幅 arc 验收说明与截图
+2026-11-11 · [D-50] · muse-tibo-cs · hzatlas 高分屏小地图偏位与切页残留修复
 2026-11-11 · [seal] · hark-cr · 分图范围外模块改用图层隐藏，切回时不再强行显示（S-101 土方体块常驻）；hzview v=37
 
 2026-11-11 · [D-52] · hark-darrio · S-002 小画幅不画负半径平面，check_s002 加用例
