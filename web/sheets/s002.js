@@ -103,6 +103,7 @@
     const stripH = small ? 0 : Math.round(clamp(BH * (tall ? 0.3 : 0.24), 70, tall ? 300 : 150));
     const pa = { x0: box.x0 + gut + 8, y0: box.y0 + (small ? 30 : 16) + topH, x1: box.x1 - 8, y1: box.y1 - 18 - stripH };
     const E = m.ext, k = Math.min((pa.x1 - pa.x0) / (E.xb - E.xa), (pa.y1 - pa.y0) / (E.zb - E.za));
+    if (!(k > 0) || pa.x1 - pa.x0 < 8 || pa.y1 - pa.y0 < 8) return { state: s };   // D-52：画幅太小（pa 宽高为负）时不画平面，免 arc 负半径 IndexSizeError
     const ox = (pa.x0 + pa.x1) / 2 - (E.xa + E.xb) / 2 * k, oy = (pa.y0 + pa.y1) / 2 - (E.za + E.zb) / 2 * k;
     const X = x => ox + x * k, Y = z => oy + z * k, clip = [pa.x0, pa.y0, pa.x1, pa.y1];
 
@@ -113,11 +114,11 @@
       g.strokeStyle = live ? C.red3 : C.faint; g.lineWidth = 0.5; g.strokeRect(X(p.geo.min[0]), Y(p.geo.min[2]), (p.geo.max[0] - p.geo.min[0]) * k, (p.geo.max[2] - p.geo.min[2]) * k); } }
     // 塔吊：回转圈（虚线，半径 = 臂长 L）+ 塔身十字
     for (const T of s.tw) { const cx = X(T.x), cy = Y(T.z), erect = t < T.up || t >= T.dn;
-      g.strokeStyle = erect ? C.temp : C.ink2; g.lineWidth = 0.8; g.setLineDash([4, 3]); g.beginPath(); g.arc(cx, cy, T.L * k, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = erect ? C.temp : C.ink2; g.lineWidth = 0.8; g.setLineDash([4, 3]); g.beginPath(); g.arc(cx, cy, Math.max(0, T.L * k), 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
       g.lineWidth = 1.6; g.strokeStyle = erect ? C.temp : C.ink; g.beginPath(); g.moveTo(cx - 4, cy); g.lineTo(cx + 4, cy); g.moveTo(cx, cy - 4); g.lineTo(cx, cy + 4); g.stroke(); }
     // 履带吊：当天每一吊 站位 → 构件中心 的吊距线；每台画一个车身方块 + 该台最重一吊的 R 上限圈；超限的吊距线标红
     for (const c of s.crane) { const worst = c.lifts.slice().sort((a, b) => a.lim - b.lim)[0], over = c.lifts.some(l => l.over);
-      g.strokeStyle = over ? C.red : C.line; g.lineWidth = over ? 0.9 : 0.6; g.setLineDash([2, 3]); g.beginPath(); g.arc(X(c.x), Y(c.z), worst.lim * k, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = over ? C.red : C.line; g.lineWidth = over ? 0.9 : 0.6; g.setLineDash([2, 3]); g.beginPath(); g.arc(X(c.x), Y(c.z), Math.max(0, worst.lim * k), 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
       for (const l of c.lifts) { g.strokeStyle = l.over ? C.red : C.ink2; g.lineWidth = l.over ? 1.4 : 0.6; g.beginPath(); g.moveTo(X(l.x), Y(l.z)); g.lineTo(X(l.cx), Y(l.cz)); g.stroke();
         g.fillStyle = l.over ? C.red : C.ink2; g.beginPath(); g.arc(X(l.cx), Y(l.cz), 1.6, 0, 7); g.fill(); }
       const bw = Math.max(4, 7.2 * k), bh = Math.max(3, 5.6 * k); g.fillStyle = over ? C.red : C.ink; g.fillRect(X(c.x) - bw / 2, Y(c.z) - bh / 2, bw, bh); }

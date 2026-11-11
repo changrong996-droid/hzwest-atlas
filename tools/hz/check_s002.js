@@ -24,6 +24,11 @@ for (const t of [W0, 400, 600, 615, 900, W1]) for (const [w, h] of [[760, 420], 
   if (ctx.seenNo !== NO) fail(`图号 期望 ${NO} 实得 ${ctx.seenNo}`);
   if (!(c.texts.length >= 1)) fail(`t=${t} ${w}x${h} 没写字`); runs++;
 }
+// 1b. D-52 小画幅：pa 宽高为负时不得以负半径调 arc（真浏览器会抛 IndexSizeError）
+for (const t of [W0, 615, W1]) for (const [w, h] of [[80, 60], [30, 200], [200, 81], [31, 400], [120, 90]]) {
+  const c = makeCtx(), g = new Proxy(c.g, { get: (o, k) => k === 'arc' ? (x, y, r) => { if (!(r >= 0)) throw new Error('arc 负半径 r=' + r); } : o[k] });
+  try { P.draw(g, w, h, t, sheetCtx()); } catch (e) { fail(`小画幅 draw t=${t} ${w}x${h} ${e && e.message}`); } runs++;
+}
 // 2. 大数字：整数台，= 当天在场塔吊 + 履带吊台数；塔吊在场时 ≥ 塔吊台数
 let peak = 0;
 for (let t = W0; t <= W1; t += 1) {
