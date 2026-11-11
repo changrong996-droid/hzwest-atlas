@@ -98,7 +98,8 @@
           const cx = m.X(pose.camZ), cy = m.Y(pose.camX);
           const tx = m.X(pose.tgtZ), ty = m.Y(pose.tgtX);
           g.save();
-          g.setTransform(1, 0, 0, 1, 0, 0);
+          // D-50：不得清掉宿主传入的变换——drawSheet 已按 DPR 缩放，坐标是 CSS 像素，
+          // setTransform(1,0,0,1,0,0) 会让标记在 DPR 2 下缩到左上角。保留宿主变换作画。
           g.strokeStyle = 'rgba(180,32,42,.55)';
           g.lineWidth = 1.2;
           g.beginPath();
@@ -271,7 +272,12 @@
 
     function teardown() {
       canvases.forEach((el) => {
-        if (el && el.id !== 'sh-jack' && el.parentNode) el.parentNode.removeChild(el);
+        if (!el) return;
+        // D-50：sh-jack 是宿主画布不摘除，但须摘掉 hz-off——否则切到插件页后它仍以
+        // inset:0 全尺寸留在 #col 里，宿主绘制循环会按全尺寸在后台重绘它；摘掉后
+        // 宿主自己的 splug 规则（1px 隐藏）才接管。回到 S-301 时 setSub 会重新切换。
+        if (el.id === 'sh-jack') { el.classList.remove('hz-off'); return; }
+        if (el.parentNode) el.parentNode.removeChild(el);
       });
       while (pushedCount > 0 && S.SHEETS.length > baseLen) {
         S.SHEETS.pop();
@@ -296,6 +302,16 @@
           }
           return;
         }
+        // D-50：图纸函数缺失须在建 tab 之前就 return——旧顺序先建 tab 再查函数，
+        // 缺函数时 tabs 多出一项而 canvases 没跟上，setSub 的下标从此整体错位。
+        let drawFn = null;
+        if (item.canvas !== 'sh-jack') {
+          drawFn = S.SH[item.fn];
+          if (typeof drawFn !== 'function') {
+            console.warn('hzatlas: 图纸函数缺失 ' + item.fn);
+            return;
+          }
+        }
         const idx = tabs.length + 1;
         const sp = document.createElement('span');
         sp.className = 'st';
@@ -306,11 +322,6 @@
         tabs.push(sp);
         if (item.canvas === 'sh-jack') {
           canvases.push(document.getElementById('sh-jack'));
-          return;
-        }
-        const drawFn = S.SH[item.fn];
-        if (typeof drawFn !== 'function') {
-          console.warn('hzatlas: 图纸函数缺失 ' + item.fn);
           return;
         }
         const el = document.createElement('canvas');
