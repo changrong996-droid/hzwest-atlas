@@ -6,7 +6,7 @@
                                           新主镜像从 GitHub 同步 main、从所有在跑的镜像补 agent/* 分支、合并认领锁，
                                           再把 primary.txt 写到新主镜像与其它在跑的镜像
   python3 tools/inbox/mirror.py status    各镜像状态、已跑时长、冷却
-轮值见 SHIFTS：每段远低于该机 maxRunMinutes，下班的机器不碰，闲 30 分钟自动挂起、清零运行时长。
+轮值见 SHIFTS：两台每 80 分钟交替，交接后立刻挂起下班的机器。
 """
 import json, os, sys, time, datetime, subprocess
 sys.path.insert(0, '/workspace/work/ibx'); import ibx
@@ -16,8 +16,9 @@ STATE = '/workspace/work/inbox/primary.json'
 MIRRORS = [('test-5', 'm_agqw7hn5d3p3sl4cbll4o2rf5e'),   # maxRunMinutes 480
            ('test-4', 'm_agqw5j356gn4k75di4h3ixq2ki'),   # maxRunMinutes 120（免费机由平台管，改不了）
            ('test-1', 'm_agqw476xysfznjvxms7h7jpmse')]   # maxRunMinutes 360
-# 轮值表（北京时间，卡在 collect 每 20 分钟一轮的整点上）：每段都远低于该机上限，段与段之间让下班的机器闲置 ≥30 分钟自动挂起、清零运行时长
-SHIFTS = [('08:00', 'test-5'), ('13:00', 'test-4'), ('14:40', 'test-5'), ('19:20', 'test-4'), ('21:00', 'test-5')]
+# 轮值表（北京时间）：两台每 80 分钟交替一次（委托人 11-11 15:43：单台短开、轮换冷却）。
+# 80 分钟卡在 collect 每 20 分钟一轮的整点上，低于 test-4 的 120 分钟上限；交接后立刻挂起下班的机器，运行时长清零
+SHIFTS = [(f'{(480 + 80 * k) // 60:02d}:{(480 + 80 * k) % 60:02d}', ('test-5', 'test-4')[k % 2]) for k in range(12)]
 URL = lambda mid: f'https://8090-{mid[2:]}.instabox.tech'
 BJ = datetime.timezone(datetime.timedelta(hours=8))
 
@@ -91,6 +92,10 @@ sudo systemctl is-active hzinbox""", 240)
     for m in running + [MIRRORS[tgt]]:
         ibx.req('PUT', f'/v1/machines/{m[1]}/files?path={D}/primary.txt&parents=true', raw=open('/tmp/primary.txt', 'rb').read())
     json.dump({'vm': name, 'mid': mid, 'url': url, 'since': stamp}, open(STATE, 'w'))
+    # 下班的旧主镜像立刻挂起（不等 30 分钟闲置），免得拖着跑满上限进冷却；有人推它会自动唤醒
+    old = MIRRORS[cur][1]
+    if old != mid and info(old).get('state') == 'running':
+        ibx.req('POST', f'/v1/machines/{old}/suspend', {}, headers={'Idempotency-Key': os.urandom(8).hex()})
     print('SWITCH', st['vm'], '->', name, url, '| locks', len(lock), '|', out.strip().replace('\n', ' '))
 
 def status():
