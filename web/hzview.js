@@ -1180,7 +1180,7 @@
     const modSheet = m => m.sheet || (/^s(\d{3})(-|$)/.exec(m.id || '') ? 'S-' + /^s(\d{3})/.exec(m.id)[1] : null);
     // 隐藏模式（SCOPE_OUT = 'hide'）另外：近景人员 actors 整个不画（说不清服务哪张图）；云门墨线本图范围不含 ym 时不画；模块的幽灵层（m.G.ghost.o 或 userData.ghost = true 的节点）不画。宿主隐藏的节点记 userData.scOff，范围关掉时还原
     let YMH = false;
-    const scOff = (o, h) => { if (h) { if (o.visible) { o.visible = false; o.userData.scOff = 1; } } else if (o.userData.scOff) { o.visible = true; o.userData.scOff = 0; } };
+    const scOff = (o, h) => { if (h) { o.userData.scOff = 1; o.traverse(c => c.layers.disable(0)); } else if (o.userData.scOff) { o.userData.scOff = 0; o.traverse(c => c.layers.enable(0)); } };   // 封单深审：改用图层隐藏，不碰模块自己管的 visible（原写法还原时强行 visible = true，模块只在状态切换时设 visible 的节点会常驻，如 S-101 土方体块）
     function scopeMods() { const on = U.uScope.value > 0.5, sc = S.scope || {}, hide = !!SC_HIDE;
       for (const m of MODS) { const ms = modSheet(m), out = on && ms && ms !== SHEET, all = out || (hide && m.id === 'actors'); const gh = m.G && m.G.ghost && m.G.ghost.o;
         for (const o of (m.__nodes || [])) scOff(o, all || (hide && (o === gh || (o.userData && o.userData.ghost === true)))); if (gh && !(m.__nodes || []).includes(gh)) scOff(gh, all || hide); }
