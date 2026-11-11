@@ -94,6 +94,9 @@ for (const s of ['HZA.mount', 'HZA.setSub', 'hz-subtabs', 'S.SHEETS.push']) {
 for (const s of ['S.SHEETS[0] =', 'S.SHEETS.splice', 'S.SHEETS.length = ']) {
   if (atlasJs.includes(s)) fail('hzatlas.js 含禁用写法 ' + s);
 }
+// D-50 回归断言：小地图标记不得清掉宿主 DPR 变换；teardown 须摘 sh-jack 的 hz-off
+if (atlasJs.includes('g.setTransform(1, 0, 0, 1, 0, 0)')) fail('hzatlas.js 仍在清 DPR 变换（D-50）');
+if (!atlasJs.includes("classList.remove('hz-off')")) fail('hzatlas.js teardown 未摘 sh-jack 的 hz-off（D-50）');
 const atlasHtml = fs.readFileSync(path.join(root, 'web/hzatlas.html'), 'utf8');
 for (const s of ["fetch('hzwest.html'", 'hzatlas.js?v=']) {
   if (!atlasHtml.includes(s)) fail('hzatlas.html 缺少 ' + s);
@@ -114,7 +117,7 @@ check('focusFor 用例', () => {
 for (const s of ['HZA.focusFor', 'wireFly', 'location.hash = ', 'hz-hint']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=7')) fail('hzatlas.html 缺少 hzatlas.js?v=7');
+if (!atlasHtml.includes('hzatlas.js?v=8')) fail('hzatlas.html 缺少 hzatlas.js?v=8');
 
 // 12 HZ2-02 平面图小地图断言
 const approx = (a, b, tol = 0.75) => assert.ok(Math.abs(a - b) <= tol, a + ' !≈ ' + b);
@@ -163,7 +166,7 @@ check('planCamPose 用例', () => {
 for (const s of ['HZA.planMap', 'HZA.planCamPose']) {
   if (!atlasJs.includes(s)) fail('hzatlas.js 缺少 ' + s);
 }
-if (!atlasHtml.includes('hzatlas.js?v=7')) fail('hzatlas.html 缺少 hzatlas.js?v=7');
+if (!atlasHtml.includes('hzatlas.js?v=8')) fail('hzatlas.html 缺少 hzatlas.js?v=8');
 
 // 13 接新图断言
 check('接新图断言', () => {
