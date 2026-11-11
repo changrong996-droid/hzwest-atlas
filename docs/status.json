@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-11-10T21:44:00+08:00",
+ "generated_at": "2026-11-11T10:27:00+08:00",
  "headline": {
-  "commits_total": 457,
-  "commits_today": 55,
-  "files": 275,
+  "commits_total": 487,
+  "commits_today": 2,
+  "files": 293,
   "items_done": 31,
   "items_total": 39,
-  "workflows_running": 19,
-  "dispatch_open": 15,
+  "workflows_running": 20,
+  "dispatch_open": 16,
   "live_claims": 4,
-  "pending_review": 0,
-  "blockers": 17,
+  "pending_review": 3,
+  "blockers": 15,
   "waiting_on_owner": 4,
   "decisions": 9
  },
@@ -27,33 +27,33 @@
  "by_agent": [
   {
    "agent": "hark-cr",
-   "total": 247,
-   "today": 38
+   "total": 261,
+   "today": 2
   },
   {
    "agent": "hark-cs",
-   "total": 79,
-   "today": 10
+   "total": 87,
+   "today": 0
   },
   {
    "agent": "hark-liuzhijie",
-   "total": 33,
-   "today": 1
+   "total": 34,
+   "today": 0
   },
   {
    "agent": "hark-fangyi",
-   "total": 29,
-   "today": 3
+   "total": 31,
+   "today": 0
+  },
+  {
+   "agent": "hark-darrio",
+   "total": 27,
+   "today": 0
   },
   {
    "agent": "—",
    "total": 27,
    "today": 0
-  },
-  {
-   "agent": "hark-darrio",
-   "total": 22,
-   "today": 2
   },
   {
    "agent": "muse-tibo-cs",
@@ -73,7 +73,7 @@
   {
    "agent": "inbox-bot",
    "total": 1,
-   "today": 1
+   "today": 0
   },
   {
    "agent": "traycer-cs",
@@ -83,52 +83,52 @@
  ],
  "recent_commits": [
   {
-   "sha": "2ecdd8a",
-   "at": "2026-11-10T13:40:03Z",
-   "subj": "[D-47] 完成 + 看板刷新",
+   "sha": "ee1933b",
+   "at": "2026-11-11T02:22:57Z",
+   "subj": "合并 agent/hark-cs/D-42-pv-south-first（内容已在 main：4ea61ed/2bd69c8）",
    "agent": "hark-cr"
   },
   {
-   "sha": "e92d0bb",
-   "at": "2026-11-10T13:36:55Z",
+   "sha": "b507329",
+   "at": "2026-11-11T00:45:05Z",
+   "subj": "合入 muse-tibo-cs/s401-ai-render 的 promo-page.md 回单（CLAIMS.md 取 main）",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "e808790",
+   "at": "2026-11-10T15:10:31Z",
+   "subj": "[D-47][D-48] CHANGELOG",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "ee62c44",
+   "at": "2026-11-10T15:07:26Z",
+   "subj": "合并 agent/hark-liuzhijie/D-48-closeout",
+   "agent": "hark-cr"
+  },
+  {
+   "sha": "ef59bd7",
+   "at": "2026-11-10T15:07:26Z",
    "subj": "合并 agent/hark-darrio/D-47-release",
    "agent": "hark-cr"
   },
   {
-   "sha": "0c794da",
-   "at": "2026-11-10T13:13:52Z",
-   "subj": "合并 agent/hark-fangyi/D-36-46-audit",
+   "sha": "e8f255b",
+   "at": "2026-11-10T14:15:37Z",
+   "subj": "[宿主] 撤回图钉临时隐藏（D-45 已合）；info.js?v=4、yunmen.js?v=2；D-41/D-45/D-46 关闭",
    "agent": "hark-cr"
   },
   {
-   "sha": "c096e1c",
-   "at": "2026-11-10T12:34:59Z",
-   "subj": "[D-36][D-46] 收口验收截图：S-201 幽灵线前后、哨兵二号裁图拼版、Copernicus 链接实测",
-   "agent": "hark-fangyi"
-  },
-  {
-   "sha": "152bfda",
-   "at": "2026-11-10T12:34:33Z",
-   "subj": "[D-36][D-46] 收口验收说明",
-   "agent": "hark-fangyi"
-  },
-  {
-   "sha": "ad7afbe",
-   "at": "2026-11-10T12:31:05Z",
-   "subj": "[CLAIMS] gen.js 单元格内换行折成全角空格，修复 b45498b 后 check_claims",
+   "sha": "4e74406",
+   "at": "2026-11-10T14:10:39Z",
+   "subj": "合并 agent/hark-cs/S-401-front-label",
    "agent": "hark-cr"
   },
   {
-   "sha": "b45498b",
-   "at": "2026-11-10T12:27:08Z",
-   "subj": "[CLAIMS] 修复派单表断行：D-13…D-49 续行并回单行，board 才能读到",
+   "sha": "ec165c2",
+   "at": "2026-11-10T14:10:39Z",
+   "subj": "合并 agent/hark-cs/D-36-s401-shots",
    "agent": "hark-cr"
-  },
-  {
-   "sha": "761b285",
-   "at": "2026-11-10T11:45:26Z",
-   "subj": "[D-47] 发布前无头验收：两视口 28 条全部通过，另记 3 条手机小问题",
-   "agent": "hark-darrio"
   }
  ],
  "dispatches_open": [
@@ -163,24 +163,6 @@
    "state": "待做"
   },
   {
-   "id": "D-41",
-   "agent": "hark-cs",
-   "item": "S-000 总图云门改示意线型",
-   "state": "待做"
-  },
-  {
-   "id": "D-45",
-   "agent": "hark-cs",
-   "item": "实物图钉太密、数字看不懂：按记录聚合，默认收起",
-   "state": "待做"
-  },
-  {
-   "id": "D-46",
-   "agent": "hark-fangyi",
-   "item": "哨兵二号记录的来源链接打不开：换成人能看的证据",
-   "state": "待做"
-  },
-  {
    "id": "D-48",
    "agent": "hark-liuzhijie",
    "item": "S-251-hoist 分支变基或作废",
@@ -205,6 +187,12 @@
    "state": "待做"
   },
   {
+   "id": "D-41",
+   "agent": "hark-cs",
+   "item": "S-000 总图云门改示意线型",
+   "state": "已完成"
+  },
+  {
    "id": "D-42",
    "agent": "hark-cs",
    "item": "S-401 光伏铺设改南先北后（pvFront 与 hzview.js 同步）",
@@ -220,6 +208,24 @@
    "id": "D-44",
    "agent": "hark-cs",
    "item": "信息卡显示构件关系两层（info.js 读 ctx.rel）",
+   "state": "待做"
+  },
+  {
+   "id": "D-45",
+   "agent": "hark-cs",
+   "item": "实物图钉太密、数字看不懂：按记录聚合，默认收起",
+   "state": "已完成"
+  },
+  {
+   "id": "D-46",
+   "agent": "hark-fangyi",
+   "item": "哨兵二号记录的来源链接打不开：换成人能看的证据",
+   "state": "已完成"
+  },
+  {
+   "id": "D-47",
+   "agent": "hark-darrio",
+   "item": "发布前无头验收：手机竖屏、深链、说明卡、关系高亮",
    "state": "待做"
   }
  ],
@@ -285,7 +291,11 @@
   }
  ],
  "free_items": [],
- "pending_review": [],
+ "pending_review": [
+  "hark-cs/D-22-s401-polish",
+  "hark-cs/D-22-window-fix",
+  "hark-cs/D-22-s401-window"
+ ],
  "stale_locks": [],
  "blockers": [
   {
@@ -330,11 +340,6 @@
   },
   {
    "kind": "协作者",
-   "what": "D-36 二维图纸关掉未建幽灵虚线（S-401、S-201 已合入；S-101/S-501 二维自查已满足，余前后截图对比）",
-   "who": "hark-liuzhijie"
-  },
-  {
-   "kind": "协作者",
    "what": "D-39 S-101 地下节拍图上注记（规则：终点吻合只注记，R-0017…R-0021）",
    "who": "hark-liuzhijie"
   },
@@ -359,11 +364,6 @@
    "who": "委托人"
   },
   {
-   "kind": "协作者",
-   "what": "D-20 S-101 ②–⑤、D-36 截图",
-   "who": "hark-liuzhijie、hark-cs"
-  },
-  {
    "kind": "集成",
    "what": "收件自动合入（GitHub Actions inbox-automerge，check/push 两 job）11-10 00:22 首跑：check 成功、合入 0（11 个按规则留下），push job 因无可合跳过——快进推送路径尚未实跑过，首次真合入后要看一眼",
    "who": "hark-cr"
@@ -380,7 +380,7 @@
   "repo": "https://github.com/changrong996-droid/hzwest-atlas"
  },
  "flow": {
-  "generated_at": "2026-11-10T21:44:36+08:00",
+  "generated_at": "2026-11-11T10:27:59+08:00",
   "people": [
    {
     "name": "hark-cr",
@@ -388,11 +388,11 @@
      "D-49"
     ],
     "done_today": 0,
-    "last_at": 1794318003,
+    "last_at": 1794357905,
     "mine": [],
     "state": "review",
     "away": false,
-    "idle_min": 4
+    "idle_min": 102
    },
    {
     "name": "hark-cr（执行：Traycer CLI on Mac；原 traycer-cs，traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI）",
@@ -408,30 +408,31 @@
     "name": "hark-cs",
     "active": [
      "D-36",
-     "D-41",
-     "D-45",
      "D-28",
+     "D-41",
      "D-42",
-     "D-44"
+     "D-44",
+     "D-45"
     ],
     "done_today": 0,
-    "last_at": 1794316210,
+    "last_at": 1794318453,
     "mine": [],
     "state": "review",
-    "away": false,
-    "idle_min": 33
+    "away": true,
+    "idle_min": 759
    },
    {
     "name": "hark-darrio",
     "active": [
-     "D-43"
+     "D-43",
+     "D-47"
     ],
     "done_today": 0,
-    "last_at": 1794316231,
+    "last_at": 1794318979,
     "mine": [],
     "state": "review",
-    "away": false,
-    "idle_min": 33
+    "away": true,
+    "idle_min": 750
    },
    {
     "name": "hark-fangyi",
@@ -444,8 +445,8 @@
     "last_at": 1794314099,
     "mine": [],
     "state": "review",
-    "away": false,
-    "idle_min": 69
+    "away": true,
+    "idle_min": 832
    },
    {
     "name": "hark-liuzhijie",
@@ -455,14 +456,12 @@
      "D-48",
      "D-39"
     ],
-    "done_today": 1,
-    "last_at": 1794285255,
-    "mine": [
-     "D-48"
-    ],
-    "state": "stopped",
+    "done_today": 0,
+    "last_at": 1794309816,
+    "mine": [],
+    "state": "review",
     "away": true,
-    "idle_min": 549
+    "idle_min": 903
    },
    {
     "name": "marvis",
@@ -476,7 +475,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 3403
+    "idle_min": 4166
    },
    {
     "name": "muse-tibo-cs",
@@ -492,7 +491,7 @@
     ],
     "state": "stopped",
     "away": true,
-    "idle_min": 589
+    "idle_min": 1352
    },
    {
     "name": "pi-t2",
@@ -530,7 +529,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 3289
+    "idle_min": 4052
    },
    {
     "name": "zcode-cs",
@@ -540,7 +539,7 @@
     "mine": [],
     "state": "idle",
     "away": true,
-    "idle_min": 1251
+    "idle_min": 2014
    }
   ],
   "jobs": [
@@ -563,7 +562,7 @@
      "who": "marvis",
      "what": "还没开工",
      "since": 1794118391,
-     "age_min": 3330,
+     "age_min": 4094,
      "level": "red"
     },
     "done": false
@@ -580,20 +579,21 @@
     "stages": {
      "派出": 1794122454,
      "开工": 1794126892,
-     "交付": 1794221300,
-     "合入": 1794222971
+     "交付": 1794309816,
+     "合入": 1794323246
     },
     "returned": false,
     "branches": [
      "agent/hark-liuzhijie/D-20-s101",
-     "agent/hark-liuzhijie/D-20b"
+     "agent/hark-liuzhijie/D-20b",
+     "agent/hark-liuzhijie/D-48-closeout"
     ],
-    "commits": 2,
+    "commits": 3,
     "wait": {
      "who": "hark-cr",
      "what": "合入了，等关单",
-     "since": 1794222971,
-     "age_min": 1587,
+     "since": 1794323246,
+     "age_min": 679,
      "level": "red"
     },
     "done": false
@@ -617,7 +617,7 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794128678,
-     "age_min": 3159,
+     "age_min": 3922,
      "level": "red"
     },
     "done": false
@@ -636,22 +636,22 @@
     "stages": {
      "派出": 1794194970,
      "开工": 1794205992,
-     "交付": 1794314099,
-     "合入": 1794316432
+     "交付": 1794318432,
+     "合入": 1794323246
     },
     "returned": false,
     "branches": [
-     "agent/hark-fangyi/D-36-46-audit",
      "agent/hark-liuzhijie/D-38",
-     "agent/hark-liuzhijie/D-38-36"
+     "agent/hark-liuzhijie/D-38-36",
+     "agent/hark-liuzhijie/D-48-closeout"
     ],
-    "commits": 6,
+    "commits": 8,
     "wait": {
      "who": "hark-cr",
      "what": "合入了，等关单",
-     "since": 1794316432,
-     "age_min": 30,
-     "level": "ok"
+     "since": 1794323246,
+     "age_min": 679,
+     "level": "red"
     },
     "done": false
    },
@@ -674,94 +674,8 @@
      "who": "muse-tibo-cs",
      "what": "还没开工",
      "since": 1794278189,
-     "age_min": 667,
+     "age_min": 1430,
      "level": "red"
-    },
-    "done": false
-   },
-   {
-    "id": "D-41",
-    "title": "S-000 总图云门改示意线型",
-    "who": [
-     "hark-cs"
-    ],
-    "kind": "派单",
-    "status": "待做",
-    "stage": 2,
-    "stages": {
-     "派出": 1794278189,
-     "开工": 1794316209,
-     "交付": 1794316210
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-cs/D-41-yunmen-schematic"
-    ],
-    "commits": 2,
-    "wait": {
-     "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794316210,
-     "age_min": 33,
-     "level": "ok"
-    },
-    "done": false
-   },
-   {
-    "id": "D-45",
-    "title": "实物图钉太密、数字看不懂：按记录聚合，默认收起",
-    "who": [
-     "hark-cs"
-    ],
-    "kind": "派单",
-    "status": "待做",
-    "stage": 2,
-    "stages": {
-     "派出": 1794296785,
-     "开工": 1794315780,
-     "交付": 1794315785
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-cs/D-45-pins-cluster"
-    ],
-    "commits": 2,
-    "wait": {
-     "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794315785,
-     "age_min": 41,
-     "level": "ok"
-    },
-    "done": false
-   },
-   {
-    "id": "D-46",
-    "title": "哨兵二号记录的来源链接打不开：换成人能看的证据",
-    "who": [
-     "hark-fangyi"
-    ],
-    "kind": "派单",
-    "status": "待做",
-    "stage": 2,
-    "stages": {
-     "派出": 1794296923,
-     "开工": 1794299642,
-     "交付": 1794314099
-    },
-    "returned": false,
-    "branches": [
-     "agent/hark-fangyi/D-36-46-audit",
-     "agent/hark-fangyi/D-46-s2-evidence",
-     "agent/hark-fangyi/real-s251-s301-sat"
-    ],
-    "commits": 4,
-    "wait": {
-     "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794314099,
-     "age_min": 69,
-     "level": "ok"
     },
     "done": false
    },
@@ -773,19 +687,24 @@
     ],
     "kind": "派单",
     "status": "待做",
-    "stage": 0,
+    "stage": 3,
     "stages": {
-     "派出": 1794308055
+     "派出": 1794308055,
+     "开工": 1794309816,
+     "交付": 1794309816,
+     "合入": 1794323246
     },
     "returned": false,
-    "branches": [],
-    "commits": 0,
+    "branches": [
+     "agent/hark-liuzhijie/D-48-closeout"
+    ],
+    "commits": 1,
     "wait": {
-     "who": "hark-liuzhijie",
-     "what": "还没开工",
-     "since": 1794308055,
-     "age_min": 169,
-     "level": "amber"
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794323246,
+     "age_min": 679,
+     "level": "red"
     },
     "done": false
    },
@@ -811,8 +730,8 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794313628,
-     "age_min": 76,
-     "level": "ok"
+     "age_min": 840,
+     "level": "red"
     },
     "done": false
    },
@@ -848,15 +767,11 @@
     "stage": 4,
     "stages": {
      "派出": 1794112517,
-     "开工": 1794223865,
-     "交付": 1794223865,
      "关单": 1794118391
     },
     "returned": false,
-    "branches": [
-     "agent/hark-fangyi/D-02-note"
-    ],
-    "commits": 1,
+    "branches": [],
+    "commits": 0,
     "wait": null,
     "done": true
    },
@@ -1212,16 +1127,16 @@
     "stage": 4,
     "stages": {
      "派出": 1794122454,
-     "开工": 1794123733,
+     "开工": 1794133899,
      "交付": 1794290858,
+     "合入": 1794296485,
      "关单": 1794191040
     },
     "returned": false,
     "branches": [
-     "agent/hark-fangyi/D-19-s201-polish",
      "agent/hark-fangyi/real-roof-calib"
     ],
-    "commits": 4,
+    "commits": 2,
     "wait": null,
     "done": true
    },
@@ -1605,7 +1520,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794298961,
-     "age_min": 321,
+     "age_min": 1084,
      "level": "red"
     },
     "done": false
@@ -1634,7 +1549,36 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794287716,
-     "age_min": 508,
+     "age_min": 1271,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-41",
+    "title": "S-000 总图云门改示意线型",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "已完成",
+    "stage": 3,
+    "stages": {
+     "派出": 1794278189,
+     "开工": 1794316209,
+     "交付": 1794316210,
+     "合入": 1794319839
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/D-41-yunmen-schematic"
+    ],
+    "commits": 2,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794319839,
+     "age_min": 736,
      "level": "red"
     },
     "done": false
@@ -1647,24 +1591,26 @@
     ],
     "kind": "派单",
     "status": "已完成（11-10 已合入）",
-    "stage": 2,
+    "stage": 3,
     "stages": {
      "派出": 1794288323,
      "开工": 1794294196,
-     "交付": 1794297450
+     "交付": 1794318453,
+     "合入": 1794363777
     },
     "returned": false,
     "branches": [
      "agent/hark-cs/D-42-pv-south-first",
+     "agent/hark-cs/S-401-front-label",
      "agent/hark-cs/s401-pv-south-first"
     ],
-    "commits": 3,
+    "commits": 4,
     "wait": {
      "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794297450,
-     "age_min": 346,
-     "level": "red"
+     "what": "合入了，等关单",
+     "since": 1794363777,
+     "age_min": 4,
+     "level": "ok"
     },
     "done": false
    },
@@ -1692,7 +1638,7 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794296463,
-     "age_min": 363,
+     "age_min": 1126,
      "level": "red"
     },
     "done": false
@@ -1721,7 +1667,94 @@
      "who": "hark-cr",
      "what": "合入了，等关单",
      "since": 1794298961,
-     "age_min": 321,
+     "age_min": 1084,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-45",
+    "title": "实物图钉太密、数字看不懂：按记录聚合，默认收起",
+    "who": [
+     "hark-cs"
+    ],
+    "kind": "派单",
+    "status": "已完成",
+    "stage": 3,
+    "stages": {
+     "派出": 1794296785,
+     "开工": 1794315780,
+     "交付": 1794315785,
+     "合入": 1794319839
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-cs/D-45-pins-cluster"
+    ],
+    "commits": 2,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794319839,
+     "age_min": 736,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-46",
+    "title": "哨兵二号记录的来源链接打不开：换成人能看的证据",
+    "who": [
+     "hark-fangyi"
+    ],
+    "kind": "派单",
+    "status": "已完成",
+    "stage": 3,
+    "stages": {
+     "派出": 1794296923,
+     "开工": 1794309613,
+     "交付": 1794314099,
+     "合入": 1794318948
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-fangyi/D-36-46-audit"
+    ],
+    "commits": 3,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794318948,
+     "age_min": 751,
+     "level": "red"
+    },
+    "done": false
+   },
+   {
+    "id": "D-47",
+    "title": "发布前无头验收：手机竖屏、深链、说明卡、关系高亮",
+    "who": [
+     "hark-darrio"
+    ],
+    "kind": "派单",
+    "status": "待做",
+    "stage": 3,
+    "stages": {
+     "派出": 1794308055,
+     "开工": 1794311126,
+     "交付": 1794318979,
+     "合入": 1794323246
+    },
+    "returned": false,
+    "branches": [
+     "agent/hark-darrio/D-47-release"
+    ],
+    "commits": 2,
+    "wait": {
+     "who": "hark-cr",
+     "what": "合入了，等关单",
+     "since": 1794323246,
+     "age_min": 679,
      "level": "red"
     },
     "done": false
@@ -1757,8 +1790,8 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107769,
-     "交付": 1794285255,
-     "合入": 1794287716,
+     "交付": 1794309816,
+     "合入": 1794323246,
      "关单": 1794109194
     },
     "returned": false,
@@ -1767,7 +1800,7 @@
      "agent/hark-liuzhijie/S-101-mod",
      "agent/hark-liuzhijie/S-101-underground"
     ],
-    "commits": 11,
+    "commits": 12,
     "wait": null,
     "done": true
    },
@@ -1784,6 +1817,7 @@
      "派出": 1794105383,
      "开工": 1794107679,
      "交付": 1794314099,
+     "合入": 1794316432,
      "关单": 1794109194
     },
     "returned": false,
@@ -1792,7 +1826,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 15,
+    "commits": 13,
     "wait": null,
     "done": true
    },
@@ -1808,7 +1842,7 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794107129,
-     "交付": 1794297430,
+     "交付": 1794318453,
      "关单": 1794109194
     },
     "returned": false,
@@ -1817,7 +1851,7 @@
      "agent/hark-cs/claim",
      "agent/hark-cs/s401-pv-south-first"
     ],
-    "commits": 26,
+    "commits": 28,
     "wait": null,
     "done": true
    },
@@ -1833,17 +1867,17 @@
     "stages": {
      "派出": 1794105383,
      "开工": 1794109143,
-     "交付": 1794221535,
-     "合入": 1794241057,
+     "交付": 1794309816,
+     "合入": 1794323246,
      "关单": 1794110640
     },
     "returned": false,
     "branches": [
-     "agent/hark-liuzhijie/D-38",
+     "agent/hark-liuzhijie/D-48-closeout",
      "agent/hark-liuzhijie/S-501-D09",
      "agent/hark-liuzhijie/S-501-draft2"
     ],
-    "commits": 8,
+    "commits": 9,
     "wait": null,
     "done": true
    },
@@ -1859,7 +1893,7 @@
     "stages": {
      "派出": 1794112344,
      "开工": 1794107769,
-     "交付": 1794285255,
+     "交付": 1794309816,
      "关单": 1794118391
     },
     "returned": false,
@@ -1884,8 +1918,8 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107769,
-     "交付": 1794285255,
-     "合入": 1794287716,
+     "交付": 1794309816,
+     "合入": 1794323246,
      "关单": 1794118391
     },
     "returned": false,
@@ -1894,7 +1928,7 @@
      "agent/hark-liuzhijie/S-101-mod",
      "agent/hark-liuzhijie/S-101-underground"
     ],
-    "commits": 11,
+    "commits": 12,
     "wait": null,
     "done": true
    },
@@ -1911,6 +1945,7 @@
      "派出": 1794110640,
      "开工": 1794107679,
      "交付": 1794314099,
+     "合入": 1794316432,
      "关单": 1794118391
     },
     "returned": false,
@@ -1919,7 +1954,7 @@
      "agent/hark-fangyi/S-201-v2",
      "agent/hark-fangyi/S-201-v2-req"
     ],
-    "commits": 15,
+    "commits": 13,
     "wait": null,
     "done": true
    },
@@ -1935,7 +1970,7 @@
     "stages": {
      "派出": 1794110640,
      "开工": 1794107129,
-     "交付": 1794297430,
+     "交付": 1794318453,
      "关单": 1794118391
     },
     "returned": false,
@@ -1944,7 +1979,7 @@
      "agent/hark-cs/claim",
      "agent/hark-cs/s401-pv-south-first"
     ],
-    "commits": 26,
+    "commits": 28,
     "wait": null,
     "done": true
    },
@@ -2016,7 +2051,7 @@
      "who": "pi-t2",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 3431,
+     "age_min": 4194,
      "level": "red"
     },
     "done": false
@@ -2040,7 +2075,7 @@
      "who": "pi-t3",
      "what": "还没开工",
      "since": 1794112344,
-     "age_min": 3431,
+     "age_min": 4194,
      "level": "red"
     },
     "done": false
@@ -2077,11 +2112,12 @@
     ],
     "kind": "认领",
     "status": "认领",
-    "stage": 2,
+    "stage": 3,
     "stages": {
      "派出": 1794105383,
      "开工": 1794110089,
-     "交付": 1794309614
+     "交付": 1794309614,
+     "合入": 1794318948
     },
     "returned": false,
     "branches": [
@@ -2089,13 +2125,13 @@
      "agent/hark-fangyi/real-s251-s301-sat",
      "agent/hark-fangyi/real-sat-yards"
     ],
-    "commits": 7,
+    "commits": 6,
     "wait": {
      "who": "hark-cr",
-     "what": "交了，等审查合入",
-     "since": 1794309614,
-     "age_min": 143,
-     "level": "amber"
+     "what": "合入了，等关单",
+     "since": 1794318948,
+     "age_min": 751,
+     "level": "red"
     },
     "done": false
    },

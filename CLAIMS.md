@@ -12,8 +12,8 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 7 |
-| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 42 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 4 |
+| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 45 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 9 |
@@ -64,7 +64,7 @@
 | 构件信息卡 | 选中构件弹卡显示 part.info + 看建成后/看开工时（hark-cs、hark-fangyi 提案） | hark-cs | 派单 D-28 | 2026-11-08 | 做成模块 web/mods/info.js（HZ_MODS pick/unpick + #mod-ui，11-08 宿主钩子已上线 hzview.js?v=17，接口见 docs/hz-atlas-check.md 第三节 12–13），不改共用文件 |
 | 实物图钉 | HZR.forPart 非空的构件在 3D 打小图钉，点开列记录与原链接 | hark-cs | 派单 D-28 | 2026-11-08 | 与构件信息卡同一模块 web/mods/info.js |
 | 屋盖排程校准 | hzseq.js：asm/jig/lift 后移约 4 天，对齐 2021-05-31 / 06-28 公开节点（hark-liuzhijie 请求） | hark-cr | 完成 | 2026-11-08 | 楼面→胎架加 4 天（JIG_LAG），lift1..3 现为第 636–649 天；check_s251 偏差 +1 / 0 天（原 −3 / −4）。连带：check_callouts 串台时刻 632→636；S-201 镜头 t=636 违反 1（check_cams S-201 临时报告模式，修法并入 D-26）；s401.js 时间窗写死 679–781（现应 683–785，并入 D-22） |
-| S-252 屋盖提升 | 接 S-251：lift1..3（校准后第 636–649 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点（任务书 docs/tasks/S-252.md） | muse-tibo-cs | 认领 | 2026-11-08 | 中活；hark-liuzhijie 提议；认领板已锁给 muse-tibo-cs；见派单 D-29；11-10 委托人暂缓（D-29 挂起，待 N-03 S-251 数据出代码试点之后） |
+| S-252 屋盖提升 | 接 S-251：lift1..3（校准后第 636–649 天）三区脱胎 0.6 m + 绕外缘转 4°；平面 + 吊点剖面，大数字 = 已提升区数 / 3 或当前转角，读 HZ.jackRead 显示千斤顶读数；parts 每区每个吊点（任务书 docs/tasks/S-252.md） | muse-tibo-cs | 认领 | 2026-11-10 | 中活；hark-liuzhijie 提议；认领板已锁给 muse-tibo-cs；见派单 D-29；11-10 委托人暂缓（D-29 挂起，待 N-03 S-251 数据出代码试点之后） |
 | S-001 总进度（提议） | 55 个 HZ.K 工序的横道图与 3D 时间轴同步：竖线 = 当前天，在施工序红、关键链粗线；点横道 → parts 联动 3D 飞到该工序构件；大数字 = 在施工序数或距开通天数 | hark-cs | 完成 | 2026-11-08 | 中活；web/sheets/s001.js + check_s001 已合入 11-08；11-08 已上线（SHEETS_ALL、图册登记、check_all）；宿主已支持 focusZoom:false，s001.js 里加上即生效 |
 | 吊装资源图（提议） | 读 HZ.cranes / assignCranes：每天在场吊机台数、各台位置与吊距圈，超吊距标红；与「履带吊臂长规则」同源，可作其图纸面 | hark-darrio | 完成 | 2026-11-08 | 中活；web/sheets/s002.js + check_s002 已合入 11-08；图号定 S-002「吊装资源」，11-08 已上线并进 check_all |
 | 看板界面优化 | 集成看板 web/status.html 界面重做（docs/tasks/status-ui.md），委托人指定由其他智能体做，hark-cr 只合并 | hark-cs | 完成 | 2026-11-08 | 中活；11-08 15:45 合入（agent/hark-cs/status-ui）；flow 字段提案见 docs/proposals/hark-cs-status-ui-notes.md；11-08 已接：flow.py 移到 tools/status/flow.py，gen.py 调用写入 status.json 的 flow，check_status 验字段 |
@@ -76,11 +76,8 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 单号 | 给谁 | 事项 | 内容 | 状态 | 下发 |
 |---|---|---|---|---|---|
 | D-13 | marvis | Windows 真机审查 | 只看新图 S-251（`#sheet=S-251`）起、中、末三个时刻，问题追加到 `docs/audit/2026-11-08-windows.md` 新一节，不改代码。验收：文件里有 S-251 一节，每条写时刻、视口、现象　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。收口必做，请优先。 | 待做 | 11-08 hark-cr |
-| D-20 | hark-liuzhijie | S-101 雕琢 | 按 docs/audit/2026-11-08-visual.md「S-101」节：①右侧剖面加标高数字（至少 ±0、-15.4、坑底）与层名 B1–B4（地铁层标明）、构件名、简短图例；②三维与剖面完成度一致：t=182「回筑 B2 板、拆第 3 道撑」时三维要看得到中央深坑、内支撑与分层回筑（用 parts/焦点或局部剖切，不用改共用文件则在插件内完成；需宿主接口在 CLAIMS 接口请求提）；③t=355「4/4」时剖面顶板不再是虚线；④信息卡只留一个大数字。只改 web/sheets/s101.js。验收：check_all + check_s101；t=10、182、355 截图 ⑤（11-08 补，Traycer 审查 4）`web/mods/s101.js` 约 86–87 行每次 key 变化 `slice` 新数组并 `computeLineDistances()`，t > 420 体量已隐藏后仍在算：改为 build 时一次分配缓冲、只改 drawRange / needsUpdate 范围，隐藏后 update 直接返回（可参照 web/mods/yunmen.js 的做法）；check_s101 末节 update p99 断言照过。可改 web/mods/s101.js　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。收口必做，请优先。 | 在做（11-09 合入 da51f08：剖面图例；②三维与剖面一致、③t=355 顶板实线、④只留一个大数字未见对应提交，请自查后提交或回报「已满足」；⑤ s101 mod 缓冲改造待做） | 11-08 hark-cr |
 | D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定　11-10 18:55：不在封单范围，封单后再做。 | 挂起（委托人 11-10 10:32）：S-252 暂缓，待 N-03 S-251 数据出代码试点之后再开 | 11-08 hark-cr |
-| D-36 | hark-fangyi、hark-cs、hark-liuzhijie | 分图二维图纸关掉未建幽灵线 | 委托人 11-09 11:05：淡影既容易误解又影响观看，分图上只画本图范围内已建与在建的东西。宿主 3D 已改为范围外隐藏（hzview.js?v=27，`SCOPE_OUT = 'hide'`，docs/hz-atlas-check.md 第三节 15），未建设计位红线、S-101 体量模块终值虚线外框（`m.G.ghost`）宿主已隐藏。请各自把二维 `draw` 里未建构件的淡红虚线 / 幽灵框（`C.ghost`、`st < 0` 分支）改为不画：S-201 `web/sheets/s201.js`（hark-fangyi）、S-401 `web/sheets/s401.js` 未铺区淡红等高线（hark-cs）、S-101 / S-501（hark-liuzhijie，含 mods/s101.js 的 ghost 层可直接删）。时间轴、横道图里「未来」的表达（S-001 全显）不在此列。只改各自文件。验收：check_all；截图对比前后　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。收口必做，请优先。　11-10 22:15：S-201（hark-fangyi）、S-401（hark-cs）已交并合入；只剩 S-101 / S-501（hark-liuzhijie）。 | 待做（S-101 虚线外框、S-401 未铺区淡红线、S-201 二维幽灵线已合入 11-09；二维 s101/s501 hark-liuzhijie 自查已满足（11-10 随 D-38 合入记录）；待截图对比） | 11-09 hark-cr |
 | D-40 | muse-tibo-cs | 9×4 形态覆盖矩阵（小活） | 委托人 11-10 10:32 批准（Fable 5.2 备忘录 docs/hz-fable52-review-2026-11-10.md）。出 docs/audit/form-matrix.md ：九图（S-000、S-001、S-002、S-101、S-201、S-251、S-301、S-401、S-501）× 四形态（图纸 / 生长 / 成品 / 实物），每格填 有 / 无 / 不适用 + 一句理由（指向文件、R-编号或页签）；另列 12 张 Blender 海报，各标图号与时刻 t（或日期）。只新增该文件，不改代码。验收：36 格齐全、每格有依据；12 张海报全部归号　11-10 18:55：不在封单范围，封单后再做。 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
-| D-48 | hark-liuzhijie | S-251-hoist 分支变基或作废 | 收件仓 agent/hark-liuzhijie/S-251-hoist（1 个提交）与 main 冲突。请在最新 main 上变基后重推；若内容已被后续提交取代，回一句作废即可。另 D-36 中 S-101 / S-501 二维不画未建幽灵线、D-20 S-101 雕琢请一并收尾。验收：变基分支 check_all 全 OK，或认领板写明作废。　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。 | 待做 | 11-10 hark-cr（委托人 18:52 清理） |
 | D-49 | hark-cr | Mac 真机 GPU 终审：十张图起中末截图与帧率 | 用 Mac Chrome（Metal）打开线上页，十张图各取起、中、末三个时刻，1920×1080 与 800×1200 两视口截图；记录每张图 fps（目标 ≥55）与 >1 s 卡顿；列出肉眼可见问题（穿模、遮挡、错字、空白）。写 　docs/audit/2026-11-10-gpu-final.md　，截图 　docs/audit/img/2026-11-10-gpu-final/　（每张 ≤200 KB）。只验不改代码；问题按图号列，hark-cr 派回作者。验收：60 张截图 + 帧率表。　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。　11-10 19:15：traycer-cs 额度用尽，改由 hark-cr 用 Mac Chrome（~/Hark/castle-hz3/mac/sheets.js）执行。 | 待做 | 11-10 hark-cr（委托人 18:52 清理）；11-10 19:15 traycer-cs 额度用尽，hark-cr 用 Mac Chrome 自做 |
 
 ## 接口请求
