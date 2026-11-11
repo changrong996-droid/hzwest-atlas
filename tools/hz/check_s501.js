@@ -76,4 +76,9 @@ if (!P.parts(W1, sheetCtx()).some(q => q.id === 'TRAIN')) fail('开通后 parts 
 // 7. D-38：声明整片屋盖范围；开通前 13 天，屋盖各工序（已建的）在场
 { const ks = (P.scope && P.scope.keys) || []; for (const k of ['asm1', 'asm2', 'asm3', 'merge', 'head']) if (HZ.K[k] && !ks.includes(k)) fail('S-501 scope.keys 缺屋盖工序 ' + k);
   const tq = HZ.P.OPEN - 13; for (const k of ks) { const ps2 = HZ.K[k].parts.filter(p => p.st != null && p.st <= tq && !(p.rm && p.rm[0] >= 0 && p.rm[0] <= tq)); if (!ps2.length && k !== 'pv') fail(`开通前 13 天 ${k} 无在场构件`); } }
+// 8. D-51 ②：小画幅不得以负半径调用 arc（浏览器抛 IndexSizeError）
+{ const neg = []; const g8 = new Proxy({ measureText: s => ({ width: String(s).length * 6 }) }, { get: (o, k) => (k in o ? o[k] : k === 'arc' || k === 'ellipse' ? (...a) => { if (!(a[2] >= 0)) neg.push(k + ' r=' + a[2]); } : () => {}), set: () => true });
+  for (const [w, h] of [[200, 60], [120, 40], [30, 20], [760, 30]]) for (const t of [P.window[0], HZ.P.OPEN - 3, HZ.P.OPEN + 2]) { try { P.draw(g8, w, h, t, {}); } catch (e) { fail(`D-51 小画幅 draw ${w}x${h} t=${t} 抛错 ${e.message}`); } }
+  if (neg.length) fail('D-51 小画幅 arc 负半径：' + neg.slice(0, 3).join('，')); }
+
 console.log(`OK check_s501 parts=${nParts}  runs=${runs} cam=${P.cam.length} train_z=${Te.z} head_x=${Te.head.toFixed(1)}`);
