@@ -26,8 +26,8 @@ class H(http.server.BaseHTTPRequestHandler):
     def _run(self):
         u = urllib.parse.urlsplit(self.path)
         if u.path in ('/', '/health'):
-            body = b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\nclaim board: <this-url>/board\n'
-            body += _primary().encode()
+            # 当前主镜像放第一行（AGENTS.md 6B 的约定；mirror_setup.sh 的 head -1 也据此看交接结果）
+            body = _primary().encode() + b'hzwest-atlas inbox ok\nclone: <this-url>/hzwest-atlas.git\nrules: see AGENTS.md section 6B\nclaim board: <this-url>/board\n'
             self.send_response(200); self.send_header('Content-Type', 'text/plain'); self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path in ('/board', '/claim', '/release'):
             code, txt = board.handle(ROOT, u.path, u.query); body = (_primary() + txt).encode()
