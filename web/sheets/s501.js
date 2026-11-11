@@ -32,10 +32,11 @@
     const K = HZ.K, P = HZ.P, OPEN = P.OPEN, sig = [OPEN, K.ymf.start].concat(['ym', 'ymc', 'tod'].map(k => K[k].parts.map(p => p.st + ':' + p.du).join(','))).join('|');
     if (M && M.HZ === HZ && M.sig === sig) return M;
     const grab = keys => { const out = []; for (const k of keys) if (K[k]) for (const p of K[k].parts) if (p.geo && isFinite(p.geo.min[0])) out.push({ k, p, b: p.geo }); return out; };
-    const ym = K.ym, ymTop = Math.max(...ym.parts.map(p => p.geo.max[1]));
+    const top = ps => { let v = -Infinity; for (const p of ps) if (p.geo && isFinite(p.geo.max[1])) v = Math.max(v, p.geo.max[1]); return isFinite(v) ? v : 0; };   // D-51 ③：缺 geo 的构件不参与
+    const ym = K.ym, ymTop = top(ym.parts);
     M = { HZ, sig, OPEN, win: [K.ymf.start, OPEN + 30],
       tracks: grab(['trackS', 'trackN']), plats: grab(['platS', 'platN']), ymParts: grab(['ymf', 'ym', 'ymc']), cranes: grab(['ycrane']), tod: grab(['tod']),
-      roofBox: uBox(grab(['ring', 'clad', 'sky'])), ymTop, todTop: Math.max(...K.tod.parts.map(p => p.geo.max[1])) };
+      roofBox: uBox(grab(['ring', 'clad', 'sky'])), ymTop, todTop: top(K.tod.parts) };
     return M;
   }
   const FVof = () => Object.assign(FV0(G.HZ), (G.__pv && G.__pv.FV) || {});
@@ -96,7 +97,7 @@
     const gut = small || tall ? 0 : clamp(bw * 0.2, 96, 150);
     const pa = { x0: box.x0 + gut + 6, y0: box.y0 + (small ? 28 : tall ? topH : 6), x1: box.x1 - 4, y1: box.y1 - 4 - botH };
     // 视窗：z ∈ [−300, 300]（围挡 ±280–300、云门南缘 240、塔吊 263），x 半宽按画幅比例，至少 ±300
-    const pw = pa.x1 - pa.x0, ph = pa.y1 - pa.y0, zH = 300, xH = Math.max(300, zH * pw / ph), s = Math.min(pw / (2 * xH), ph / (2 * zH));
+    const pw = Math.max(1, pa.x1 - pa.x0), ph = Math.max(1, pa.y1 - pa.y0), zH = 300, xH = Math.max(300, zH * pw / ph), s = Math.max(0, Math.min(pw / (2 * xH), ph / (2 * zH)));   // D-51 ②：小画幅钳制，arc 半径不为负
     const cx = (pa.x0 + pa.x1) / 2, cy = (pa.y0 + pa.y1) / 2, X = x => cx + x * s, Y = z => cy + z * s;   // 北上（z<0 在上）、东右
     const lit = (x, z) => (L.on <= 0 ? 0 : L.r > 0 ? clamp((L.r - Math.hypot(x, z)) / 30, 0, 1) : 1) * L.on;   // 同 hzview：hzSm(0, 30, uWave − |xz|)
     const rectXZ = (b, fill, stroke, lw) => { const x0 = X(b.min[0]), y0 = Y(b.min[2]), ww = Math.max(0.6, (b.max[0] - b.min[0]) * s), hh = Math.max(0.6, (b.max[2] - b.min[2]) * s); if (fill) { g.fillStyle = fill; g.fillRect(x0, y0, ww, hh); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 0.8; g.strokeRect(x0, y0, ww, hh); } };

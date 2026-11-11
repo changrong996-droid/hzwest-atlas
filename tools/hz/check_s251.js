@@ -129,4 +129,8 @@ let faceTxt = '';
   re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, med = re[re.length >> 1];   // 同 check_actors：60 帧/秒、1 天/秒播放
   if (avg > 2 || med > 2) fail(`update 平均 ${avg.toFixed(2)} ms、重算帧中位 ${med.toFixed(2)} ms，应 < 2 ms`);
   faceTxt = ` face=${nLive} cranes=${nCr} crawler=${nHo} segmax=${nSeg} face_ms=${avg.toFixed(2)}`; }
+// D-51 ①：楼面基座外框真的画出来（strokeRect 宽高为有限正数，旧代码循环变量 k 遮蔽缩放系数 → NaN）
+{ const rs = []; const g9 = new Proxy({ measureText: s => ({ width: String(s).length * 6 }) }, { get: (o, k) => (k in o ? o[k] : k === 'strokeRect' ? (...a) => rs.push(a) : () => {}), set: () => true });
+  P.draw(g9, 1100, 620, (P.window[0] + P.window[1]) / 2, {}); const bad = rs.filter(a => !a.every(isFinite)); if (bad.length) fail(`D-51 strokeRect 非有限参数 ${bad.length} 处（楼面外框不显示）`); }
+
 console.log(`OK check_s251 real ${devTxt} runs=${runs} units=${N} parts=${nParts} cam=${P.cam.length}${faceTxt}${baseTxt}`);

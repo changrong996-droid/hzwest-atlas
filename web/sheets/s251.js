@@ -156,7 +156,7 @@
     // 端部悬挑吊装单元：外框橙色虚线（与胎架同为临时措施色），区别于楼面拼装
     g.setLineDash([3, 2]); g.strokeStyle = C.temp; g.lineWidth = 0.9; for (const u of m.units) if (u.hoist) g.strokeRect(X(u.xa) - 1, Y(u.za) - 1, (u.xb - u.xa) * k + 2, (u.zb - u.za) * k + 2); g.setLineDash([]);
     // 楼面基座（D-37）：候车层楼板块外框（淡墨）与板下柱位（小点），与 S-201 / S-301 同一轴网
-    g.strokeStyle = C.line; g.lineWidth = 0.5; for (const k of FLOOR_KEYS) if (HZ.K[k]) for (const p of HZ.K[k].parts) if (stOf(p, t) >= 2) for (const b of p.geo.boxes) g.strokeRect(X(b.min[0]), Y(b.min[2]), (b.max[0] - b.min[0]) * k, (b.max[2] - b.min[2]) * k);
+    g.strokeStyle = C.line; g.lineWidth = 0.5; for (const fk of FLOOR_KEYS) if (HZ.K[fk]) for (const p of HZ.K[fk].parts) if (stOf(p, t) >= 2) for (const b of p.geo.boxes) g.strokeRect(X(b.min[0]), Y(b.min[2]), (b.max[0] - b.min[0]) * k, (b.max[2] - b.min[2]) * k);
     g.fillStyle = C.ink3; for (const ck of COL_KEYS) if (HZ.K[ck]) for (const p of HZ.K[ck].parts) { const x = (p.geo.min[0] + p.geo.max[0]) / 2, z = (p.geo.min[2] + p.geo.max[2]) / 2; g.fillRect(X(x) - 1, Y(z) - 1, 2, 2); }
     // 胎架：在位的画成小方块（临时，橙）
     g.fillStyle = C.temp; const js = clamp(k * 1.2, 1.2, 3);
