@@ -39,6 +39,7 @@
 
   // ---------- 一张图的节点图：节点 = 图上可点构件；members = 它代表的引擎构件 ----------
   function graph(sheet, parts) {
+    parts = (parts || []).filter(p => p && p.id != null);   // 封单深审：空项先滤掉，再算签名
     const ix = index(), sig = sheet + '|' + parts.map(p => p.id + ':' + (Array.isArray(p.box) ? p.box.map(v => (+v).toFixed(2)).join(',') : '')).join(';');
     const hit = ix.graphs.get(sheet); if (hit && hit.sig === sig) return hit;
     const nodes = parts.filter(p => p && p.id != null).map(p => ({ id: String(p.id), label: p.label || String(p.id), M: [], acts: new Set() }));

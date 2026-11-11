@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 4 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 7 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 45 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
@@ -79,6 +79,9 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定　11-10 18:55：不在封单范围，封单后再做。 | 挂起（委托人 11-10 10:32）：S-252 暂缓，待 N-03 S-251 数据出代码试点之后再开 | 11-08 hark-cr |
 | D-40 | muse-tibo-cs | 9×4 形态覆盖矩阵（小活） | 委托人 11-10 10:32 批准（Fable 5.2 备忘录 docs/hz-fable52-review-2026-11-10.md）。出 docs/audit/form-matrix.md ：九图（S-000、S-001、S-002、S-101、S-201、S-251、S-301、S-401、S-501）× 四形态（图纸 / 生长 / 成品 / 实物），每格填 有 / 无 / 不适用 + 一句理由（指向文件、R-编号或页签）；另列 12 张 Blender 海报，各标图号与时刻 t（或日期）。只新增该文件，不改代码。验收：36 格齐全、每格有依据；12 张海报全部归号　11-10 18:55：不在封单范围，封单后再做。 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
 | D-49 | hark-cr | Mac 真机 GPU 终审：十张图起中末截图与帧率 | 用 Mac Chrome（Metal）打开线上页，十张图各取起、中、末三个时刻，1920×1080 与 800×1200 两视口截图；记录每张图 fps（目标 ≥55）与 >1 s 卡顿；列出肉眼可见问题（穿模、遮挡、错字、空白）。写 　docs/audit/2026-11-10-gpu-final.md　，截图 　docs/audit/img/2026-11-10-gpu-final/　（每张 ≤200 KB）。只验不改代码；问题按图号列，hark-cr 派回作者。验收：60 张截图 + 帧率表。　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。　11-10 19:15：traycer-cs 额度用尽，改由 hark-cr 用 Mac Chrome（~/Hark/castle-hz3/mac/sheets.js）执行。 | 待做 | 11-10 hark-cr（委托人 18:52 清理）；11-10 19:15 traycer-cs 额度用尽，hark-cr 用 Mac Chrome 自做 |
+| D-50 | muse-tibo-cs | hzatlas 高分屏小地图偏位与切页残留 | 1）web/hzatlas.js 第 101 行 wrapFn 画平面图相机标记前 g.setTransform(1,0,0,1,0,0) 把 DPR 缩放清掉了，坐标却按 CSS 像素算，Retina 或手机（DPR 2）上标记缩到左上角。改为保留宿主传入的变换（去掉 setTransform 或先存后恢复）。2）teardown()（约 272 行）没有移除 sh-jack 的 hz-off 类，从 S-301 子图 2/3/4 切到插件图后，千斤顶图仍按全尺寸在后台重绘。3）buildFor 约 312 行：S.SH[item.fn] 缺失时先 return 再建 tab，避免 tabs 与 canvases 下标错位。验收：DPR 2 下标记与镜头位置一致的截图；check_all 全 OK。　封单前深审（11-11，Carbon 审查 + hark-cr 复核）。封单目标 2026-11-12 18:00 CST。宿主已给插件 draw 加了 catch 兜底，但作者仍需自修。 | 待做 | 11-11 hark-cr（封单前深审） |
+| D-51 | hark-liuzhijie | S-251 楼面外框不显示（变量遮蔽）与 S-501 小画幅 | 1）web/sheets/s251.js 第 159 行 for (const k of FLOOR_KEYS) 把外层缩放系数 k 遮蔽成了字符串，strokeRect 宽高成了 NaN，D-37 的楼面基座外框从来没画出来。循环变量改名即可。2）web/sheets/s501.js 第 99 行 ph≤0 时 s 为负，134/112/136 行 g.arc 负半径在真浏览器会抛 IndexSizeError，请钳制 s≥0 或小画幅时跳过 arc。3）s501.js 第 35、38 行 Math.max(...parts.map(p=>p.geo.max[1])) 没像 34 行那样过滤缺 geo 的构件。验收：S-251 中段截图能看到楼面外框；check_all 全 OK。　封单前深审（11-11，Carbon 审查 + hark-cr 复核）。封单目标 2026-11-12 18:00 CST。宿主已给插件 draw 加了 catch 兜底，但作者仍需自修。 | 待做 | 11-11 hark-cr（封单前深审） |
+| D-52 | hark-darrio | S-002 小画幅 arc 负半径 | web/sheets/s002.js 第 105 行画幅较矮（约 h<82 或 w<32）时 pa 宽高为负、k 为负，116/120 行 g.arc 负半径在真浏览器会抛 IndexSizeError。请钳制 k≥0，或 k≤0 时直接返回。小活。验收：check_all 全 OK，并附一张 800×1200 截图。　封单前深审（11-11，Carbon 审查 + hark-cr 复核）。封单目标 2026-11-12 18:00 CST。宿主已给插件 draw 加了 catch 兜底，但作者仍需自修。 | 待做 | 11-11 hark-cr（封单前深审） |
 
 ## 接口请求
 

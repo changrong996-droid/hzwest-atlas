@@ -600,6 +600,7 @@
     // 每帧：① 目标限高 / 目标贴墙 → 挪到最近开敞点；② 俯仰上限 = 头顶有遮盖（屋盖 / 楼板 / 承轨层）才放到 polarUp，否则 polar，平滑过渡；③ 期望距离 dWant（滚轮改它；碰撞推近后转开 → 0.3 s 平滑回到 dWant）；
     // ④ 碰撞：外拉被身后实体挡住 → 穿到实体另一侧（滚轮外拉永远有效）；地面挡住 → 贴地滑（保持距离、视线抬起）；其余 → 沿视线推到实体外。
     const CBOX = [], CG = new Map(), CCS = 16, CM = 0.6, UG = { x: 199.2 - CM, z: P.gap - 0.8 - CM, y0: -9.2 + CM }, TY0 = -10, TY1 = HZ.Ht(0, 0) + HZ.D + 4;
+    try { const o = JSON.parse(hp.get('camcfg') || '{}'); if (!o || typeof o !== 'object') hp.delete('camcfg'); } catch (e) { hp.delete('camcfg'); }   // 封单深审：非法 #camcfg 不再崩页
     const CC = S.camCfg = Object.assign({ polar: 0.6, polarUp: 0.75, tyMin: -5, minD: 9, ug: 0 }, JSON.parse(hp.get('camcfg') || '{}'));   // set2e 扫描选定（work/hzwest-set2/cam_sweep.md）：ug 0 = 不进地下（tyMin 只在 ug 1 时起作用）
     CC.ug = CC.ug === 1 || CC.ug === true ? 1 : 0;   // 地铁层镜头入口默认关闭（委托人 11-08 定）：只有 hash 里显式写 #camcfg={"ug":1} 才开；其它值一律关
     for (const a of HZ.acts) { if (a.kind === 'untemp') continue; for (const p of a.parts) { if (p.cells || p.grp || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) { if (b.max[1] - b.min[1] < 0.05) continue; const e = { p, b, y0: p.geo.min[1], tall: /crane|mast|tower|red/.test(a.stage + ' ' + a.key + ' ' + (p.geo.mat || '')) }, k = CBOX.push(e) - 1;   // tall：塔吊 / 提升塔架 —— 不算「已有构件高度」
@@ -615,11 +616,11 @@
     function solidAt(x, y, z, t, m) { m = m == null ? CM : m; if (y < m && !inUnder(x, y, z, t)) return 'ground';
       if (SV.cut && x < HZ.SEC_X - m) return null;   // 剖切中 x < 39 已切掉：只剩地面约束
       const L = CG.get(Math.floor(x / CCS) * 4096 + Math.floor(z / CCS)); if (!L) return null;
-      for (const k of L) { const e = CBOX[k], b = e.b; if (x < b.min[0] - m || x > b.max[0] + m || z < b.min[2] - m || z > b.max[2] + m) continue; const kk = kOf(e.p, t); if (kk < 1e-4) continue;
+      for (const k of L) { const e = CBOX[k], b = e.b; if (x < b.min[0] - m || x > b.max[0] + m || z < b.min[2] - m || z > b.max[2] + m) continue; const kk = kOf(e.p, t); if (kk < 1e-4) continue; if (PICK_SC && PICK_SC.mask) { const ii = ITEM_OF.get(e.p); if (ii != null && !PICK_SC.mask[ii]) continue; }   // 封单深审 #1：点选时跳过范围外已隐藏的构件
         const y0 = e.y0 + (b.min[1] - e.y0) * kk, y1 = e.y0 + (b.max[1] - e.y0) * kk; if (y >= y0 - m && y <= y1 + m) return e; }
       return null; }
     // 屋盖（网架，不在 CBOX 里）：只用于「头顶遮盖」与视野判定，不做碰撞（网架有洞，原来就允许穿）
-    const roofAt = (x, y, z, t) => { if (t < HZ.K.asm1.start + 4 || HZ.rho(x, z) > 1 || (SV.cut && x < HZ.SEC_X)) return false; const ps = S.pose || HZ.pose(t), zn = zoneOfZ3(z), top = HZ.xf(ps, zn, [x, HZ.Ht(x, z), z])[1]; return y <= top && y >= top - P.depth - 0.5; };
+    const roofAt = (x, y, z, t) => { if (PICK_SC && PICK_SC.mask) { const ii = ITEM_OF.get(HZ.K.asm1.parts[0]); if (ii != null && !PICK_SC.mask[ii]) return false; } if (t < HZ.K.asm1.start + 4 || HZ.rho(x, z) > 1 || (SV.cut && x < HZ.SEC_X)) return false; const ps = S.pose || HZ.pose(t), zn = zoneOfZ3(z), top = HZ.xf(ps, zn, [x, HZ.Ht(x, z), z])[1]; return y <= top && y >= top - P.depth - 0.5; };
     // 目标上限 = 该时刻已有构件的最高点 + 6 m（屋盖在场取屋盖顶）：没屋盖时目标不能悬在空中，否则视线中心对着天
     let topT = -1, topV = TY1; function topAt(t) { if (t === topT) return topV; topT = t; let h = 12; for (const e of CBOX) { if (e.tall) continue; const k = kOf(e.p, t); if (k > 0.05) h = Math.max(h, e.y0 + (e.b.max[1] - e.y0) * k); }
       if (t >= HZ.K.asm1.start + 4) { const ps = S.pose || HZ.pose(t); h = Math.max(h, HZ.xf(ps, 2, [0, HZ.Ht(0, 0), 0])[1]); } topV = Math.min(TY1, h + 6); return topV; }
@@ -800,7 +801,9 @@
       if (S.st.auto) { PFOL.pend = [0, 0, 0]; return; } if (FLY) return; const q = PFOL.pend; if (Math.abs(q[0]) + Math.abs(q[1]) + Math.abs(q[2]) < 1e-4) return;
       const a = 1 - Math.exp(-dt / 0.25), d = new THREE.Vector3(q[0] * a, q[1] * a, q[2] * a); ctl.target.add(d); cam.position.add(d); for (let k = 0; k < 3; k++) q[k] -= d.getComponent(k); dirty = true; }
     // 3D 拾取：视线步进到第一个实体（构件盒 / 网架 / 地面），命中点落在某 part.box（外扩 1.5 m）内 → 该 part（多个取体积最小）
-    function plugPick3D(cx, cy) { if (!PLUG[SHEET]) return null; const R = v3.getBoundingClientRect(), x = cx - R.left, y = cy - R.top; if (x < 0 || y < 0 || x > R.width || y > R.height) return null;
+    var PICK_SC = null;   // 封单深审 #1：plugPick3D 期间 = SC_HIDE（隐藏的构件不挡点选），其余时刻 null（镜头碰撞照旧）
+    function plugPick3D(cx, cy) { if (!PLUG[SHEET]) return null; PICK_SC = SC_HIDE; try { return plugPick3Dx(cx, cy); } finally { PICK_SC = null; } }
+    function plugPick3Dx(cx, cy) { const R = v3.getBoundingClientRect(), x = cx - R.left, y = cy - R.top; if (x < 0 || y < 0 || x > R.width || y > R.height) return null;
       cam.updateMatrixWorld(); ndc.set(x / R.width * 2 - 1, -(y / R.height) * 2 + 1); rc.setFromCamera(ndc, cam); const o = rc.ray.origin, dv = rc.ray.direction, t = S.st.t; let at = null;
       for (let s = 1, n = 0; s < 4500 && n < 6000; n++) { const px = o.x + dv.x * s, py = o.y + dv.y * s, pz = o.z + dv.z * s;
         if (py < 0 && !inUnder(px, py, pz, t)) { const sg = dv.y < -1e-6 && o.y > 0 ? -o.y / dv.y : s; at = [o.x + dv.x * sg, Math.max(0, o.y + dv.y * sg), o.z + dv.z * sg]; break; }
@@ -984,7 +987,7 @@
 
     // ---------------- 图纸（右栏）----------------
     const SHEETS = [{ id: 'sh-jack', fn: SH.jack, no: 'HZW-S-301-1' }, { id: 'sh-plug', fn: (g, w, h, t, cx) => { const pl = PLUG[SHEET]; if (!pl) return; PV.w = w; PV.h = h; PL.clamp(PV, w, h); cx.focus = PV.focus; cx.zoom = PV.k;   // 联动 v2：缩放平移在 draw 前施加
-      g.save(); PL.apply(g, PV, w, h); try { pl.draw(g, w, h, t, cx); } finally { g.restore(); } if (typeof pl.parts === 'function') PPC = { key: pkey(t), parts: PL.safeParts(pl, t, cx, pwarn) }; relOverlay2D(g, w, h, PPC.parts); }, no: 'plugin' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
+      g.save(); PL.apply(g, PV, w, h); try { pl.draw(g, w, h, t, cx); } catch (e) { if (!pl.__drawErr) { pl.__drawErr = 1; console.warn('[hz] plugin draw error', SHEET, e); } } finally { g.restore(); }   /* 封单深审 #5：插件 draw 抛错不再击穿 frame()，每图只 warn 一次 */ if (typeof pl.parts === 'function') PPC = { key: pkey(t), parts: PL.safeParts(pl, t, cx, pwarn) }; relOverlay2D(g, w, h, PPC.parts); }, no: 'plugin' }].map(s => Object.assign(s, { el: $(s.id), key: '', drawn: 0, n: 0, scale: '' }));
     let sheetsDirty = true;
     // set2a：S-301 图纸 ↔ 3D —— 平面缩放平移（1–8×，滚轮 / 双指 / 拖拽，双击复位）；悬停吊点只高亮，点击吊点 → 镜头 1 s 飞到该提升器近景
     const SV = S.sheetView = { k: 1, px: 0, py: 0, hover: -1, sel: -1, cut: 0, hoverK: null };
@@ -1038,7 +1041,7 @@
     function sheetCtx(s) { return { tb: (w, h, no, name, t) => ({ tb: h < 170 ? 17 : 20, no, name, scale: s.id === 'sh-jack' ? '示意' : (s.scale || '1:—'), rev: evAt(t), date: HZ.dayDate(Math.floor(Math.min(t, TL.OPEN))), chk: AU ? (AU.zero ? '自检 0 ✓' : '自检 ✕') : '自检中', chkOk: AU && AU.zero }), lastVe: s.ve || 1, view: SV, hover: SV.hover, sel: SV.sel, zone: S.selZone, cut: SV.cut, hoverK: SV.hoverK, stroke: strokeData(), anim: !!SVA, chartOpen: !!SV.chartOpen, noChartDraw: !!S.noChartDraw,
       setScale: px => { const mmPerPx = 25.4 / 96, k = 1000 / (px * mmPerPx); s.scale = '1:' + (Math.round(k / 100) * 100).toLocaleString('en-US'); } }; }
     function drawSheet(s, now) { const c = s.el, w = c.clientWidth, h = c.clientHeight, DPR = Math.min(2, devicePixelRatio || 1); if (w < 20 || h < 20) { s.drawn = now; return; } /* GPU 审计 #1：隐藏画布也记时，否则每帧排第一、占掉唯一名额，播放时看得见的图纸不重画 */ if (c.width !== Math.round(w * DPR) || c.height !== Math.round(h * DPR)) { c.width = Math.round(w * DPR); c.height = Math.round(h * DPR); }
-      const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.textAlign = 'left'; const t0 = performance.now(), cx = sheetCtx(s); s.fn(g, w, h, sheetT(), cx); s.hits = cx.hits || []; s.pa = cx.pa; s.cutHit = cx.cutHit; s.gapHit = cx.gapHit; s.gapVal = cx.gapVal; s.chartBox = cx.chartBox; s.pm = cx.pm; s.zbb = cx.zoneBB; if (cx.ve && cx.ve !== (s.ve || 1)) { s.ve = cx.ve; s.key = ''; sheetsDirty = true; }
+      const g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.textAlign = 'left'; const t0 = performance.now(), cx = sheetCtx(s); g.save(); try { s.fn(g, w, h, sheetT(), cx); } catch (e) { if (!s.__err) { s.__err = 1; console.warn('[hz] sheet draw error', s.id, e); } } finally { g.restore(); } s.hits = cx.hits || []; s.pa = cx.pa; s.cutHit = cx.cutHit; s.gapHit = cx.gapHit; s.gapVal = cx.gapVal; s.chartBox = cx.chartBox; s.pm = cx.pm; s.zbb = cx.zoneBB; if (cx.ve && cx.ve !== (s.ve || 1)) { s.ve = cx.ve; s.key = ''; sheetsDirty = true; }
       if (S.st.t >= TL.OPEN) { g.save(); g.translate(w - 70, 34); g.rotate(-0.18); g.strokeStyle = '#b3202a'; g.fillStyle = 'rgba(179,32,42,.9)'; g.lineWidth = 2; g.strokeRect(-46, -15, 92, 30); g.font = '700 15px "PingFang SC","Noto Sans CJK SC",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('竣工 · 开通', 0, 1); g.restore(); }
       if (s.scale !== s._sc0) { s._sc0 = s.scale; s.key = ''; sheetsDirty = true; } s.ms = performance.now() - t0; s.n++; S.sheetDraws++; s.drawn = now; }
 
