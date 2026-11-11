@@ -1,4 +1,6 @@
 # CHANGELOG
+
+2026-11-11 · [D-52] · hark-darrio · S-002 小画幅不画负半径平面，check_s002 加用例
 2026-11-10 · [D-47] · hark-darrio · 验收截图缩小存档（2.8→1.3 MB）
 2026-11-10 · [D-48] · hark-liuzhijie · S-101/S-501 收尾验收截图与记录
 
