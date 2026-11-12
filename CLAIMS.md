@@ -12,8 +12,8 @@
 |---|---|---|---|
 | 图纸 | CLAIMS.md | 分图认领（认领锁、board、scope 读） | 11 |
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
-| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 4 |
-| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 48 |
+| 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 3 |
+| 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 49 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 11 |
@@ -51,11 +51,11 @@
 | 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | pi-t2 | 认领 | 2026-11-08 | 小活 |
 | 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | pi-t3 | 认领 | 2026-11-08 | 小活 |
 | 难懂字幕改写 | 4 条字幕各给 2 个改写（docs/tasks/captions.md） | hark-darrio | 完成 | 2026-11-08 | 小活；改写见接口请求「字幕」行；11-08 hark-cr 已选定并改入 hzseq.js |
-| Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | marvis | 认领 | 2026-11-08 | 小活；适合 marvis |
+| Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | — | 空 |  | 小活；适合 marvis；11-12 hark-cs 认领板同步：实时锁里已无 marvis 的锁，改回空（要继续请在 /board 重新认领） |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | hark-cr | 完成 | 2026-11-08 | 需本地 GPU；执行：Traycer CLI on Mac（Mac mini M4 真 Chrome/Metal，playwright）；traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI；实时板因 Blender 自报规则拒认领，以本文件为准；11-08 第二轮：9 图 × 3 视口 0 页面错误、播放 60 fps，actors 注入 60 fps，问题单 #9–#13 见 docs/audit/2026-11-08-gpu.md；11-08 晚第三轮（hzview.js?v=21 上线后复测，见同文件） |
 | 插件镜头扫描 | 插件 cam 关键帧规则检查（docs/tasks/cam-sweep.md） | hark-liuzhijie | 完成 | 2026-11-08 | tools/hz/check_cams.js 已合入（D-15）；D-14 后 S-201 违反 0，11-08 已逐图接入 check_all（违反即失败） |
 | 地铁层镜头入口 | `#camcfg=` 可进地铁层参数，角落外拉偏弱需修 | hark-cr | 完成 | 2026-11-08 | 委托人 11-08 17:23 定默认关闭。`hzview.js` 里 `CC.ug` 只在 hash 显式 `#camcfg={"ug":1}` 时为 1，其它值一律 0（hzview.js?v=20）；check_linkage 断言；镜头扫描（默认参数，S-301 页 3 时刻）第一轮 300 次 + 第二轮偏低处 4 种子 ×300 次：硬规则 0、卡住 0、外拉/反平移被吃 0、关键视角全可达。ug 1 时地铁层角落外拉偏弱不修（默认不可达） |
-| 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | hark-fangyi | 认领 | 2026-11-08 | 小活；只用公开来源，写清许可 |
+| 实物层记录库 | `web/hzreal.js` 补照片/实测/文献记录（任务书 docs/tasks/real-records.md） | — | 空 |  | 小活；只用公开来源，写清许可；11-12 hark-cs 认领板同步：实时锁里已无 hark-fangyi 的锁，改回空（要继续请在 /board 重新认领） |
 | 3D 载荷标签 | 吊点标签显示载荷（HZ.jackLoad） | hark-cr | 完成 | 2026-11-08 | 11-08 新增 HZ.jackLoad(t)（分区钢重按吊点平均分摊，推算），S-301 提升器标签显示「载荷≈n t」；hzview.js?v=18 |
 | 手机竖屏布局 | GPU 审计 #2：390×844 下 3D 被挤、页签出界 | hark-cr | 完成 |  | 共用文件 |
 | 墨线光伏 | GPU 审计 #8：墨线模式 3D 屋面也画光伏条带 | hark-cr | 完成 |  | 共用文件 |
@@ -75,10 +75,9 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 
 | 单号 | 给谁 | 事项 | 内容 | 状态 | 下发 |
 |---|---|---|---|---|---|
-| D-13 | marvis | Windows 真机审查 | 只看新图 S-251（`#sheet=S-251`）起、中、末三个时刻，问题追加到 `docs/audit/2026-11-08-windows.md` 新一节，不改代码。验收：文件里有 S-251 一节，每条写时刻、视口、现象　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。收口必做，请优先。 | 待做 | 11-08 hark-cr |
 | D-29 | muse-tibo-cs | S-252 屋盖提升 | 按 `docs/tasks/S-252.md` 出 `web/sheets/s252.js` + `tools/hz/check_s252.js`（认领板已锁给你）。与 D-11（Blender 终版精修）先后或并行由你定　11-10 18:55：不在封单范围，封单后再做。 | 挂起（委托人 11-10 10:32）：S-252 暂缓，待 N-03 S-251 数据出代码试点之后再开 | 11-08 hark-cr |
 | D-40 | muse-tibo-cs | 9×4 形态覆盖矩阵（小活） | 委托人 11-10 10:32 批准（Fable 5.2 备忘录 docs/hz-fable52-review-2026-11-10.md）。出 docs/audit/form-matrix.md ：九图（S-000、S-001、S-002、S-101、S-201、S-251、S-301、S-401、S-501）× 四形态（图纸 / 生长 / 成品 / 实物），每格填 有 / 无 / 不适用 + 一句理由（指向文件、R-编号或页签）；另列 12 张 Blender 海报，各标图号与时刻 t（或日期）。只新增该文件，不改代码。验收：36 格齐全、每格有依据；12 张海报全部归号　11-10 18:55：不在封单范围，封单后再做。 | 待做 | 11-10 hark-cr（委托人 10:32 批准） |
-| D-49 | hark-cr | Mac 真机 GPU 终审：十张图起中末截图与帧率 | 用 Mac Chrome（Metal）打开线上页，十张图各取起、中、末三个时刻，1920×1080 与 800×1200 两视口截图；记录每张图 fps（目标 ≥55）与 >1 s 卡顿；列出肉眼可见问题（穿模、遮挡、错字、空白）。写 　docs/audit/2026-11-10-gpu-final.md　，截图 　docs/audit/img/2026-11-10-gpu-final/　（每张 ≤200 KB）。只验不改代码；问题按图号列，hark-cr 派回作者。验收：60 张截图 + 帧率表。　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。　11-10 19:15：traycer-cs 额度用尽，改由 hark-cr 用 Mac Chrome（~/Hark/castle-hz3/mac/sheets.js）执行。 | 待做 | 11-10 hark-cr（委托人 18:52 清理）；11-10 19:15 traycer-cs 额度用尽，hark-cr 用 Mac Chrome 自做 |
+| D-49 | hark-cs | Mac 真机 GPU 终审：十张图起中末截图与帧率 | 用 Mac Chrome（Metal）打开线上页，十张图各取起、中、末三个时刻，1920×1080 与 800×1200 两视口截图；记录每张图 fps（目标 ≥55）与 >1 s 卡顿；列出肉眼可见问题（穿模、遮挡、错字、空白）。写 　docs/audit/2026-11-10-gpu-final.md　，截图 　docs/audit/img/2026-11-10-gpu-final/　（每张 ≤200 KB）。只验不改代码；问题按图号列，hark-cr 派回作者。验收：60 张截图 + 帧率表。　封单目标 2026-11-12 18:00 CST（委托人 11-10 18:52：赶紧清理）。　11-10 19:15：traycer-cs 额度用尽，改由 hark-cr 用 Mac Chrome（~/Hark/castle-hz3/mac/sheets.js）执行。 | 待做 | 11-10 hark-cr（委托人 18:52 清理）；11-10 19:15 traycer-cs 额度用尽，hark-cr 用 Mac Chrome 自做；11-12 集成人移交，改由 hark-cs 接（Mac Chrome 执行） |
 
 ## 接口请求
 
