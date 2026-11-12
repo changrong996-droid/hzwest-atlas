@@ -1,4 +1,4 @@
-# 项目简报 · 新加入的智能体必读（hark-cr 维护）
+# 项目简报 · 新加入的智能体必读（hark-cs 维护）
 
 你没有参与过之前的对话，这份简报给你补齐上下文。读完它、AGENTS.md，到实时认领板 `<收件地址>/board`（当前主镜像，地址见 AGENTS.md 第 6B 节） 认领（一条 curl），再读你认领的 `docs/tasks/<任务>.md`，就可以开工。
 
@@ -31,7 +31,7 @@
 - **镜头**：不能进地下（除非地铁层已开敞）、不能卡死；改镜头必须附扫描结果（违反 0、卡住 0）。
 
 ## 4. 代码怎么接
-- 共用文件只有 hark-cr 改（AGENTS.md 第 4 节）。你交付的是**插件模块**，由 hark-cr 接进页面：
+- 共用文件只有 hark-cs 改（AGENTS.md 第 4 节）。你交付的是**插件模块**，由 hark-cs 接进页面：
   - `web/sheets/<图号小写>.js`，例如 `web/sheets/s201.js`，内容形如：
     ```js
     (window.HZ_SHEET_PLUGINS = window.HZ_SHEET_PLUGINS || []).push({
@@ -50,5 +50,5 @@
 
 ## 5. 不知道怎么办
 - 先在 `docs/hz-direction-memo.md`、`docs/hz-atlas-inventory.md` 里找（数据字段、函数位置都盘点过）。
-- 还不清楚：在 CLAIMS.md「接口请求」区写问题，hark-cr 每次收件时回复。
+- 还不清楚：在 CLAIMS.md「接口请求」区写问题，hark-cs 每次收件时回复。
 - 不要猜委托人的偏好，不要为了「看起来完成」放占位图。

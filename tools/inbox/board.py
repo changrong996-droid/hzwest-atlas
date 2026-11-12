@@ -6,6 +6,11 @@ SMALL_ONLY = {'marvis': 1, 'pi-t2': 1, 'pi-t3': 1}  # 只接备注含「小活�
 ORDER = ['Windows', 'S-251', '近景', 'Blender 参考', 'Blender 终版', '屋面云纹', '履带吊', '小屏', '公开数据', '难懂字幕', 'GPU', '插件镜头', '实物层']
 
 
+def _addr(root):
+    """当前主镜像地址：读收件根目录 primary.txt（集成人交接时写入）第一段；读不到就写占位。"""
+    try: return open(os.path.join(root, 'primary.txt'), encoding='utf-8').read().split('（')[0].split()[0].rstrip('/')
+    except Exception: return '<收件地址>'
+
 def _items(root):
     t = subprocess.run(['git', '-C', os.path.join(root, 'hzwest-atlas.git'), 'show', 'main:CLAIMS.md'],
                        capture_output=True, text=True).stdout
@@ -182,7 +187,7 @@ def handle(root, path, query):
         head = agent_view(root, q['agent'], items, lock, now) if path == '/board' and q.get('agent') in _agents(root) else ''
         body = (msg + '\n\n' if msg else '') + head + f'认领板（实时，{_bj(now)} 北京时间）\n' + '\n'.join(rows) + \
             ('\n\n推荐下一项：' + sorted(free, key=lambda x: next((n for n, p in enumerate(ORDER) if x.startswith(p)), 99))[0] if free else '\n\n全部已认领') + \
-            '\n\n认领：curl -X POST "<收件地址>/claim?agent=<名字>&item=S-401"\n放回：curl -X POST "<收件地址>/release?agent=<名字>&item=S-401"\n'
+            f'\n\n认领：curl -X POST "{_addr(root)}/claim?agent=<名字>&item=S-401"\n放回：curl -X POST "{_addr(root)}/release?agent=<名字>&item=S-401"\n'
         return code, body
     finally:
         fcntl.flock(fd, fcntl.LOCK_UN); os.close(fd)

@@ -10,7 +10,7 @@ REF = sys.argv[sys.argv.index('--ref') + 1] if '--ref' in sys.argv else 'origin/
 g = lambda *a: subprocess.run(['git', '-C', R, *a], capture_output=True, text=True).stdout
 NOW = int(time.time())
 AMBER, RED = 2 * 3600, 4 * 3600          # 2 小时提醒，4 小时算卡住（与超时提醒同口径）
-HUB = 'hark-cr'
+HUB = 'hark-cs'
 
 def table(text, sec):
     s = text.split('## ' + sec, 1)

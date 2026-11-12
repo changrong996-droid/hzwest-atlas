@@ -16,7 +16,7 @@
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 48 |
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
-| 决定记录 | docs/decisions.md | 委托人决定，按时间 | 10 |
+| 决定记录 | docs/decisions.md | 委托人决定，按时间 | 11 |
 | 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 4 |
 | 退回记录 | CLAIMS.md | 近 7 天退回（更早的移入 docs/claims-archive.md） | 8 |
 

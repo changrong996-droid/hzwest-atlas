@@ -50,9 +50,15 @@ def free_items():
     return out
 
 
+def _addr():
+    """当前主镜像地址：锁文件同目录的 primary.txt 第一段；读不到就写占位。"""
+    try: return open(os.path.join(os.path.dirname(os.path.abspath(lockf)), 'primary.txt'), encoding='utf-8').read().split('（')[0].split()[0].rstrip('/')
+    except Exception: return '<收件地址>'
+
+
 def die(msg):
     f = free_items() if 'live' in globals() else []
-    tip = ('\n  还空着的（推荐从第一项开始）：' + '、'.join(f) + '\n  任务书在 docs/tasks/，简报 docs/BRIEF.md；实时锁：<收件地址>/claims') if f else ''
+    tip = ('\n  还空着的（推荐从第一项开始）：' + '、'.join(f) + '\n  任务书在 docs/tasks/，简报 docs/BRIEF.md；实时锁：' + _addr() + '/claims') if f else ''
     print('拒绝（认领规则）：' + msg + tip, file=sys.stderr); sys.exit(1)
 
 
