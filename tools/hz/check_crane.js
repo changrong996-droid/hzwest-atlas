@@ -69,9 +69,15 @@ if (towersOn) {   // D-25：内侧 6 吊改塔吊（11-09 起塔吊已落 hzseq�
     for (const T of J.towers) { if (!(T.erect[1] <= p.st && T.remove[0] >= p.st + p.du)) continue; const d = Math.hypot(p.c[0] - T.x, p.c[2] - T.z); if (d <= M.jib && d > 4 && d < bd) { bd = d; best = T; } }
     if (!best) continue; p.towerD25 = best.id; const { w } = pick(p), need = w * HOOK, c = bd < M.minR ? 0 : cap(M.chart, bd);
     towerRows.push({ id: best.id, key: a.key, at: `(${p.c[0]},${p.c[2]})`, R: +bd.toFixed(1), W: +w.toFixed(1), need: +need.toFixed(1), cap: c, ok: need <= c }); }
+  // 11-09 起塔吊已落 hzseq（tcrane），上面的「改派」再找不到 crane=-1 的吊次 → 塔吊=0 等于没复核。改为也复核 HZ 实际派给 tcrane 的吊次（拆除与安装共用构件，按一次计）
+  const tseen = new Set();
+  for (const a of HZ.acts) for (const p of a.parts) { const C = HZ.cranes[p.crane]; if (!C || C.key !== 'tcrane' || tseen.has(p)) continue; tseen.add(p);
+    const bd = Math.hypot(p.c[0] - C.x, p.c[2] - C.z), { w } = pick(p), need = w * HOOK, c = bd < M.minR || bd > M.jib ? 0 : cap(M.chart, bd);
+    towerRows.push({ id: 'HZ#' + p.crane, key: a.key, at: `(${p.c[0]},${p.c[2]})`, R: +bd.toFixed(1), W: +w.toFixed(1), need: +need.toFixed(1), cap: c, ok: need <= c }); }
+  if (!towerRows.length) fail('--towers 没有复核到任何塔吊吊次（既无改派，HZ 也没派给 tcrane）');
   console.table(towerRows);
   const bad = towerRows.filter(r => !r.ok); if (bad.length) fail(`塔吊超载 ${bad.length} 吊（${bad.map(r => r.key + r.at).join(' ')}）`);
-  console.log(`改派塔吊 ${towerRows.length} 吊，均在额定内`);
+  console.log(`塔吊吊次 ${towerRows.length}（改派 + HZ 已派 tcrane），均在额定内`);
 }
 const seen = new Set(), skipT = p => towersOn && p.towerD25, rows = [];
 for (const a of HZ.acts) for (const p of a.parts) {
