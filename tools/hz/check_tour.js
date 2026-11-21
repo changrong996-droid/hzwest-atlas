@@ -115,7 +115,8 @@ const mockPv = {
 };
 G.__pv = mockPv;
 M.build(null, HZ, null);
-if (M.state.active) fail('pv.tourHook 未设 true 时不应自启');
+if (M.state.active || M.state.elBar) fail('pv.tourHook 未设 true 时不应自启或创建传送门栏');
+if (M.start(0) !== false || M.state.active) fail('pv.tourHook 未设 true 时手动 start 也应拒绝');
 
 // 模拟开闸后跑云谷穿行段（10 s → 22 s），断言相机真实移动
 mockPv.tourHook = true;

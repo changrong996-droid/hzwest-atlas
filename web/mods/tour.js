@@ -299,6 +299,7 @@
   }
 
   function start(nowMs) {
+    if (!state.pv || state.pv.tourHook !== true) return false;
     ensureDom();
     state.entryHash = (G.location && G.location.hash) || '';
     state.active = true;
@@ -350,10 +351,11 @@
       state.THREE = THREE;
       state.pv = G.__pv || null;
       state.built = true;
+      // 安全闸门：仅当宿主显式给出 pv.tourHook === true 时才创建传送门栏、挂载回调并自动启动
+      if (!state.pv || state.pv.tourHook !== true) return;
       ensureDom();
-      if (state.pv) state.pv.onTourAbort = onUserAbort;
-      // 安全闸门：仅当宿主显式给出 pv.tourHook === true 时自动启动（宿主未改前保持静默，绝不与旧 SEQ0 抢时间轴）
-      if (state.pv && state.pv.tourHook === true && shouldAutoStart()) {
+      state.pv.onTourAbort = onUserAbort;
+      if (shouldAutoStart()) {
         if (typeof setTimeout === 'function') {
           setTimeout(() => { if (!state.active && state.pv && state.pv.tourHook === true && shouldAutoStart()) start(); }, 0);
         }
