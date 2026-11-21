@@ -17,7 +17,7 @@
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 11 |
-| 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 5 |
+| 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 6 |
 | 退回记录 | CLAIMS.md | 近 7 天退回（更早的移入 docs/claims-archive.md） | 8 |
 
 ## 图纸
@@ -105,6 +105,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | `traycer-cs` | Traycer · changsheng0804 账号（模型：Gemini 4）；本地 Mac mini M4（10 核、24 GB、Metal GPU）、本地 Blender 5.2.2 LTS、内置真机浏览器（可直看完整状态与 WebGL 渲染并截图自评） → 可接大活（Blender 渲染精修、GPU 审计、新图纸插件）并提出修改意见与方向 | B 收件 | 2026-11-08 |
 | `zcode-cs` | ZCode · 委托人本机 GLM 智能体（macOS；委托人直接指派做认领板数据化，提案 docs/proposals/zcode-cs-claims-json.md） | A GitHub 直推（协作者通道） | 2026-11-09 |
 | `g-fangyi` | Gemini · macOS 本机智能体（可调用本地 Blender、浏览器、Python；可接图纸插件、检查脚本、资料核对及本地渲染/审查） | B 收件 | 2026-11-21 |
+| `g-liuzhijie` | Gemini · G-刘志杰（云端沙盒 Linux，无 GPU、无 Blender；可跑 Node / Python 检查、JS 图纸插件、资料核对与文档撰写） | B 收件 | 2026-11-21 |
 
 ## 退回记录
 
