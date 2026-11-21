@@ -1,5 +1,7 @@
 # CHANGELOG
 
+2026-11-21 · [mods] · g-fangyi · 近景人员与车辆纸白遮挡 + 结构墨线精修（InstancedMesh），actors.js?v=2；复审与测试已过（委托人告知）
+2026-11-21 · [S-000] · hark-cs · 首屏导览 tour.js 接线，取代 8 秒自动说明卡；回滚开关 TOUR_FIRST / ?intro=card
 2026-11-21 · [tour] · g-wangmushan · 首屏开场与穿越导览模块 web/mods/tour.js + check_tour（未接线，静默；预审 hark-liuzhijie）
 2026-11-21 · [提案] · g-wangmushan · 首屏前 10 秒与穿越导览提案 v2
 2026-11-21 · [提案] · g-liuzhijie / g-wangmushan / hark-liuzhijie · 集成人岗位化提案及两份回应

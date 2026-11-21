@@ -1,83 +1,730 @@
-// 近景人员与车辆（docs/tasks/mods-actors.md）· hark-darrio
-// 按 HZ.acts 当前在做的工序，在作业面生成墨线小人（站 / 推 / 焊 / 指挥 4 种姿态）与车辆（混凝土罐车、平板车、履带吊）。
-// 规则：只在镜头 < 120 m 时出现；数量随工序强度（在建构件数 × 工种班组系数）变；落在在场构件的顶面上（不穿模、不悬空），
-// 地面 = y 0（基础底板顶面同高）。位置每小时按工序重排，确定性（同一时刻任何机器结果相同）。
-// 接口：window.HZ_MODS.push({ id:'actors', build(scene, HZ, THREE, opts), update(t, cam) })；THREE 由宿主传第 3 个参数（hzview 里 THREE 是模块，不在 window 上）；
-// opts.clip（THREE.Plane[]，可选）：给线材质加 clippingPlanes，剖切时小人与车一起切（D-16）。
-// 不传 THREE（Node 检查）时只算布置与线段缓冲，不建 three.js 对象。
+// 近景人员与车辆（docs/tasks/mods-actors.md）· 纸白遮挡体量 + 结构墨线精修版（InstancedMesh + 双档 LOD）
+// 按 HZ.acts 当前在做的工序，在作业面生成墨线小人（站 / 推 / 焊 / 指挥 4 种姿态）与车辆设备（混凝土罐车、平板车、挖掘机、剪叉车、四弦格构臂履带吊）。
+// 规则：只在镜头 < 120 m 时出现（< 34 m 启用精细 LOD）；真机渲染时实体层只用纸白（COL.paper）作消隐遮挡体，轮廓全部由墨线绘制，
+// 与主站墨线语言一致并消除线框穿透；桩环境无 InstancedMesh 时自动降级为纯线段。
 (function () {
   'use strict';
   const ROOT = typeof window !== 'undefined' ? window : globalThis;
-  const R_SHOW = 120;            // 镜头距离阈值（米）
-  const MAXSEG = 60000;          // 线段缓冲上限
-  const CELL = 16;               // 空间网格（米）
-  const EPS = 0.03;              // 顶面贴合容差（米）
+  const R_SHOW = 120;
+  const R_HI = 34;
+  const MAXSEG = 90000;
+  const MAX_INST_FIG = 256;
+  const MAX_INST_VEH = 32;
+  const CELL = 16;
+  const EPS = 0.03;
 
-  // ---------- 形体（局部坐标：x 右、y 上、z 前；米；脚底 y = 0） ----------
-  const S = [];                  // 临时
+  // ---------- 纯纸白遮挡色（严格遵循主站墨线语言，零彩色实体） ----------
+  const PAPER = [0.94, 0.91, 0.85];
+  const COL = { paper: PAPER };
+
+  // 主站一致的日光方向（用于真实法线明暗分阶，让低模人物呈现真实 3D 体积感）
+  const SUN = [-0.45, 0.78, 0.43];
+  const SUN_L = Math.hypot(SUN[0], SUN[1], SUN[2]);
+  const SX = SUN[0] / SUN_L, SY = SUN[1] / SUN_L, SZ = SUN[2] / SUN_L;
+
+  // ---------- 基础图元（线 + 真实法线着色 3D 实体） ----------
   const seg = (out, a, b) => { out.push(a[0], a[1], a[2], b[0], b[1], b[2]); };
   const poly = (out, pts, close) => { for (let i = 0; i < pts.length - (close ? 0 : 1); i++) seg(out, pts[i], pts[(i + 1) % pts.length]); };
-  const ring = (out, c, r, axis, n) => { n = n || 8; const P = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, u = Math.cos(a) * r, v = Math.sin(a) * r;
-    P.push(axis === 'x' ? [c[0], c[1] + u, c[2] + v] : axis === 'z' ? [c[0] + u, c[1] + v, c[2]] : [c[0] + u, c[1], c[2] + v]); } poly(out, P, true); };
-  const boxL = (out, x0, y0, z0, x1, y1, z1) => { const v = [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]];
-    for (const [a, b] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) seg(out, v[a], v[b]); };
-  const head = (out, c) => { ring(out, c, 0.11, 'z', 8); ring(out, c, 0.11, 'x', 8); seg(out, [c[0] - 0.17, c[1] + 0.06, c[2]], [c[0] + 0.17, c[1] + 0.06, c[2]]); seg(out, [c[0], c[1] + 0.06, c[2] - 0.17], [c[0], c[1] + 0.06, c[2] + 0.17]); };  // 头 + 安全帽檐
-  const limb = (out, ...p) => poly(out, p, false);
+  const ring = (out, c, r, axis, n) => {
+    n = n || 8; const P = [];
+    for (let i = 0; i < n; i++) {
+      const a = i / n * Math.PI * 2, u = Math.cos(a) * r, v = Math.sin(a) * r;
+      P.push(axis === 'x' ? [c[0], c[1] + u, c[2] + v] : axis === 'z' ? [c[0] + u, c[1] + v, c[2]] : [c[0] + u, c[1], c[2] + v]);
+    }
+    poly(out, P, true);
+  };
+  const arc = (out, c, r, axis, a0, a1, n) => {
+    const P = [];
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + (a1 - a0) * (i / n), u = Math.cos(a) * r, v = Math.sin(a) * r;
+      P.push(axis === 'x' ? [c[0], c[1] + u, c[2] + v] : axis === 'z' ? [c[0] + u, c[1] + v, c[2]] : [c[0] + u, c[1], c[2] + v]);
+    }
+    poly(out, P, false);
+  };
+  const boxL = (out, x0, y0, z0, x1, y1, z1) => {
+    const v = [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]];
+    for (const [a, b] of [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]) seg(out, v[a], v[b]);
+  };
+  const prismL = (out, b, t) => {
+    for (let i = 0; i < 4; i++) { seg(out, b[i], b[(i + 1) % 4]); seg(out, t[i], t[(i + 1) % 4]); seg(out, b[i], t[i]); }
+  };
 
-  function figure(kind) { const o = [];
-    if (kind === 'stand') { const H = [0, 0.95, 0], N = [0, 1.45, 0];
-      seg(o, H, N); head(o, [0, 1.6, 0]); limb(o, H, [-0.1, 0.5, 0], [-0.12, 0, 0]); limb(o, H, [0.1, 0.5, 0], [0.12, 0, 0]);
-      seg(o, [-0.2, 1.42, 0], [0.2, 1.42, 0]); limb(o, [-0.2, 1.42, 0], [-0.25, 1.12, 0], [-0.24, 0.86, 0.04]); limb(o, [0.2, 1.42, 0], [0.25, 1.12, 0], [0.24, 0.86, 0.04]); }
-    else if (kind === 'push') { const H = [0, 0.9, -0.05], N = [0, 1.32, 0.3];   // 前倾推斗车（混凝土、铺轨）
-      seg(o, H, N); head(o, [0, 1.46, 0.4]); limb(o, H, [-0.1, 0.48, 0.2], [-0.12, 0, 0.3]); limb(o, H, [0.1, 0.5, -0.25], [0.12, 0, -0.45]);
-      seg(o, [-0.2, 1.3, 0.28], [0.2, 1.3, 0.28]); limb(o, [-0.2, 1.3, 0.28], [-0.22, 1.08, 0.5], [-0.22, 0.82, 0.68]); limb(o, [0.2, 1.3, 0.28], [0.22, 1.08, 0.5], [0.22, 0.82, 0.68]);
-      boxL(o, -0.3, 0.3, 0.75, 0.3, 0.65, 1.3); seg(o, [-0.22, 0.82, 0.68], [-0.22, 0.6, 0.8]); seg(o, [0.22, 0.82, 0.68], [0.22, 0.6, 0.8]); ring(o, [0, 0.18, 1.35], 0.18, 'x', 8); }
-    else if (kind === 'weld') { const H = [0, 0.52, -0.12], N = [0, 0.98, 0.12];   // 蹲焊
-      seg(o, H, N); head(o, [0, 1.12, 0.22]); limb(o, H, [-0.15, 0.48, 0.25], [-0.15, 0, 0.12]); limb(o, H, [0.15, 0.48, 0.25], [0.15, 0, 0.12]);
-      seg(o, [-0.2, 0.95, 0.1], [0.2, 0.95, 0.1]); limb(o, [-0.2, 0.95, 0.1], [-0.12, 0.7, 0.35], [0, 0.5, 0.48]); limb(o, [0.2, 0.95, 0.1], [0.12, 0.7, 0.35], [0, 0.5, 0.48]);
-      seg(o, [0, 0.5, 0.48], [0, 0.08, 0.62]); boxL(o, -0.14, 1.0, 0.33, 0.14, 1.24, 0.38); }   // 焊枪 + 面罩
-    else { const H = [0, 0.95, 0], N = [0, 1.45, 0];   // 指挥：一臂上举、一臂平指
-      seg(o, H, N); head(o, [0, 1.6, 0]); limb(o, H, [-0.12, 0.5, 0], [-0.16, 0, 0]); limb(o, H, [0.12, 0.5, 0], [0.16, 0, 0]);
-      seg(o, [-0.2, 1.42, 0], [0.2, 1.42, 0]); limb(o, [-0.2, 1.42, 0], [-0.3, 1.68, 0], [-0.32, 1.95, 0]); limb(o, [0.2, 1.42, 0], [0.45, 1.42, 0.05], [0.68, 1.43, 0.1]);
-      seg(o, [-0.32, 1.95, 0], [-0.32, 2.15, 0]); seg(o, [-0.32, 2.15, 0], [-0.5, 2.08, 0]); }   // 小旗
-    return new Float32Array(o); }
+  // 纸白遮挡三角形：统一使用 COL.paper，仅保留极轻的纸面法线明暗（0.90–1.02），只作消隐遮挡体
+  const triS = (P, C, a, b, c, _col, shade) => {
+    let s = shade;
+    if (s == null) {
+      const e1x = b[0] - a[0], e1y = b[1] - a[1], e1z = b[2] - a[2];
+      const e2x = c[0] - a[0], e2y = c[1] - a[1], e2z = c[2] - a[2];
+      let nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
+      const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+      const l = Math.max(0, nx * SX + ny * SY + nz * SZ);
+      const hemi = 0.5 + 0.5 * ny;
+      s = Math.min(1.02, 0.90 + 0.06 * hemi + 0.06 * l);
+    } else {
+      s = 0.92 + (s - 0.75) * 0.28;
+    }
+    P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+    for (let i = 0; i < 3; i++) C.push(Math.min(1, PAPER[0] * s), Math.min(1, PAPER[1] * s), Math.min(1, PAPER[2] * s));
+  };
+  const quadS = (P, C, a, b, c, d, col, shade) => { triS(P, C, a, b, c, col, shade); triS(P, C, a, c, d, col, shade); };
+  const prismS = (P, C, b, t, col) => {
+    quadS(P, C, b[0], b[3], b[2], b[1], col, 0.76);
+    quadS(P, C, t[0], t[1], t[2], t[3], col, 1.04);
+    for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; quadS(P, C, b[i], b[j], t[j], t[i], col); }
+  };
+  const boxS = (P, C, x0, y0, z0, x1, y1, z1, col) => {
+    prismS(P, C, [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], col);
+  };
+  const latheS = (P, C, slices, n, col) => {
+    for (let k = 0; k < slices.length - 1; k++) {
+      const [x0, y0, r0] = slices[k], [x1, y1, r1] = slices[k + 1];
+      for (let i = 0; i < n; i++) {
+        const a0 = i / n * Math.PI * 2, a1 = (i + 1) / n * Math.PI * 2;
+        const p00 = [x0, y0 + Math.cos(a0) * r0, Math.sin(a0) * r0];
+        const p01 = [x0, y0 + Math.cos(a1) * r0, Math.sin(a1) * r0];
+        const p11 = [x1, y1 + Math.cos(a1) * r1, Math.sin(a1) * r1];
+        const p10 = [x1, y1 + Math.cos(a0) * r1, Math.sin(a0) * r1];
+        quadS(P, C, p00, p10, p11, p01, col);
+      }
+    }
+  };
+  // 任意两点间的 3D 变径圆管（用于四肢、脖颈、关节、斗车扶手）
+  const tubeS = (P, C, a, b, r0, r1, n, col, cap) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz) || 1;
+    const ux = dx / L, uy = dy / L, uz = dz / L;
+    const hx = Math.abs(uy) < 0.9 ? 0 : 1, hy = Math.abs(uy) < 0.9 ? 1 : 0, hz = 0;
+    let e1x = uy * hz - uz * hy, e1y = uz * hx - ux * hz, e1z = ux * hy - uy * hx;
+    const l1 = Math.hypot(e1x, e1y, e1z) || 1; e1x /= l1; e1y /= l1; e1z /= l1;
+    const e2x = uy * e1z - uz * e1y, e2y = uz * e1x - ux * e1z, e2z = ux * e1y - uy * e1x;
+    const R0 = [], R1 = [];
+    for (let i = 0; i < n; i++) {
+      const ang = i / n * Math.PI * 2, cs = Math.cos(ang), sn = Math.sin(ang);
+      const ox = e1x * cs + e2x * sn, oy = e1y * cs + e2y * sn, oz = e1z * cs + e2z * sn;
+      R0.push([a[0] + ox * r0, a[1] + oy * r0, a[2] + oz * r0]);
+      R1.push([b[0] + ox * r1, b[1] + oy * r1, b[2] + oz * r1]);
+    }
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      quadS(P, C, R0[i], R0[j], R1[j], R1[i], col);
+      if (cap) { triS(P, C, a, R0[j], R0[i], col); triS(P, C, b, R1[i], R1[j], col); }
+    }
+  };
+  // 椭球 / 半球穹顶（用于头部、肩关节、安全帽圆顶）
+  const ellipS = (P, C, c, rx, ry, rz, rings, segs, col, phi0, phi1) => {
+    const p0 = phi0 == null ? -Math.PI / 2 : phi0, p1 = phi1 == null ? Math.PI / 2 : phi1;
+    const grid = [];
+    for (let r = 0; r <= rings; r++) {
+      const ph = p0 + (p1 - p0) * (r / rings), cp = Math.cos(ph), sp = Math.sin(ph), row = [];
+      for (let s = 0; s < segs; s++) {
+        const th = s / segs * Math.PI * 2;
+        row.push([c[0] + Math.cos(th) * cp * rx, c[1] + sp * ry, c[2] + Math.sin(th) * cp * rz]);
+      }
+      grid.push(row);
+    }
+    for (let r = 0; r < rings; r++) {
+      for (let s = 0; s < segs; s++) {
+        const sn = (s + 1) % segs;
+        quadS(P, C, grid[r][s], grid[r][sn], grid[r + 1][sn], grid[r + 1][s], col);
+      }
+    }
+  };
 
-  // 车辆：局部 x = 车头方向；脚印 hx × hz，高 h（穿模检查只看底盘箱体）
-  function vehicle(kind) { const o = [];
-    const wheels = (xs, hz, r) => { for (const x of xs) for (const s of [-1, 1]) { ring(o, [x, r, s * hz], r, 'z', 10); seg(o, [x, r, s * hz - 0.15], [x, r, s * hz + 0.15]); } };
-    if (kind === 'mixer') {   // 混凝土罐车 9.0 × 2.5 m
-      boxL(o, -4.5, 0.9, -1.2, 4.5, 1.3, 1.2); boxL(o, 2.3, 1.3, -1.2, 4.5, 3.4, 1.2); seg(o, [2.3, 2.4, -1.2], [4.5, 2.6, -1.2]); seg(o, [2.3, 2.4, 1.2], [4.5, 2.6, 1.2]);
-      const A = [-4.2, 2.1], B = [1.8, 3.1], n = 10, r0 = 1.15, r1 = 0.7, D = [];   // 倾斜搅拌筒
-      for (let k = 0; k <= 4; k++) { const f = k / 4, cx = A[0] + (B[0] - A[0]) * f, cy = A[1] + (B[1] - A[1]) * f, r = (f < 0.5 ? r1 + (r0 - r1) * f * 2 : r0 - (r0 - r1) * (f - 0.5) * 2) * (k === 0 || k === 4 ? 0.75 : 1); ring(o, [cx, cy, 0], r, 'x', n); D.push([cx, cy, r]); }
-      for (let i = 0; i < n; i += 2) { const a = i / n * Math.PI * 2, P = D.map(([cx, cy, r]) => [cx, cy + Math.cos(a) * r, Math.sin(a) * r]); poly(o, P, false); }
-      seg(o, [-4.5, 2.0, 0], [-5.2, 1.2, 0]); seg(o, [-5.2, 1.2, 0], [-5.4, 0.9, 0]);   // 溜槽
-      wheels([-3.4, -2.0, 3.4], 1.1, 0.5); return { L: new Float32Array(o), hx: 5.4, hz: 1.35, h: 4.4 }; }
-    if (kind === 'flatbed') {   // 平板车 12.0 × 2.5 m，载 2 根钢构件
-      boxL(o, -6, 1.1, -1.25, 4, 1.45, 1.25); boxL(o, 4, 1.1, -1.2, 6, 3.3, 1.2); seg(o, [4, 2.3, -1.2], [6, 2.5, -1.2]); seg(o, [4, 2.3, 1.2], [6, 2.5, 1.2]);
-      for (const z of [-0.6, 0.6]) { boxL(o, -5.6, 1.45, z - 0.3, 3.4, 2.05, z + 0.3); seg(o, [-5.6, 1.75, z], [3.4, 1.75, z]); }
-      for (const x of [-4, 0, 3]) seg(o, [x, 2.05, -1.0], [x, 1.1, -1.25]);   // 绑带
-      wheels([-4.6, -3.4, 2.2, 5.0], 1.1, 0.5); return { L: new Float32Array(o), hx: 6.1, hz: 1.35, h: 3.4 }; }
-    // 履带吊底盘（臂架按目标动态加）：两条履带 7.2 × 1.0、车身、配重
-    for (const s of [-1, 1]) { const z0 = s * 2.3; boxL(o, -3.6, 0, z0 - 0.5, 3.6, 1.2, z0 + 0.5); for (let x = -3; x <= 3; x += 1) seg(o, [x, 0, z0 - 0.5], [x, 1.2, z0 - 0.5]); ring(o, [-3.0, 0.6, z0 + s * 0.52], 0.55, 'z', 10); ring(o, [3.0, 0.6, z0 + s * 0.52], 0.55, 'z', 10); }
-    boxL(o, -2.4, 1.2, -1.8, 2.2, 3.4, 1.8); boxL(o, -3.4, 1.4, -1.6, -2.4, 3.0, 1.6); boxL(o, 1.2, 1.2, 1.0, 2.6, 3.2, 1.9);   // 车身 + 配重 + 驾驶室
-    return { L: new Float32Array(o), hx: 3.7, hz: 2.9, h: 3.4 }; }
+  // ---------- 建筑骨架逻辑 3D 施工人员模型（关节节点驱动，局部坐标系放样，零断颈/零剪切） ----------
+  const add3 = (a, b, s) => s == null ? [a[0] + b[0], a[1] + b[1], a[2] + b[2]] : [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s];
+  const frameRing = (m, u, f, rx, rz, n) => {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * Math.PI * 2;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      const x = Math.sign(ca) * Math.pow(Math.abs(ca), 0.78) * rx;
+      const z = Math.sign(sa) * Math.pow(Math.abs(sa), 0.78) * rz;
+      pts.push([m[0] + x, m[1] + f[1] * z, m[2] + f[2] * z]);
+    }
+    return pts;
+  };
+  const loftBand = (P, C, r0, r1, col, capBot, capTop) => {
+    const n = r0.length;
+    for (let i = 0; i < n; i++) { const j = (i + 1) % n; quadS(P, C, r0[i], r0[j], r1[j], r1[i], col); }
+    if (capBot) {
+      const c = [0, 0, 0]; for (const p of r0) { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }
+      c[0] /= n; c[1] /= n; c[2] /= n;
+      for (let i = 0; i < n; i++) triS(P, C, c, r0[(i + 1) % n], r0[i], col, 0.76);
+    }
+    if (capTop) {
+      const c = [0, 0, 0]; for (const p of r1) { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }
+      c[0] /= n; c[1] /= n; c[2] /= n;
+      for (let i = 0; i < n; i++) triS(P, C, c, r1[i], r1[(i + 1) % n], col, 1.04);
+    }
+  };
+  // 四肢/圆管墨线包络（画 4 条纵向轮廓线，配合纸白遮挡体自动消隐背面线）
+  const tubeL = (o, a, b, r0, r1) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.hypot(dx, dy, dz) || 1;
+    const ux = dx / L, uy = dy / L, uz = dz / L;
+    const hx = Math.abs(uy) < 0.9 ? 0 : 1, hy = Math.abs(uy) < 0.9 ? 1 : 0, hz = 0;
+    let e1x = uy * hz - uz * hy, e1y = uz * hx - ux * hz, e1z = ux * hy - uy * hx;
+    const l1 = Math.hypot(e1x, e1y, e1z) || 1; e1x /= l1; e1y /= l1; e1z /= l1;
+    const e2x = uy * e1z - uz * e1y, e2y = uz * e1x - ux * e1z, e2z = ux * e1y - uy * e1x;
+    for (const [cs, sn] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ox = e1x * cs + e2x * sn, oy = e1y * cs + e2y * sn, oz = e1z * cs + e2z * sn;
+      seg(o, [a[0] + ox * r0, a[1] + oy * r0, a[2] + oz * r0], [b[0] + ox * r1, b[1] + oy * r1, b[2] + oz * r1]);
+    }
+  };
+  const workerLeg = (o, P, C, hip, knee, ankle, hi) => {
+    const n = hi ? 8 : 6;
+    ellipS(P, C, hip, 0.082, 0.082, 0.082, 3, n, PAPER);
+    tubeS(P, C, hip, knee, 0.080, 0.064, n, PAPER, true);
+    ellipS(P, C, knee, 0.063, 0.063, 0.063, 3, n, PAPER);
+    tubeS(P, C, knee, ankle, 0.062, 0.048, n, PAPER, true);
+    if (hi) { tubeL(o, hip, knee, 0.082, 0.066); tubeL(o, knee, ankle, 0.064, 0.050); }
+    else { seg(o, hip, knee); seg(o, knee, ankle); }
+  };
+  const workerBoot = (o, P, C, foot, hi) => {
+    const [x, , z] = foot;
+    const b0 = [[x - 0.056, 0.0, z - 0.075], [x + 0.056, 0.0, z - 0.075], [x + 0.052, 0.0, z + 0.155], [x - 0.052, 0.0, z + 0.155]];
+    const t0 = [[x - 0.054, 0.095, z - 0.070], [x + 0.054, 0.095, z - 0.070], [x + 0.044, 0.062, z + 0.145], [x - 0.044, 0.062, z + 0.145]];
+    prismS(P, C, b0, t0, PAPER);
+    if (hi) prismL(o, b0, t0); else poly(o, b0, true);
+  };
+  const workerArm = (o, P, C, sh, elbow, hand, hi) => {
+    const n = hi ? 8 : 6;
+    ellipS(P, C, sh, 0.062, 0.060, 0.060, 4, n, PAPER);
+    tubeS(P, C, sh, elbow, 0.053, 0.044, n, PAPER, true);
+    ellipS(P, C, elbow, 0.044, 0.044, 0.044, 3, n, PAPER);
+    tubeS(P, C, elbow, hand, 0.042, 0.035, n, PAPER, true);
+    ellipS(P, C, hand, 0.041, 0.041, 0.041, 3, n, PAPER);
+    if (hi) { tubeL(o, sh, elbow, 0.055, 0.046); tubeL(o, elbow, hand, 0.044, 0.037); }
+    else { seg(o, sh, elbow); seg(o, elbow, hand); }
+  };
 
-  const FIG = { stand: figure('stand'), push: figure('push'), weld: figure('weld'), signal: figure('signal') };
-  const VEH = { mixer: vehicle('mixer'), flatbed: vehicle('flatbed'), crawler: vehicle('crawler') };
-  const FW = 0.3, FH = 1.85;   // 小人占位半宽、高（穿模检查）
+  function buildWorker(o, P, C, sk, hi) {
+    const nT = hi ? 8 : 6, nH = hi ? 10 : 6;
+    const lp = sk.lean || 0;
+    const u = [0, Math.cos(lp), Math.sin(lp)];
+    const f = [0, -Math.sin(lp), Math.cos(lp)];
+    const pelvis = sk.pelvis;
+    const spineAt = d => add3(pelvis, u, d);
+    const R = (d, rx, rz) => frameRing(spineAt(d), u, f, rx, rz, nT);
+
+    // 1. 躯干（全部断面严格垂直于脊柱轴 u，纸白实体消隐 + 墨线勾勒躯干/腰带/反光带轮廓）
+    const rHip = R(-0.07, 0.155, 0.096), rBelt0 = R(0.05, 0.166, 0.104), rBelt1 = R(0.11, 0.166, 0.104);
+    const v0 = R(0.11, 0.164, 0.102), v1 = R(0.32, 0.192, 0.116), v2 = R(0.51, 0.205, 0.106);
+    const rCol = R(0.57, 0.074, 0.068);
+    loftBand(P, C, rHip, R(0.05, 0.162, 0.100), PAPER, true, false);
+    loftBand(P, C, rBelt0, rBelt1, PAPER, false, false);
+    loftBand(P, C, v0, v1, PAPER, false, false);
+    loftBand(P, C, v1, v2, PAPER, false, true);
+    loftBand(P, C, R(0.50, 0.145, 0.088), rCol, PAPER, false, true);
+    poly(o, rBelt0, true); poly(o, v2, true);
+    for (let i = 0; i < nT; i += hi ? 2 : 3) { seg(o, rHip[i], v1[i]); seg(o, v1[i], v2[i]); }
+    if (hi) {
+      poly(o, rBelt1, true); poly(o, rCol, true);
+      for (const d of [0.19, 0.28]) {
+        const rx = 0.176 + (d - 0.11) * 0.11, rz = 0.111 + (d - 0.11) * 0.045;
+        poly(o, R(d, rx, rz), true);
+      }
+    }
+
+    // 2. 颈部与头部：从脊柱领口节点连续长出（颈底埋入领口内 4 cm，颈顶埋入头颅内，绝对不断裂）
+    const neckBase = spineAt(0.53);
+    const neckDir = [0, Math.cos(lp * 0.45), Math.sin(lp * 0.45)];
+    const headC = add3(neckBase, neckDir, 0.165);
+    tubeS(P, C, neckBase, headC, 0.054, 0.046, 8, PAPER, true);
+    ellipS(P, C, headC, 0.088, 0.104, 0.095, hi ? 4 : 3, nH, PAPER);
+    if (hi) {
+      ring(o, headC, 0.092, 'y', 8);
+      arc(o, headC, 0.096, 'x', -Math.PI * 0.45, Math.PI * 0.45, 6);
+    }
+
+    // 3. 安全帽（以 headC 为锚点，帽檐 + 帽顶加强筋全墨线勾勒）
+    const [hx, hy, hz] = headC;
+    ellipS(P, C, [hx, hy + 0.028, hz], 0.118, 0.105, 0.122, hi ? 4 : 2, nH, PAPER, 0, Math.PI / 2);
+    tubeS(P, C, [hx, hy + 0.020, hz], [hx, hy + 0.038, hz], 0.130, 0.120, nH, PAPER, true);
+    if (!sk.noVisor) {
+      const vb = [[hx - 0.088, hy + 0.022, hz + 0.085], [hx + 0.088, hy + 0.022, hz + 0.085], [hx + 0.062, hy + 0.010, hz + 0.178], [hx - 0.062, hy + 0.010, hz + 0.178]];
+      const vt = [[hx - 0.084, hy + 0.038, hz + 0.085], [hx + 0.084, hy + 0.038, hz + 0.085], [hx + 0.058, hy + 0.024, hz + 0.178], [hx - 0.058, hy + 0.024, hz + 0.178]];
+      prismS(P, C, vb, vt, PAPER);
+      if (hi) prismL(o, vb, vt); else poly(o, vt, true);
+    }
+    ring(o, [hx, hy + 0.030, hz], 0.132, 'y', nH);
+    if (hi) {
+      arc(o, [hx, hy + 0.028, hz], 0.120, 'x', 0, Math.PI, 8);
+      arc(o, [hx, hy + 0.028, hz], 0.118, 'z', 0, Math.PI, 8);
+      const rb = [[hx - 0.020, hy + 0.112, hz - 0.072], [hx + 0.020, hy + 0.112, hz - 0.072], [hx + 0.020, hy + 0.112, hz + 0.072], [hx - 0.020, hy + 0.112, hz + 0.072]];
+      const rt = [[hx - 0.014, hy + 0.136, hz - 0.055], [hx + 0.014, hy + 0.136, hz - 0.055], [hx + 0.014, hy + 0.136, hz + 0.055], [hx - 0.014, hy + 0.136, hz + 0.055]];
+      prismS(P, C, rb, rt, PAPER); prismL(o, rb, rt);
+    }
+
+    // 4. 胯窝与双腿 + 工装靴
+    const hipC = spineAt(-0.02);
+    workerLeg(o, P, C, [hipC[0] - 0.095, hipC[1], hipC[2]], sk.lKnee, [sk.lFoot[0], 0.06, sk.lFoot[2]], hi);
+    workerLeg(o, P, C, [hipC[0] + 0.095, hipC[1], hipC[2]], sk.rKnee, [sk.rFoot[0], 0.06, sk.rFoot[2]], hi);
+    workerBoot(o, P, C, sk.lFoot, hi);
+    workerBoot(o, P, C, sk.rFoot, hi);
+
+    // 5. 肩窝与双臂（由倾斜后的胸肩节点直接推出）
+    const shC = spineAt(0.455);
+    workerArm(o, P, C, [shC[0] - 0.195, shC[1], shC[2]], sk.lElbow, sk.lHand, hi);
+    workerArm(o, P, C, [shC[0] + 0.195, shC[1], shC[2]], sk.rElbow, sk.rHand, hi);
+
+    return { headC, lHand: sk.lHand, rHand: sk.rHand };
+  }
+
+  function figure(kind, hi) {
+    const o = [], P = [], C = [];
+    if (kind === 'stand') {
+      buildWorker(o, P, C, {
+        pelvis: [0, 0.90, 0], lean: 0.02, noVisor: false,
+        lKnee: [-0.105, 0.47, 0.02], lFoot: [-0.115, 0, 0.0],
+        rKnee: [0.105, 0.47, -0.02], rFoot: [0.115, 0, -0.02],
+        lElbow: [-0.23, 1.13, 0.09], lHand: [-0.12, 1.08, 0.26],
+        rElbow: [0.23, 1.13, 0.09], rHand: [0.12, 1.08, 0.26],
+      }, hi);
+      const cb = [[-0.15, 1.00, 0.25], [0.15, 1.00, 0.25], [0.15, 1.24, 0.36], [-0.15, 1.24, 0.36]];
+      const ct = [[-0.15, 1.018, 0.232], [0.15, 1.018, 0.232], [0.15, 1.258, 0.342], [-0.15, 1.258, 0.342]];
+      prismS(P, C, cb, ct, PAPER);
+      boxS(P, C, -0.045, 1.22, 0.33, 0.045, 1.26, 0.365, PAPER);
+      prismL(o, cb, ct);
+    } else if (kind === 'push') {
+      buildWorker(o, P, C, {
+        pelvis: [0, 0.86, -0.05], lean: 0.48, noVisor: false,
+        lKnee: [-0.105, 0.46, 0.14], lFoot: [-0.115, 0, 0.22],
+        rKnee: [0.105, 0.46, -0.22], rFoot: [0.115, 0, -0.38],
+        lElbow: [-0.21, 1.03, 0.40], lHand: [-0.22, 0.80, 0.64],
+        rElbow: [0.21, 1.03, 0.40], rHand: [0.22, 0.80, 0.64],
+      }, hi);
+      const b0 = [[-0.24, 0.34, 0.80], [0.24, 0.34, 0.80], [0.22, 0.34, 1.24], [-0.22, 0.34, 1.24]];
+      const t0 = [[-0.32, 0.68, 0.72], [0.32, 0.68, 0.72], [0.30, 0.72, 1.34], [-0.30, 0.72, 1.34]];
+      prismS(P, C, b0, t0, PAPER); prismL(o, b0, t0);
+      ellipS(P, C, [0, 0.68, 1.03], 0.25, 0.10, 0.24, 3, 8, PAPER, 0, Math.PI / 2);
+      for (const s of [-1, 1]) {
+        tubeS(P, C, [s * 0.22, 0.80, 0.63], [s * 0.22, 0.42, 0.84], 0.022, 0.022, 6, PAPER, true);
+        tubeS(P, C, [s * 0.22, 0.42, 0.84], [s * 0.16, 0.20, 1.38], 0.022, 0.022, 6, PAPER, true);
+        tubeS(P, C, [s * 0.22, 0.42, 0.84], [s * 0.22, 0.02, 0.88], 0.020, 0.020, 6, PAPER, true);
+        seg(o, [s * 0.22, 0.80, 0.63], [s * 0.22, 0.42, 0.84]);
+        seg(o, [s * 0.22, 0.42, 0.84], [s * 0.16, 0.20, 1.38]);
+        seg(o, [s * 0.22, 0.42, 0.84], [s * 0.22, 0.02, 0.88]);
+      }
+      tubeS(P, C, [-0.04, 0.20, 1.38], [0.04, 0.20, 1.38], 0.20, 0.20, hi ? 10 : 8, PAPER, true);
+      ring(o, [0, 0.20, 1.38], 0.20, 'x', hi ? 10 : 6);
+    } else if (kind === 'weld') {
+      const { headC } = buildWorker(o, P, C, {
+        pelvis: [0, 0.54, -0.14], lean: 0.46, noVisor: true,
+        lKnee: [-0.15, 0.48, 0.20], lFoot: [-0.14, 0, 0.08],
+        rKnee: [0.15, 0.48, 0.20], rFoot: [0.14, 0, 0.08],
+        lElbow: [-0.17, 0.70, 0.28], lHand: [-0.04, 0.48, 0.46],
+        rElbow: [0.17, 0.70, 0.28], rHand: [0.04, 0.48, 0.46],
+      }, hi);
+      const [hx, hy, hz] = headC;
+      boxS(P, C, hx - 0.115, hy - 0.13, hz + 0.11, hx + 0.115, hy + 0.09, hz + 0.155, PAPER);
+      boxL(o, hx - 0.115, hy - 0.13, hz + 0.11, hx + 0.115, hy + 0.09, hz + 0.155);
+      poly(o, [[hx - 0.068, hy - 0.02, hz + 0.158], [hx + 0.068, hy - 0.02, hz + 0.158], [hx + 0.068, hy + 0.035, hz + 0.158], [hx - 0.068, hy + 0.035, hz + 0.158]], true);
+      tubeS(P, C, [0, 0.48, 0.46], [0, 0.12, 0.64], 0.022, 0.014, 6, PAPER, true);
+      seg(o, [0, 0.48, 0.46], [0, 0.12, 0.64]);
+      if (hi) {
+        const fx = 0, fy = 0.10, fz = 0.65;
+        seg(o, [fx - 0.11, fy, fz], [fx + 0.11, fy, fz]);
+        seg(o, [fx, fy - 0.05, fz], [fx, fy + 0.13, fz]);
+        seg(o, [fx - 0.08, fy + 0.09, fz - 0.05], [fx + 0.08, fy + 0.02, fz + 0.05]);
+        boxS(P, C, 0.22, 0.0, -0.22, 0.44, 0.34, 0.08, PAPER);
+        boxL(o, 0.22, 0.0, -0.22, 0.44, 0.34, 0.08);
+        poly(o, [[0.33, 0.28, 0.08], [0.22, 0.14, 0.34], [0, 0.48, 0.46]], false);
+      }
+    } else {
+      buildWorker(o, P, C, {
+        pelvis: [0, 0.90, 0], lean: 0.0, noVisor: false,
+        lKnee: [-0.12, 0.47, 0], lFoot: [-0.14, 0, 0],
+        rKnee: [0.12, 0.47, 0], rFoot: [0.14, 0, 0],
+        lElbow: [-0.27, 1.63, 0], lHand: [-0.30, 1.90, 0],
+        rElbow: [0.43, 1.38, 0.04], rHand: [0.65, 1.40, 0.08],
+      }, hi);
+      tubeS(P, C, [-0.30, 1.88, 0], [-0.30, 2.34, 0], 0.014, 0.012, 6, PAPER, true);
+      seg(o, [-0.30, 1.88, 0], [-0.30, 2.34, 0]);
+      quadS(P, C, [-0.30, 2.34, 0], [-0.64, 2.30, 0], [-0.62, 2.02, 0], [-0.30, 2.04, 0], PAPER, 1.0);
+      poly(o, [[-0.30, 2.34, 0], [-0.64, 2.30, 0], [-0.62, 2.02, 0], [-0.30, 2.04, 0]], true);
+    }
+    return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C) };
+  }
+
+  // ---------- 车辆与工程机械（线 + 纸色实体） ----------
+  function vehicle(kind, hi) {
+    const o = [], P = [], C = [];
+    // 真实结构轮组：实心橡胶胎 + 凹陷轮毂盘 + 轮芯 + 双胎并装 + 横向车桥
+    const wheel = (x, z, r, dual) => {
+      const cn = hi ? 12 : 8;
+      const sgn = z > 0 ? 1 : -1;
+      const wT = dual ? 0.44 : 0.25;
+      const zOut = z, zIn = z - sgn * wT;
+      for (let i = 0; i < cn; i++) {
+        const a0 = i / cn * Math.PI * 2, a1 = (i + 1) / cn * Math.PI * 2;
+        const c0 = Math.cos(a0) * r, s0 = Math.sin(a0) * r, c1 = Math.cos(a1) * r, s1 = Math.sin(a1) * r;
+        quadS(P, C, [x + c0, r + s0, zOut], [x + c1, r + s1, zOut], [x + c1, r + s1, zIn], [x + c0, r + s0, zIn], PAPER);
+        triS(P, C, [x, r, zOut], [x + c0, r + s0, zOut], [x + c1, r + s1, zOut], PAPER, 0.85);
+        triS(P, C, [x, r, zIn], [x + c1, r + s1, zIn], [x + c0, r + s0, zIn], PAPER, 0.72);
+      }
+      tubeS(P, C, [x, r, zOut], [x, r, zOut + sgn * 0.06], r * 0.22, r * 0.18, 6, PAPER, true);
+      ring(o, [x, r, zOut + sgn * 0.01], r, 'z', cn);
+      ring(o, [x, r, zIn - sgn * 0.01], r, 'z', cn);
+      if (hi) { ring(o, [x, r, zOut + sgn * 0.02], r * 0.54, 'z', 8); ring(o, [x, r, zOut + sgn * 0.065], r * 0.18, 'z', 6); }
+    };
+    const axle = (x, hz, r, dual) => {
+      tubeS(P, C, [x, r, -hz + 0.15], [x, r, hz - 0.15], 0.11, 0.11, 6, PAPER, false);
+      seg(o, [x, r, -hz + 0.15], [x, r, hz - 0.15]);
+      wheel(x, -hz, r, dual); wheel(x, hz, r, dual);
+    };
+    // 精修重卡驾驶室：阶梯车头、倾斜风挡、门窗立柱、保险杠+大灯、登车踏步、实心后视镜、顶置警示灯
+    const cab = (x0, x1, y0, y1, hw, col) => {
+      const wb = x1 - 0.26, ym = y0 + 1.02;
+      const bot = [[x0, y0, -hw], [x1, y0, -hw], [x1, y0, hw], [x0, y0, hw]];
+      const mid = [[x0, ym, -hw], [x1, ym, -hw], [x1, ym, hw], [x0, ym, hw]];
+      const top = [[x0, y1, -hw], [wb, y1, -hw], [wb, y1, hw], [x0, y1, hw]];
+      prismS(P, C, bot, mid, col); prismS(P, C, mid, top, col);
+      prismL(o, bot, mid); prismL(o, mid, top);
+      // 车顶导流遮阳檐 + 警示灯
+      boxS(P, C, wb - 0.10, y1 - 0.06, -hw + 0.04, x1 - 0.06, y1 + 0.03, hw - 0.04, PAPER);
+      boxL(o, wb - 0.10, y1 - 0.06, -hw + 0.04, x1 - 0.06, y1 + 0.03, hw - 0.04);
+      tubeS(P, C, [x0 + 0.85, y1, 0], [x0 + 0.85, y1 + 0.18, 0], 0.09, 0.075, 8, PAPER, true);
+      if (hi) { ring(o, [x0 + 0.85, y1 + 0.18, 0], 0.075, 'y', 8); ring(o, [x0 + 0.85, y1 + 0.02, 0], 0.09, 'y', 8); }
+      // 重型前保险杠 + 左右大灯 + 进气格栅
+      boxS(P, C, x1 - 0.06, y0 - 0.30, -hw - 0.03, x1 + 0.18, y0 + 0.08, hw + 0.03, PAPER);
+      boxL(o, x1 - 0.06, y0 - 0.30, -hw - 0.03, x1 + 0.18, y0 + 0.08, hw + 0.03);
+      for (const s of [-1, 1]) {
+        boxS(P, C, x1 + 0.15, y0 - 0.22, s * (hw - 0.38) - 0.16, x1 + 0.20, y0 - 0.02, s * (hw - 0.38) + 0.16, PAPER);
+        if (hi) boxL(o, x1 + 0.15, y0 - 0.22, s * (hw - 0.38) - 0.16, x1 + 0.20, y0 - 0.02, s * (hw - 0.38) + 0.16);
+        // 登车踏步（带竖向吊架连入驾驶室底板，零悬空）
+        const zIn = s * (hw - 0.16), zOut = s * (hw + 0.02);
+        const z0 = Math.min(zIn, zOut), z1 = Math.max(zIn, zOut);
+        boxS(P, C, x0 + 0.46, y0 - 0.40, z0, x0 + 1.12, y0 - 0.34, z1, PAPER);
+        boxS(P, C, x0 + 0.46, y0 - 0.18, z0, x0 + 1.12, y0 - 0.12, z1, PAPER);
+        for (const sx of [x0 + 0.48, x0 + 1.06]) {
+          boxS(P, C, sx, y0 - 0.40, z0, sx + 0.05, y0, z1, PAPER);
+          if (hi) seg(o, [sx + 0.025, y0 - 0.40, zOut], [sx + 0.025, y0, zOut]);
+        }
+        if (hi) { seg(o, [x0 + 0.46, y0 - 0.37, zOut], [x0 + 1.12, y0 - 0.37, zOut]); seg(o, [x0 + 0.46, y0 - 0.15, zOut], [x0 + 1.12, y0 - 0.15, zOut]); }
+      }
+      // 进气格栅条
+      boxS(P, C, x1 - 0.01, y0 + 0.18, -hw + 0.24, x1 + 0.04, ym - 0.12, hw - 0.24, PAPER);
+      boxL(o, x1 - 0.01, y0 + 0.18, -hw + 0.24, x1 + 0.04, ym - 0.12, hw - 0.24);
+      for (let k = 0; k < 3; k++) { const gy = y0 + 0.28 + k * 0.22; seg(o, [x1 + 0.05, gy, -hw + 0.28], [x1 + 0.05, gy, hw - 0.28]); }
+      // 前挡风玻璃 + 侧门玻璃 + 实心后视镜
+      const wf = [[x1 - 0.01, ym + 0.10, -hw + 0.14], [x1 - 0.01, ym + 0.10, hw - 0.14], [wb + 0.03, y1 - 0.14, hw - 0.14], [wb + 0.03, y1 - 0.14, -hw + 0.14]];
+      quadS(P, C, wf[0], wf[1], wf[2], wf[3], PAPER, 1.02); poly(o, wf, true);
+      for (const s of [-1, 1]) {
+        const zS = s * (hw + 0.012);
+        const sw = [[x0 + 0.36, ym + 0.08, zS], [x1 - 0.18, ym + 0.08, zS], [wb - 0.06, y1 - 0.15, zS], [x0 + 0.36, y1 - 0.15, zS]];
+        quadS(P, C, sw[0], sw[1], sw[2], sw[3], PAPER, 0.96); poly(o, sw, true);
+        // 后视镜支架 + 镜壳
+        tubeS(P, C, [x1 - 0.18, ym + 0.62, s * hw], [x1 - 0.12, ym + 0.62, s * (hw + 0.26)], 0.02, 0.02, 5, PAPER, true);
+        tubeS(P, C, [x1 - 0.18, ym + 0.18, s * hw], [x1 - 0.12, ym + 0.18, s * (hw + 0.26)], 0.02, 0.02, 5, PAPER, true);
+        const m0 = Math.min(s * (hw + 0.22), s * (hw + 0.30)), m1 = Math.max(s * (hw + 0.22), s * (hw + 0.30));
+        boxS(P, C, x1 - 0.18, ym + 0.18, m0, x1 - 0.06, ym + 0.62, m1, PAPER);
+        if (hi) {
+          seg(o, [x1 - 0.18, ym + 0.62, s * hw], [x1 - 0.12, ym + 0.62, s * (hw + 0.26)]);
+          seg(o, [x1 - 0.18, ym + 0.18, s * hw], [x1 - 0.12, ym + 0.18, s * (hw + 0.26)]);
+          boxL(o, x1 - 0.18, ym + 0.18, m0, x1 - 0.06, ym + 0.62, m1);
+        }
+      }
+    };
+
+    if (kind === 'mixer') {
+      // 重型双纵梁车架 + 后双桥挡泥板 + 侧面油箱 + 驾驶室
+      for (const s of [-1, 1]) boxS(P, C, -4.55, 0.86, s * 0.52 - 0.12, 4.45, 1.18, s * 0.52 + 0.12, PAPER);
+      boxS(P, C, -4.55, 1.16, -1.16, 4.45, 1.28, 1.16, PAPER);
+      boxL(o, -4.55, 1.16, -1.16, 4.45, 1.28, 1.16);
+      // 车架下油箱与储气筒
+      boxS(P, C, 0.25, 0.55, 0.68, 1.65, 1.08, 1.16, PAPER);
+      boxS(P, C, 0.45, 0.60, -1.14, 1.45, 1.05, -0.68, PAPER);
+      if (hi) { boxL(o, 0.25, 0.55, 0.68, 1.65, 1.08, 1.16); boxL(o, 0.45, 0.60, -1.14, 1.45, 1.05, -0.68); }
+      // 后双桥挡泥板罩
+      for (const s of [-1, 1]) {
+        const z0 = Math.min(s * 0.85, s * 1.24), z1 = Math.max(s * 0.85, s * 1.24);
+        boxS(P, C, -4.15, 1.08, z0, -1.30, 1.18, z1, PAPER);
+        if (hi) boxL(o, -4.15, 1.08, z0, -1.30, 1.18, z1);
+      }
+      cab(2.35, 4.5, 1.28, 3.38, 1.18, PAPER);
+
+      // 14 边倾斜搅拌筒（纯纸白遮挡 + 4 圈圆环 + 4 条母线墨线轮廓）
+      const A = [-4.15, 2.08], B = [1.85, 3.16], n = hi ? 14 : 8, D = [];
+      const rads = [0.56, 0.88, 1.16, 1.18, 1.02, 0.72];
+      for (let k = 0; k < rads.length; k++) {
+        const f = k / (rads.length - 1);
+        const cx = A[0] + (B[0] - A[0]) * f, cy = A[1] + (B[1] - A[1]) * f, r = rads[k];
+        D.push([cx, cy, r]);
+        if (k === 0 || k === 2 || k === 3 || k === 5) ring(o, [cx, cy, 0], r + 0.008, 'x', n);
+      }
+      for (let k = 0; k < D.length - 1; k++) {
+        latheS(P, C, [D[k], D[k + 1]], n, PAPER);
+        const [x0, y0, r0] = D[k], [x1, y1, r1] = D[k + 1];
+        for (const [sy, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          seg(o, [x0, y0 + sy * r0, sz * r0], [x1, y1 + sy * r1, sz * r1]);
+        }
+      }
+      // 滚筒前后实心支架 + 卧式水箱 + 尾端进料斗/出料溜槽/检修梯
+      for (const s of [-1, 1]) {
+        tubeS(P, C, [-4.32, 1.26, s * 0.96], [-3.82, 2.52, s * 0.62], 0.065, 0.055, 6, PAPER, true);
+        tubeS(P, C, [-3.30, 1.26, s * 0.96], [-3.82, 2.52, s * 0.62], 0.065, 0.055, 6, PAPER, true);
+        tubeS(P, C, [1.65, 1.26, s * 0.84], [1.65, 2.50, s * 0.56], 0.075, 0.065, 6, PAPER, true);
+        tubeL(o, [-4.32, 1.26, s * 0.96], [-3.82, 2.52, s * 0.62], 0.068, 0.058);
+        tubeL(o, [-3.30, 1.26, s * 0.96], [-3.82, 2.52, s * 0.62], 0.068, 0.058);
+        tubeL(o, [1.65, 1.26, s * 0.84], [1.65, 2.50, s * 0.56], 0.078, 0.068);
+      }
+      tubeS(P, C, [1.98, 2.25, -0.78], [1.98, 2.25, 0.78], 0.34, 0.34, 10, PAPER, true);
+      if (hi) {
+        ring(o, [1.98, 2.25, -0.78], 0.34, 'z', 8); ring(o, [1.98, 2.25, 0.78], 0.34, 'z', 8);
+        seg(o, [1.98, 2.59, -0.78], [1.98, 2.59, 0.78]); seg(o, [1.98, 1.91, -0.78], [1.98, 1.91, 0.78]);
+      }
+      const hb = [[-4.55, 2.52, -0.28], [-4.05, 2.52, -0.28], [-4.05, 2.52, 0.28], [-4.55, 2.52, 0.28]];
+      const ht = [[-4.75, 3.20, -0.44], [-3.98, 3.20, -0.44], [-3.98, 3.20, 0.44], [-4.75, 3.20, 0.44]];
+      prismS(P, C, hb, ht, PAPER); prismL(o, hb, ht);
+      const cb0 = [[-4.40, 2.02, -0.20], [-4.40, 2.02, 0.20], [-5.32, 1.05, 0.16], [-5.32, 1.05, -0.16]];
+      const cb1 = [[-4.40, 2.18, -0.22], [-4.40, 2.18, 0.22], [-5.32, 1.18, 0.18], [-5.32, 1.18, -0.18]];
+      prismS(P, C, cb0, cb1, PAPER); prismL(o, cb0, cb1);
+      for (const z of [0.42, 0.78]) {
+        tubeS(P, C, [-4.56, 0.92, z], [-4.56, 3.28, z], 0.025, 0.025, 5, PAPER, true);
+        tubeL(o, [-4.56, 0.92, z], [-4.56, 3.28, z], 0.028, 0.028);
+      }
+      for (let y = 1.25; y <= 3.1; y += 0.42) {
+        tubeS(P, C, [-4.56, y, 0.42], [-4.56, y, 0.78], 0.018, 0.018, 5, PAPER, false);
+        seg(o, [-4.585, y, 0.42], [-4.585, y, 0.78]);
+      }
+
+      axle(-3.45, 1.12, 0.52, true); axle(-2.05, 1.12, 0.52, true); axle(3.40, 1.12, 0.52, false);
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), hx: 5.4, hz: 1.35, h: 4.4 };
+    }
+
+    if (kind === 'flatbed') {
+      // 重型钢构平板运输车：双纵梁 + 货箱边梁 + 工具箱 + 龙门防撞架 + 工字钢货载 + 垫木 + 紧固带
+      for (const s of [-1, 1]) boxS(P, C, -6.0, 0.84, s * 0.52 - 0.12, 5.8, 1.12, s * 0.52 + 0.12, PAPER);
+      boxS(P, C, -6.0, 1.12, -1.25, 4.0, 1.40, 1.25, PAPER);
+      boxL(o, -6.0, 1.12, -1.25, 4.0, 1.40, 1.25);
+      boxS(P, C, -1.8, 0.58, 0.72, 0.6, 1.08, 1.20, PAPER);
+      boxS(P, C, -1.8, 0.58, -1.20, 0.6, 1.08, -0.72, PAPER);
+      if (hi) { boxL(o, -1.8, 0.58, 0.72, 0.6, 1.08, 1.20); boxL(o, -1.8, 0.58, -1.20, 0.6, 1.08, -0.72); }
+      for (const s of [-1, 1]) boxS(P, C, -5.3, 1.05, Math.min(s * 0.85, s * 1.26), -2.6, 1.14, Math.max(s * 0.85, s * 1.26), PAPER);
+      cab(4.0, 6.0, 1.12, 3.28, 1.20, PAPER);
+
+      // 实心钢构龙门防撞架（立柱 + 横梁 + 斜撑全墨线）
+      for (const s of [-1, 1]) {
+        boxS(P, C, 3.74, 1.40, s * 1.18 - 0.06, 3.90, 3.18, s * 1.18 + 0.06, PAPER);
+        boxL(o, 3.74, 1.40, s * 1.18 - 0.06, 3.90, 3.18, s * 1.18 + 0.06);
+        tubeS(P, C, [3.82, 2.85, s * 1.14], [3.15, 1.40, s * 1.14], 0.045, 0.045, 6, PAPER, true);
+        tubeL(o, [3.82, 2.85, s * 1.14], [3.15, 1.40, s * 1.14], 0.048, 0.048);
+      }
+      boxS(P, C, 3.74, 3.06, -1.24, 3.90, 3.20, 1.24, PAPER);
+      boxL(o, 3.74, 3.06, -1.24, 3.90, 3.20, 1.24);
+      for (const y of [1.95, 2.50]) {
+        boxS(P, C, 3.78, y, -1.14, 3.86, y + 0.07, 1.14, PAPER);
+        boxL(o, 3.78, y, -1.14, 3.86, y + 0.07, 1.14);
+      }
+
+      // 货载：垫木 + 2 根真实工字钢大梁（上/下翼缘 + 凹陷腹板 + 竖向加劲肋）+ 紧固绑带与棘轮扣具
+      for (const x of [-4.4, -1.2, 2.0]) {
+        boxS(P, C, x - 0.12, 1.40, -1.12, x + 0.12, 1.54, 1.12, PAPER);
+        if (hi) boxL(o, x - 0.12, 1.40, -1.12, x + 0.12, 1.54, 1.12);
+      }
+      for (const z of [-0.62, 0.62]) {
+        boxS(P, C, -5.6, 1.54, z - 0.34, 3.3, 1.66, z + 0.34, PAPER);
+        boxS(P, C, -5.6, 2.12, z - 0.34, 3.3, 2.24, z + 0.34, PAPER);
+        boxS(P, C, -5.6, 1.66, z - 0.08, 3.3, 2.12, z + 0.08, PAPER);
+        boxL(o, -5.6, 1.54, z - 0.34, 3.3, 1.66, z + 0.34);
+        boxL(o, -5.6, 2.12, z - 0.34, 3.3, 2.24, z + 0.34);
+        for (let x = -5.0; x <= 2.8; x += 1.56) {
+          boxS(P, C, x - 0.04, 1.66, z - 0.30, x + 0.04, 2.12, z + 0.30, PAPER);
+          if (hi) { seg(o, [x, 1.66, z - 0.305], [x, 2.12, z - 0.305]); seg(o, [x, 1.66, z + 0.305], [x, 2.12, z + 0.305]); }
+        }
+      }
+      for (const x of [-4.4, -1.2, 2.0]) {
+        tubeS(P, C, [x, 1.40, -1.22], [x, 2.26, -0.96], 0.022, 0.022, 5, PAPER, true);
+        tubeS(P, C, [x, 2.26, -0.96], [x, 2.26, 0.96], 0.022, 0.022, 5, PAPER, true);
+        tubeS(P, C, [x, 2.26, 0.96], [x, 1.40, 1.22], 0.022, 0.022, 5, PAPER, true);
+        tubeL(o, [x, 1.40, -1.22], [x, 2.26, -0.96], 0.025, 0.025);
+        tubeL(o, [x, 2.26, -0.96], [x, 2.26, 0.96], 0.025, 0.025);
+        tubeL(o, [x, 2.26, 0.96], [x, 1.40, 1.22], 0.025, 0.025);
+        for (const s of [-1, 1]) {
+          const z0 = s > 0 ? 1.24 : -1.29, z1 = s > 0 ? 1.29 : -1.24;
+          boxS(P, C, x - 0.05, 1.20, z0, x + 0.05, 1.38, z1, PAPER);
+          if (hi) boxL(o, x - 0.05, 1.20, z0, x + 0.05, 1.38, z1);
+        }
+      }
+      axle(-4.65, 1.12, 0.50, true); axle(-3.35, 1.12, 0.50, true); axle(2.20, 1.12, 0.50, false); axle(5.00, 1.12, 0.50, false);
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), hx: 6.1, hz: 1.35, h: 3.4 };
+    }
+
+    if (kind === 'excavator') {
+      // 精修履带式挖掘机（地下基坑 civil 阶段）：圆角履带架 + 回转支承 + 斜坡配重 + 全景玻璃驾驶室 + 鹅颈动臂/油缸/带齿铲斗
+      for (const s of [-1, 1]) {
+        const z0 = s * 1.12;
+        boxS(P, C, -1.72, 0.02, z0 - 0.32, 1.72, 0.80, z0 + 0.32, PAPER);
+        boxL(o, -1.72, 0.02, z0 - 0.32, 1.72, 0.80, z0 + 0.32);
+        for (const tx of [-1.72, 1.72]) {
+          tubeS(P, C, [tx, 0.41, z0 - 0.33], [tx, 0.41, z0 + 0.33], 0.39, 0.39, hi ? 10 : 8, PAPER, true);
+          ring(o, [tx, 0.41, z0 + s * 0.34], 0.38, 'z', hi ? 10 : 6);
+        }
+        if (hi) for (let x = -1.5; x <= 1.5; x += 0.5) seg(o, [x, 0.04, z0 + s * 0.33], [x, 0.78, z0 + s * 0.33]);
+      }
+      boxS(P, C, -1.05, 0.32, -0.82, 1.05, 0.82, 0.82, PAPER);
+      boxL(o, -1.05, 0.32, -0.82, 1.05, 0.82, 0.82);
+      tubeS(P, C, [0, 0.82, 0], [0, 1.05, 0], 0.86, 0.86, 12, PAPER, true);
+      ring(o, [0, 0.94, 0], 0.86, 'y', 10);
+
+      // 上车机棚 + 尾部配重 + 引擎盖 + 排气管
+      boxS(P, C, -1.65, 1.05, -1.16, 0.95, 2.08, 1.16, PAPER);
+      boxL(o, -1.65, 1.05, -1.16, 0.95, 2.08, 1.16);
+      const cwB = [[-2.25, 1.05, -1.08], [-1.65, 1.05, -1.16], [-1.65, 1.05, 1.16], [-2.25, 1.05, 1.08]];
+      const cwT = [[-2.18, 2.05, -1.02], [-1.65, 2.08, -1.14], [-1.65, 2.08, 1.14], [-2.18, 2.05, 1.02]];
+      prismS(P, C, cwB, cwT, PAPER); prismL(o, cwB, cwT);
+      boxS(P, C, -2.26, 1.18, -0.96, -2.14, 1.56, 0.96, PAPER);
+      boxS(P, C, -1.45, 2.08, -0.78, 0.35, 2.28, 0.10, PAPER);
+      boxL(o, -1.45, 2.08, -0.78, 0.35, 2.28, 0.10);
+      tubeS(P, C, [-1.30, 2.25, -0.58], [-1.30, 2.98, -0.58], 0.065, 0.055, 8, PAPER, true);
+      seg(o, [-1.30, 2.25, -0.58], [-1.30, 2.98, -0.58]);
+      if (hi) { boxL(o, -2.26, 1.18, -0.96, -2.14, 1.56, 0.96); ring(o, [-1.30, 2.98, -0.58], 0.055, 'y', 6); }
+
+      // 左侧全景玻璃驾驶室（窗框全墨线勾勒）
+      const cb = [[-0.45, 1.05, 0.18], [1.28, 1.05, 0.18], [1.28, 1.05, 1.16], [-0.45, 1.05, 1.16]];
+      const cm = [[-0.45, 1.65, 0.18], [1.28, 1.65, 0.18], [1.28, 1.65, 1.16], [-0.45, 1.65, 1.16]];
+      const ct = [[-0.45, 2.86, 0.18], [1.08, 2.86, 0.18], [1.08, 2.86, 1.16], [-0.45, 2.86, 1.16]];
+      prismS(P, C, cb, cm, PAPER); prismS(P, C, cm, ct, PAPER);
+      prismL(o, cb, cm); prismL(o, cm, ct);
+      const ef = [[1.29, 1.70, 0.26], [1.29, 1.70, 1.08], [1.11, 2.78, 1.08], [1.11, 2.78, 0.26]];
+      const es = [[-0.36, 1.70, 1.175], [1.18, 1.70, 1.175], [1.02, 2.78, 1.175], [-0.36, 2.78, 1.175]];
+      const eb = [[-0.465, 1.72, 1.06], [-0.465, 1.72, 0.28], [-0.465, 2.74, 0.28], [-0.465, 2.74, 1.06]];
+      poly(o, ef, true); poly(o, es, true); if (hi) poly(o, eb, true);
+      boxS(P, C, -0.48, 2.86, 0.16, 1.12, 2.94, 1.18, PAPER);
+      boxL(o, -0.48, 2.86, 0.16, 1.12, 2.94, 1.18);
+
+      // 动臂根部双耳铰支座 + 鹅颈两段式实心大臂 + 斗杆 + 双液压油缸 + 带齿铲斗
+      boxS(P, C, 0.25, 1.05, -0.52, 0.94, 1.78, 0.04, PAPER);
+      boxL(o, 0.25, 1.05, -0.52, 0.94, 1.78, 0.04);
+      const b0 = [[0.42, 1.48, -0.42], [0.42, 1.48, -0.06], [0.64, 1.88, -0.06], [0.64, 1.88, -0.42]];
+      const bm = [[1.28, 2.82, -0.42], [1.28, 2.82, -0.06], [1.56, 3.14, -0.06], [1.56, 3.14, -0.42]];
+      const b1 = [[2.18, 3.12, -0.38], [2.18, 3.12, -0.10], [2.36, 3.40, -0.10], [2.36, 3.40, -0.38]];
+      prismS(P, C, b0, bm, PAPER); prismS(P, C, bm, b1, PAPER);
+      prismL(o, b0, bm); prismL(o, bm, b1);
+      const s0 = [[2.12, 3.22, -0.36], [2.12, 3.22, -0.12], [2.42, 3.36, -0.12], [2.42, 3.36, -0.36]];
+      const s1 = [[2.96, 1.45, -0.34], [2.96, 1.45, -0.14], [3.18, 1.56, -0.14], [3.18, 1.56, -0.34]];
+      prismS(P, C, s0, s1, PAPER); prismL(o, s0, s1);
+      for (const dz of [-0.44, -0.04]) {
+        tubeS(P, C, [0.80, 1.24, dz], [1.10, 2.02, dz], 0.065, 0.065, 6, PAPER, true);
+        tubeS(P, C, [1.10, 2.02, dz], [1.38, 2.80, dz], 0.040, 0.040, 6, PAPER, true);
+        tubeL(o, [0.80, 1.24, dz], [1.10, 2.02, dz], 0.068, 0.068);
+        tubeL(o, [1.10, 2.02, dz], [1.38, 2.80, dz], 0.043, 0.043);
+      }
+      tubeS(P, C, [1.38, 3.12, -0.24], [1.85, 3.36, -0.24], 0.075, 0.075, 6, PAPER, true);
+      tubeS(P, C, [1.85, 3.36, -0.24], [2.30, 3.48, -0.24], 0.045, 0.045, 6, PAPER, true);
+      tubeL(o, [1.38, 3.12, -0.24], [1.85, 3.36, -0.24], 0.078, 0.078);
+      tubeL(o, [1.85, 3.36, -0.24], [2.30, 3.48, -0.24], 0.048, 0.048);
+      const bw = 0.46;
+      const kb = [[2.42, 0.56, -0.24 - bw], [3.22, 0.72, -0.24 - bw], [3.22, 0.72, -0.24 + bw], [2.42, 0.56, -0.24 + bw]];
+      const kt = [[2.88, 1.48, -0.24 - bw], [3.35, 1.38, -0.24 - bw], [3.35, 1.38, -0.24 + bw], [2.88, 1.48, -0.24 + bw]];
+      prismS(P, C, kb, kt, PAPER); prismL(o, kb, kt);
+      for (let k = -1.5; k <= 1.5; k += 1) {
+        const tz = -0.24 + k * 0.24;
+        tubeS(P, C, [2.44, 0.58, tz], [2.18, 0.46, tz], 0.045, 0.015, 4, PAPER, true);
+        seg(o, [2.44, 0.58, tz], [2.18, 0.46, tz]);
+      }
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), hx: 3.6, hz: 1.5, h: 3.6 };
+    }
+
+    if (kind === 'scissor') {
+      // 剪叉式高空作业平台：实心底盘 + 3 层管状 X 剪叉臂 + 中央顶升油缸 + 护栏平台（全墨线）
+      boxS(P, C, -1.25, 0.22, -0.68, 1.25, 0.72, 0.68, PAPER);
+      boxL(o, -1.25, 0.22, -0.68, 1.25, 0.72, 0.68);
+      boxS(P, C, -0.65, 0.26, -0.71, 0.65, 0.66, 0.71, PAPER);
+      if (hi) boxL(o, -0.65, 0.26, -0.71, 0.65, 0.66, 0.71);
+      axle(-0.90, 0.68, 0.22, false); axle(0.90, 0.68, 0.22, false);
+      const tiers = 3, y0 = 0.72, y1 = 3.10, dy = (y1 - y0) / tiers;
+      for (const s of [-0.52, 0.52]) {
+        for (let i = 0; i < tiers; i++) {
+          const ya = y0 + i * dy, yb = ya + dy;
+          tubeS(P, C, [-1.05, ya, s], [1.05, yb, s], 0.042, 0.042, 6, PAPER, true);
+          tubeS(P, C, [1.05, ya, s], [-1.05, yb, s], 0.042, 0.042, 6, PAPER, true);
+          tubeL(o, [-1.05, ya, s], [1.05, yb, s], 0.045, 0.045);
+          tubeL(o, [1.05, ya, s], [-1.05, yb, s], 0.045, 0.045);
+        }
+      }
+      for (let i = 0; i < tiers; i++) {
+        tubeS(P, C, [0, y0 + (i + 0.5) * dy, -0.54], [0, y0 + (i + 0.5) * dy, 0.54], 0.035, 0.035, 6, PAPER, true);
+        tubeL(o, [0, y0 + (i + 0.5) * dy, -0.54], [0, y0 + (i + 0.5) * dy, 0.54], 0.038, 0.038);
+      }
+      tubeS(P, C, [-0.35, y0 + 0.1, 0], [0.25, y0 + dy * 1.4, 0], 0.065, 0.065, 6, PAPER, true);
+      tubeS(P, C, [0.25, y0 + dy * 1.4, 0], [0.65, y1 - 0.1, 0], 0.040, 0.040, 6, PAPER, true);
+      tubeL(o, [-0.35, y0 + 0.1, 0], [0.25, y0 + dy * 1.4, 0], 0.068, 0.068);
+      tubeL(o, [0.25, y0 + dy * 1.4, 0], [0.65, y1 - 0.1, 0], 0.043, 0.043);
+      boxS(P, C, -1.32, y1, -0.74, 1.32, y1 + 0.18, 0.74, PAPER);
+      boxL(o, -1.32, y1, -0.74, 1.32, y1 + 0.18, 0.74);
+      const hy1 = y1 + 0.60, hy2 = y1 + 1.06;
+      for (const y of [hy1, hy2]) {
+        tubeS(P, C, [-1.30, y, -0.72], [1.30, y, -0.72], 0.022, 0.022, 5, PAPER, true);
+        tubeS(P, C, [1.30, y, -0.72], [1.30, y, 0.72], 0.022, 0.022, 5, PAPER, true);
+        tubeS(P, C, [1.30, y, 0.72], [-1.30, y, 0.72], 0.022, 0.022, 5, PAPER, true);
+        tubeS(P, C, [-1.30, y, 0.72], [-1.30, y, -0.72], 0.022, 0.022, 5, PAPER, true);
+        tubeL(o, [-1.30, y, -0.72], [1.30, y, -0.72], 0.025, 0.025);
+        tubeL(o, [1.30, y, -0.72], [1.30, y, 0.72], 0.025, 0.025);
+        tubeL(o, [1.30, y, 0.72], [-1.30, y, 0.72], 0.025, 0.025);
+        tubeL(o, [-1.30, y, 0.72], [-1.30, y, -0.72], 0.025, 0.025);
+      }
+      for (const x of [-1.30, 0, 1.30]) for (const z of [-0.72, 0.72]) {
+        tubeS(P, C, [x, y1 + 0.16, z], [x, hy2, z], 0.024, 0.024, 5, PAPER, true);
+        tubeL(o, [x, y1 + 0.16, z], [x, hy2, z], 0.027, 0.027);
+      }
+      boxS(P, C, 1.08, hy1 + 0.12, 0.25, 1.34, hy2 + 0.08, 0.65, PAPER);
+      boxL(o, 1.08, hy1 + 0.12, 0.25, 1.34, hy2 + 0.08, 0.65);
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), hx: 1.4, hz: 0.85, h: 4.2 };
+    }
+
+    // 履带吊底盘
+    for (const s of [-1, 1]) {
+      const z0 = s * 2.3;
+      boxL(o, -3.6, 0, z0 - 0.52, 3.6, 1.22, z0 + 0.52);
+      boxS(P, C, -3.6, 0, z0 - 0.52, 3.6, 1.22, z0 + 0.52, PAPER);
+      ring(o, [-3.05, 0.61, z0 + s * 0.54], 0.56, 'z', hi ? 12 : 8);
+      ring(o, [3.05, 0.61, z0 + s * 0.54], 0.56, 'z', hi ? 12 : 8);
+      const step = hi ? 0.6 : 1.2;
+      for (let x = -3.0; x <= 3.01; x += step) { seg(o, [x, 0, z0 - 0.52], [x, 1.22, z0 - 0.52]); if (hi) seg(o, [x, 0, z0 + 0.52], [x, 1.22, z0 + 0.52]); }
+    }
+    boxL(o, -1.6, 0.45, -1.78, 1.6, 1.15, 1.78);
+    boxS(P, C, -1.6, 0.45, -1.78, 1.6, 1.15, 1.78, PAPER);
+    ring(o, [0, 1.24, 0], 1.35, 'y', hi ? 12 : 8);
+    boxL(o, -2.5, 1.25, -1.75, 2.2, 3.35, 1.75);
+    boxS(P, C, -2.5, 1.25, -1.75, 2.2, 3.35, 1.75, PAPER);
+    boxL(o, -3.55, 1.35, -1.65, -2.5, 3.15, 1.65);
+    boxS(P, C, -3.55, 1.35, -1.65, -2.5, 3.15, 1.65, PAPER);
+    if (hi) {
+      for (const y of [1.80, 2.25, 2.70]) poly(o, [[-3.55, y, -1.65], [-2.5, y, -1.65], [-2.5, y, 1.65], [-3.55, y, 1.65]], true);
+      for (let x = -2.0; x <= 1.2; x += 0.8) seg(o, [x, 1.65, -1.76], [x, 2.95, -1.76]);
+    }
+    boxL(o, 1.05, 1.25, 1.05, 2.65, 3.25, 2.05);
+    boxS(P, C, 1.05, 1.25, 1.05, 2.65, 3.25, 2.05, PAPER);
+    if (hi) {
+      const fw = [[2.66, 1.55, 1.18], [2.66, 1.55, 1.92], [2.66, 3.05, 1.92], [2.66, 3.05, 1.18]];
+      poly(o, fw, true); quadS(P, C, fw[0], fw[1], fw[2], fw[3], PAPER, 1.02);
+      const sw = [[1.25, 1.65, 2.06], [2.45, 1.65, 2.06], [2.45, 3.05, 2.06], [1.25, 3.05, 2.06]];
+      poly(o, sw, true); quadS(P, C, sw[0], sw[1], sw[2], sw[3], PAPER, 0.96);
+    }
+    const gTop = [-2.55, 5.45];
+    for (const s of [-1.15, 1.15]) { seg(o, [-2.45, 3.35, s], [gTop[0], gTop[1], s * 0.72]); seg(o, [-0.65, 3.35, s], [gTop[0], gTop[1], s * 0.72]); }
+    seg(o, [gTop[0], gTop[1], -0.83], [gTop[0], gTop[1], 0.83]);
+    return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), hx: 3.7, hz: 2.9, h: 3.4 };
+  }
+
+  const mkFig = k => { const lo = figure(k, false), hi = figure(k, true); return { L: lo.L, P: lo.P, C: lo.C, Lhi: hi.L, Phi: hi.P, Chi: hi.C }; };
+  const FIG_OBJ = { stand: mkFig('stand'), push: mkFig('push'), weld: mkFig('weld'), signal: mkFig('signal') };
+  const FIG = { stand: FIG_OBJ.stand.L, push: FIG_OBJ.push.L, weld: FIG_OBJ.weld.L, signal: FIG_OBJ.signal.L };
+  const mkVeh = k => { const lo = vehicle(k, false), hi = vehicle(k, true); return { L: lo.L, P: lo.P, C: lo.C, Lhi: hi.L, Phi: hi.P, Chi: hi.C, hx: lo.hx, hz: lo.hz, h: lo.h }; };
+  const VEH = { mixer: mkVeh('mixer'), flatbed: mkVeh('flatbed'), excavator: mkVeh('excavator'), scissor: mkVeh('scissor'), crawler: mkVeh('crawler') };
+  const FW = 0.3, FH = 1.85;
 
   // ---------- 工种规则 ----------
-  // 每个在建构件的班组人数（白天），姿态配比；夜间 30%
   const TRADE = {
-    civil: { n: 6, mix: ['push', 'push', 'stand', 'stand', 'signal'], veh: 'mixer' },
+    civil: { n: 6, mix: ['push', 'push', 'stand', 'stand', 'signal'], veh: 'excavator' },
     frame: { n: 5, mix: ['push', 'push', 'stand', 'weld', 'signal'], veh: 'mixer' },
     mezz: { n: 4, mix: ['push', 'stand', 'stand', 'signal'], veh: 'mixer' },
     bridge: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
     track: { n: 4, mix: ['push', 'push', 'stand', 'signal'], veh: 'flatbed' },
     steel: { n: 4, mix: ['weld', 'weld', 'stand', 'signal'], veh: 'flatbed' },
-    asm: { n: 5, mix: ['weld', 'weld', 'weld', 'stand', 'signal'], veh: 'flatbed' },
+    asm: { n: 5, mix: ['weld', 'weld', 'weld', 'stand', 'signal'], veh: 'scissor' },
     jig: { n: 3, mix: ['weld', 'stand', 'signal'], veh: 'flatbed' },
-    skin: { n: 4, mix: ['weld', 'stand', 'stand', 'signal'], veh: 'flatbed' },
+    skin: { n: 4, mix: ['weld', 'stand', 'stand', 'signal'], veh: 'scissor' },
     tod: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
     ym: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
   };
@@ -86,106 +733,257 @@
   const present = (p, t) => { const s = stOf(p, t); return s >= 0 && s !== 3; };
   const rng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) | 0; let q = Math.imul(s ^ s >>> 15, 1 | s); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; }; };
 
-  // ---------- 场地索引：所有固定构件的盒子（不含移动分区 grp 与网架格） ----------
-  function index(HZ) { const B = [], G = new Map();
+  // ---------- 场地索引 ----------
+  function index(HZ) {
+    const B = [], G = new Map();
     for (const a of HZ.acts) for (const p of a.parts) { if (p.grp || p.cells || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) B.push({ p, a, b }); }
     const seen = new Set();
-    for (let i = 0; i < B.length; i++) { const { b } = B[i]; const k = b.min.join() + '|' + b.max.join() + '|' + B[i].p.st; if (seen.has(k)) continue; seen.add(k);   // 拆除活动共享 parts，去重
+    for (let i = 0; i < B.length; i++) {
+      const { b } = B[i]; const k = b.min.join() + '|' + b.max.join() + '|' + B[i].p.st; if (seen.has(k)) continue; seen.add(k);
       const x0 = Math.floor(b.min[0] / CELL), x1 = Math.floor(b.max[0] / CELL), z0 = Math.floor(b.min[2] / CELL), z1 = Math.floor(b.max[2] / CELL);
-      for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const key = x * 4096 + z; let l = G.get(key); if (!l) G.set(key, l = []); l.push(i); } }
+      for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) { const key = x * 4096 + z; let l = G.get(key); if (!l) G.set(key, l = []); l.push(i); }
+    }
     const crawl = []; for (const a of HZ.acts) for (const p of a.parts) if (p.crane === -1 && p.crawl) crawl.push({ a, p });
-    return { B, G, crawl, stamp: new Uint32Array(B.length), gen: 0 }; }
-  function near(I, x0, z0, x1, z1, fn) { const cx0 = Math.floor(x0 / CELL), cx1 = Math.floor(x1 / CELL), cz0 = Math.floor(z0 / CELL), cz1 = Math.floor(z1 / CELL);
+    return { B, G, crawl, stamp: new Uint32Array(B.length), gen: 0 };
+  }
+  function near(I, x0, z0, x1, z1, fn) {
+    const cx0 = Math.floor(x0 / CELL), cx1 = Math.floor(x1 / CELL), cz0 = Math.floor(z0 / CELL), cz1 = Math.floor(z1 / CELL);
     const multi = cx1 > cx0 || cz1 > cz0, g = multi ? ++I.gen : 0, st = I.stamp;
-    for (let x = cx0; x <= cx1; x++) for (let z = cz0; z <= cz1; z++) { const l = I.G.get(x * 4096 + z); if (!l) continue; for (let j = 0; j < l.length; j++) { const i = l[j]; if (multi) { if (st[i] === g) continue; st[i] = g; } if (fn(I.B[i]) === false) return false; } } return true; }
-  // 体积 [x0,x1]×[y0,y1]×[z0,z1] 与在场构件不相交
+    for (let x = cx0; x <= cx1; x++) for (let z = cz0; z <= cz1; z++) {
+      const l = I.G.get(x * 4096 + z); if (!l) continue;
+      for (let j = 0; j < l.length; j++) { const i = l[j]; if (multi) { if (st[i] === g) continue; st[i] = g; } if (fn(I.B[i]) === false) return false; }
+    }
+    return true;
+  }
   function clear(I, t, x0, y0, z0, x1, y1, z1) { return near(I, x0, z0, x1, z1, e => { const b = e.b; if (b.max[0] <= x0 || b.min[0] >= x1 || b.max[2] <= z0 || b.min[2] >= z1 || b.max[1] <= y0 || b.min[1] >= y1) return; if (present(e.p, t)) return false; }); }
-  // 点 (x,z) 在高度 y 有支承：在场构件顶面（±EPS），或 y≈0 的地面且正下方无在场构件伸出地面以上
-  function supportAt(I, t, x, y, z) { let ok = false;
+  function supportAt(I, t, x, y, z) {
+    let ok = false;
     near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2]) return; if (Math.abs(b.max[1] - y) <= EPS && present(e.p, t)) { ok = true; return false; } });
     if (ok) return true; if (Math.abs(y) > EPS) return false;
     let pit = false; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2]) return; if (b.max[1] < -EPS && b.min[1] < -1 && e.a.stage === 'found' && !present(e.p, t)) { pit = true; return false; } });
-    return !pit; }
-  // (x,z) 处、高度 ≤ ymax 的最高支承面：在场构件顶面，否则地面 0（基坑未回填处为 null）
-  function surfaceAt(I, t, x, z, ymax) { let y = null; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || b.max[1] > ymax + EPS || !present(e.p, t)) return; if (y == null || b.max[1] > y) y = b.max[1]; });
-    if (y == null && ymax >= 0 && supportAt(I, t, x, 0, z)) y = 0; return y; }
+    return !pit;
+  }
+  function surfaceAt(I, t, x, z, ymax) {
+    let y = null; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || b.max[1] > ymax + EPS || !present(e.p, t)) return; if (y == null || b.max[1] > y) y = b.max[1]; });
+    if (y == null && ymax >= 0 && supportAt(I, t, x, 0, z)) y = 0; return y;
+  }
   function supported(I, t, x, y, z, hx, hz, ca, sa) { for (const [u, v] of [[0, 0], [-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]]) if (!supportAt(I, t, x + u * ca - v * sa, y, z + u * sa + v * ca)) return false; return true; }
-  // 旋转后的占位按轴对齐外包盒检查（保守）
   function clearRot(I, t, x, y, z, hx, hz, h, ca, sa) { const ex = Math.abs(hx * ca) + Math.abs(hz * sa), ez = Math.abs(hx * sa) + Math.abs(hz * ca); return clear(I, t, x - ex, y + 0.02, z - ez, x + ex, y + h, z + ez); }
 
   // ---------- 布置 ----------
   function plan(HZ, I, t) {
     const hr = Math.floor(t * 24), hd = (t - Math.floor(t)) * 24, day = hd >= 7 && hd < 19, out = { t, figs: [], vehs: [], cranes: [], acts: [] };
-    const placed = [];   // 已放的占位（互不重叠）
+    const placed = [];
     const freeOf = (x0, z0, x1, z1, y0, y1) => { for (const q of placed) if (!(q[3] <= x0 || q[0] >= x1 || q[5] <= z0 || q[2] >= z1 || q[4] <= y0 || q[1] >= y1)) return false; return true; };
-    for (const a of HZ.acts) { if (a.kind === 'milestone' || a.kind === 'untemp' || !(t >= a.start && t < a.end) || !a.parts.length) continue; const tr = tradeOf(a); if (!tr) continue;
+    for (const a of HZ.acts) {
+      if (a.kind === 'milestone' || a.kind === 'untemp' || !(t >= a.start && t < a.end) || !a.parts.length) continue;
+      const tr = tradeOf(a); if (!tr) continue;
       const live = a.parts.filter(p => !p.grp && !p.cells && p.geo && p.geo.boxes && (() => { const s = stOf(p, t); return s >= 0 && s < 1; })()); if (!live.length) continue;
       const T = TRADE[tr], R = rng(hr * 7919 + a.ix * 104729 + 17); let nA = 0;
       const pick = live.length > 24 ? live.filter((_, i) => i % Math.ceil(live.length / 24) === 0) : live;
-      for (const p of pick) { const nP = Math.max(1, Math.round(T.n * (day ? 1 : 0.3)));
+      for (const p of pick) {
+        const nP = Math.max(1, Math.round(T.n * (day ? 1 : 0.3)));
         const tops = p.geo.boxes.filter(b => b.max[0] - b.min[0] >= 1.4 && b.max[2] - b.min[2] >= 1.4 && b.max[1] >= p.top - 0.05 && (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) >= 6), mn = p.geo.min, mx = p.geo.max;
-        for (let k = 0; k < nP; k++) { for (let tryN = 0; tryN < 6; tryN++) { let x, y, z; const yaw = R() * Math.PI * 2;
+        for (let k = 0; k < nP; k++) {
+          for (let tryN = 0; tryN < 6; tryN++) {
+            let x, y, z; const yaw = R() * Math.PI * 2;
             if (tops.length && tryN < 4) { const b = tops[Math.floor(R() * tops.length)]; x = b.min[0] + 0.5 + R() * (b.max[0] - b.min[0] - 1); z = b.min[2] + 0.5 + R() * (b.max[2] - b.min[2] - 1); y = b.max[1]; }
-            else {   // 窄构件（钢轨、杆件、幕墙条）与柱（顶面 < 6 m²）：人站在旁边的作业面上——外包盒外扩 2 m 内，构件顶以下 3 m 内或构件根部所在的在场顶面
-              x = mn[0] - 2 + R() * (mx[0] - mn[0] + 4); z = mn[2] - 2 + R() * (mx[2] - mn[2] + 4); y = surfaceAt(I, t, x, z, p.top + 0.05); if (y == null || (p.top - y > 3 && Math.abs(y - mn[1]) > 0.05)) continue; }
-          const box = [x - FW, y + 0.02, z - FW, x + FW, y + FH, z + FW]; if (!freeOf(box[0], box[2], box[3], box[5], box[1], box[4])) continue;
-          if (!clear(I, t, box[0], box[1], box[2], box[3], box[4], box[5])) continue;   // 站在本构件（在建 = 在场）顶面盒内 ≥ 0.5 m，支承天然成立；check_actors 另行暴力核对
-          if (!(tops.length && tryN < 4) && !supportAt(I, t, x, y, z)) continue;
-          placed.push(box); out.figs.push({ x, y, z, yaw, pose: k === 0 && nP > 2 ? 'signal' : T.mix[Math.floor(R() * T.mix.length)], act: a.key }); nA++; break; } } }
-      // 车辆：每 3 个在建构件 1 台，最多 4 台；停在构件外沿 4–14 m、同一支承面上，车头朝构件
-      if (day && (a.kind !== 'temp' || tr === 'jig')) { const nV = Math.min(4, Math.ceil(live.length / 3)), V = VEH[T.veh];
-        for (let k = 0; k < nV; k++) { const p = live[Math.floor(R() * live.length)], mn = p.geo.min, mx = p.geo.max;
-          for (let tryN = 0; tryN < 6; tryN++) { const side = Math.floor(R() * 4), d = 4 + R() * 10 + V.hx, u = R();
+            else { x = mn[0] - 2 + R() * (mx[0] - mn[0] + 4); z = mn[2] - 2 + R() * (mx[2] - mn[2] + 4); y = surfaceAt(I, t, x, z, p.top + 0.05); if (y == null || (p.top - y > 3 && Math.abs(y - mn[1]) > 0.05)) continue; }
+            const box = [x - FW, y + 0.02, z - FW, x + FW, y + FH, z + FW]; if (!freeOf(box[0], box[2], box[3], box[5], box[1], box[4])) continue;
+            if (!clear(I, t, box[0], box[1], box[2], box[3], box[4], box[5])) continue;
+            if (!(tops.length && tryN < 4) && !supportAt(I, t, x, y, z)) continue;
+            placed.push(box); out.figs.push({ x, y, z, yaw, pose: k === 0 && nP > 2 ? 'signal' : T.mix[Math.floor(R() * T.mix.length)], act: a.key }); nA++; break;
+          }
+        }
+      }
+      if (day && (a.kind !== 'temp' || tr === 'jig')) {
+        const nV = Math.min(4, Math.ceil(live.length / 3)), V = VEH[T.veh];
+        for (let k = 0; k < nV; k++) {
+          const p = live[Math.floor(R() * live.length)], mn = p.geo.min, mx = p.geo.max;
+          for (let tryN = 0; tryN < 6; tryN++) {
+            const side = Math.floor(R() * 4), d = 4 + R() * 10 + V.hx, u = R();
             let x = side < 2 ? mn[0] + (mx[0] - mn[0]) * u : side === 2 ? mn[0] - d : mx[0] + d, z = side >= 2 ? mn[2] + (mx[2] - mn[2]) * u : side === 0 ? mn[2] - d : mx[2] + d;
-            // 支承面：构件底面以下最近的在场顶面，否则地面
             let y = 0; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || !present(e.p, t)) return; if (b.max[1] <= mn[1] + 0.1 && b.max[1] > y) y = b.max[1]; });
             const yaw = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(yaw), sa = Math.sin(yaw), ex = Math.abs(V.hx * ca) + Math.abs(V.hz * sa), ez = Math.abs(V.hx * sa) + Math.abs(V.hz * ca);
             if (!freeOf(x - ex, z - ez, x + ex, z + ez, y + 0.02, y + V.h)) continue;
             if (!clearRot(I, t, x, y, z, V.hx, V.hz, V.h, ca, sa) || !supported(I, t, x, y, z, V.hx * 0.9, V.hz * 0.9, ca, sa)) continue;
-            placed.push([x - ex, y + 0.02, z - ez, x + ex, y + V.h, z + ez]); out.vehs.push({ x, y, z, yaw, kind: T.veh, act: a.key }); break; } } }
-      if (nA) out.acts.push({ key: a.key, trade: tr, figs: nA, live: live.length }); }
-    // 履带吊：R10 派给履带的构件，在吊装时段（±0.5 天）停在 hzseq 搜出的站位，臂架指向构件、吊钩落到构件顶 +1.5 m
-    for (const { a, p } of I.crawl) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (out.cranes.length >= 14) break;
+            placed.push([x - ex, y + 0.02, z - ez, x + ex, y + V.h, z + ez]); out.vehs.push({ x, y, z, yaw, kind: T.veh, act: a.key }); break;
+          }
+        }
+      }
+      if (nA) out.acts.push({ key: a.key, trade: tr, figs: nA, live: live.length });
+    }
+    for (const { a, p } of I.crawl) {
+      if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (out.cranes.length >= 14) break;
       const [x, z] = p.crawl, y = p.crawlY || 0, yaw = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(yaw), sa = Math.sin(yaw), V = VEH.crawler;
       if (!clearRot(I, t, x, y, z, V.hx, V.hz, V.h, ca, sa)) continue;
       const hd = Math.hypot(p.c[0] - x, p.c[2] - z) * 0.92, tipY = Math.max(p.top + 10, y + 22);
-      out.cranes.push({ x, y, z, yaw, hd, tipY, hook: p.top + 1.5, act: a.key }); }
-    return out; }
+      out.cranes.push({ x, y, z, yaw, hd, tipY, hook: p.top + 1.5, act: a.key });
+    }
+    return out;
+  }
 
-  // ---------- 线段写入 ----------
-  function emit(buf, n, L, x, y, z, yaw) { const c = Math.cos(yaw), s = Math.sin(yaw), m = L.length / 3;   // 局部 x 前 → 世界 (c, s)，局部 z → (-s, c)
+  // ---------- 线段与实体写入 ----------
+  function emit(buf, n, L, x, y, z, yaw) {
+    const c = Math.cos(yaw), s = Math.sin(yaw), m = L.length / 3;
     if ((n + m / 2) > MAXSEG) return n; let o = n * 6;
     for (let i = 0; i < L.length; i += 3) { const u = L[i], v = L[i + 1], w = L[i + 2]; buf[o++] = x + u * c - w * s; buf[o++] = y + v; buf[o++] = z + u * s + w * c; }
-    return n + m / 2; }
+    return n + m / 2;
+  }
+  // 直接写入 InstancedMesh 的列主序 4×4 矩阵（零对象分配，匹配 emit 旋转约定）
+  function pushInst(slot, x, y, z, yaw) {
+    if (!slot || slot.n >= slot.cap) return;
+    const a = slot.arr, o = slot.n * 16, c = Math.cos(yaw), s = Math.sin(yaw);
+    a[o] = c; a[o + 1] = 0; a[o + 2] = s; a[o + 3] = 0;
+    a[o + 4] = 0; a[o + 5] = 1; a[o + 6] = 0; a[o + 7] = 0;
+    a[o + 8] = -s; a[o + 9] = 0; a[o + 10] = c; a[o + 11] = 0;
+    a[o + 12] = x; a[o + 13] = y; a[o + 14] = z; a[o + 15] = 1;
+    slot.n++;
+  }
+
+  function emitCraneBoom(buf, n, k, hi) {
+    const ca = Math.cos(k.yaw), sa = Math.sin(k.yaw);
+    const fx = k.x + ca * 1.75, fy = k.y + 2.85, fz = k.z + sa * 1.75;
+    const tx = k.x + ca * k.hd, ty = k.tipY, tz = k.z + sa * k.hd;
+    const dx = tx - fx, dy = ty - fy, dz = tz - fz, L = Math.hypot(dx, dy, dz) || 1;
+    const ux = dx / L, uy = dy / L, uz = dz / L;
+    const rx = -sa, rz = ca;
+    const vx = -uy * rz, vy = ux * rz - uz * rx, vz = uy * rx;
+    const bays = hi ? Math.max(8, Math.min(16, Math.round(L / 2.6))) : 5;
+    const need = 4 + bays * (hi ? 8 : 4) + 18;
+    if (n + need > MAXSEG) return n;
+    let o = n * 6;
+    const put = (ax, ay, az, bx, by, bz) => { buf[o++] = ax; buf[o++] = ay; buf[o++] = az; buf[o++] = bx; buf[o++] = by; buf[o++] = bz; n++; };
+    const pt = (f, sr, sv) => {
+      const hw = 0.62 - 0.24 * f;
+      return [fx + dx * f + rx * (sr * hw) + vx * (sv * hw), fy + dy * f + vy * (sv * hw), fz + dz * f + rz * (sr * hw) + vz * (sv * hw)];
+    };
+    const cs = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+    for (const [sr, sv] of cs) { const a = pt(0, sr, sv), b = pt(1, sr, sv); put(a[0], a[1], a[2], b[0], b[1], b[2]); }
+    for (let i = 0; i < bays; i++) {
+      const f0 = i / bays, f1 = (i + 1) / bays;
+      const p0 = cs.map(([sr, sv]) => pt(f0, sr, sv)), p1 = cs.map(([sr, sv]) => pt(f1, sr, sv));
+      for (let j = 0; j < 4; j++) {
+        const jn = (j + 1) % 4;
+        if (i > 0) put(p0[j][0], p0[j][1], p0[j][2], p0[jn][0], p0[jn][1], p0[jn][2]);
+        if (hi || (j % 2 === 0)) {
+          const a = (i % 2 === 0) ? p0[j] : p0[jn], b = (i % 2 === 0) ? p1[jn] : p1[j];
+          put(a[0], a[1], a[2], b[0], b[1], b[2]);
+        }
+      }
+    }
+    for (const s of [-0.72, 0.72]) {
+      const gx = k.x - ca * 2.55 - sa * s, gy = k.y + 5.45, gz = k.z - sa * 2.55 + ca * s;
+      const hx = tx - sa * (s * 0.45), hz = tz + ca * (s * 0.45);
+      put(gx, gy, gz, hx, ty + 0.35, hz);
+    }
+    for (const s of [-0.18, 0.18]) put(tx - sa * s, ty, tz + ca * s, tx - sa * s, k.hook + 0.75, tz + ca * s);
+    const hy = k.hook + 0.75;
+    for (const y of [hy - 0.55, hy]) {
+      put(tx - 0.28, y, tz - 0.22, tx + 0.28, y, tz - 0.22);
+      put(tx + 0.28, y, tz - 0.22, tx + 0.28, y, tz + 0.22);
+      put(tx + 0.28, y, tz + 0.22, tx - 0.28, y, tz + 0.22);
+      put(tx - 0.28, y, tz + 0.22, tx - 0.28, y, tz - 0.22);
+    }
+    for (const [sx, sz] of [[-0.28, -0.22], [0.28, -0.22], [0.28, 0.22], [-0.28, 0.22]]) put(tx + sx, hy - 0.55, tz + sz, tx + sx, hy, tz + sz);
+    put(tx, hy - 0.55, tz, tx, k.hook - 0.25, tz);
+    put(tx, k.hook - 0.25, tz, tx + 0.28, k.hook - 0.42, tz);
+    put(tx + 0.28, k.hook - 0.42, tz, tx + 0.36, k.hook - 0.12, tz);
+    return n;
+  }
+
   const camPos = cam => cam ? (cam.position ? [cam.position.x, cam.position.y, cam.position.z] : cam) : null;
 
-  const MOD = { id: 'actors', R_SHOW, FIG, VEH, TRADE, stOf, plan, _clear: clear, _supported: supported, _index: index,
-    stats: { figs: 0, vehs: 0, cranes: 0, shown: 0, segs: 0 },
-    build(scene, HZ, THREE, opts) { opts = opts || {}; this.clip = Array.isArray(opts.clip) && opts.clip.length ? opts.clip : null; this.HZ = HZ; this.I = index(HZ); this.buf = new Float32Array(MAXSEG * 6); this.n = 0; this.key = null; this.P = null; this.lastCam = null;
+  const MOD = {
+    id: 'actors', R_SHOW, R_HI, FIG, VEH, TRADE, stOf, plan, _clear: clear, _supported: supported, _index: index,
+    stats: { figs: 0, vehs: 0, cranes: 0, shown: 0, segs: 0, insts: 0 },
+    build(scene, HZ, THREE, opts) {
+      opts = opts || {}; this.clip = Array.isArray(opts.clip) && opts.clip.length ? opts.clip : null;
+      this.HZ = HZ; this.I = index(HZ); this.buf = new Float32Array(MAXSEG * 6); this.n = 0; this.key = null; this.P = null; this.lastCam = null;
+      this.instFig = null; this.instVeh = null; this.instList = []; this.obj = null;
       THREE = THREE || ROOT.THREE;
-      if (THREE && scene) { const g = new THREE.BufferGeometry(); this.attr = new THREE.BufferAttribute(this.buf, 3); this.attr.setUsage && this.attr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('position', this.attr); g.setDrawRange(0, 0);
-        this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial(Object.assign({ color: 0x1c1a17, transparent: true, opacity: 0.92 }, this.clip ? { clippingPlanes: this.clip } : {}))); this.obj.frustumCulled = false; this.obj.renderOrder = 5; this.obj.name = 'hz-actors'; scene.add(this.obj); }
-      return this; },
-    update(t, cam) { if (!this.I) return 0; const key = Math.floor(t * 24); let dirty = false; this.calls = (this.calls || 0) + 1;
-      // 播放时每帧都可能跨小时：重排最多每 6 帧一次（时间跳变 > 0.5 天时立即重排），把 2–3 ms 的布置摊到多帧
+      if (THREE && scene) {
+        const g = new THREE.BufferGeometry(); this.attr = new THREE.BufferAttribute(this.buf, 3);
+        this.attr.setUsage && this.attr.setUsage(THREE.DynamicDrawUsage);
+        g.setAttribute('position', this.attr); g.setDrawRange(0, 0);
+        this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial(Object.assign({ color: 0x1c1a17, transparent: true, opacity: 0.92 }, this.clip ? { clippingPlanes: this.clip } : {})));
+        this.obj.frustumCulled = false; this.obj.renderOrder = 5; this.obj.name = 'hz-actors'; scene.add(this.obj);
+        // 实例化实体层（挂在 this.obj 下，宿主按 scope 隐藏 actors 时同步隐藏；9 个原型几何只上传 GPU 一次）
+        if (THREE.InstancedMesh && THREE.MeshBasicMaterial) {
+          const mat = new THREE.MeshBasicMaterial(Object.assign({
+            vertexColors: true, side: THREE.DoubleSide || 2,
+            polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2
+          }, this.clip ? { clippingPlanes: this.clip } : {}));
+          const mkSlot = (P, C, cap, name) => {
+            const sg = new THREE.BufferGeometry();
+            sg.setAttribute('position', new THREE.BufferAttribute(P, 3));
+            sg.setAttribute('color', new THREE.BufferAttribute(C, 3));
+            const im = new THREE.InstancedMesh(sg, mat, cap);
+            im.count = 0; im.frustumCulled = false; im.renderOrder = 4; im.name = name;
+            if (im.instanceMatrix && im.instanceMatrix.setUsage) im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            this.obj.add(im);
+            const slot = { mesh: im, arr: im.instanceMatrix.array, cap, n: 0, prev: 0 };
+            this.instList.push(slot);
+            return slot;
+          };
+          this.instFig = {};
+          for (const k in FIG_OBJ) this.instFig[k] = mkSlot(FIG_OBJ[k].Phi, FIG_OBJ[k].Chi, MAX_INST_FIG, 'hz-fig-' + k);
+          this.instVeh = {};
+          for (const k in VEH) this.instVeh[k] = mkSlot(VEH[k].Phi, VEH[k].Chi, MAX_INST_VEH, 'hz-veh-' + k);
+        }
+      }
+      return this;
+    },
+    update(t, cam) {
+      if (!this.I) return 0; const key = Math.floor(t * 24); let dirty = false; this.calls = (this.calls || 0) + 1;
       const lag = this.P && key !== this.key && this.calls - this.planCall < 6 && Math.abs(t - this.P.t) < 0.5;
       if (key !== this.key && !lag) { this.planCall = this.calls; this.key = key; this.P = plan(this.HZ, this.I, t); dirty = true; Object.assign(this.stats, { figs: this.P.figs.length, vehs: this.P.vehs.length, cranes: this.P.cranes.length }); }
       const c = camPos(cam); if (!c) return this.n;
       if (!dirty && this.lastCam && Math.hypot(c[0] - this.lastCam[0], c[1] - this.lastCam[1], c[2] - this.lastCam[2]) < 1) return this.n;
-      this.lastCam = c.slice(); const R2 = R_SHOW * R_SHOW, buf = this.buf; let n = 0, shown = 0;
+      this.lastCam = c.slice(); const R2 = R_SHOW * R_SHOW, RHI2 = R_HI * R_HI, buf = this.buf;
+      const iF = this.instFig, iV = this.instVeh;
+      for (let i = 0; i < this.instList.length; i++) this.instList[i].n = 0;
+      let n = 0, shown = 0;
       const d2 = (x, y, z) => (x - c[0]) * (x - c[0]) + (y - c[1]) * (y - c[1]) + (z - c[2]) * (z - c[2]);
-      for (const f of this.P.figs) { if (d2(f.x, f.y + 1, f.z) > R2) continue; n = emit(buf, n, FIG[f.pose], f.x, f.y, f.z, f.yaw); shown++; }
-      for (const v of this.P.vehs) { if (d2(v.x, v.y + 1.5, v.z) > R2) continue; n = emit(buf, n, VEH[v.kind].L, v.x, v.y, v.z, v.yaw); shown++; }
-      for (const k of this.P.cranes) { if (d2(k.x, k.y + 2, k.z) > R2) continue; n = emit(buf, n, VEH.crawler.L, k.x, k.y, k.z, k.yaw); shown++;
-        const ca = Math.cos(k.yaw), sa = Math.sin(k.yaw), foot = [k.x + ca * 1.8, k.y + 3.0, k.z + sa * 1.8], tip = [k.x + ca * k.hd, k.tipY, k.z + sa * k.hd];
-        if (n + 6 <= MAXSEG) { let o = n * 6; const put = (a, b) => { buf.set(a, o); buf.set(b, o + 3); o += 6; n++; };
-          for (const s of [-0.6, 0.6]) put([foot[0] - sa * s, foot[1], foot[2] + ca * s], [tip[0], tip[1], tip[2]]);   // 双肢臂架
-          put([k.x - ca * 2.4, k.y + 3.4, k.z - sa * 2.4], [k.x + ca * k.hd * 0.45, k.tipY * 0.55 + k.y * 0.45 + 2, k.z + sa * k.hd * 0.45]);   // 变幅拉索
-          put([k.x + ca * k.hd * 0.45, k.tipY * 0.55 + k.y * 0.45 + 2, k.z + sa * k.hd * 0.45], tip);
-          put(tip, [tip[0], k.hook, tip[2]]); put([tip[0] - 0.5, k.hook, tip[2]], [tip[0] + 0.5, k.hook, tip[2]]); } }
-      this.n = n; this.stats.shown = shown; this.stats.segs = n;
-      if (this.obj) { this.obj.geometry.setDrawRange(0, n * 2); this.attr.needsUpdate = true; if (this.attr.addUpdateRange) { this.attr.clearUpdateRanges && this.attr.clearUpdateRanges(); this.attr.addUpdateRange(0, n * 6); } }
-      return n; },
+      for (const v of this.P.vehs) {
+        const dd = d2(v.x, v.y + 1.5, v.z); if (dd > R2) continue;
+        const V = VEH[v.kind], hi = dd < RHI2;
+        n = emit(buf, n, hi ? V.Lhi : V.L, v.x, v.y, v.z, v.yaw);
+        if (iV) pushInst(iV[v.kind], v.x, v.y, v.z, v.yaw);
+        shown++;
+      }
+      for (const k of this.P.cranes) {
+        const dd = d2(k.x, k.y + 2, k.z); if (dd > R2) continue;
+        const hi = dd < RHI2;
+        n = emit(buf, n, hi ? VEH.crawler.Lhi : VEH.crawler.L, k.x, k.y, k.z, k.yaw);
+        if (iV) pushInst(iV.crawler, k.x, k.y, k.z, k.yaw);
+        n = emitCraneBoom(buf, n, k, hi);
+        shown++;
+      }
+      for (const f of this.P.figs) {
+        const dd = d2(f.x, f.y + 1, f.z); if (dd > R2) continue;
+        const F = FIG_OBJ[f.pose], hi = dd < RHI2;
+        n = emit(buf, n, hi ? F.Lhi : F.L, f.x, f.y, f.z, f.yaw);
+        if (iF) pushInst(iF[f.pose], f.x, f.y, f.z, f.yaw);
+        shown++;
+      }
+      let insts = 0;
+      for (let i = 0; i < this.instList.length; i++) {
+        const sl = this.instList[i];
+        insts += sl.n;
+        if (sl.n !== sl.prev || sl.n > 0) {
+          sl.mesh.count = sl.n;
+          if (sl.n > 0) sl.mesh.instanceMatrix.needsUpdate = true;
+          sl.prev = sl.n;
+        }
+      }
+      this.n = n; this.stats.shown = shown; this.stats.segs = n; this.stats.insts = insts;
+      if (this.obj) {
+        this.obj.geometry.setDrawRange(0, n * 2); this.attr.needsUpdate = true;
+        if (this.attr.addUpdateRange) { this.attr.clearUpdateRanges && this.attr.clearUpdateRanges(); this.attr.addUpdateRange(0, n * 6); }
+      }
+      return n;
+    },
   };
   (ROOT.HZ_MODS = ROOT.HZ_MODS || []).push(MOD);
 })();
