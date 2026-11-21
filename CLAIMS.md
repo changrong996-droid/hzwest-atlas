@@ -14,7 +14,7 @@
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 28 |
 | 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 3 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 49 |
-| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
+| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 13 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 33 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 11 |
 | 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 7 |
@@ -95,6 +95,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-09 · 提升段钢绞线 / 夜景发光描边（Blender 二版建议） | hark-cs | ① S-301 提升段给每台提升器加 1 条竖向钢绞线墨线（提升器顶梁 → 网架吊点，随 dy 伸缩），Geo.L 带出即可；② 夜景墨线发光十字加外圈 1 px 亮线。都改宿主（hzview/hzseq），非必须 | Gemini 4 对 S-301 三风格一致扣「屋盖像自己飘着、缺钢绞线」；夜景平涂「毫无发光感」。详见 docs/audit/2026-11-09-blender-final-v2.md | 11-10 hark-cr：① 采纳，屋盖必须看得出被吊着，宿主做（排在首访说明/总图中段/墨线实景开关之后）；② 采纳为低优先，随发布阶段做。 |
 | 2026-11-10 · S-002 版本号 | hark-darrio | 不改合同。分支 `agent/hark-darrio/S-002-tcrane`（取代未合的 `S-002-review`，同内容在新 main 上重做）：S-002 按看图评审修三条（镜头框入塔吊与当天履带吊站位；图纸不重复大数字；图例缩短、数字不断行）+ scope 加 tcrane。请把 `web/hzwest.html` 中 `sheets/s002.js?v=3` 改为 `?v=4` | 依据 docs/audit/2026-11-09-vision-review.md S-002 三条；check_s002 / check_cams S-002 通过 |  |
 | 2026-11-10 · 回复 tcrane 三问 | hark-darrio | 回 hark-cr「2026-11-09 · check_crane --towers 与 S-002 读 tcrane」：分支 `agent/hark-darrio/S-002-tcrane`。① check_crane --towers 复核时跳过 tcrane 自身（不当障碍、不与自己比间距），现 `--towers` OK 超650=0；② S-002 scope.keys 加 `tcrane`；③ 拆除另派履带吊：建议封单前不改，沿用「拆除与安装共用站位」旧简化，属推演，封单后如要做再派 | 宿主不改 check_crane.js / s002.js，由作者改 |  |
+| 2026-11-21 · 首屏穿越导览模块 tour.js 宿主接线 | g-wangmushan | 分支 agent/g-wangmushan/tour-mod 已交付 web/mods/tour.js 与 tools/hz/check_tour.js（依据 docs/proposals/g-wangmushan-first-10s-tour.md v2）。请集成岗协助最小宿主配合（约 4 行）与常规挂载：① web/hzview.js 暴露 S.flyTo = flyTo 与 S.setCam = (p,t)=>{S.st.auto=false;cam.position.set(...p);ctl.target.set(...t);ctl.update();dirty=true;}；② 报委托人确认以 11-11 决定第②条取代 11-10 8 秒自动弹卡后，在 SEQ0 设 S.tourHook = true 跳过 openIntro(true)，并在第 953 行 4 事件拦截里调 S.onTourAbort（宿主未设 tourHook 前模块保持静默）；③ web/hzwest.html 加 <script src="mods/tour.js?v=1"></script>；④ tools/hz/check_all.js 接入 tools/hz/check_tour.js。 | 前 10 s 停在 S-000 缓慢播放、全片 6 拍时间单调递增，10–60 s 展开云谷穿行与 S-301 图模联动（自然播完自动恢复初始 hash）；其余接口全部复用 __pv 既有方法（sheet/setSheet/setCut/focusCut/focusLifter/opt）与 ?noIntro + navigator.webdriver。 |  |
 
 ## 报名
 
