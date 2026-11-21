@@ -936,6 +936,8 @@
     intro.addEventListener('mouseenter', () => { if (!S.st.intro || !inAt) return; clearTimeout(inTimer); inLeft = Math.max(0, inLeft - (performance.now() - inAt)); inAt = 0; });
     intro.addEventListener('mouseleave', () => { if (S.st.intro && !inAt) inRun(); });
     const SEQ0 = S.introSeq = { auto: false, lit: 'off', hold: false, playTouched: false };   // lit: wait（等卡收起）→ on（实景预览中）→ done；off = 本次不预览
+    const TOUR_FIRST = true;   // 委托人 2026-11-21 定：首屏改由 mods/tour.js 自动慢放导览，取代 11-10 的 8 秒自动说明卡（右下角 i 仍可手动打开）。回滚：这里改 false 即恢复旧说明卡（旧逻辑原样保留）；单次回看旧版用 ?intro=card
+    S.tourHook = TOUR_FIRST && !/[?&]intro=card\b/.test(location.search) && !!(window.HZ_MODS || []).some(m => m && m.id === 'tour');   // 须早于 HZ_MODS build；tour.js 没加载时自动退回说明卡
     let litTimer = 0;
     const releaseHold = () => { if (!SEQ0.hold) return; SEQ0.hold = false; if (S._wantPlay && !SEQ0.playTouched && !S.st.play) setPlay(true); };
     const litEnd = back => { clearTimeout(litTimer); if (SEQ0.lit === 'on' && back && S.st.pref === 'lit') setMode('ink'); SEQ0.lit = 'done'; releaseHold(); };
@@ -949,10 +951,12 @@
     { const act = e => { const tg = e.target, cl = s => tg && tg.closest && tg.closest(s); if (cl('#intro')) return;
         if (e.type === 'keydown') { if (/INPUT|TEXTAREA/.test(tg && tg.tagName || '')) return; if (/^(Space|Arrow)/.test(e.code)) SEQ0.playTouched = true; if (e.key === 'c') modeTouched = true; }
         else { if (cl('#b-play') || cl('#track')) SEQ0.playTouched = true; if (cl('#b-mode')) modeTouched = true; }
-        if (S.st.intro) { e._hzIntro = 1; closeIntro(); } };
+        if (S.st.intro) { e._hzIntro = 1; closeIntro(); }
+        if (typeof S.onTourAbort === 'function') S.onTourAbort(e); };
       for (const ev of ['pointerdown', 'wheel', 'keydown', 'touchstart']) addEventListener(ev, act, { capture: true, passive: true }); }
     S.introAuto = SEQ0.auto = !/[?&]noIntro\b/.test(location.search) && !navigator.webdriver;
-    if (S.introAuto) { SEQ0.hold = true; SEQ0.lit = S.st.pref === 'lit' ? 'off' : 'wait'; setTimeout(() => { if (S.st.intro) return; if (SEQ0.hold && !S.st.info) openIntro(true); else afterIntro(); }, 0); }
+    if (S.introAuto && !S.tourHook) { SEQ0.hold = true; SEQ0.lit = S.st.pref === 'lit' ? 'off' : 'wait'; setTimeout(() => { if (S.st.intro) return; if (SEQ0.hold && !S.st.info) openIntro(true); else afterIntro(); }, 0); }
+    S.flyTo = flyTo; S.setCam = (p, t) => { S.st.auto = false; cam.position.set(...p); ctl.target.set(...t); ctl.update(); dirty = true; };   // 导览模块 tour.js 用（req:2026-11-21:0a60756e）
     S.opt = o => { if (o.play != null) setPlay(o.play); if (o.auto != null) { S.st.auto = o.auto; if (o.auto) placeCam(camKey(S.st.t)); } if (o.info != null) openInfo(o.info); if (o.mode) setMode(o.mode); dirty = true; };
     ctl.addEventListener('start', () => { FLY = null; S.flying = false; S.st.auto = false; $('b-home').classList.add('on'); });
     ctl.addEventListener('change', () => { dirty = true; });
