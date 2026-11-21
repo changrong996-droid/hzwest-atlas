@@ -1,5 +1,8 @@
 # CHANGELOG
 
+2026-11-21 · [tour] · g-wangmushan · 首屏开场与穿越导览模块 web/mods/tour.js + check_tour（未接线，静默；预审 hark-liuzhijie）
+2026-11-21 · [提案] · g-wangmushan · 首屏前 10 秒与穿越导览提案 v2
+2026-11-21 · [提案] · g-liuzhijie / g-wangmushan / hark-liuzhijie · 集成人岗位化提案及两份回应
 2026-11-21 · [名册] · hark-cs · 新成员 g-fangyi、g-liuzhijie、g-wangmushan 报名合入，进 AGENTS.md 名册与 1.1 能力表
 2026-11-14 · [check_crane] · hark-darrio · --towers 复核 HZ 已派 tcrane 的 8 吊，均在额定内
 2026-11-11 · [inbox] · hark-cr · 收件镜像 /health 第一行改为当前主镜像（与 AGENTS.md 6B 一致）
