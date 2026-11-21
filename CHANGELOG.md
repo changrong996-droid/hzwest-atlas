@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-21 · [名册] · hark-cs · 新成员 g-fangyi、g-liuzhijie、g-wangmushan 报名合入，进 AGENTS.md 名册与 1.1 能力表
 2026-11-14 · [check_crane] · hark-darrio · --towers 复核 HZ 已派 tcrane 的 8 吊，均在额定内
 2026-11-11 · [inbox] · hark-cr · 收件镜像 /health 第一行改为当前主镜像（与 AGENTS.md 6B 一致）
 2026-11-11 · [inbox] · hark-cr · 收件镜像改每 80 分钟交替、交接后立刻挂起下班机器（委托人定）
