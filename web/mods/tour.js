@@ -1,9 +1,10 @@
 // 首屏缓慢开场与建筑内部穿越导览（HZ_MODS 模块）· g-wangmushan
-// 依据：docs/proposals/g-wangmushan-first-10s-tour.md（v2）
-// - 前 10 s 停在 S-000 缓慢播放，不切图；10–60 s 展开云谷低空穿行、S-301 图模跳转、x=39m 剖切与亮灯收官
-// - 全部时刻用 <活动key>@<0..1比例> 表达，运行期按 HZ.K 动态解算
-// - 沿用 ?noIntro + navigator.webdriver + 深链（#sheet / #focus / #camcfg）跳过自动开场
-// - 复用宿主 4 事件拦截（pointerdown / wheel / keydown / touchstart）0 延迟让权
+// 依据：docs/proposals/g-wangmushan-first-10s-tour.md（v2）及审查修订
+// - 仅在宿主显式给出 pv.tourHook === true 时自动启动，宿主未改前保持静默，不与旧 SEQ0 抢时间轴
+// - 前 10 s 停在 S-000 缓慢播放（不切图），全片 6 拍时间严格单调递增（无倒退）
+// - 逐帧运镜统一走宿主 pv.setCam(pos, tgt)，节拍转场走 pv.flyTo(tgt, pos, ms)
+// - 全部时刻用 <活动key>@<0..1比例> 表达；云谷安全范围读 HZ.P.gap / HZ.P.stX，障碍窗读 HZ.K.jigL2.start
+// - 自然播完时恢复进入前的 location.hash（避免 focusLifter 写的 #focus= 导致刷新后无法再开场）
 (function () {
   'use strict';
   const G = typeof window !== 'undefined' ? window : globalThis;
@@ -21,7 +22,7 @@
     return a.start + (a.end - a.start) * r;
   }
 
-  // 剧本定义（0–10 s 单图 S-000 缓播；10–60 s 穿行与核心魔术示范）
+  // 剧本定义（0–10 s 单图 S-000 缓播；10–60 s 穿行与核心魔术；6 拍时间严格单调不减）
   const TOUR_BEATS = [
     {
       id: 'intro-grow',
@@ -29,23 +30,23 @@
       sheet: 'S-000',
       mode: 'ink',
       cut: 0,
-      t0: 'frameS@0.35',
-      t1: 'floorS@1.0',
-      cam0: { pos: [122, 82, 168], tgt: [0, 18, 0] },
-      cam1: { pos: [92, 58, 128], tgt: [0, 20, 0] },
+      t0: 'frameS@0',
+      t1: 'frameS@1.0',
+      cam0: { pos: [122, 82, 168], tgt: [0, 16, 0] },
+      cam1: { pos: [106, 68, 146], tgt: [0, 18, 0] },
       caption: '3 年工期 · 1906 个构件按力学先后自己长出来',
     },
     {
-      id: 'intro-roof',
+      id: 'intro-deck',
       sec: [5, 10],
       sheet: 'S-000',
       mode: 'ink',
       cut: 0,
-      t0: 'asm1@0',
-      t1: 'wlift@1.0',
-      cam0: { pos: [92, 58, 128], tgt: [0, 22, 0] },
-      cam1: { pos: [112, 76, 156], tgt: [0, 32, 0] },
-      caption: '1.3 万吨屋盖抬升就位 · 随时拖动或点图纸接管',
+      t0: 'frameS@1.0',
+      t1: 'floorS@0.45',
+      cam0: { pos: [106, 68, 146], tgt: [0, 18, 0] },
+      cam1: { pos: [92, 56, 124], tgt: [0, 22, 0] },
+      caption: '承轨层与候车厅逐层成形 · 随时拖动或点图纸接管',
     },
     {
       id: 'cloud-fly',
@@ -53,11 +54,11 @@
       sheet: 'S-000',
       mode: 'ink',
       cut: 0,
-      t0: 'frameS@0.5',
+      t0: 'floorS@0.45',
       t1: 'floorS@1.0',
-      // 实查验证：floorS/floorN 在 |z|<14 完全开洞；t<604 无 jigL2，|x|<=220 避开 x=±260 塔吊
+      // 紧接开场不倒退；t < HZ.K.jigL2.start 且 |z| <= HZ.P.gap、|x| <= HZ.P.stX - 5，0 障碍
       cam0: { pos: [-185, 28, 0], tgt: [120, 18, 0] },
-      cam1: { pos: [185, 19, 0], tgt: [220, 18, 0] },
+      cam1: { pos: [185, 19, 0], tgt: [215, 18, 0] },
       caption: '穿过 28 米宽云谷 · 承轨层与候车厅在两侧展开',
     },
     {
@@ -135,6 +136,7 @@
     built: false,
     boundFallback: false,
     rafId: 0,
+    entryHash: '',
     pv: null,
     HZ: null,
     THREE: null,
@@ -193,7 +195,7 @@
         if (!b) return;
         e.stopPropagation();
         const pid = b.dataset.p;
-        if (pid === '__replay') start(0);
+        if (pid === '__replay') start();
         else runPortal(pid);
       });
       root.appendChild(bar);
@@ -203,19 +205,20 @@
     return root;
   }
 
+  // 逐帧运镜统一走宿主 pv.setCam(pos, tgt)；节拍转场优先走 pv.flyTo(tgt, pos, ms)
   function applyCam(pv, THREE, pos, tgt, flyMs) {
-    if (!pv) return;
-    if (flyMs && typeof pv.flyTo === 'function' && THREE && THREE.Vector3) {
-      pv.flyTo(new THREE.Vector3(tgt[0], tgt[1], tgt[2]), new THREE.Vector3(pos[0], pos[1], pos[2]), flyMs);
-      return;
+    if (!pv) return false;
+    if (flyMs && typeof pv.flyTo === 'function') {
+      const tVec = THREE && THREE.Vector3 ? new THREE.Vector3(tgt[0], tgt[1], tgt[2]) : tgt;
+      const pVec = THREE && THREE.Vector3 ? new THREE.Vector3(pos[0], pos[1], pos[2]) : pos;
+      pv.flyTo(tVec, pVec, flyMs);
+      return true;
     }
-    if (pv.cam && pv.cam.position && pv.ctl && pv.ctl.target) {
-      if (pv.st) pv.st.auto = false;
-      pv.cam.position.set(pos[0], pos[1], pos[2]);
-      pv.ctl.target.set(tgt[0], tgt[1], tgt[2]);
-      if (typeof pv.ctl.update === 'function') pv.ctl.update();
-      if (typeof pv.render === 'function') pv.render();
+    if (typeof pv.setCam === 'function') {
+      pv.setCam(pos, tgt);
+      return true;
     }
+    return false;
   }
 
   function enterBeat(idx) {
@@ -224,9 +227,8 @@
     if (!beat || !pv || !HZ) return;
     state.beatIdx = idx;
     state.modeSwitched = false;
-    if (beat.sheet && typeof pv.setSheet === 'function') {
-      const cur = pv.TL && pv.TL.sheet;
-      if (cur !== beat.sheet) pv.setSheet(beat.sheet);
+    if (beat.sheet && typeof pv.setSheet === 'function' && pv.sheet !== beat.sheet) {
+      pv.setSheet(beat.sheet);
     }
     if (typeof pv.opt === 'function' && beat.mode) pv.opt({ mode: beat.mode, play: false });
     if (typeof pv.setCut === 'function') pv.setCut(beat.cut ? 1 : 0);
@@ -239,16 +241,16 @@
     if (state.elRip) state.elRip.hidden = !beat.ripple;
   }
 
-  function step(nowMs) {
-    if (!state.active) return;
+  function stepAt(nowMs) {
+    if (!state.active) return false;
     const elapsed = Math.max(0, (nowMs - state.startedAt) / 1000);
     const totalSec = TOUR_BEATS[TOUR_BEATS.length - 1].sec[1];
-    if (elapsed >= totalSec) { stop('done'); return; }
+    if (elapsed >= totalSec) { stop('done'); return false; }
     let idx = -1;
     for (let i = 0; i < TOUR_BEATS.length; i++) {
       if (elapsed >= TOUR_BEATS[i].sec[0] && elapsed < TOUR_BEATS[i].sec[1]) { idx = i; break; }
     }
-    if (idx < 0) { stop('done'); return; }
+    if (idx < 0) { stop('done'); return false; }
     if (idx !== state.beatIdx) enterBeat(idx);
     const beat = TOUR_BEATS[idx];
     const frac = Math.max(0, Math.min(1, (elapsed - beat.sec[0]) / Math.max(0.001, beat.sec[1] - beat.sec[0])));
@@ -264,7 +266,22 @@
       state.modeSwitched = true;
       if (state.pv && typeof state.pv.opt === 'function') state.pv.opt({ mode: beat.modeAt.mode });
     }
+    return true;
+  }
+
+  function step(nowMs) {
+    if (!stepAt(nowMs)) return;
     if (typeof requestAnimationFrame === 'function') state.rafId = requestAnimationFrame(step);
+  }
+
+  function restoreHashIfDone(reason) {
+    // 导览自然播完时恢复进入前的 hash，避免 focusLifter 写的 #focus= 导致刷新后不再自动开场；
+    // 若用户通过传送门或手动交互打断，则保留当前焦点 hash 方便分享。
+    if (reason !== 'done') return;
+    if (typeof history !== 'undefined' && typeof history.replaceState === 'function' && G.location) {
+      const base = (G.location.pathname || '') + (G.location.search || '') + (state.entryHash || '');
+      try { history.replaceState(null, '', base); } catch (_) { /* ignore */ }
+    }
   }
 
   function stop(reason) {
@@ -277,11 +294,13 @@
     if (state.elCap) state.elCap.hidden = true;
     if (state.elRip) state.elRip.hidden = true;
     if (state.elBar) state.elBar.hidden = false;
+    restoreHashIfDone(reason);
     return wasActive;
   }
 
   function start(nowMs) {
     ensureDom();
+    state.entryHash = (G.location && G.location.hash) || '';
     state.active = true;
     state.beatIdx = -1;
     state.modeSwitched = false;
@@ -298,7 +317,7 @@
     const pv = state.pv, HZ = state.HZ;
     if (!p || !pv || !HZ) return false;
     stop('portal');
-    if (p.sheet && typeof pv.setSheet === 'function') pv.setSheet(p.sheet);
+    if (p.sheet && typeof pv.setSheet === 'function' && pv.sheet !== p.sheet) pv.setSheet(p.sheet);
     const t = resolveT(p.at, HZ);
     if (Number.isFinite(t) && typeof pv.set === 'function') pv.set(t);
     if (p.lifter != null && typeof pv.focusLifter === 'function') pv.focusLifter(p.lifter);
@@ -312,13 +331,6 @@
     stop(e && e.type || 'user');
   }
 
-  // 兜底监听（宿主未将 onTourAbort 接到第 953 行 4 事件拦截前生效）
-  function bindAbortFallback() {
-    if (state.boundFallback || typeof addEventListener !== 'function') return;
-    state.boundFallback = true;
-    for (const ev of ABORT_EVENTS) addEventListener(ev, onUserAbort, { capture: true, passive: true });
-  }
-
   const MOD = {
     id: 'tour',
     ABORT_EVENTS,
@@ -327,6 +339,7 @@
     resolveT,
     shouldAutoStart,
     sampleCam,
+    stepAt,
     state,
     start,
     stop,
@@ -339,11 +352,10 @@
       state.built = true;
       ensureDom();
       if (state.pv) state.pv.onTourAbort = onUserAbort;
-      bindAbortFallback();
-      if (shouldAutoStart()) {
-        // 等宿主初始化完首帧后启动（仅当宿主未显式关闭 introAuto）
-        if (!state.pv || state.pv.introAuto !== false) {
-          if (typeof setTimeout === 'function') setTimeout(() => { if (!state.active && shouldAutoStart()) start(); }, 0);
+      // 安全闸门：仅当宿主显式给出 pv.tourHook === true 时自动启动（宿主未改前保持静默，绝不与旧 SEQ0 抢时间轴）
+      if (state.pv && state.pv.tourHook === true && shouldAutoStart()) {
+        if (typeof setTimeout === 'function') {
+          setTimeout(() => { if (!state.active && state.pv && state.pv.tourHook === true && shouldAutoStart()) start(); }, 0);
         }
       }
     },
