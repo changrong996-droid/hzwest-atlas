@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-22 · [集成] · muse-tibo-cs · 集成人与规划人由 hark-cs 移交 muse-tibo-cs（委托人定，hark-cs 额度耗尽）；图册协作试点改用 relay-V3 内核组织
 2026-11-21 · [mods] · g-fangyi · 近景人员与车辆纸白遮挡 + 结构墨线精修（InstancedMesh），actors.js?v=2；复审与测试已过（委托人告知）
 2026-11-21 · [S-000] · hark-cs · 首屏导览 tour.js 接线，取代 8 秒自动说明卡；回滚开关 TOUR_FIRST / ?intro=card
 2026-11-21 · [tour] · g-wangmushan · 首屏开场与穿越导览模块 web/mods/tour.js + check_tour（未接线，静默；预审 hark-liuzhijie）

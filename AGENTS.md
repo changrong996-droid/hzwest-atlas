@@ -6,20 +6,20 @@
 
 1. `curl -s "<收件地址>/board?agent=<你的名字>"`（`<收件地址>` = 当前主镜像，见第 6B 节；先试镜像 A，不通换 B）：你手上的事项、你的分支合了没、你的接口请求有没有回复、你上次来之后规矩改了什么。
 2. `git pull`，读本文件和你事项的任务书（`docs/tasks/`）、最新审查意见（`docs/review/`）。
-3. 有问题写进 `CLAIMS.md`「接口请求」，不经过委托人；hark-cs 每小时回复一次。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
+3. 有问题写进 `CLAIMS.md`「接口请求」，不经过委托人；muse-tibo-cs 每小时回复一次。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
 
-**派单**：hark-cs 每次合并、审查后，把发现的后续问题拆成小单写进 `CLAIMS.md`「派单」，指名给相关作者（或「全体」）。你的进门画面最上面就是派给你的单，**先做派单，再做自领事项**；派单不占 2 项认领名额。提交标题写 `[D-xx] ...`，合并后 hark-cs 关单。做不了就在该行写原因，hark-cs 改派。同一人同时待做的派单一般不超过 2 张；本地能力强的 `hark-cs`、`traycer-cs`、`muse-tibo-cs` 可同时持有 3 张（11-08 起，委托人要求少留多派）。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
+**派单**：muse-tibo-cs 每次合并、审查后，把发现的后续问题拆成小单写进 `CLAIMS.md`「派单」，指名给相关作者（或「全体」）。你的进门画面最上面就是派给你的单，**先做派单，再做自领事项**；派单不占 2 项认领名额。提交标题写 `[D-xx] ...`，合并后 muse-tibo-cs 关单。做不了就在该行写原因，muse-tibo-cs 改派。同一人同时待做的派单一般不超过 2 张；本地能力强的 `hark-cs`、`traycer-cs`、`muse-tibo-cs` 可同时持有 3 张（11-08 起，委托人要求少留多派）。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
 
 **建议**：在你自己那边设一个定时任务（每 1–2 小时），每次跑第 1 步；有派单或审查意见就接着做，没有就安静结束。这样委托人不用传话。
 
-委托人只管三件事：做什么、先做哪个、好不好。他的意见由 hark-cs 写进 `docs/review/`，不靠转述。
+委托人只管三件事：做什么、先做哪个、好不好。他的意见由 muse-tibo-cs 写进 `docs/review/`，不靠转述。
 
 ## 1. 名册
 
 | 名字（Agent） | 身份 | 角色 | 提交途径 |
 |---|---|---|---|
-| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；可用本地 Mac（Metal GPU、Blender）、虚拟机、多种 API/CLI | **集成人 + 规划人**（2026-11-12 起，委托人定）：审查、合并、推送 main，维护共用文件，规划与派单 | 直接推送 |
-| `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | 图册旁路 hzatlas、检查基座；**本地 GPU + Blender + Gemini 4 CLI：渲染、精修、视觉审查优先派它** | B 收件（11-08 起，原 fork + PR 停用） |
+| `hark-cs` | Hark · changsheng0804 账号（hark-changsheng）；可用本地 Mac（Metal GPU、Blender）、虚拟机、多种 API/CLI | 原集成人（2026-11-22 移交 muse-tibo-cs，额度耗尽） | B 收件 |
+| `muse-tibo-cs` | muse 智能体（GitHub tanxinhao2026-netizen） | **集成人 + 规划人**（2026-11-22 起，委托人定）：审查、合并、推送 main，维护共用文件，规划与派单；图册旁路 hzatlas、检查基座；**本地 GPU + Blender + Gemini 4 CLI：渲染、精修、视觉审查优先派它** | 直接推送 |
 | `hark-cr` | Hark · changrong996 账号 | 原集成人（2026-11-12 移交 hark-cs，额度有限） | B 收件 |
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
 | `hark-liuzhijie` | Hark · 刘志杰账号 | S-101、S-501 | B 收件 |
@@ -53,7 +53,7 @@
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。
 
-新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 hark-cs 合入名册（每小时整点收件，8:00–23:00 北京时间）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
+新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 muse-tibo-cs 合入名册（每小时整点收件，8:00–23:00 北京时间）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
 
 ## 2. 统一标注
 
@@ -75,45 +75,45 @@ curl -s -X POST "<收件地址>/release?agent=<名字>&item=S-401"   # 放回
 - 先认领、后动手。认领成功那一刻就锁住，先到先得；被拒时返回里会列出还空着的事项和推荐的下一项，直接换一项认领即可。
 - 每人同时最多 **2 项**；**3 天**没有任何推送，锁自动放回（每次推送自动续期）。
 - 任务书在 `docs/tasks/`，开工前读 `docs/BRIEF.md`。
-- 标「保留」的事项要改共用文件，只由 hark-cs 做。
-- 不需要再为认领改 CLAIMS.md；hark-cs 每小时把认领板同步进去。若推送里改了 CLAIMS.md，也会按同一把锁检查。
-- 状态：`认领` → `进行` → `待合并` → `完成`（由 hark-cs 改为完成）。
-- **认领板数据以 `data/claims/*.jsonl` 为真相**（2026-11-10 起，委托人同意合入 zcode-cs 认领板数据化）：认领、派单、接口请求、报名、退回、决定都改对应的 JSONL 行（按 id 排序、键序固定，写法见 `docs/proposals/zcode-cs-claims-json.md`「以后智能体怎么新增一条数据」），改完同一提交里跑 `node tools/claims/gen.js` 重新生成 `CLAIMS.md` 与 `docs/{claims-archive,dispatch-archive,decisions}.md`；**这四个 MD 不手改**，`check_all` 里的 `check_claims` 会把 MD 与 JSONL 不一致判红。收件机 `board.py` / `claims_gate.py` 与每小时同步改为写 JSONL 是第二阶段（hark-cs 待做），在此之前它们仍读生成后的 `CLAIMS.md`。
+- 标「保留」的事项要改共用文件，只由 muse-tibo-cs 做。
+- 不需要再为认领改 CLAIMS.md；muse-tibo-cs 每小时把认领板同步进去。若推送里改了 CLAIMS.md，也会按同一把锁检查。
+- 状态：`认领` → `进行` → `待合并` → `完成`（由 muse-tibo-cs 改为完成）。
+- **认领板数据以 `data/claims/*.jsonl` 为真相**（2026-11-10 起，委托人同意合入 zcode-cs 认领板数据化）：认领、派单、接口请求、报名、退回、决定都改对应的 JSONL 行（按 id 排序、键序固定，写法见 `docs/proposals/zcode-cs-claims-json.md`「以后智能体怎么新增一条数据」），改完同一提交里跑 `node tools/claims/gen.js` 重新生成 `CLAIMS.md` 与 `docs/{claims-archive,dispatch-archive,decisions}.md`；**这四个 MD 不手改**，`check_all` 里的 `check_claims` 会把 MD 与 JSONL 不一致判红。收件机 `board.py` / `claims_gate.py` 与每小时同步改为写 JSONL 是第二阶段（集成人待做），在此之前它们仍读生成后的 `CLAIMS.md`。
 
 ### 3.1 活的大小
 CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、渲染，需较强模型与算力；小活：只读审查、资料核对、文字改写，不改代码或只加记录。委托人可按智能体能力限定可接范围（见名册）。
 
 ## 4. 边界（最重要）
 
-- **共用文件只由集成人修改**：`web/hzview.js`、`web/hzwest.html`、`web/core/seq.js`、`web/hzseq.js`、`web/hzsheet.js`、`.github/`、`tools/hz/check_all.js`、`tools/status/`、`docs/status.json`、`docs/status-blockers.md`（看板数据，hark-cs 每轮生成）。`web/status.html`（看板界面）归认领「看板界面优化」的智能体，按 `docs/tasks/status-ui.md` 只改它，hark-cs 只合并。需要新接口时，在 `CLAIMS.md` 的「接口请求」区提出，hark-cs 来加。
+- **共用文件只由集成人修改**：`web/hzview.js`、`web/hzwest.html`、`web/core/seq.js`、`web/hzseq.js`、`web/hzsheet.js`、`.github/`、`tools/hz/check_all.js`、`tools/status/`、`docs/status.json`、`docs/status-blockers.md`（看板数据，muse-tibo-cs 每轮生成）。`web/status.html`（看板界面）归认领「看板界面优化」的智能体，按 `docs/tasks/status-ui.md` 只改它，muse-tibo-cs 只合并。需要新接口时，在 `CLAIMS.md` 的「接口请求」区提出，muse-tibo-cs 来加。
 - **各自的东西写在自己的新文件里**：新图纸放 `web/sheets/<图号小写>.js`（例 `web/sheets/s201.js`），通过登记表挂进页面（参照 `web/hzatlas.js` 的旁路做法）；新检查放 `tools/hz/check_<名>.js`；文档放 `docs/`。
 - 不改别人认领范围内的文件；要改先在 CLAIMS 里说。
-- **接口合同**：`docs/hz-atlas-check.md` 第三节的 8 条接口，所有人共同遵守。要改其中任何一条，先在 CLAIMS「接口请求」区写明，等 hark-cs 回复。
+- **接口合同**：`docs/hz-atlas-check.md` 第三节的 8 条接口，所有人共同遵守。要改其中任何一条，先在 CLAIMS「接口请求」区写明，等 muse-tibo-cs 回复。
 - 不提交密钥、令牌、账号信息、大于 1 MB 的文件、生成的截图（截图放 PR 说明或外链）。
 
 ## 5. 验收
 
 - 每次提交必须通过 `node tools/hz/check_all.js`（应打印 `OK check_all N/N`）。
-- 新图纸附带自己的检查脚本，PR 里说明加进 check_all 的方式，由 hark-cs 接入。
+- 新图纸附带自己的检查脚本，PR 里说明加进 check_all 的方式，由 muse-tibo-cs 接入。
 - 改了画面的，PR / 提交说明里写清楚：看哪个链接、哪个 `#sheet=` / `#focus=`、预期看到什么。
 - 页面要求：一屏看完、核心信息同时可见、不穿模；镜头相关改动需附扫描结果（违反 0、卡住 0）。
 - **交付必附证据**（委托人 2026-11-09 定）：每次交付在提交说明或 `docs/audit/` 里附截图（外链或入库小图）或命令原样输出（至少 `OK check_all N/N` 与本图检查的最后一行）；没有证据的交付按未完成处理。
-- **同一办法失败两次就停**（委托人 2026-11-09 定）：同一做法连续失败两次，不再第三次重试，把现象、已试的两次和卡在哪写进 `CLAIMS.md`（接口请求或派单备注），等 hark-cs / 委托人定。
+- **同一办法失败两次就停**（委托人 2026-11-09 定）：同一做法连续失败两次，不再第三次重试，把现象、已试的两次和卡在哪写进 `CLAIMS.md`（接口请求或派单备注），等 muse-tibo-cs / 委托人定。
 - **长单要有回执与进度**（委托人 2026-11-09 定）：预计超过 1 小时的单，开工时先推一个 `[D-xx] 开工` 提交（写打算怎么做、预计多久）；之后约每小时推一次进度提交（哪怕只是 CLAIMS 备注），做完再推交付提交。
 - 线上：https://changrong996-droid.github.io/hzwest-atlas/ （main 推送后约 1 分钟更新）。
 
 ### 5.1 合并分档
 - **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、你本人的提案 `docs/proposals/<你的名字>-*.md`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
-- **人工合**：动了第 4 节共用文件、接口合同或别人的范围，由 hark-cs 审。
+- **人工合**：动了第 4 节共用文件、接口合同或别人的范围，由 muse-tibo-cs 审。
 
 
 机械验收（`tools/inbox/mchecks.py`，借自 relay）：非空改动、无冲突标记、无密钥、无提示词泄漏、每个提交带 `Agent:` 尾注。任一不过就不进 AUTO 档，收件报告写明哪条。
 
-超时提醒：派单待做超过 24 小时、你的分支里还没有 `[D-xx]` 提交，进门画面标 ⚠；超过 48 小时 hark-cs 改派或撤回。
+超时提醒：派单待做超过 24 小时、你的分支里还没有 `[D-xx]` 提交，进门画面标 ⚠；超过 48 小时 muse-tibo-cs 改派或撤回。
 ## 6. 两条提交途径
 
 ### A. 有 GitHub 账号
-fork `changrong996-droid/hzwest-atlas` → 按第 2 节建分支、提交 → 向 `main` 提 PR。CI 自动跑 check_all，hark-cs 审查后合并。
+fork `changrong996-droid/hzwest-atlas` → 按第 2 节建分支、提交 → 向 `main` 提 PR。CI 自动跑 check_all，muse-tibo-cs 审查后合并。
 
 ### B. 没有 GitHub 账号（收件仓库）
 ```bash
@@ -122,8 +122,8 @@ git checkout -b agent/<名字>/<事项>
 # 修改、提交（末尾加 Agent: <名字>）
 git push origin agent/<名字>/<事项>
 ```
-- 只能推送 `agent/<名字>/...` 分支，名字须已在名册里（报名用的 `agent/<名字>/join` 除外）；`main` 只读，由 hark-cs 从 GitHub 同步。
-- hark-cs 定时收件：拉取新分支 → 跑 check_all → 通过则合入 GitHub main，并在 `CHANGELOG.md` 记一行；不通过则把原因写回 `CLAIMS.md`。
+- 只能推送 `agent/<名字>/...` 分支，名字须已在名册里（报名用的 `agent/<名字>/join` 除外）；`main` 只读，由 muse-tibo-cs 从 GitHub 同步。
+- muse-tibo-cs 定时收件：拉取新分支 → 跑 check_all → 通过则合入 GitHub main，并在 `CHANGELOG.md` 记一行；不通过则把原因写回 `CLAIMS.md`。
 - **收件仓库有两台镜像（2026-11-11 起，轮流值班，免得一台跑满时长被平台冷却后整体停摆）**：
   - 镜像 A（test-5）：`https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech`
   - 镜像 B（test-4）：`https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech`
@@ -134,10 +134,10 @@ git push origin agent/<名字>/<事项>
   - 集成人工具：`tools/inbox/mirror.py`（status / rotate）、`tools/inbox/mirror_setup.sh <机器>`（装一台新镜像）、`tools/inbox/mirrors.txt`（镜像清单，GitHub Actions 的自动合并会逐台收件）。
 - 推送时收件机会跑 check_all（约 60 秒），期间每 10 秒回一行「check_all 运行中…」，看到「通过」即成功（11-11 修好：以前静默太久会被代理掐成 502，其实分支已到）。是否到达以 `git ls-remote origin` 为准。
 - 机器会自动休眠，第一次请求可能要等 10–30 秒唤醒；推送失败隔一分钟重试，或换另一台镜像。
-- 更简单的备选：把 `git format-patch origin/main` 生成的补丁交给用户转给 hark-cs。
+- 更简单的备选：把 `git format-patch origin/main` 生成的补丁交给用户转给 muse-tibo-cs。
 
-## 7. 集成人（hark-cs）的承诺
-- 2026-11-09 22:06 起（委托人批准）：绿档由 GitHub Actions 每小时自动合入。2026-11-12 起集成人为 **hark-cs**（原 hark-cs 移交）；替补集成人**待委托人指定**，指定前不设替补。任何时刻只一人在合。黄档集成人审过即可；红档只问委托人。
+## 7. 集成人（muse-tibo-cs）的承诺
+- 2026-11-09 22:06 起（委托人批准）：绿档由 GitHub Actions 每小时自动合入。2026-11-22 起集成人为 **muse-tibo-cs**（2026-11-12 起为 hark-cs，hark-cs 额度耗尽、委托人定移交）；替补集成人**待委托人指定**，指定前不设替补。任何时刻只一人在合。黄档集成人审过即可；红档只问委托人。
 - 收到的 PR / 收件分支，48 小时内给出合并或退回意见。
 - 合并保留原作者和 Agent 行；每次合并记 CHANGELOG。
 - 修改共用文件前，先对照第 4 节接口合同；要破坏某条会先在 CLAIMS 里公告。
