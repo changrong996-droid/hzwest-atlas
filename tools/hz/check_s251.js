@@ -120,10 +120,26 @@ let faceTxt = '';
       if (hit) fail(`t=${t} 汽车吊 ${c.unit} 压在 ${hit.a.key} 上`); }
     nLive += L.live.length; nCr += L.cranes.length; nSeg = Math.max(nSeg, L.face.length / 6); }
   if (nLive < 100) fail(`施工面抽样只有 ${nLive}`); if (P.model().units.some(u => u.hoist) && !nHo) fail('吊装单元在拼期间没有履带吊');
-  const made = []; const T = { BufferGeometry: function () { this.setAttribute = () => {}; this.setDrawRange = () => {}; }, BufferAttribute: function () {}, DynamicDrawUsage: 1,
-    LineBasicMaterial: function (o) { Object.assign(this, o); made.push(this); }, LineSegments: function (g, m) { this.geometry = g; this.material = m; } };
+  const made = [], insts = [];
+  const T = {
+    BufferGeometry: function () { this.attrs = {}; this.setAttribute = (n, a) => { this.attrs[n] = a; }; this.setDrawRange = () => {}; this.computeVertexNormals = () => { this.normalsComputed = true; }; },
+    BufferAttribute: function (a) { this.array = a; }, DynamicDrawUsage: 1, DoubleSide: 2,
+    LineBasicMaterial: function (o) { Object.assign(this, o); made.push(this); },
+    MeshBasicMaterial: function (o) { Object.assign(this, o); made.push(this); this.kind = 'ink'; },
+    MeshStandardMaterial: function (o) { Object.assign(this, o); made.push(this); this.kind = 'lit'; },
+    LineSegments: function (g, m) { this.geometry = g; this.material = m; },
+    InstancedMesh: function (g, m, cap) { this.geometry = g; this.material = m; this.cap = cap; this.count = 0; this.instanceMatrix = { array: new Float32Array(cap * 16), setUsage: () => {}, needsUpdate: false }; insts.push(this); }
+  };
   const plane = { normal: [0, 0, 1], constant: 0 }; MD.build({ add: () => {} }, HZ, T, { clip: [plane] });
   if (!made.length || made.some(m => !m.clippingPlanes || m.clippingPlanes[0] !== plane)) fail('opts.clip 未传到材质');
+  const tS = W[0] + 10; MD.key = null; MD.update(tS, [0, 50, 0]);
+  if (insts.length !== 2 || insts.some(im => !im.geometry.normalsComputed)) fail('B-5 吊车 InstancedMesh 未构建或未算法线');
+  if (MD.stats.insts !== MD.stats.cranes) fail(`B-5 实例数 ${MD.stats.insts} ≠ 吊车数 ${MD.stats.cranes}`);
+  G.__pv = { blend: 1 }; MD.update(tS, [0, 50, 0]);
+  if (!MD.lastLit || insts.some(im => im.material.kind !== 'lit')) fail('B-5 切实景未切换至 MeshStandardMaterial');
+  G.__pv = { blend: 0 }; MD.update(tS, [0, 50, 0]);
+  if (MD.lastLit || insts.some(im => im.material.kind !== 'ink')) fail('B-5 切墨线未恢复纸白材质');
+  delete G.__pv;
   MD.build(null, HZ);
   const ms = [], re = []; let key = null; for (let f = 0; f < 2400; f++) { const t = W[0] + 8 + f / 60, k = Math.round(t * 8), t0 = process.hrtime.bigint(); MD.update(t, [0, 50, 0]); const d = Number(process.hrtime.bigint() - t0) / 1e6; if (f > 30) { ms.push(d); if (k !== key) re.push(d); } key = k; }
   re.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length, med = re[re.length >> 1];   // 同 check_actors：60 帧/秒、1 天/秒播放
