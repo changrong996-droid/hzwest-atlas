@@ -86,6 +86,11 @@ const onTop = (L, x, y, z) => Math.abs(y) <= 0.03 || L.some(({ b }) => x >= b.mi
 const ext = (hx, hz, yaw) => { const c = Math.abs(Math.cos(yaw)), s = Math.abs(Math.sin(yaw)); return [hx * c + hz * s, hx * s + hz * c]; };
 const T = []; for (let t = 0.4; t < HZ.P.OPEN; t += 9.7) T.push(t); for (const k of ['found', 'frameS', 'deckS', 'trackS', 'col24N', 'mast', 'asm1', 'holes', 'clad', 'tod', 'ym']) T.push(HZ.K[k].start + HZ.K[k].dur * 0.4 + 0.45);
 let nF = 0, nV = 0, nC = 0, busyT = 0, emptyBusy = [];
+const seenVeh = new Set();
+for (const k of ['drill', 'pump', 'dump', 'crawler']) {
+  const V = M.VEH[k];
+  if (!V || !V.Phi || !V.Phi.length || !V.CLhi || !V.CLhi.length || !V.Lhi || !V.Lhi.length) fail(`B-6 车型 ${k} 缺少双模式几何原型`);
+}
 for (const t of T) { const P = M.plan(HZ, M.I, t), L = live(t), occ = [];
   const busy = HZ.acts.some(a => a.kind === 'build' && a.parts.some(p => !p.grp && !p.cells && p.geo && (s => s >= 0 && s < 1)(stOf(p, t))));
   const hd = (t % 1) * 24; if (busy && hd >= 7 && hd < 19) { busyT++; if (!P.figs.length) emptyBusy.push(t.toFixed(1)); }
@@ -95,10 +100,11 @@ for (const t of T) { const P = M.plan(HZ, M.I, t), L = live(t), occ = [];
   for (const v of P.vehs) { const V = M.VEH[v.kind], [ex, ez] = ext(V.hx, V.hz, v.yaw), bx = [v.x - ex, v.y + 0.02, v.z - ez, v.x + ex, v.y + V.h, v.z + ez], h = hit(L, ...bx);
     if (h) fail(`t=${t.toFixed(2)} ${v.kind} 穿模 撞 ${h.a.key}`);
     const c = Math.cos(v.yaw), s = Math.sin(v.yaw); for (const [u, w] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) { const x = v.x + u * V.hx * 0.9 * c - w * V.hz * 0.9 * s, z = v.z + u * V.hx * 0.9 * s + w * V.hz * 0.9 * c; if (!onTop(L, x, v.y, z)) fail(`t=${t.toFixed(2)} ${v.kind} 悬空 (${x.toFixed(1)},${v.y},${z.toFixed(1)})`); }
-    occ.push(bx); nV++; }
+    seenVeh.add(v.kind); occ.push(bx); nV++; }
   for (const k of P.cranes) { const V = M.VEH.crawler, [ex, ez] = ext(V.hx, V.hz, k.yaw), h = hit(L, k.x - ex, k.y + 0.02, k.z - ez, k.x + ex, k.y + V.h, k.z + ez); if (h) fail(`t=${t.toFixed(2)} 履带吊底盘穿模 撞 ${h.a.key}`); if (!(k.tipY > k.hook)) fail('吊钩高于臂头'); nC++; }
   for (let i = 0; i < occ.length; i++) for (let j = i + 1; j < occ.length; j++) { const a = occ[i], b = occ[j]; if (a[3] > b[0] && a[0] < b[3] && a[4] > b[1] && a[1] < b[4] && a[5] > b[2] && a[2] < b[5]) fail(`t=${t.toFixed(2)} 人 / 车互相重叠`); } }
 if (!(nF > 300 && nV > 20)) fail(`抽样里人 ${nF}、车 ${nV} 太少`);
+for (const k of ['drill', 'pump', 'dump']) if (!seenVeh.has(k)) fail(`B-6 全工期抽样中未出现新增车型 ${k}（已出现：${[...seenVeh].join(',')}）`);
 if (emptyBusy.length > busyT * 0.1) fail(`白天有在建工序却没人的时刻过多：${emptyBusy.slice(0, 8).join(', ')}`);
 if (M.plan(HZ, M.I, HZ.P.OPEN + 2.5).figs.length) fail('开通后还有工人');
 // 强度：人数随在建构件数变（取 found 段与 trackS 段比较不应恒等）
