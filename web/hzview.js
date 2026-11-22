@@ -310,11 +310,16 @@
       const o = new THREE.LineSegments(g, m); o.frustumCulled = false; o.visible = false; return o; })(); scene.add(STR);
 
     // ---- 地面（实景）+ 城市街区（实景网格 / 墨线轮廓同源）----
-    const GU = { uT: U.uT };
+    // B-8：动态基坑开挖洞口（S-101 实时挖开真实下凹基坑，非 S-101 时 uPitCount = 0 保持地面完整）
+    const PIT_MAX = 24, PIT_BOXES = Array.from({ length: PIT_MAX }, () => new THREE.Vector4());
+    const GU = { uT: U.uT, uPitBoxes: { value: PIT_BOXES }, uPitCount: { value: 0 } };
+    S.setPitCutout = boxes => { const n = Math.min(PIT_MAX, boxes ? boxes.length : 0); GU.uPitCount.value = n;
+      for (let i = 0; i < n; i++) { const b = boxes[i]; PIT_BOXES[i].set(b[0], b[1], b[2], b[3]); } };
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 1, 1).rotateX(-Math.PI / 2), (() => { const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
       m.onBeforeCompile = sh => { Object.assign(sh.uniforms, GU); sh.vertexShader = 'varying vec3 vWp;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-        sh.fragmentShader = 'varying vec3 vWp; uniform float uT;\nfloat gh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }\nfloat gn(vec2 p){ vec2 i = floor(p), f = fract(p), u = f*f*(3.0-2.0*f); return mix(mix(gh(i), gh(i+vec2(1,0)), u.x), mix(gh(i+vec2(0,1)), gh(i+vec2(1,1)), u.x), u.y); }\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+        sh.fragmentShader = 'varying vec3 vWp; uniform float uT, uPitCount; uniform vec4 uPitBoxes[24];\nfloat gh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }\nfloat gn(vec2 p){ vec2 i = floor(p), f = fract(p), u = f*f*(3.0-2.0*f); return mix(mix(gh(i), gh(i+vec2(1,0)), u.x), mix(gh(i+vec2(0,1)), gh(i+vec2(1,1)), u.x), u.y); }\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
           vec2 w = vWp.xz; if (abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;   /* set2e：地铁层建成（metro 192.7+43.8 天）才开洞，之前洞下是虚空 */
+          if (uPitCount > 0.5) { for (int i = 0; i < 24; i++) { if (float(i) >= uPitCount) break; vec4 pb = uPitBoxes[i]; if (w.x > pb.x && w.x < pb.y && w.y > pb.z && w.y < pb.w) discard; } }
           float n = gn(w * 0.012) * 0.6 + gn(w * 0.05) * 0.4, nf = gn(w * 0.004);
           vec3 field = mix(vec3(0.20, 0.27, 0.13), vec3(0.34, 0.33, 0.20), nf) * (0.8 + 0.3 * n);
           vec3 city = mix(vec3(0.33, 0.33, 0.32), vec3(0.42, 0.41, 0.38), n);
@@ -329,14 +334,15 @@
       return m; })()); ground.position.y = -0.04; ground.receiveShadow = true; scene.add(ground);
     // B-10：墨线模式地面基底（柔和暖灰纸面区分天地层次 + 站区硬化基底 + 细密坐标网格，让 S-301 等低视角墩柱落地关系一目了然）
     const inkGround = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 1, 1).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
-      uniforms: { uT: U.uT, uPaper: U.uPaper, uInk: U.uInk, uCut: U.uCut, uCam: U.uCam },
+      uniforms: { uT: U.uT, uPaper: U.uPaper, uInk: U.uInk, uCut: U.uCut, uCam: U.uCam, uPitBoxes: GU.uPitBoxes, uPitCount: GU.uPitCount },
       polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
       vertexShader: 'varying vec3 vWp; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vWp = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: `uniform float uT, uCut; uniform vec3 uPaper, uInk, uCam; varying vec3 vWp;
+      fragmentShader: `uniform float uT, uCut, uPitCount; uniform vec4 uPitBoxes[24]; uniform vec3 uPaper, uInk, uCam; varying vec3 vWp;
         void main() {
           if (vWp.x < uCut) discard;
           vec2 w = vWp.xz;
           if (abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;
+          if (uPitCount > 0.5) { for (int i = 0; i < 24; i++) { if (float(i) >= uPitCount) break; vec4 pb = uPitBoxes[i]; if (w.x > pb.x && w.x < pb.y && w.y > pb.z && w.y < pb.w) discard; } }
           float d = distance(vWp, uCam);
           float hFade = 1.0 - smoothstep(650.0, 2600.0, d);
           float pad = 1.0 - smoothstep(0.0, 18.0, max(abs(w.x) - 255.0, abs(w.y) - 180.0));
