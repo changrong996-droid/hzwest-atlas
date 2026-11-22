@@ -89,13 +89,16 @@
     update(t, cam) { if (!this.HZ) return 0;
       // D-20 ⑤：窗外（t > SHOW[1]）全部隐藏一次后直接返回，不再算线段
       if (t > SHOW[1] || t < SHOW[0]) { if (!this.off) { this.off = true; this.key = null; if (this.G) for (const k in this.G) { this.G[k].o.visible = false; this.G[k].o.geometry.setDrawRange(0, 0); } if (this.fill) this.fill.visible = false; this.stats.pit = this.stats.cube = this.stats.face = 0; } return 0; }
-      this.off = false; const key = Math.round(t * 8); if (key === this.key) return this.stats.pit + this.stats.cube;
+      const sheet = ROOT.__pv && ROOT.__pv.sheet ? ROOT.__pv.sheet : '';
+      const showXray = !sheet || sheet === 'S-101';
+      this.off = false; const key = Math.round(t * 8) + ':' + (showXray ? 1 : 0); if (key === this.key) return this.stats.pit + this.stats.cube;
       this.key = key; const L = lines(this.HZ, t, this.L), fade = 1 - Math.max(0, Math.min(1, (t - (SHOW[1] - 30)) / 30));
       this.stats.pit = L.pit.length / 6; this.stats.cube = L.cube.length / 6; this.stats.face = L.face.length / 6; this.stats.ex = L.ex; this.stats.a = L.a;
       if (this.G) { for (const k of ['pit', 'cube', 'ghost', 'face', 'built']) { const g = this.G[k], arr = L[k], n = Math.min(arr.length, MAXSEG * 6), B = g.buf;
+          const isXray = k === 'pit' || k === 'face' || k === 'built';
           for (let i = 0; i < n; i++) B[i] = arr[i];   /* build 时一次分配的缓冲，原地写，不 slice 新数组 */
           g.o.geometry.setDrawRange(0, n / 3); if (n) { g.at.needsUpdate = true; g.at.updateRange && (g.at.updateRange.offset = 0, g.at.updateRange.count = n); }
-          if (g.ld && n) { for (let i = 0; i < n; i += 6) { g.ld[i / 3] = 0; g.ld[i / 3 + 1] = Math.hypot(B[i + 3] - B[i], B[i + 4] - B[i + 1], B[i + 5] - B[i + 2]); } g.la.needsUpdate = true; }   /* 线段虚线距离（同 LineSegments.computeLineDistances，不新建属性） */ g.mat.opacity = g.op * fade; g.o.visible = n > 0 && fade > 0; }
+          if (g.ld && n) { for (let i = 0; i < n; i += 6) { g.ld[i / 3] = 0; g.ld[i / 3 + 1] = Math.hypot(B[i + 3] - B[i], B[i + 4] - B[i + 1], B[i + 5] - B[i + 2]); } g.la.needsUpdate = true; }   /* 线段虚线距离（同 LineSegments.computeLineDistances，不新建属性） */ g.mat.opacity = g.op * fade; g.o.visible = n > 0 && fade > 0 && (!isXray || showXray); }
         if (this.fill) { const a = L.a; this.fill.visible = a > 0.5 && fade > 0; if (this.fill.visible) { this.fill.scale.set(a, a, a); this.fill.position.set(L.A.x, a / 2, L.A.zS - a / 2); this.fill.material.opacity = 0.5 * fade; } } }
       return this.stats.pit + this.stats.cube; },
   };
