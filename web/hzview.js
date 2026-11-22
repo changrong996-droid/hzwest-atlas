@@ -327,6 +327,34 @@
           vec3 sc = mix(mix(field, dirt, dig), fin, done);
           diffuseColor.rgb = mix(base, sc, site);`); };
       return m; })()); ground.position.y = -0.04; ground.receiveShadow = true; scene.add(ground);
+    // B-10：墨线模式地面基底（柔和暖灰纸面区分天地层次 + 站区硬化基底 + 细密坐标网格，让 S-301 等低视角墩柱落地关系一目了然）
+    const inkGround = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 1, 1).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
+      uniforms: { uT: U.uT, uPaper: U.uPaper, uInk: U.uInk, uCut: U.uCut, uCam: U.uCam },
+      polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
+      vertexShader: 'varying vec3 vWp; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vWp = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+      fragmentShader: `uniform float uT, uCut; uniform vec3 uPaper, uInk, uCam; varying vec3 vWp;
+        void main() {
+          if (vWp.x < uCut) discard;
+          vec2 w = vWp.xz;
+          if (abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;
+          float d = distance(vWp, uCam);
+          float hFade = 1.0 - smoothstep(650.0, 2600.0, d);
+          float pad = 1.0 - smoothstep(0.0, 18.0, max(abs(w.x) - 255.0, abs(w.y) - 180.0));
+          float site = 1.0 - smoothstep(0.0, 45.0, max(abs(w.x) - 720.0, abs(w.y) - 300.0));
+          vec3 col = mix(uPaper, mix(uPaper, uInk, 0.045), hFade * 0.75);
+          col = mix(col, mix(uPaper, uInk, 0.075), site * hFade * 0.65);
+          col = mix(col, mix(uPaper, uInk, 0.105), pad * hFade * 0.72);
+          // 站区 25 m / 100 m 细密墨线基准格（近景清晰、远景柔化防摩尔纹）
+          vec2 g25 = abs(fract(w / 25.0 + 0.5) - 0.5) / max(fwidth(w / 25.0), vec2(1e-4));
+          float l25 = 1.0 - smoothstep(0.5, 1.5, min(g25.x, g25.y));
+          vec2 g100 = abs(fract(w / 100.0 + 0.5) - 0.5) / max(fwidth(w / 100.0), vec2(1e-4));
+          float l100 = 1.0 - smoothstep(0.6, 1.6, min(g100.x, g100.y));
+          float gFade = 1.0 - smoothstep(280.0, 1300.0, d);
+          col = mix(col, uInk, (l25 * 0.095 * site + l100 * 0.14) * gFade);
+          gl_FragColor = vec4(col, 1.0);
+        }`
+    }));
+    inkGround.position.y = -0.06; inkGround.visible = false; scene.add(inkGround);
     // 城市 + 背景墨线（街区轮廓、铁路走廊、绘图网格、施工围挡、材料堆场边线）：aW = [透明度, 出现日, 消失日]
     const CTX = (() => { const r = SEQ.rng(20220922), pos = [], nor = [], colA = [], lp = [], lw = [];
       const L = (a, b, al, t0, t1) => { lp.push(...a, ...b); lw.push(al, t0 == null ? -1e9 : t0, t1 == null ? 1e9 : t1, al, t0 == null ? -1e9 : t0, t1 == null ? 1e9 : t1); };
@@ -337,9 +365,10 @@
       // 铁路走廊（站外延伸）：20 线 × 两端
       for (const yk of ['S', 'N']) for (const tz of HZ.tracks(HZ.YARDS[yk])) for (const s of [-1, 1]) { L([s * P.apX, 0.3, tz], [s * 4200, 0.3, tz], 0.3); }
       for (const s of [-1, 1]) for (const z of [-150, 150]) L([s * 700, 0, z], [s * 4200, 0, z * 0.6], 0.14);
-      // 绘图网格（地面，50 m）
-      for (let x = -1500; x <= 1500; x += 50) L([x, 0, -900], [x, 0, 900], x % 250 ? 0.05 : 0.1);
-      for (let z = -900; z <= 900; z += 50) L([-1500, 0, z], [1500, 0, z], z % 250 ? 0.05 : 0.1);
+      // 绘图网格（地面，50 m）+ 站区基座外框参照线（B-10）
+      for (let x = -1500; x <= 1500; x += 50) L([x, 0, -900], [x, 0, 900], x % 250 ? 0.07 : 0.14);
+      for (let z = -900; z <= 900; z += 50) L([-1500, 0, z], [1500, 0, z], z % 250 ? 0.07 : 0.14);
+      for (const [a, b] of [[[-255, -180], [255, -180]], [[255, -180], [255, 180]], [[255, 180], [-255, 180]], [[-255, 180], [-255, -180]]]) L([a[0], 0.05, a[1]], [b[0], 0.05, b[1]], 0.28);
       // 施工围挡（开工 → 开通前）：虚线
       const fence = [[-720, -300], [720, -300], [720, 300], [-720, 300]]; for (let k = 0; k < 4; k++) { const a = fence[k], b = fence[(k + 1) % 4], n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 16); for (let i = 0; i < n; i += 2) { const f0 = i / n, f1 = (i + 1) / n; L([a[0] + (b[0] - a[0]) * f0, 2.2, a[1] + (b[1] - a[1]) * f0], [a[0] + (b[0] - a[0]) * f1, 2.2, a[1] + (b[1] - a[1]) * f1], 0.55, 0, TL.OPEN - 30); } }
       // 施工便道（环形）
@@ -1072,7 +1101,7 @@
     // ---------------- 渲染 ----------------
     const paperQuad = (() => { const m = new THREE.ShaderMaterial({ uniforms: { uA: { value: 0 }, uPaper: U.uPaper }, transparent: true, depthTest: false, depthWrite: false, vertexShader: 'void main(){ gl_Position = vec4(position.xy * 2.0, 0.0, 1.0); }', fragmentShader: 'uniform float uA; uniform vec3 uPaper; void main(){ gl_FragColor = vec4(uPaper, uA); }' });
       const q = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), m); q.frustumCulled = false; const sc = new THREE.Scene(); sc.add(q); return { sc, m }; })();
-    const LITONLY = [LOOK.sky, MTN, ground, CTX.city, sun, hemi], INKONLY = [CTX.lines];
+    const LITONLY = [LOOK.sky, MTN, ground, CTX.city, sun, hemi], INKONLY = [CTX.lines, inkGround];
     const postOpts = () => { const Pp = Object.assign({}, T.post); return Object.assign(Pp, { sd: sunDir, sunC: T.sun, interior: false, exp: Pp.exp * look.exp, sat: Pp.sat * look.sat, warm: Pp.warm.map(v => 1 + (v - 1) * look.warm), ao: true, vol: 0, dust: 0, fogA: 0.00012, fogH: 140, mistA: 0, god: Pp.god * 0.7, bloom: Pp.bloom * 1.1 }); };
     let lastNow = performance.now();
     const GL2 = (() => { const g = renderer.getContext(); return typeof WebGL2RenderingContext !== 'undefined' && g instanceof WebGL2RenderingContext && !hp.has('nofence') ? g : null; })(), FEN = [];

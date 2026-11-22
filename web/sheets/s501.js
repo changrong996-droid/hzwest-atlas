@@ -245,8 +245,8 @@
     big: t => big(G.HZ, t),
     draw, parts,
     // 镜头主体（tools/hz/check_cams.js 读）：开通前两周以前用默认；开通时刻的主体是整座车站与首趟列车所在股道
-    // D-38 图纸范围：整片屋盖工序进范围（隐藏模式下「站房屋盖」盒只认到 2 块合龙段会被当碎片去掉）；其余仍按 parts 盒认件
-    get scope() { const K = G.HZ && G.HZ.K || {}; return { keys: ['mast', 'asm1', 'asm2', 'asm3', 'merge', 'head', 'sky', 'clad', 'pv', 'ring'].filter(k => K[k]) }; },
+    // B-2 + D-38 图纸范围：包含全站承重下部结构（基础/承轨层/墩柱/站台/雨棚/候车层/屋盖/云门/上盖），消除 S-501 底座腾空及距开通 12 天突兀弹出
+    get scope() { const K = G.HZ && G.HZ.K || {}; return { keys: ['found', 'frameS', 'frameN', 'mezzS', 'mezzN', 'pierS', 'pierN', 'deckS', 'deckN', 'deckapS', 'deckapN', 'platS', 'platN', 'canopyS', 'canopyN', 'col24S', 'col24N', 'floorS', 'floorN', 'mast', 'asm1', 'asm2', 'asm3', 'merge', 'head', 'sky', 'clad', 'pv', 'ring', 'trackS', 'trackN', 'ymf', 'ym', 'ymc', 'tod', 'ycrane'].filter(k => K[k]) }; },
     subject: t => t < (G.HZ ? G.HZ.P.OPEN : 1101) - 14 ? null : ['ym', 'ymc', 'tod', 'clad', 'sky', 'ring', 'platS', 'platN', 'canopyS', 'canopyN', 'trackS', 'trackN'],
     // 镜头：见上方 camKeys（开通段由首趟列车位置推算）
     get cam() { return camKeys(G.HZ); },
