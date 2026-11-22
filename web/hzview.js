@@ -199,8 +199,8 @@
       mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, U);
         sh.vertexShader = VDEF + sh.vertexShader.replace('#include <beginnormal_vertex>', 'hzCalc();\nvec3 objectNormal = mat3(hzM) * normal;').replace('#include <begin_vertex>', 'vec3 transformed = hzP;');
         sh.fragmentShader = PVGLSL + sh.fragmentShader
-          .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = hzRel(diffuseColor.rgb, vec3(0.86, 0.85, 0.82));\nfloat hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVA(vWq.xz) * step(mix(175.0, -170.0, uPV), vWq.z); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 0.75; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } vec2 sd = abs(fract(vWq.xz / vec2(3.5, 1.75)) - 0.5); float ln = 1.0 - smoothstep(0.0, fwidth(vWq.x / 3.5) * 1.5, 0.5 - sd.x); diffuseColor.rgb *= 1.0 - 0.06 * ln; vec2 pc = abs(fract(vWq.xz / vec2(2.0, 1.0)) - 0.5); float pl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.0) * 1.2, 0.5 - pc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z) * 1.2, 0.5 - pc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, uPVs > 0.5 ? vec3(0.07, 0.12, 0.26) * (1.0 - 0.3 * pl) + vec3(0.30) * pl : vec3(0.16, 0.26, 0.48) * (1.0 - 0.35 * pl) + vec3(0.12) * pl, hzPV); }\nif (vM.w > 1.5) { vec2 gc = abs(fract(vWq.xz / vec2(2.4, 2.4)) - 0.5); float gl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.4) * 1.3, 0.5 - gc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z / 2.4) * 1.3, 0.5 - gc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.75), gl * 0.6); }')
-          .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = mix(vM.x, 0.18, hzPV);').replace('#include <metalnessmap_fragment>', 'float metalnessFactor = mix(vM.y, 0.6, hzPV);')
+          .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = hzRel(diffuseColor.rgb, vec3(0.86, 0.85, 0.82));\nif (vWq.y < -0.5) { float ugD = clamp((-vWq.y - 0.5) / 9.0, 0.0, 1.0); float ugW = max(smoothstep(8.2, 13.4, abs(vWq.z)), smoothstep(182.0, 200.0, abs(vWq.x))); diffuseColor.rgb *= (1.0 - 0.26 * ugD) * (1.0 - 0.18 * ugW); vec2 ugG = abs(fract(vWq.xz / vec2(12.0, 6.0)) - 0.5); float ugL = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 12.0) * 1.4, 0.5 - ugG.x), 1.0 - smoothstep(0.0, fwidth(vWq.z / 6.0) * 1.4, 0.5 - ugG.y)); diffuseColor.rgb *= 1.0 - 0.09 * ugL * smoothstep(-7.5, -8.8, vWq.y); }\nfloat hzPV = 0.0; if (vM.w > 0.5 && vM.w < 1.5) { hzPV = hzPVA(vWq.xz) * step(mix(175.0, -170.0, uPV), vWq.z); if (uPVs > 0.5) { float sc = uPVs < 1.5 ? vWq.z / 6.0 : uPVs < 2.5 ? vWq.x / 6.0 : length(vWq.xz / vec2(' + PP.roofA.toFixed(1) + ', ' + PP.roofB.toFixed(1) + ')) * 24.0; float fs = abs(fract(sc) - 0.5), aw = fwidth(sc) * 0.75; hzPV *= 1.0 - smoothstep(0.31 - aw, 0.31 + aw, fs); } vec2 sd = abs(fract(vWq.xz / vec2(3.5, 1.75)) - 0.5); float ln = 1.0 - smoothstep(0.0, fwidth(vWq.x / 3.5) * 1.5, 0.5 - sd.x); diffuseColor.rgb *= 1.0 - 0.06 * ln; vec2 pc = abs(fract(vWq.xz / vec2(2.0, 1.0)) - 0.5); float pl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.0) * 1.2, 0.5 - pc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z) * 1.2, 0.5 - pc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, uPVs > 0.5 ? vec3(0.07, 0.12, 0.26) * (1.0 - 0.3 * pl) + vec3(0.30) * pl : vec3(0.16, 0.26, 0.48) * (1.0 - 0.35 * pl) + vec3(0.12) * pl, hzPV); }\nif (vM.w > 1.5) { vec2 gc = abs(fract(vWq.xz / vec2(2.4, 2.4)) - 0.5); float gl = max(1.0 - smoothstep(0.0, fwidth(vWq.x / 2.4) * 1.3, 0.5 - gc.x), 1.0 - smoothstep(0.0, fwidth(vWq.z / 2.4) * 1.3, 0.5 - gc.y)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.75), gl * 0.6); }')
+          .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = mix(vM.x, 0.18, hzPV); if (vWq.y < -0.5) roughnessFactor = max(roughnessFactor, 0.92);').replace('#include <metalnessmap_fragment>', 'float metalnessFactor = mix(vM.y, 0.6, hzPV);')
           .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nfloat hzWv = uWave > 0.0 ? hzSm(0.0, 30.0, uWave - length(vWq.xz)) : 1.0; totalEmissiveRadiance += uGlowCol * vGlow * (0.35 + 0.65 * vGlow) + diffuseColor.rgb * uLightCol * vM.z * uLights * hzWv; if (vM.w > 0.5 && vM.w < 1.5) totalEmissiveRadiance += diffuseColor.rgb * uRoofLift * (1.0 - hzPV);'); };
       mat.customProgramCacheKey = () => 'hz-std'; return mat; }
     function patchDepth(mat) { mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, U); sh.vertexShader = VDEF + sh.vertexShader.replace('#include <begin_vertex>', 'hzCalc();\nvec3 transformed = hzP;'); }; mat.customProgramCacheKey = () => 'hz-depth'; return mat; }
@@ -312,13 +312,13 @@
     // ---- 地面（实景）+ 城市街区（实景网格 / 墨线轮廓同源）----
     // B-8：动态基坑开挖洞口（S-101 实时挖开真实下凹基坑，非 S-101 时 uPitCount = 0 保持地面完整）
     const PIT_MAX = 24, PIT_BOXES = Array.from({ length: PIT_MAX }, () => new THREE.Vector4());
-    const GU = { uT: U.uT, uPitBoxes: { value: PIT_BOXES }, uPitCount: { value: 0 } };
+    const GU = { uT: U.uT, uPitBoxes: { value: PIT_BOXES }, uPitCount: { value: 0 }, uMetroHole: { value: 1 } };
     S.setPitCutout = boxes => { const n = Math.min(PIT_MAX, boxes ? boxes.length : 0); GU.uPitCount.value = n;
       for (let i = 0; i < n; i++) { const b = boxes[i]; PIT_BOXES[i].set(b[0], b[1], b[2], b[3]); } };
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 1, 1).rotateX(-Math.PI / 2), (() => { const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
       m.onBeforeCompile = sh => { Object.assign(sh.uniforms, GU); sh.vertexShader = 'varying vec3 vWp;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-        sh.fragmentShader = 'varying vec3 vWp; uniform float uT, uPitCount; uniform vec4 uPitBoxes[24];\nfloat gh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }\nfloat gn(vec2 p){ vec2 i = floor(p), f = fract(p), u = f*f*(3.0-2.0*f); return mix(mix(gh(i), gh(i+vec2(1,0)), u.x), mix(gh(i+vec2(0,1)), gh(i+vec2(1,1)), u.x), u.y); }\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-          vec2 w = vWp.xz; if (abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;   /* set2e：地铁层建成（metro 192.7+43.8 天）才开洞，之前洞下是虚空 */
+        sh.fragmentShader = 'varying vec3 vWp; uniform float uT, uPitCount, uMetroHole; uniform vec4 uPitBoxes[24];\nfloat gh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }\nfloat gn(vec2 p){ vec2 i = floor(p), f = fract(p), u = f*f*(3.0-2.0*f); return mix(mix(gh(i), gh(i+vec2(1,0)), u.x), mix(gh(i+vec2(0,1)), gh(i+vec2(1,1)), u.x), u.y); }\n' + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+          vec2 w = vWp.xz; if (uMetroHole > 0.5 && abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;   /* B-13：仅当地下地铁槽构件在场可见时才挖开地表，避免分图隐藏地铁槽时露出底下天空成亮米白条 */
           if (uPitCount > 0.5) { for (int i = 0; i < 24; i++) { if (float(i) >= uPitCount) break; vec4 pb = uPitBoxes[i]; if (w.x > pb.x && w.x < pb.y && w.y > pb.z && w.y < pb.w) discard; } }
           float n = gn(w * 0.012) * 0.6 + gn(w * 0.05) * 0.4, nf = gn(w * 0.004);
           vec3 field = mix(vec3(0.20, 0.27, 0.13), vec3(0.34, 0.33, 0.20), nf) * (0.8 + 0.3 * n);
@@ -334,14 +334,14 @@
       return m; })()); ground.position.y = -0.04; ground.receiveShadow = true; scene.add(ground);
     // B-10：墨线模式地面基底（柔和暖灰纸面区分天地层次 + 站区硬化基底 + 细密坐标网格，让 S-301 等低视角墩柱落地关系一目了然）
     const inkGround = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 1, 1).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
-      uniforms: { uT: U.uT, uPaper: U.uPaper, uInk: U.uInk, uCut: U.uCut, uCam: U.uCam, uPitBoxes: GU.uPitBoxes, uPitCount: GU.uPitCount },
+      uniforms: { uT: U.uT, uPaper: U.uPaper, uInk: U.uInk, uCut: U.uCut, uCam: U.uCam, uPitBoxes: GU.uPitBoxes, uPitCount: GU.uPitCount, uMetroHole: GU.uMetroHole },
       polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
       vertexShader: 'varying vec3 vWp; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vWp = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-      fragmentShader: `uniform float uT, uCut, uPitCount; uniform vec4 uPitBoxes[24]; uniform vec3 uPaper, uInk, uCam; varying vec3 vWp;
+      fragmentShader: `uniform float uT, uCut, uPitCount, uMetroHole; uniform vec4 uPitBoxes[24]; uniform vec3 uPaper, uInk, uCam; varying vec3 vWp;
         void main() {
           if (vWp.x < uCut) discard;
           vec2 w = vWp.xz;
-          if (abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;
+          if (uMetroHole > 0.5 && abs(w.x) < 200.0 && abs(w.y) < 13.2 && uT > 236.6) discard;
           if (uPitCount > 0.5) { for (int i = 0; i < 24; i++) { if (float(i) >= uPitCount) break; vec4 pb = uPitBoxes[i]; if (w.x > pb.x && w.x < pb.y && w.y > pb.z && w.y < pb.w) discard; } }
           float d = distance(vWp, uCam);
           float hFade = 1.0 - smoothstep(650.0, 2600.0, d);
@@ -398,16 +398,23 @@
       const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, clippingPlanes: [CUTP] })); lines.frustumCulled = false; lines.renderOrder = 3;
       return { mesh, lines, mg, lg }; })();
     scene.add(DYN.mesh, DYN.lines);
-    // 工人（set1：实例化小人形，不再是 2 px 点；随距离放大到可读，近景 = 真实 1.75 m）
+    // 工人（B-7 精修：工装靴接地 y=0、藏青工装裤、腰带、橙色反光背心+双道反光条、双臂、帽檐安全帽；近景 = 真实 1.78 m）
     const WK = (() => { const N = 2400, G0 = new HZ.GB('conc'); G0.ink = false;
-      G0.box(-0.17, 0, -0.1, -0.03, 0.82, 0.1, [0.20, 0.22, 0.30], false); G0.box(0.03, 0, -0.1, 0.17, 0.82, 0.1, [0.20, 0.22, 0.30], false);   // 腿
-      G0.box(-0.24, 0.82, -0.13, 0.24, 1.45, 0.13, [0.95, 0.55, 0.12], false); G0.box(-0.3, 0.9, -0.08, -0.24, 1.38, 0.08, [0.95, 0.55, 0.12], false); G0.box(0.24, 0.9, -0.08, 0.3, 1.38, 0.08, [0.95, 0.55, 0.12], false);   // 躯干（反光背心）+ 臂
-      G0.box(-0.11, 1.47, -0.11, 0.11, 1.66, 0.11, [0.86, 0.70, 0.58], false); G0.box(-0.15, 1.64, -0.15, 0.15, 1.76, 0.15, [0.98, 0.98, 0.95], false);   // 头 + 安全帽
+      const boot = [0.14, 0.13, 0.12], pant = [0.18, 0.22, 0.32], vest = [0.95, 0.52, 0.10], band = [0.94, 0.95, 0.62], slv = [0.24, 0.28, 0.36], skin = [0.86, 0.70, 0.58], hat = [0.98, 0.86, 0.14];
+      G0.box(-0.16, 0, -0.09, -0.04, 0.14, 0.14, boot, false); G0.box(0.04, 0, -0.09, 0.16, 0.14, 0.14, boot, false);   // 工装靴（接地 y=0）
+      G0.box(-0.15, 0.14, -0.08, -0.04, 0.83, 0.08, pant, false); G0.box(0.04, 0.14, -0.08, 0.15, 0.83, 0.08, pant, false);   // 双腿
+      G0.box(-0.19, 0.82, -0.10, 0.19, 0.89, 0.10, boot, false);   // 腰带
+      G0.box(-0.21, 0.89, -0.11, 0.21, 1.44, 0.11, vest, false);   // 反光背心躯干
+      G0.box(-0.22, 1.00, -0.12, 0.22, 1.06, 0.12, band, false); G0.box(-0.22, 1.22, -0.12, 0.22, 1.28, 0.12, band, false);   // 双道高亮反光条
+      G0.box(-0.29, 1.08, -0.07, -0.21, 1.41, 0.07, slv, false); G0.box(0.21, 1.08, -0.07, 0.29, 1.41, 0.07, slv, false);   // 上臂工装袖
+      G0.box(-0.28, 0.84, -0.06, -0.21, 1.08, 0.06, skin, false); G0.box(0.21, 0.84, -0.06, 0.28, 1.08, 0.06, skin, false);   // 前臂
+      G0.box(-0.06, 1.44, -0.06, 0.06, 1.50, 0.06, skin, false); G0.box(-0.10, 1.49, -0.10, 0.10, 1.67, 0.10, skin, false);   // 颈与头
+      G0.box(-0.13, 1.66, -0.13, 0.13, 1.78, 0.13, hat, false); G0.box(-0.15, 1.64, -0.14, 0.15, 1.67, 0.20, hat, false);   // 安全帽顶 + 前帽檐
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(G0.P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(G0.N, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(G0.C, 3));
       const WU = { uCam: U.uCam, uCut: U.uCut, uInk: { value: 0 }, uPaper: U.uPaper, uSun2: U.uSun2, uK: { value: +(hp.get('wk') || 0.008) } };
       const mat = new THREE.ShaderMaterial({ uniforms: WU, side: THREE.DoubleSide,
         vertexShader: 'attribute vec3 color; uniform vec3 uCam; uniform float uK; varying vec3 vC; varying vec3 vN; varying float vWx; void main() { vec4 c0 = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); float k = max(1.0, distance(c0.xyz, uCam) * uK); vec4 w = modelMatrix * instanceMatrix * vec4(position * k, 1.0); vWx = c0.x; vC = color; vN = normalize(mat3(modelMatrix * instanceMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }',
-        fragmentShader: 'uniform float uInk, uCut; uniform vec3 uPaper, uSun2; varying vec3 vC; varying vec3 vN; varying float vWx; void main() { if (vWx < uCut) discard; float l = 0.62 + 0.38 * max(0.0, dot(normalize(vN), uSun2)); vec3 c = pow(vC, vec3(1.0 / 2.2)); vec3 ink = vC.r > 0.9 && vC.b < 0.3 ? vec3(0.70, 0.13, 0.16) : mix(vec3(0.11, 0.10, 0.09), uPaper, vC.r > 0.9 ? 0.75 : 0.08); gl_FragColor = vec4(mix(c * l, ink * (0.85 + 0.15 * l), uInk), 1.0); }' });
+        fragmentShader: 'uniform float uInk, uCut; uniform vec3 uPaper, uSun2; varying vec3 vC; varying vec3 vN; varying float vWx; void main() { if (vWx < uCut) discard; float l = 0.55 + 0.45 * max(0.0, dot(normalize(vN), uSun2)); vec3 cLit = pow(vC, vec3(2.2)) * l; vec3 ink = (vC.r > 0.9 && vC.g < 0.65 && vC.b < 0.3) ? vec3(0.70, 0.13, 0.16) : (vC.r > 0.9 && vC.g > 0.75) ? mix(uPaper, vec3(0.98, 0.92, 0.72), 0.38) : mix(vec3(0.12, 0.11, 0.10), uPaper, vC.r > 0.75 ? 0.45 : 0.08); gl_FragColor = vec4(mix(cLit, ink * (0.85 + 0.15 * l), uInk), 1.0); }' });
       const o = new THREE.InstancedMesh(geo, mat, N); o.count = 0; o.frustumCulled = false; o.renderOrder = 4; return { o, N, WU, key: '', m4: new THREE.Matrix4() }; })();
     S.WK = WK;
     scene.add(WK.o);
@@ -428,25 +435,51 @@
     function measureAt(ps, t) { const e = HZ.gapTab[1][0], q = HZ.xf(ps, 1, e.p0), y = q[1] - e.rr; return { at: [q[0], y, q[2]], v: y - P.floorTop }; }   // 南区内边最紧处那根下弦（拼装姿态净空 = 全屋盖最小 1.40 m），随姿态实时
     let dynKey = ''; const DS = { cranesBusy: 0, crawlers: 0, trucks: 0, workers: 0 };
     function rebuildDyn(t) {
-      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut + ':' + (PV.focus || '') + ':' + (PV.box ? PV.box.join(',') : '') + ':' + SHEET + (SC_HIDE ? 'h' : ''); if (key === dynKey) return; dynKey = key; const SH = SC_HIDE;   // SH：范围外隐藏时只画服务本图的机械
+      const SH = SC_HIDE;
+      // B-4：近景（< R_SHOW = 120 m）且 actors 模块活跃并已绘制该履带吊时，隐藏宿主粗模履带吊避免双重叠影
+      const actMod = !SH && S.modsList ? S.modsList.find(m => m.id === 'actors') : null;
+      const actCr = actMod && actMod.P && Array.isArray(actMod.P.cranes) ? actMod.P.cranes : null;
+      const actR2 = ((actMod && actMod.R_SHOW) || 120) ** 2;
+      let crHide = 0;
+      if (actCr && actCr.length) { let ci0 = 0; for (const p of crawlParts) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (ci0 >= 14) break; const [x, z] = p.crawl, by = p.crawlY || 0; const d2 = (x - cam.position.x) ** 2 + (by + 2 - cam.position.y) ** 2 + (z - cam.position.z) ** 2; if (d2 <= actR2 && actCr.some(k => Math.abs(k.x - x) < 0.5 && Math.abs(k.z - z) < 0.5)) crHide |= (1 << ci0); ci0++; } }
+      const key = (S.st.t).toFixed(3) + ':' + SV.sel + ':' + SV.cut + ':' + (PV.focus || '') + ':' + (PV.box ? PV.box.join(',') : '') + ':' + SHEET + (SH ? 'h' : '') + ':' + crHide; if (key === dynKey) return; dynKey = key;
       const g = new HZ.GB('yellow'), Lq = []; const Lc = (a, b, c) => Lq.push([a, b, c]);
       const INK = [0.11, 0.1, 0.09], RED = [0.70, 0.13, 0.16], YEL = HZ.MAT.yellow.c;
       DS.cranesBusy = 0;
-      for (let ci = 0; ci < CR.length; ci++) { const c = CR[ci]; if (SH && !(SH.cr && SH.cr[ci])) continue; const s = craneState(c, t); if (!s) continue; const ca = Math.cos(s.yaw), sa = Math.sin(s.yaw), y = c.jy + 0.6;
-        const tip = [c.x + ca * c.L, y, c.z + sa * c.L], tail = [c.x - ca * c.Lc, y, c.z - sa * c.Lc], top = [c.x, c.top, c.z];
-        g.rod(tail, tip, 0.55); g.rod(top, [c.x + ca * c.L * 0.6, y + 0.5, c.z + sa * c.L * 0.6], 0.12); g.rod(top, [tail[0], y + 0.5, tail[2]], 0.12);
-        g.B(tail[0] - 2, y - 2, tail[2] - 2, tail[0] + 2, y + 1, tail[2] + 2, HZ.MAT.conc.c);
-        const tr = [c.x + ca * s.r, y - 0.6, c.z + sa * s.r]; g.B(tr[0] - 0.9, tr[1] - 0.8, tr[2] - 0.9, tr[0] + 0.9, tr[1], tr[2] + 0.9, YEL);
-        Lc(tr, [tr[0], s.hookY, tr[2]], s.busy ? RED : INK); if (s.busy) { DS.cranesBusy++; g.B(tr[0] - 1.6, s.hookY - 1.4, tr[2] - 1.6, tr[0] + 1.6, s.hookY, tr[2] + 1.6, [0.75, 0.2, 0.15]); } }
-      // 履带吊（R10：不在任何塔吊回转半径内的构件；站位由 hzseq 搜出、不与在场构件相交）
-      DS.crawlers = 0; for (const p of crawlParts) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (SH && !(SH.crawl && SH.crawl.has(p))) continue; if (DS.crawlers >= 14) break; DS.crawlers++; const [x, z] = p.crawl, by = p.crawlY || 0, ang = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(ang), sa = Math.sin(ang);
+      // B-13：宿主塔吊升级为三弦格构桁架臂 + 塔帽人字架 + 驾驶室 + 配重 + 变幅小车
+      for (let ci = 0; ci < CR.length; ci++) { const c = CR[ci]; if (SH && !(SH.cr && SH.cr[ci])) continue; const s = craneState(c, t); if (!s) continue; const ca = Math.cos(s.yaw), sa = Math.sin(s.yaw), px = -sa, pz = ca, y = c.jy + 0.6;
+        const tail = [c.x - ca * c.Lc, y, c.z - sa * c.Lc], top = [c.x, c.top, c.z];
+        const jp = (u, lat, up) => [c.x + ca * u + px * lat, y + up, c.z + sa * u + pz * lat];
+        const hw = 0.72, hTop = u => u >= 0 ? 1.38 - 0.78 * (u / c.L) : 1.38;
+        g.rod(jp(-c.Lc, -hw, 0), jp(c.L, -hw, 0), 0.15); g.rod(jp(-c.Lc, hw, 0), jp(c.L, hw, 0), 0.15); g.rod(jp(-c.Lc, 0, 1.38), jp(0, 0, 1.38), 0.16); g.rod(jp(0, 0, 1.38), jp(c.L, 0, 0.60), 0.16);
+        const step = 8; for (let u = -c.Lc; u < c.L - 0.5; u += step) { const u1 = Math.min(c.L, u + step), yt0 = hTop(u), yt1 = hTop(u1);
+          g.rod(jp(u, -hw, 0), jp(u, hw, 0), 0.08); g.rod(jp(u, -hw, 0), jp(u1, 0, yt1), 0.08); g.rod(jp(u, hw, 0), jp(u1, 0, yt1), 0.08); }
+        g.rod(jp(0, -hw, 0), top, 0.14); g.rod(jp(0, hw, 0), top, 0.14);
+        g.rod(top, jp(c.L * 0.58, 0, hTop(c.L * 0.58)), 0.11); g.rod(top, jp(-c.Lc * 0.92, 0, 1.38), 0.11);
+        const cx = c.x + px * 1.75 + ca * 1.1, cz = c.z + pz * 1.75 + sa * 1.1; g.B(cx - 0.85, y - 2.2, cz - 0.85, cx + 0.85, y - 0.15, cz + 0.85, [0.92, 0.91, 0.88]); g.B(cx + ca * 0.78 - 0.35, y - 1.55, cz + sa * 0.78 - 0.35, cx + ca * 0.78 + 0.35, y - 0.45, cz + sa * 0.78 + 0.35, [0.18, 0.25, 0.33]);
+        g.B(tail[0] - 2.0, y - 1.9, tail[2] - 2.0, tail[0] + 2.0, y + 1.1, tail[2] + 2.0, HZ.MAT.conc.c);
+        const tr = [c.x + ca * s.r, y - 0.55, c.z + sa * s.r]; g.B(tr[0] - 0.9, tr[1] - 0.75, tr[2] - 0.9, tr[0] + 0.9, tr[1], tr[2] + 0.9, YEL);
+        Lc(tr, [tr[0], s.hookY, tr[2]], s.busy ? RED : INK); if (s.busy) { DS.cranesBusy++; g.B(tr[0] - 1.5, s.hookY - 1.3, tr[2] - 1.5, tr[0] + 1.5, s.hookY, tr[2] + 1.5, [0.75, 0.2, 0.15]); } }
+      // 履带吊（R10：不在任何塔吊回转半径内的构件；站位由 hzseq 搜出、不与在场构件相交；B-4 近景交棒 actors.js）
+      DS.crawlers = 0; for (const p of crawlParts) { if (!(t >= p.st - 0.5 && t < p.st + p.du + 0.5)) continue; if (SH && !(SH.crawl && SH.crawl.has(p))) continue; if (DS.crawlers >= 14) break; const idx = DS.crawlers++; if (crHide & (1 << idx)) continue; const [x, z] = p.crawl, by = p.crawlY || 0, ang = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(ang), sa = Math.sin(ang);
         g.B(x - 3.6, by, z - 2.8, x + 3.6, by + 1.4, z + 2.8, [0.35, 0.33, 0.30]); g.B(x - 2.2, by + 1.4, z - 2.0, x + 2.2, by + 3.6, z + 2.0, [0.86, 0.32, 0.12]);
         const hd = Math.hypot(p.c[0] - x, p.c[2] - z), tipY = Math.max(p.top + 10, by + 22), tip = [x + ca * hd * 0.92, tipY, z + sa * hd * 0.92]; g.rod([x, by + 3, z], tip, 0.35); Lc(tip, [tip[0], p.top + 1.5, tip[2]], RED); }
-      // 运输车（便道环线；车数 ∝ 在建工序数；钢构车 = 红，混凝土 = 灰）
+      // 运输车（B-7：便道环线接地多部件方向性卡车，轮胎落于 y=0、车头含风挡、钢构平板载红梁 / 混凝土罐体）
       const act = HZ.acts.filter(a => a.parts.length && a.kind !== 'temp' && t >= a.start && t < a.end); let nSteel = 0, nConc = 0; for (const a of act) { if (a.res.steel || a.res.asm || a.res.skin) nSteel++; else nConc++; }
       const nT = t < TL.OPEN - 30 && !(SH && !SH.site) ? Math.min(36, 4 + (nSteel + nConc) * 4) : 0; DS.trucks = nT; const per = 2 * (1400 + 560);
-      for (let i = 0; i < nT; i++) { const d = ((t * 140 + i * per / Math.max(1, nT)) % per + per) % per; let x, z, dir; if (d < 1400) { x = -700 + d; z = -280; dir = 0; } else if (d < 1960) { x = 700; z = -280 + (d - 1400); dir = 1; } else if (d < 3360) { x = 700 - (d - 1960); z = 280; dir = 0; } else { x = -700; z = 280 - (d - 3360); dir = 1; }
-        const steel = i < nT * nSteel / Math.max(1, nSteel + nConc), c = steel ? [0.72, 0.18, 0.12] : [0.62, 0.62, 0.6], hx = dir ? 1.4 : 6, hz = dir ? 6 : 1.4; g.B(x - hx, 0.4, z - hz, x + hx, 3.0, z + hz, c); }
+      for (let i = 0; i < nT; i++) { const d = ((t * 140 + i * per / Math.max(1, nT)) % per + per) % per; let x, z, fx, fz, rx, rz;
+        if (d < 1400) { x = -700 + d; z = -280; fx = 1; fz = 0; rx = 0; rz = 1; }
+        else if (d < 1960) { x = 700; z = -280 + (d - 1400); fx = 0; fz = 1; rx = -1; rz = 0; }
+        else if (d < 3360) { x = 700 - (d - 1960); z = 280; fx = -1; fz = 0; rx = 0; rz = -1; }
+        else { x = -700; z = 280 - (d - 3360); fx = 0; fz = -1; rx = 1; rz = 0; }
+        const steel = i < nT * nSteel / Math.max(1, nSteel + nConc);
+        const tBox = (u0, u1, y0, y1, v0, v1, col) => { const x0 = x + fx * u0 + rx * v0, x1 = x + fx * u1 + rx * v1, z0 = z + fz * u0 + rz * v0, z1 = z + fz * u1 + rz * v1; g.B(Math.min(x0, x1), y0, Math.min(z0, z1), Math.max(x0, x1), y1, Math.max(z0, z1), col); };
+        tBox(2.9, 4.1, 0.0, 1.0, -1.32, 1.32, [0.15, 0.15, 0.16]); tBox(-4.8, -2.0, 0.0, 1.0, -1.32, 1.32, [0.15, 0.15, 0.16]);
+        tBox(-5.6, 5.2, 0.72, 1.15, -1.18, 1.18, [0.24, 0.25, 0.27]);
+        tBox(2.8, 5.4, 1.15, 3.15, -1.24, 1.24, steel ? [0.76, 0.20, 0.14] : [0.88, 0.87, 0.84]);
+        tBox(5.28, 5.46, 2.05, 2.92, -1.12, 1.12, [0.18, 0.26, 0.34]);
+        if (steel) { tBox(-5.6, 2.5, 1.15, 1.48, -1.28, 1.28, [0.34, 0.32, 0.30]); tBox(-5.3, 2.2, 1.48, 2.55, -0.95, 0.95, [0.68, 0.22, 0.15]); }
+        else { tBox(-5.2, 2.2, 1.22, 3.25, -1.15, 1.15, [0.66, 0.66, 0.64]); tBox(-5.5, -5.0, 1.15, 2.45, -0.65, 0.65, [0.86, 0.48, 0.12]); } }
       // 堆场：钢构堆场库存 = 已到场 − 已安装（到场比安装提前 40 日）；钢筋 / 预制堆场随土建活动
       const steelA = HZ.acts.filter(a => a.tally && a.tally.steel), inst = tt => steelA.reduce((s, a) => s + a.tally.steel * Math.max(0, Math.min(1, (tt - a.start) / a.dur)), 0), stock = Math.max(0, inst(t + 40) - inst(t)) / 13000;
       const civ = act.filter(a => !(a.res.steel || a.res.asm || a.res.skin)).length;
@@ -1114,7 +1147,7 @@
     { const az = THREE.MathUtils.degToRad(232), el = THREE.MathUtils.degToRad(12); U.uRakeDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)); }   // 掠射光方向：与实景太阳同方位（西南 232°），高 12°
     function renderInk(la) { ghostMat.uniforms.uGhA.value = 0.22; CAP.CU.uLitCap.value = 0; ENDW.visible = false; U.uYm.value = YMON ? 1 : 0; U.uRake.value = SHEET === 'S-401' ? 1 : 0.7; for (const o of YMO) o.visible = !YMH; for (const o of LITONLY) o.visible = false; for (const o of INKONLY) o.visible = true; MESH.material = inkMat; DYN.mesh.material = DYN.mesh.userData.ink; LINES.visible = true; DYN.lines.visible = true; WK.WU.uInk.value = 1; STR.material.uniforms.uC.value.set(0xb3202a);
       U.uLA.value = la; renderer.setRenderTarget(null); renderer.setClearColor(0xefe9dd, 1); renderer.toneMapping = THREE.NoToneMapping; renderer.render(scene, cam); }
-    function renderLit() { ghostMat.uniforms.uGhA.value = 0.3; CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
+    function renderLit() { ghostMat.uniforms.uGhA.value = 0.3; CAP.CU.uLitCap.value = 1; ENDW.visible = S.st.t >= UGT && GU.uMetroHole.value > 0.5; U.uYm.value = 0; U.uRake.value = 0; for (const o of YMO) o.visible = false; for (const o of LITONLY) o.visible = true; for (const o of INKONLY) o.visible = false; MESH.material = MESH.userData.lit; DYN.mesh.material = DYN.mesh.userData.lit; LINES.visible = false; DYN.lines.visible = false; WK.WU.uInk.value = 0; STR.material.uniforms.uC.value.set(0x0f0d0d);
       renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.setClearColor(0x000000, 1);
       shadowAge++; if (shadowWant && (!S.st.play || shadowAge >= (S.pose && S.pose.lifting ? SPL : SP))) { renderer.shadowMap.needsUpdate = true; shadowWant = false; shadowAge = 0; lastShadowT = S.st.t; }
       if (POST.level > 0) POST.render(scene, cam, postOpts()); else { renderer.setRenderTarget(null); renderer.render(scene, cam); } }
@@ -1157,7 +1190,7 @@
         const ga = MESH.geometry.getAttribute('aGh'), la = LINES.geometry.getAttribute('aGh'); ga.array.fill(0); la.array.fill(0);
         if (sc.on) ITEMS.forEach((it, i) => { if (sc.mask[i]) return; ga.array.fill(1, it.v[0], it.v[1]); la.array.fill(1, it.l[0], it.l[1]); });
         ga.needsUpdate = la.needsUpdate = true; }
-      const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on && SCOPE_OUT === 'ghost'; SC_HIDE = on && SCOPE_OUT === 'hide' ? sc : null; S.scope = { sheet: SHEET, on, n: sc.n, live: sc.live, src: sc.src, keys: sc.keys, mode: SCOPE_OUT, hide: !!SC_HIDE, cranes: sc.cr ? sc.cr.slice() : null, site: !!sc.site }; }
+      const on = sc.on && t < TL.OPEN - 12; U.uScope.value = on ? 1 : 0; GHOST.visible = on && SCOPE_OUT === 'ghost'; SC_HIDE = on && SCOPE_OUT === 'hide' ? sc : null; GU.uMetroHole.value = (!SC_HIDE || (SC_HIDE.keys && SC_HIDE.keys.includes('found'))) ? 1 : 0; S.scope = { sheet: SHEET, on, n: sc.n, live: sc.live, src: sc.src, keys: sc.keys, mode: SCOPE_OUT, hide: !!SC_HIDE, cranes: sc.cr ? sc.cr.slice() : null, site: !!sc.site }; }
     function leadOwn(sheet, pl) { if (pl && Array.isArray(pl.leadKeys)) return pl.leadKeys.slice(); if (pl) return LEAD_KEYS[sheet] || []; return null; }   // null = 总图（不过滤）；插件图没登记 → 空表 → 宁缺毋串
     const leadOwns = (own, k) => !own || own.indexOf(k) >= 0;
     function leadAct(K, own, t, capAct) { if (!own) return capAct && capAct.parts && capAct.parts.length && capAct.parts.some(p => p.st <= t) ? capAct : null;
