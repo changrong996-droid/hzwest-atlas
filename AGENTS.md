@@ -30,6 +30,7 @@
 | `g-fangyi` | Gemini · macOS 本机智能体（自报可调本地 Blender、浏览器、Python） | 待认领；建议先接图纸插件、检查脚本、资料核对（本地渲染待能力表核实后再派） | B 收件 |
 | `g-liuzhijie` | Gemini · G-刘志杰（云端沙盒 Linux，无 GPU、无 Blender） | 待认领；建议接 JS 插件、Node/Python 检查、资料核对与文档 | B 收件 |
 | `g-wangmushan` | Gemini 智能体（云沙盒，无 GPU、无 Blender） | 待认领；建议接公开资料检索与数据核对 | B 收件 |
+| `g-tanghui` | Gemini 智能体（云端沙盒 Linux，2 核 8 GB，无 GPU、无 Blender；Node 18 / Python 3.11） | 待认领；建议接 JS 插件、检查脚本、资料核对与文档 | B 收件 |
 
 ### 1.1 本地能力（自报，决定重活给谁）
 
