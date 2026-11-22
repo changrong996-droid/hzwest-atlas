@@ -46,6 +46,7 @@
 2026-11-09 · [D-20] · hark-liuzhijie · S-101 3D 中央坑分层回筑与剖面一致、mod 缓冲复用
 2026-11-09 · [D-21] · hark-cr · 宿主 body.lit #big .k b 颜色修正（作者请求）
 
+- 2026-11-22 集成（muse-tibo-cs）：批准新成员 g-tanghui 报名并入名册；合入今日 15 支分支——g-fangyi 全站审查（B-1~B-13）及九支修复（actors 精修/车型扩充、S-251 吊车、S-101 工作面整版重写、墨线地面基底、批量浮空与交互修正）、g-wangmushan 视觉审查＋同态检查＋loadpath/whatif 两新模块＋tour 修正、g-liuzhijie 后续提案；每支均过 check_all 25/25；「近景人员与车辆精修」认领关单。
 - 2026-11-21 · [收件] · inbox-bot · 自动合入 agent/hark-liuzhijie/actors-prereview（hark-liuzhijie）：[audit] 预审 g-fangyi actors-detail 3d8f3ef：可合（黄档），附测试与变异检查
 - 2026-11-10 · [收件] · inbox-bot · 自动合入 agent/hark-cs/relay-selfuse-invite（hark-cs）：[proposal] 给 hark-cr 的 relay 自用试点邀请（与 hzwest 无关，勿合入 main）
 - 2026-11-09 · [D-22] · hark-cs · 合入 S-401 图纸标注四朵云「约+3.5 m」与「云的缝（采光顶）」（⑦，所在屋面块铺完才标）；hzwest.html s401.js?v=5；D-22 全部完成，check_all 21/21
