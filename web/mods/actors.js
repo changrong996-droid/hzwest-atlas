@@ -777,15 +777,16 @@
     return true;
   }
   function clear(I, t, x0, y0, z0, x1, y1, z1) { return near(I, x0, z0, x1, z1, e => { const b = e.b; if (b.max[0] <= x0 || b.min[0] >= x1 || b.max[2] <= z0 || b.min[2] >= z1 || b.max[1] <= y0 || b.min[1] >= y1) return; if (present(e.p, t)) return false; }); }
+  const solidTop = (e, t) => { const s = stOf(e.p, t); return s >= 0 && s !== 3 && (s >= 0.96 || e.b.max[1] - e.p.geo.min[1] <= 1.5); };
   function supportAt(I, t, x, y, z) {
     let ok = false;
-    near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2]) return; if (Math.abs(b.max[1] - y) <= EPS && present(e.p, t)) { ok = true; return false; } });
+    near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2]) return; if (Math.abs(b.max[1] - y) <= EPS && solidTop(e, t)) { ok = true; return false; } });
     if (ok) return true; if (Math.abs(y) > EPS) return false;
     let pit = false; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2]) return; if (b.max[1] < -EPS && b.min[1] < -1 && e.a.stage === 'found' && !present(e.p, t)) { pit = true; return false; } });
     return !pit;
   }
   function surfaceAt(I, t, x, z, ymax) {
-    let y = null; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || b.max[1] > ymax + EPS || !present(e.p, t)) return; if (y == null || b.max[1] > y) y = b.max[1]; });
+    let y = null; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || b.max[1] > ymax + EPS || !solidTop(e, t)) return; if (y == null || b.max[1] > y) y = b.max[1]; });
     if (y == null && ymax >= 0 && supportAt(I, t, x, 0, z)) y = 0; return y;
   }
   function supported(I, t, x, y, z, hx, hz, ca, sa) { for (const [u, v] of [[0, 0], [-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]]) if (!supportAt(I, t, x + u * ca - v * sa, y, z + u * sa + v * ca)) return false; return true; }
@@ -804,7 +805,8 @@
       const pick = live.length > 24 ? live.filter((_, i) => i % Math.ceil(live.length / 24) === 0) : live;
       for (const p of pick) {
         const nP = Math.max(1, Math.round(T.n * (day ? 1 : 0.3)));
-        const tops = p.geo.boxes.filter(b => b.max[0] - b.min[0] >= 1.4 && b.max[2] - b.min[2] >= 1.4 && b.max[1] >= p.top - 0.05 && (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) >= 6), mn = p.geo.min, mx = p.geo.max;
+        const mn = p.geo.min, mx = p.geo.max, canStandTop = stOf(p, t) >= 0.96 || (p.top - mn[1] <= 1.5);
+        const tops = canStandTop ? p.geo.boxes.filter(b => b.max[0] - b.min[0] >= 1.4 && b.max[2] - b.min[2] >= 1.4 && b.max[1] >= p.top - 0.05 && (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) >= 6) : [];
         for (let k = 0; k < nP; k++) {
           for (let tryN = 0; tryN < 6; tryN++) {
             let x, y, z; const yaw = R() * Math.PI * 2;
@@ -974,7 +976,7 @@
     },
     update(t, cam) {
       if (!this.I) return 0;
-      const isLit = !!(ROOT.__pv && ROOT.__pv.blend > 0.5) || (typeof document !== 'undefined' && document.body && document.body.classList && document.body.classList.contains('lit'));
+      const isLit = ROOT.__pv && typeof ROOT.__pv.blend === 'number' ? ROOT.__pv.blend > 0.5 : !!(typeof document !== 'undefined' && document.body && document.body.classList && document.body.classList.contains('lit'));
       if (this.obj && isLit !== this.lastLit) this.applyMode(isLit);
       const key = Math.floor(t * 24); let dirty = false; this.calls = (this.calls || 0) + 1;
       const lag = this.P && key !== this.key && this.calls - this.planCall < 6 && Math.abs(t - this.P.t) < 0.5;
