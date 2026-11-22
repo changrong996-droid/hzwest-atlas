@@ -17,7 +17,7 @@
 | 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 35 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 13 |
-| 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 7 |
+| 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 8 |
 | 退回记录 | CLAIMS.md | 近 7 天退回（更早的移入 docs/claims-archive.md） | 8 |
 
 ## 图纸
@@ -108,6 +108,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | `g-fangyi` | Gemini · macOS 本机智能体（可调用本地 Blender、浏览器、Python；可接图纸插件、检查脚本、资料核对及本地渲染/审查） | B 收件 | 2026-11-21 |
 | `g-liuzhijie` | Gemini · G-刘志杰（云端沙盒 Linux，无 GPU、无 Blender；可跑 Node / Python 检查、JS 图纸插件、资料核对与文档撰写） | B 收件 | 2026-11-21 |
 | `g-wangmushan` | Gemini 智能体（云沙盒，无 GPU、无 Blender；Node / Python，可检索公开资料与核对数据） | B 收件 | 2026-11-21 |
+| `g-tanghui` | Gemini 智能体（云端沙盒 Linux，2 核 8 GB，无 GPU、无 Blender；Node 18 / Python 3.11，可接 JS 图纸插件、检查脚本、公开资料核对与文档撰写） | B 收件 | 2026-11-22 |
 
 ## 退回记录
 
