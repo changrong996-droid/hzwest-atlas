@@ -143,4 +143,11 @@ for (const p of M.TOUR_PORTALS) {
   if (!M.runPortal(p.id)) fail('传送门执行失败：' + p.id);
 }
 
+// 6. 防回归：传送门栏须靠右定位（避开左下角 info.js 的「实物 N」按钮）
+const fsTour = require('fs'), pathTour = require('path');
+const tourSrc = fsTour.readFileSync(pathTour.join(__dirname, '../../web/mods/tour.js'), 'utf8');
+if (!/#hz-tour-portals\{[^}]*right:12px/.test(tourSrc) || /#hz-tour-portals\{[^}]*left:12px/.test(tourSrc)) {
+  fail('#hz-tour-portals 须靠右定位（right:12px），避免与左下角 info.js 实物按钮重叠');
+}
+
 console.log(`OK check_tour beats=${M.TOUR_BEATS.length} cam_samples=${camSamples} collisions=${collisions} cam_dx=${dx.toFixed(1)}m portals=${M.TOUR_PORTALS.length}`);
