@@ -51,13 +51,16 @@
     const empty = { removed: [], failed: [], byAct: {}, violations: 0, maxDepth: 0 };
     if (!part || !HZ || !Array.isArray(HZ.acts)) return empty;
 
-    // 1. 找出当前时刻 t 在场、位于选中 part.box 内的被拆构件
+    // 1. 找出当前时刻 t 在场、位于选中 part.box 内的被拆构件（若 rel.acts 明确给出本构件所属工序则限定其内，防止容差误框脚下楼板）
     const removed = new Set();
+    const actKeys = (rel && Array.isArray(rel.acts)) ? rel.acts.map(x => typeof x === "string" ? x : (x && x.key)).filter(Boolean) : [];
+    const allowActs = actKeys.length ? new Set(actKeys) : null;
     if (Array.isArray(part.box) && part.box.length === 6) {
       for (const a of HZ.acts) {
+        if (allowActs && !allowActs.has(a.key)) continue;
         for (const p of a.parts || []) {
           if (!isAlive(p, t)) continue;
-          if (overlapsBox(p.bb, part.box, 0.4)) removed.add(p);
+          if (overlapsBox(p.bb, part.box, 0.2)) removed.add(p);
         }
       }
     }
@@ -90,7 +93,8 @@
       for (const sv of act.serves) {
         if (!sv) continue;
         const targets = (sv.parts && sv.parts.length) ? sv.parts
-          : (sv.liftZone && HZ.K["asm" + sv.liftZone] ? HZ.K["asm" + sv.liftZone].parts : []);
+          : (sv.liftZone && HZ.K["asm" + sv.liftZone] ? HZ.K["asm" + sv.liftZone].parts
+          : (sv.key === "wlift" ? ["asm1", "asm2", "asm3"].flatMap(k => (HZ.K[k] && HZ.K[k].parts) || []) : []));
         for (const p of targets || []) {
           if (p && !lost.has(p) && isAlive(p, t)) queue.push({ p, depth: 1, byActSup: true });
         }
@@ -107,13 +111,12 @@
       } else {
         const sups = p.supP ? (Array.isArray(p.supP) ? p.supP : Array.from(p.supP)) : [];
         if (!sups.length) continue;
-        let aliveSups = 0, stillSupported = false;
+        // 按 R1 支承完备性：构件依赖的在场支承中只要失去任意支承（局部悬空），即判定违反 R1 失稳
+        let lostSup = 0;
         for (const sp of sups) {
-          if (!isAlive(sp, t)) continue;
-          aliveSups++;
-          if (!lost.has(sp)) { stillSupported = true; break; }
+          if (isAlive(sp, t) && lost.has(sp)) { lostSup++; break; }
         }
-        unstable = aliveSups > 0 && !stillSupported;
+        unstable = lostSup > 0;
       }
       if (unstable) {
         lost.add(p);
