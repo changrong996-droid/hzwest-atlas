@@ -13,7 +13,7 @@ M.build(null, HZ);
 { const mk = (withInst) => {
     const made = { mats: [], insts: [] };
     const T = {
-      BufferGeometry: function () { this.setAttribute = () => {}; this.setDrawRange = () => {}; },
+      BufferGeometry: function () { this.attrs = {}; this.setAttribute = (n, a) => { this.attrs[n] = a; }; this.setDrawRange = () => {}; this.computeVertexNormals = () => { this.normalsComputed = true; }; },
       BufferAttribute: function (a) { this.array = a; },
       DynamicDrawUsage: 1, DoubleSide: 2,
       LineBasicMaterial: function (o) { Object.assign(this, o); made.mat = this; },
@@ -21,6 +21,7 @@ M.build(null, HZ);
     };
     if (withInst) {
       T.MeshBasicMaterial = function (o) { Object.assign(this, o); made.solidMat = this; made.mats.push(this); };
+      T.MeshStandardMaterial = function (o) { Object.assign(this, o); made.litMat = this; made.mats.push(this); };
       T.InstancedMesh = function (g, m, cap) {
         this.geometry = g; this.material = m; this.cap = cap; this.count = 0;
         this.instanceMatrix = { array: new Float32Array(cap * 16), setUsage: () => {}, needsUpdate: false };
@@ -32,7 +33,8 @@ M.build(null, HZ);
   const sc = { add: () => {} }, plane = { normal: [1, 0, 0], constant: -39 };
   let k = mk(true); M.build(sc, HZ, k.T, { clip: [plane] });
   if (!k.made.mat || !Array.isArray(k.made.mat.clippingPlanes) || k.made.mat.clippingPlanes[0] !== plane) fail('D-16 opts.clip 未传到线材质 clippingPlanes');
-  if (!k.made.solidMat || !Array.isArray(k.made.solidMat.clippingPlanes) || k.made.solidMat.clippingPlanes[0] !== plane) fail('D-16 opts.clip 未传到实体材质 clippingPlanes');
+  if (!k.made.solidMat || !Array.isArray(k.made.solidMat.clippingPlanes) || k.made.solidMat.clippingPlanes[0] !== plane) fail('D-16 opts.clip 未传到墨线实体材质 clippingPlanes');
+  if (!k.made.litMat || !Array.isArray(k.made.litMat.clippingPlanes) || k.made.litMat.clippingPlanes[0] !== plane) fail('D-16 opts.clip 未传到实景实体材质 clippingPlanes');
   // 验证 InstancedMesh 路径：实例总数 === shown、每种不超 cap（人 256 / 车 32）、矩阵旋转与 emit 的 yaw 一致
   const tI = HZ.K.frameS.start + 10.45, PI = M.plan(HZ, M.I, tI);
   const fI = PI.figs[0], vI = PI.vehs[0];
@@ -45,9 +47,18 @@ M.build(null, HZ);
     const isFig = im.name.startsWith('hz-fig-'), isVeh = im.name.startsWith('hz-veh-');
     if (isFig && (im.cap !== 256 || im.count > 256)) fail(`InstancedMesh ${im.name} 超出人 cap=256（count=${im.count}, cap=${im.cap}）`);
     if (isVeh && (im.cap !== 32 || im.count > 32)) fail(`InstancedMesh ${im.name} 超出车 cap=32（count=${im.count}, cap=${im.cap}）`);
+    if (!im.geometry.normalsComputed) fail(`InstancedMesh ${im.name} 未计算法线`);
     instSum += im.count;
   }
   if (instSum !== M.stats.shown || M.stats.insts !== M.stats.shown) fail(`InstancedMesh 实例数 ${instSum}（stats.insts=${M.stats.insts}）≠ 显示对象数 ${M.stats.shown}`);
+  // B-11：验证墨线 / 实景双模式材质与顶点色切换（即使相机静止也立即可切换）
+  G.__pv = { blend: 1 }; M.update(tI, camI);
+  if (!M.lastLit || k.made.insts.some(im => im.material !== k.made.litMat)) fail('B-11 切到实景模式后未切换至 MeshStandardMaterial');
+  if (!(k.made.mat.opacity < 0.5)) fail('B-11 实景模式轮廓线未降淡');
+  G.__pv = { blend: 0 }; M.update(tI, camI);
+  if (M.lastLit || k.made.insts.some(im => im.material !== k.made.solidMat)) fail('B-11 切回墨线模式后未恢复纸白材质');
+  if (!(k.made.mat.opacity > 0.8)) fail('B-11 墨线模式轮廓线未恢复不透明度');
+  delete G.__pv;
   // 逐对象校验写入的 4×4 列主序矩阵与 emit 的 yaw / 位移一致
   const R2I = M.R_SHOW * M.R_SHOW;
   const d2I = (x, y, z) => (x - camI[0]) ** 2 + (y - camI[1]) ** 2 + (z - camI[2]) ** 2;
@@ -65,7 +76,7 @@ M.build(null, HZ);
   for (const cr of M.P.cranes) if (d2I(cr.x, cr.y + 2, cr.z) <= R2I) checkYaw('hz-veh-crawler', cr.x, cr.y, cr.z, cr.yaw);
   for (const f of M.P.figs) if (d2I(f.x, f.y + 1, f.z) <= R2I) checkYaw('hz-fig-' + f.pose, f.x, f.y, f.z, f.yaw);
   k = mk(true); M.build(sc, HZ, k.T);
-  if (k.made.mat.clippingPlanes || k.made.solidMat.clippingPlanes) fail('D-16 没传 clip 时不应有 clippingPlanes');
+  if (k.made.mat.clippingPlanes || k.made.solidMat.clippingPlanes || k.made.litMat.clippingPlanes) fail('D-16 没传 clip 时不应有 clippingPlanes');
   M.build(null, HZ); }
 const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
 const ALL = []; for (const a of HZ.acts) for (const p of a.parts) { if (p.grp || p.cells || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) ALL.push({ p, a, b }); }
