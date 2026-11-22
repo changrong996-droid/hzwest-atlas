@@ -23,7 +23,7 @@
     steel: [0.40, 0.43, 0.47], steelL: [0.68, 0.71, 0.75], yellow: [0.90, 0.62, 0.08],
     orange: [0.86, 0.34, 0.10], cabW: [0.91, 0.89, 0.84], cabB: [0.20, 0.34, 0.52],
     drum: [0.84, 0.82, 0.78], primer: [0.56, 0.24, 0.18], wood: [0.62, 0.46, 0.26],
-    conc: [0.58, 0.56, 0.52]
+    conc: [0.58, 0.56, 0.52], soil: [0.52, 0.40, 0.27], red: [0.76, 0.18, 0.14]
   };
   let _CL = null;
 
@@ -692,37 +692,166 @@
       return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), CL: new Float32Array(CL), hx: 1.4, hz: 0.85, h: 4.2 };
     }
 
-    // 履带吊底盘
+    if (kind === 'drill') {
+      // 旋挖钻机（地下桩基期）：圆角双履带 + 回转机棚/配重 + 全景驾驶室 + 变幅平行四边形机构 + 11 m 竖向钻桅 + 动力头 + 钻杆与螺旋钻斗
+      for (const s of [-1, 1]) {
+        const z0 = s * 1.40;
+        boxS(P, C, -2.35, 0.0, z0 - 0.36, 2.35, 0.92, z0 + 0.36, LP.tire);
+        boxL(o, -2.35, 0.0, z0 - 0.36, 2.35, 0.92, z0 + 0.36);
+        for (const tx of [-2.35, 2.35]) {
+          tubeS(P, C, [tx, 0.46, z0 - 0.37], [tx, 0.46, z0 + 0.37], 0.45, 0.45, hi ? 10 : 8, LP.tire, true);
+          ring(o, [tx, 0.46, z0 + s * 0.38], 0.43, 'z', hi ? 10 : 6);
+        }
+        if (hi) for (let x = -2.0; x <= 2.01; x += 0.5) seg(o, [x, 0.04, z0 + s * 0.37], [x, 0.88, z0 + s * 0.37]);
+      }
+      boxS(P, C, -1.35, 0.36, -1.04, 1.35, 0.94, 1.04, LP.steel); boxL(o, -1.35, 0.36, -1.04, 1.35, 0.94, 1.04);
+      tubeS(P, C, [0, 0.94, 0], [0, 1.18, 0], 0.98, 0.98, 12, LP.steel, true); ring(o, [0, 1.06, 0], 0.98, 'y', 10);
+      // 上车机棚 + 尾部配重 + 引擎盖 + 排气管 + 驾驶室
+      boxS(P, C, -2.05, 1.18, -1.25, 1.35, 2.38, 1.25, LP.yellow); boxL(o, -2.05, 1.18, -1.25, 1.35, 2.38, 1.25);
+      boxS(P, C, -2.75, 1.24, -1.18, -2.05, 2.28, 1.18, LP.conc); boxL(o, -2.75, 1.24, -1.18, -2.05, 2.28, 1.18);
+      boxS(P, C, -1.85, 2.38, -0.82, 0.35, 2.62, 0.25, LP.steel); boxL(o, -1.85, 2.38, -0.82, 0.35, 2.62, 0.25);
+      tubeS(P, C, [-1.55, 2.60, -0.62], [-1.55, 3.35, -0.62], 0.07, 0.06, 6, LP.tire, true); seg(o, [-1.55, 2.60, -0.62], [-1.55, 3.35, -0.62]);
+      boxS(P, C, 0.05, 1.18, 0.44, 1.72, 3.08, 1.36, LP.cabW); boxL(o, 0.05, 1.18, 0.44, 1.72, 3.08, 1.36);
+      const dw = [[1.73, 1.52, 0.52], [1.73, 1.52, 1.28], [1.73, 2.94, 1.28], [1.73, 2.94, 0.52]];
+      quadS(P, C, dw[0], dw[1], dw[2], dw[3], LP.glass, 1.02); poly(o, dw, true);
+      // 变幅平行四边形连杆与双变幅油缸（位于 z = ±0.30 钻桅中心线两侧，与驾驶室零穿插、直连钻桅箱体）
+      for (const s of [-0.30, 0.30]) {
+        tubeS(P, C, [1.15, 1.65, s], [2.52, 2.85, s], 0.09, 0.09, 6, LP.yellow, true);
+        tubeS(P, C, [0.95, 2.30, s], [2.52, 4.35, s], 0.08, 0.08, 6, LP.steelL, true);
+        tubeS(P, C, [0.85, 1.32, s], [2.52, 3.55, s], 0.085, 0.06, 6, LP.tire, true);
+        tubeL(o, [1.15, 1.65, s], [2.52, 2.85, s], 0.095, 0.095);
+        tubeL(o, [0.95, 2.30, s], [2.52, 4.35, s], 0.085, 0.085);
+      }
+      // 竖向箱形钻桅 + 滑轮桅顶 + 后拉钢丝绳
+      boxS(P, C, 2.36, 0.45, -0.34, 2.90, 10.65, 0.34, LP.yellow); boxL(o, 2.36, 0.45, -0.34, 2.90, 10.65, 0.34);
+      boxS(P, C, 2.28, 10.65, -0.44, 3.22, 11.25, 0.44, LP.red); boxL(o, 2.28, 10.65, -0.44, 3.22, 11.25, 0.44);
+      if (hi) for (let y = 1.6; y <= 10.0; y += 1.4) { seg(o, [2.36, y, -0.35], [2.90, y, -0.35]); seg(o, [2.36, y, 0.35], [2.90, y, 0.35]); }
+      for (const s of [-0.36, 0.36]) seg(o, [-1.85, 2.40, s * 2.2], [2.45, 10.95, s]);
+      // 动力头 + 钻杆 + 接地螺旋钻斗（y = 0.02..1.62）
+      boxS(P, C, 2.74, 3.70, -0.46, 3.36, 4.88, 0.46, LP.orange); boxL(o, 2.74, 3.70, -0.46, 3.36, 4.88, 0.46);
+      tubeS(P, C, [3.06, 1.60, 0], [3.06, 10.85, 0], 0.13, 0.13, 8, LP.steelL, true);
+      tubeL(o, [3.06, 1.60, 0], [3.06, 10.85, 0], 0.135, 0.135);
+      tubeS(P, C, [3.06, 0.02, 0], [3.06, 1.62, 0], 0.38, 0.38, hi ? 10 : 8, LP.steel, true);
+      for (const y of [0.10, 0.55, 1.00, 1.45]) ring(o, [3.06, y, 0], 0.40, 'y', hi ? 10 : 6);
+      _CL = null;
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), CL: new Float32Array(CL), hx: 3.45, hz: 1.85, h: 11.4 };
+    }
+
+    if (kind === 'pump') {
+      // 混凝土臂架泵车（主体/承轨层浇筑期）：四桥重卡底盘 + 四展开支腿垫板 + 尾端料斗 + 回转塔 + 四节折臂与泵送管 + 软管
+      for (const s of [-1, 1]) boxS(P, C, -5.15, 0.84, s * 0.52 - 0.12, 4.75, 1.16, s * 0.52 + 0.12, LP.steel);
+      boxS(P, C, -5.15, 1.16, -1.18, 4.75, 1.32, 1.18, LP.steel); boxL(o, -5.15, 1.16, -1.18, 4.75, 1.32, 1.18);
+      cab(2.75, 4.80, 1.32, 3.38, 1.18, LP.cabW);
+      axle(-3.95, 1.12, 0.50, true); axle(-2.65, 1.12, 0.50, true); axle(1.95, 1.12, 0.50, false); axle(3.65, 1.12, 0.50, false);
+      // 4 条展开支腿（落在 z = ±1.48，位于 hz = 1.65 支撑范围内，零悬空）
+      for (const ax of [-4.45, 1.25]) {
+        boxS(P, C, ax - 0.22, 0.80, -1.56, ax + 0.22, 1.14, 1.56, LP.orange); boxL(o, ax - 0.22, 0.80, -1.56, ax + 0.22, 1.14, 1.56);
+        for (const s of [-1, 1]) {
+          const z = s * 1.48;
+          tubeS(P, C, [ax, 0.08, z], [ax, 1.14, z], 0.10, 0.12, 6, LP.steelL, true);
+          boxS(P, C, ax - 0.24, 0.0, z - 0.24, ax + 0.24, 0.08, z + 0.24, LP.steel);
+          boxL(o, ax - 0.24, 0.0, z - 0.24, ax + 0.24, 0.08, z + 0.24);
+          seg(o, [ax, 0.08, z], [ax, 1.14, z]);
+        }
+      }
+      // 泵送机罩 + 尾端受料斗 + 中置回转塔
+      boxS(P, C, -4.35, 1.32, -1.04, 0.85, 2.22, 1.04, LP.yellow); boxL(o, -4.35, 1.32, -1.04, 0.85, 2.22, 1.04);
+      const hpB = [[-5.18, 0.96, -0.62], [-4.35, 0.96, -0.62], [-4.35, 0.96, 0.62], [-5.18, 0.96, 0.62]];
+      const hpT = [[-5.32, 1.88, -0.82], [-4.35, 1.88, -0.82], [-4.35, 1.88, 0.82], [-5.32, 1.88, 0.82]];
+      prismS(P, C, hpB, hpT, LP.steel); prismL(o, hpB, hpT);
+      boxS(P, C, 0.85, 1.32, -0.82, 2.10, 2.85, 0.82, LP.orange); boxL(o, 0.85, 1.32, -0.82, 2.10, 2.85, 0.82);
+      // 四节 Z 型布料臂架（实体臂节 + 伴随输送钢管 + 变幅油缸 + 车头前方净空悬挂软管，不穿驾驶室）
+      const segArm = (a, b, r0, r1, col) => {
+        tubeS(P, C, a, b, r0, r1, 6, col, true);
+        tubeL(o, a, b, r0 + 0.01, r1 + 0.01);
+        tubeS(P, C, [a[0], a[1] + r0 + 0.08, a[2] + 0.14], [b[0], b[1] + r1 + 0.08, b[2] + 0.14], 0.065, 0.065, 6, LP.steelL, true);
+      };
+      const j0 = [1.45, 2.85, 0], j1 = [-2.75, 5.10, 0], j2 = [2.15, 6.25, 0], j3 = [5.45, 4.95, 0];
+      segArm(j0, j1, 0.26, 0.22, LP.yellow);
+      segArm(j1, j2, 0.21, 0.17, LP.red);
+      segArm(j2, j3, 0.16, 0.12, LP.yellow);
+      tubeS(P, C, [0.45, 2.15, 0], [-0.55, 3.85, 0], 0.11, 0.08, 6, LP.tire, true);
+      tubeS(P, C, j3, [5.52, 2.35, 0], 0.075, 0.075, 6, LP.tire, true);
+      seg(o, j3, [5.52, 2.35, 0]);
+      _CL = null;
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), CL: new Float32Array(CL), hx: 5.55, hz: 1.65, h: 6.5 };
+    }
+
+    if (kind === 'dump') {
+      // 重型自卸土方车（基坑土方外运）：三桥车架 + 橙色驾驶室 + 加强筋钢货箱 + 驾驶室防护檐 + 液压举升缸 + 满载土方堆
+      for (const s of [-1, 1]) boxS(P, C, -4.35, 0.84, s * 0.52 - 0.12, 4.15, 1.18, s * 0.52 + 0.12, LP.steel);
+      boxS(P, C, -4.35, 1.18, -1.16, 4.15, 1.30, 1.16, LP.steel); boxL(o, -4.35, 1.18, -1.16, 4.15, 1.30, 1.16);
+      boxS(P, C, -0.35, 0.56, 0.68, 1.35, 1.08, 1.16, LP.steelL);
+      if (hi) boxL(o, -0.35, 0.56, 0.68, 1.35, 1.08, 1.16);
+      cab(2.15, 4.25, 1.28, 3.36, 1.18, LP.orange);
+      axle(-3.25, 1.12, 0.52, true); axle(-1.85, 1.12, 0.52, true); axle(3.15, 1.12, 0.52, false);
+      // 钢制自卸货箱（含前防护帽檐 + 两侧竖向加强筋 + 前举升油缸）
+      const db = [[-4.35, 1.32, -1.18], [1.85, 1.32, -1.18], [1.85, 1.32, 1.18], [-4.35, 1.32, 1.18]];
+      const dt = [[-4.10, 2.98, -1.22], [1.85, 2.98, -1.22], [1.85, 2.98, 1.22], [-4.10, 2.98, 1.22]];
+      prismS(P, C, db, dt, LP.cabB); prismL(o, db, dt);
+      boxS(P, C, 1.85, 3.16, -1.12, 2.95, 3.36, 1.12, LP.cabB); boxL(o, 1.85, 3.16, -1.12, 2.95, 3.36, 1.12);
+      for (let x = -3.4; x <= 1.2; x += 1.15) {
+        for (const s of [-1, 1]) {
+          const z0 = s > 0 ? 1.18 : -1.26, z1 = s > 0 ? 1.26 : -1.18;
+          boxS(P, C, x - 0.08, 1.38, z0, x + 0.08, 2.94, z1, LP.steel);
+          if (hi) boxL(o, x - 0.08, 1.38, z0, x + 0.08, 2.94, z1);
+        }
+      }
+      tubeS(P, C, [1.96, 1.32, 0], [1.96, 2.90, 0], 0.12, 0.09, 6, LP.steelL, true);
+      // 满载开挖土方堆
+      const sb = [[-3.95, 2.96, -1.06], [1.65, 2.96, -1.06], [1.65, 2.96, 1.06], [-3.95, 2.96, 1.06]];
+      const st = [[-3.15, 3.50, -0.58], [0.85, 3.52, -0.58], [0.85, 3.52, 0.58], [-3.15, 3.50, 0.58]];
+      prismS(P, C, sb, st, LP.soil); if (hi) prismL(o, sb, st);
+      _CL = null;
+      return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), CL: new Float32Array(CL), hx: 4.5, hz: 1.35, h: 3.6 };
+    }
+
+    // 履带吊底盘（B-6 精修：圆角驱动轮/导向轮 + H 形下车架 + 实心回转支承 + 分层配重 + 引擎盖排气管 + 实心管状人字架）
     for (const s of [-1, 1]) {
       const z0 = s * 2.3;
-      boxL(o, -3.6, 0, z0 - 0.52, 3.6, 1.22, z0 + 0.52);
-      boxS(P, C, -3.6, 0, z0 - 0.52, 3.6, 1.22, z0 + 0.52, LP.tire);
-      ring(o, [-3.05, 0.61, z0 + s * 0.54], 0.56, 'z', hi ? 12 : 8);
-      ring(o, [3.05, 0.61, z0 + s * 0.54], 0.56, 'z', hi ? 12 : 8);
-      const step = hi ? 0.6 : 1.2;
-      for (let x = -3.0; x <= 3.01; x += step) { seg(o, [x, 0, z0 - 0.52], [x, 1.22, z0 - 0.52]); if (hi) seg(o, [x, 0, z0 + 0.52], [x, 1.22, z0 + 0.52]); }
+      boxL(o, -3.55, 0, z0 - 0.52, 3.55, 1.20, z0 + 0.52);
+      boxS(P, C, -3.55, 0, z0 - 0.52, 3.55, 1.20, z0 + 0.52, LP.tire);
+      for (const tx of [-3.55, 3.55]) {
+        tubeS(P, C, [tx, 0.60, z0 - 0.53], [tx, 0.60, z0 + 0.53], 0.59, 0.59, hi ? 12 : 8, LP.tire, true);
+        tubeS(P, C, [tx, 0.60, z0 + s * 0.52], [tx, 0.60, z0 + s * 0.58], 0.24, 0.20, 8, LP.steel, true);
+        ring(o, [tx, 0.60, z0 + s * 0.55], 0.56, 'z', hi ? 12 : 8);
+      }
+      const step = hi ? 0.55 : 1.1;
+      for (let x = -3.0; x <= 3.01; x += step) { seg(o, [x, 0.02, z0 - 0.53], [x, 1.18, z0 - 0.53]); if (hi) seg(o, [x, 0.02, z0 + 0.53], [x, 1.18, z0 + 0.53]); }
     }
-    boxL(o, -1.6, 0.45, -1.78, 1.6, 1.15, 1.78);
-    boxS(P, C, -1.6, 0.45, -1.78, 1.6, 1.15, 1.78, LP.steel);
+    boxL(o, -1.65, 0.44, -1.78, 1.65, 1.14, 1.78);
+    boxS(P, C, -1.65, 0.44, -1.78, 1.65, 1.14, 1.78, LP.steel);
+    tubeS(P, C, [0, 1.14, 0], [0, 1.34, 0], 1.32, 1.32, 12, LP.steel, true);
     ring(o, [0, 1.24, 0], 1.35, 'y', hi ? 12 : 8);
-    boxL(o, -2.5, 1.25, -1.75, 2.2, 3.35, 1.75);
-    boxS(P, C, -2.5, 1.25, -1.75, 2.2, 3.35, 1.75, LP.orange);
-    boxL(o, -3.55, 1.35, -1.65, -2.5, 3.15, 1.65);
-    boxS(P, C, -3.55, 1.35, -1.65, -2.5, 3.15, 1.65, LP.conc);
-    if (hi) {
-      for (const y of [1.80, 2.25, 2.70]) poly(o, [[-3.55, y, -1.65], [-2.5, y, -1.65], [-2.5, y, 1.65], [-3.55, y, 1.65]], true);
-      for (let x = -2.0; x <= 1.2; x += 0.8) seg(o, [x, 1.65, -1.76], [x, 2.95, -1.76]);
+    boxL(o, -2.5, 1.32, -1.75, 2.2, 3.35, 1.75);
+    boxS(P, C, -2.5, 1.32, -1.75, 2.2, 3.35, 1.75, LP.orange);
+    // 顶部引擎罩与排气管
+    boxS(P, C, -2.1, 3.35, -1.15, 0.9, 3.60, 0.85, LP.steel); boxL(o, -2.1, 3.35, -1.15, 0.9, 3.60, 0.85);
+    tubeS(P, C, [-1.65, 3.58, -0.95], [-1.65, 4.32, -0.95], 0.08, 0.07, 6, LP.tire, true);
+    // 分层配重块（3 层阶梯拼块）
+    for (let k = 0; k < 3; k++) {
+      const y0 = 1.38 + k * 0.60, y1 = y0 + 0.54;
+      boxS(P, C, -3.58, y0, -1.65, -2.50, y1, 1.65, LP.conc);
+      boxL(o, -3.58, y0, -1.65, -2.50, y1, 1.65);
     }
-    boxL(o, 1.05, 1.25, 1.05, 2.65, 3.25, 2.05);
-    boxS(P, C, 1.05, 1.25, 1.05, 2.65, 3.25, 2.05, LP.cabW);
+    if (hi) for (let x = -2.0; x <= 1.2; x += 0.8) seg(o, [x, 1.65, -1.76], [x, 2.95, -1.76]);
+    boxL(o, 1.05, 1.32, 1.05, 2.65, 3.25, 2.05);
+    boxS(P, C, 1.05, 1.32, 1.05, 2.65, 3.25, 2.05, LP.cabW);
+    const fw = [[2.66, 1.55, 1.18], [2.66, 1.55, 1.92], [2.66, 3.05, 1.92], [2.66, 3.05, 1.18]];
+    poly(o, fw, true); quadS(P, C, fw[0], fw[1], fw[2], fw[3], LP.glass, 1.02);
     if (hi) {
-      const fw = [[2.66, 1.55, 1.18], [2.66, 1.55, 1.92], [2.66, 3.05, 1.92], [2.66, 3.05, 1.18]];
-      poly(o, fw, true); quadS(P, C, fw[0], fw[1], fw[2], fw[3], LP.glass, 1.02);
       const sw = [[1.25, 1.65, 2.06], [2.45, 1.65, 2.06], [2.45, 3.05, 2.06], [1.25, 3.05, 2.06]];
       poly(o, sw, true); quadS(P, C, sw[0], sw[1], sw[2], sw[3], LP.glass, 0.96);
     }
+    // 实心管状 A 字人字架（实景下保持完整立体观感）
     const gTop = [-2.55, 5.45];
-    for (const s of [-1.15, 1.15]) { seg(o, [-2.45, 3.35, s], [gTop[0], gTop[1], s * 0.72]); seg(o, [-0.65, 3.35, s], [gTop[0], gTop[1], s * 0.72]); }
+    for (const s of [-1.15, 1.15]) {
+      tubeS(P, C, [-2.45, 3.35, s], [gTop[0], gTop[1], s * 0.72], 0.08, 0.07, 6, LP.steel, true);
+      tubeS(P, C, [-0.65, 3.35, s], [gTop[0], gTop[1], s * 0.72], 0.08, 0.07, 6, LP.steel, true);
+      seg(o, [-2.45, 3.35, s], [gTop[0], gTop[1], s * 0.72]);
+      seg(o, [-0.65, 3.35, s], [gTop[0], gTop[1], s * 0.72]);
+    }
+    tubeS(P, C, [gTop[0], gTop[1], -0.86], [gTop[0], gTop[1], 0.86], 0.09, 0.09, 6, LP.steel, true);
     seg(o, [gTop[0], gTop[1], -0.83], [gTop[0], gTop[1], 0.83]);
     _CL = null;
     return { L: new Float32Array(o), P: new Float32Array(P), C: new Float32Array(C), CL: new Float32Array(CL), hx: 3.7, hz: 2.9, h: 3.4 };
@@ -732,22 +861,25 @@
   const FIG_OBJ = { stand: mkFig('stand'), push: mkFig('push'), weld: mkFig('weld'), signal: mkFig('signal') };
   const FIG = { stand: FIG_OBJ.stand.L, push: FIG_OBJ.push.L, weld: FIG_OBJ.weld.L, signal: FIG_OBJ.signal.L };
   const mkVeh = k => { const lo = vehicle(k, false), hi = vehicle(k, true); return { L: lo.L, P: lo.P, C: lo.C, CL: lo.CL, Lhi: hi.L, Phi: hi.P, Chi: hi.C, CLhi: hi.CL, hx: lo.hx, hz: lo.hz, h: lo.h }; };
-  const VEH = { mixer: mkVeh('mixer'), flatbed: mkVeh('flatbed'), excavator: mkVeh('excavator'), scissor: mkVeh('scissor'), crawler: mkVeh('crawler') };
+  const VEH = {
+    mixer: mkVeh('mixer'), flatbed: mkVeh('flatbed'), excavator: mkVeh('excavator'), scissor: mkVeh('scissor'),
+    crawler: mkVeh('crawler'), drill: mkVeh('drill'), pump: mkVeh('pump'), dump: mkVeh('dump')
+  };
   const FW = 0.3, FH = 1.85;
 
-  // ---------- 工种规则 ----------
+  // ---------- 工种规则（B-6 扩充旋挖钻机/泵车/自卸车混编派车） ----------
   const TRADE = {
-    civil: { n: 6, mix: ['push', 'push', 'stand', 'stand', 'signal'], veh: 'excavator' },
-    frame: { n: 5, mix: ['push', 'push', 'stand', 'weld', 'signal'], veh: 'mixer' },
-    mezz: { n: 4, mix: ['push', 'stand', 'stand', 'signal'], veh: 'mixer' },
-    bridge: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
-    track: { n: 4, mix: ['push', 'push', 'stand', 'signal'], veh: 'flatbed' },
-    steel: { n: 4, mix: ['weld', 'weld', 'stand', 'signal'], veh: 'flatbed' },
-    asm: { n: 5, mix: ['weld', 'weld', 'weld', 'stand', 'signal'], veh: 'scissor' },
-    jig: { n: 3, mix: ['weld', 'stand', 'signal'], veh: 'flatbed' },
-    skin: { n: 4, mix: ['weld', 'stand', 'stand', 'signal'], veh: 'scissor' },
-    tod: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
-    ym: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer' },
+    civil: { n: 6, mix: ['push', 'push', 'stand', 'stand', 'signal'], veh: 'excavator', vehs: ['drill', 'excavator', 'dump'] },
+    frame: { n: 5, mix: ['push', 'push', 'stand', 'weld', 'signal'], veh: 'mixer', vehs: ['pump', 'mixer', 'mixer'] },
+    mezz: { n: 4, mix: ['push', 'stand', 'stand', 'signal'], veh: 'mixer', vehs: ['mixer', 'pump'] },
+    bridge: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer', vehs: ['pump', 'mixer'] },
+    track: { n: 4, mix: ['push', 'push', 'stand', 'signal'], veh: 'flatbed', vehs: ['flatbed'] },
+    steel: { n: 4, mix: ['weld', 'weld', 'stand', 'signal'], veh: 'flatbed', vehs: ['flatbed'] },
+    asm: { n: 5, mix: ['weld', 'weld', 'weld', 'stand', 'signal'], veh: 'scissor', vehs: ['scissor'] },
+    jig: { n: 3, mix: ['weld', 'stand', 'signal'], veh: 'flatbed', vehs: ['flatbed'] },
+    skin: { n: 4, mix: ['weld', 'stand', 'stand', 'signal'], veh: 'scissor', vehs: ['scissor'] },
+    tod: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer', vehs: ['pump', 'mixer', 'flatbed'] },
+    ym: { n: 4, mix: ['push', 'stand', 'weld', 'signal'], veh: 'mixer', vehs: ['pump', 'mixer', 'flatbed'] },
   };
   const tradeOf = a => { for (const k in a.res) if (TRADE[k]) return k; return null; };
   const stOf = (p, t) => { if (p.st == null || t < p.st) return -1; if (p.rm && p.rm[0] >= 0 && t >= p.rm[0]) return t >= p.rm[0] + p.rm[1] ? 3 : 2; return t < p.st + p.du ? (t - p.st) / p.du : 2; };
@@ -820,8 +952,13 @@
         }
       }
       if (day && (a.kind !== 'temp' || tr === 'jig')) {
-        const nV = Math.min(4, Math.ceil(live.length / 3)), V = VEH[T.veh];
+        const nV = Math.min(4, Math.ceil(live.length / 3)), vPool = T.vehs || [T.veh];
+        const prog = a.end > a.start ? (t - a.start) / (a.end - a.start) : 0;
+        const rot = (Math.floor(t) + a.ix) % vPool.length;
         for (let k = 0; k < nV; k++) {
+          let vk = vPool[(k + rot) % vPool.length];
+          if (tr === 'civil' && vk === 'drill' && prog > 0.65) vk = 'dump';
+          const V = VEH[vk];
           const p = live[Math.floor(R() * live.length)], mn = p.geo.min, mx = p.geo.max;
           for (let tryN = 0; tryN < 6; tryN++) {
             const side = Math.floor(R() * 4), d = 4 + R() * 10 + V.hx, u = R();
@@ -830,7 +967,7 @@
             const yaw = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(yaw), sa = Math.sin(yaw), ex = Math.abs(V.hx * ca) + Math.abs(V.hz * sa), ez = Math.abs(V.hx * sa) + Math.abs(V.hz * ca);
             if (!freeOf(x - ex, z - ez, x + ex, z + ez, y + 0.02, y + V.h)) continue;
             if (!clearRot(I, t, x, y, z, V.hx, V.hz, V.h, ca, sa) || !supported(I, t, x, y, z, V.hx * 0.9, V.hz * 0.9, ca, sa)) continue;
-            placed.push([x - ex, y + 0.02, z - ez, x + ex, y + V.h, z + ez]); out.vehs.push({ x, y, z, yaw, kind: T.veh, act: a.key }); break;
+            placed.push([x - ex, y + 0.02, z - ez, x + ex, y + V.h, z + ez]); out.vehs.push({ x, y, z, yaw, kind: vk, act: a.key }); break;
           }
         }
       }
