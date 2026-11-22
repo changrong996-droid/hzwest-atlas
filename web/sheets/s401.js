@@ -283,7 +283,7 @@
     get window() { const K = G.HZ && G.HZ.K; return K && K.holes && K.pv ? [K.holes.start, K.pv.end] : [683, 785]; },
     // 大数字：屋面封闭率（采光顶 + 金属屋面按块面积，只算铺完的块）；补孔阶段说明为何还是 0（D-22 ③）
     big: t => { const st = stats(t), K = data().K; return { num: Math.round(st.close), unit: '%', label: t < K.sky.start ? `屋面封闭 · 先补提升孔 ${st.holesTot - st.holesOpen}/${st.holesTot}` : '屋面封闭（按面积）' }; },
-    scope: { keys: ['holes', 'sky', 'clad', 'pv', 'mast', 'asm1', 'asm2', 'asm3', 'merge', 'head'] },   // D-34
+    scope: { keys: ['holes', 'sky', 'clad', 'pv', 'mast', 'asm1', 'asm2', 'asm3', 'merge', 'head', 'ring', 'floorS', 'floorN', 'col24S', 'col24N', 'deckS', 'deckN', 'pierS', 'pierN', 'frameS', 'frameN', 'platS', 'platN', 'found'] },   // B-1：补齐屋面下部承重结构，消除 S-401 屋面腾空
     draw,
     stats,
     // 3D 引线锚点（D-22 ④，待宿主接 pl.leadAt，见 CLAIMS 接口请求）：铺金属屋面 / 光伏时落在当前铺设前沿、离开十字采光顶的东侧屋面板上
