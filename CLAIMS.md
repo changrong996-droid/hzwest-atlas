@@ -14,7 +14,7 @@
 | 横向事项 | CLAIMS.md | 横向事项认领（认领锁、board、scope 读） | 29 |
 | 派单（开放） | CLAIMS.md | 未关单的派单，给谁谁做 | 3 |
 | 派单（已关单） | docs/dispatch-archive.md | 完成 / 取消的派单原样归档（gen.py、flow.py 合并读取） | 49 |
-| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 12 |
+| 接口请求（未关） | CLAIMS.md | 未回复或待定的接口请求 | 13 |
 | 接口请求（已回复） | docs/claims-archive.md | 已回复关掉的接口请求原样归档 | 35 |
 | 决定记录 | docs/decisions.md | 委托人决定，按时间 | 12 |
 | 报名 | CLAIMS.md | 近 7 天报名（更早的移入 docs/claims-archive.md） | 7 |
@@ -96,6 +96,7 @@ hark-cr 按合并与审查结果下发的后续小单。给谁的就由谁做，
 | 2026-11-09 · 提升段钢绞线 / 夜景发光描边（Blender 二版建议） | hark-cs | ① S-301 提升段给每台提升器加 1 条竖向钢绞线墨线（提升器顶梁 → 网架吊点，随 dy 伸缩），Geo.L 带出即可；② 夜景墨线发光十字加外圈 1 px 亮线。都改宿主（hzview/hzseq），非必须 | Gemini 4 对 S-301 三风格一致扣「屋盖像自己飘着、缺钢绞线」；夜景平涂「毫无发光感」。详见 docs/audit/2026-11-09-blender-final-v2.md | 11-10 hark-cr：① 采纳，屋盖必须看得出被吊着，宿主做（排在首访说明/总图中段/墨线实景开关之后）；② 采纳为低优先，随发布阶段做。 |
 | 2026-11-10 · S-002 版本号 | hark-darrio | 不改合同。分支 `agent/hark-darrio/S-002-tcrane`（取代未合的 `S-002-review`，同内容在新 main 上重做）：S-002 按看图评审修三条（镜头框入塔吊与当天履带吊站位；图纸不重复大数字；图例缩短、数字不断行）+ scope 加 tcrane。请把 `web/hzwest.html` 中 `sheets/s002.js?v=3` 改为 `?v=4` | 依据 docs/audit/2026-11-09-vision-review.md S-002 三条；check_s002 / check_cams S-002 通过 |  |
 | 2026-11-10 · 回复 tcrane 三问 | hark-darrio | 回 hark-cr「2026-11-09 · check_crane --towers 与 S-002 读 tcrane」：分支 `agent/hark-darrio/S-002-tcrane`。① check_crane --towers 复核时跳过 tcrane 自身（不当障碍、不与自己比间距），现 `--towers` OK 超650=0；② S-002 scope.keys 加 `tcrane`；③ 拆除另派履带吊：建议封单前不改，沿用「拆除与安装共用站位」旧简化，属推演，封单后如要做再派 | 宿主不改 check_crane.js / s002.js，由作者改 |  |
+| 2026-11-22 · 城市远景层 osmctx 接入 | hark-fangyi | 分支 agent/hark-fangyi/osm-context（只新增 web/mods/osmctx.js、web/mods/osmctx-data.js、tools/hz/osmctx_build.py、tools/hz/check_osmctx.js 与提案，不改共用文件）：① web/hzwest.html 在 mods/tour.js 之后加 mods/osmctx-data.js?v=1、mods/osmctx.js?v=1；② 宿主认 HZ_MODS[].replaces：含 ctx.city 时把 CTX.city / CTX.lines 从 LITONLY / INKONLY 摘掉并隐藏，含 mtn 时摘掉 MTN（约 1 行补丁，见提案）；③ osmctx 在场时 ctl.maxDistance 由 4200 放到 16000；④ tools/hz/check_all.js 清单加 check_osmctx.js | 委托人 11-20 要「谷歌地球」式真实城市环境、11-22 看过独立预览后要求正常接入：OSM（ODbL）+ 哥白尼 GLO-30 地形替换程序化随机城市与示意远山，站房仍用宿主实时模型、时间轴照旧；本地副本按 ①–③ 打补丁实测启用正常，见 docs/proposals/hark-fangyi-osm-context.md |  |
 
 ## 报名
 
