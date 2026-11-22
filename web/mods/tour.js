@@ -157,7 +157,7 @@
       '#hz-tour-rip{position:absolute;right:18px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;border:2px solid #b3202a;background:rgba(179,32,42,.18);pointer-events:none;animation:hzTourRip 1.2s ease-out infinite}' +
       '#hz-tour-rip[hidden]{display:none}' +
       '@keyframes hzTourRip{0%{transform:scale(.6);opacity:.95}100%{transform:scale(2.2);opacity:0}}' +
-      '#hz-tour-portals{position:absolute;left:12px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;pointer-events:auto}' +
+      '#hz-tour-portals{position:absolute;right:12px;left:auto;bottom:10px;max-width:calc(100% - 108px);display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;pointer-events:auto}' +
       '#hz-tour-portals[hidden]{display:none}' +
       '#hz-tour-portals button{height:26px;padding:0 10px;border:1px solid rgba(28,25,22,.2);border-radius:13px;background:rgba(251,249,245,.92);color:#1c1916;font:500 12px/1 var(--sans,system-ui,sans-serif);cursor:pointer;white-space:nowrap}' +
       '#hz-tour-portals button:hover{border-color:#b3202a;color:#b3202a}' +
