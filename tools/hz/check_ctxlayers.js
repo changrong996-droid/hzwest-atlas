@@ -1,7 +1,7 @@
 'use strict';
 // 远景图层机制检查（web/mods/ctx/layers.json + 图层文件，规则 docs/ctx-layers.md）· hark-fangyi
 // 1 清单每行有 id / file / by，文件存在、单个 < 300 KB、合计 < 1 MB、不重名；2 每个文件只 push 一个图层，id 与清单一致；
-// 3 图层过 osmctx 的 M.validate（字段、署名许可、坐标在地形范围 ±16 × ±12 km、标注有名、体块高度）；4 M.ll 与 tools/hz/ctxlayer.py 换算一致（站心 → 0）；
+// 3 图层过 osmctx 的 M.validate（字段、署名许可、坐标在 ±16 × ±16 km、标注有名、体块高度）；4 M.ll 与 tools/hz/ctxlayer.py 换算一致（站心 → 0）；
 // 5 时间窗：from < to；6 清单外的 ctx/*.js 视为漏登记。
 const fs = require('fs'), path = require('path');
 const { load } = require('./harness');

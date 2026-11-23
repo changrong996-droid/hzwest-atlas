@@ -57,6 +57,11 @@
     if (i < 0 || j < 0 || i >= D.nx - 1 || j >= D.ny - 1) return 0; const g = (a, b) => H.hq[(j + b) * D.nx + i + a] / 2, u = fi - i, v = fj - j;
     return Math.max(0, (g(0, 0) * (1 - u) + g(1, 0) * u) * (1 - v) + (g(0, 1) * (1 - u) + g(1, 1) * u) * v);
   };
+  M.drape = function (g, how) {   // 贴地形：each 每个顶点抬到地形高 + 1.5 m（水面、道路、线）；base 体块按所在点地形抬（同一 x、z 的上下两点同量，不变形）
+    if (!g || !M.demH) return; const a = g.attributes.position.array;
+    for (let i = 0; i < a.length; i += 3) { const h = M.ground(a[i], a[i + 2]); if (h > 0) a[i + 1] += h + (how === 'base' ? 0 : 1.5); }
+    g.attributes.position.needsUpdate = true; g.computeBoundingSphere();
+  };
   M.validate = function (L) {   // 返回问题列表（空 = 合格）；check_ctxlayers 与运行时共用
     const bad = []; if (!L || typeof L !== 'object') return ['不是对象'];
     if (!/^[a-z0-9][a-z0-9._-]*$/.test(L.id || '')) bad.push('id 须小写字母数字 . _ -'); if (!L.name) bad.push('缺 name'); if (!L.by) bad.push('缺 by（作者）');
@@ -65,7 +70,8 @@
     for (const [i, o] of (L.items || []).entries()) { const pt = o.k === 'label' || o.k === 'pin';
       if (!['area', 'line', 'road', 'bldg', 'label', 'pin'].includes(o.k)) { bad.push('items[' + i + '].k 未知：' + o.k); continue; }
       const P = pt ? [o.p] : o.p; if (!Array.isArray(P) || !P.length || (!pt && P.length < 2)) { bad.push('items[' + i + '].p 点数不足'); continue; }
-      for (const q of P) if (!Array.isArray(q) || !isFinite(q[0]) || !isFinite(q[1]) || Math.abs(q[0]) > 16000 || Math.abs(q[1]) > 12000) { bad.push('items[' + i + '] 坐标越界或非数：' + q); break; }
+      for (const q of P) if (!Array.isArray(q) || !isFinite(q[0]) || !isFinite(q[1]) || Math.abs(q[0]) > 16000 || Math.abs(q[1]) > 16000) { bad.push('items[' + i + '] 坐标越界或非数：' + q); break; }
+      if ((o.k === 'area' || o.k === 'bldg') && new Set(P.map(q => q[0] + ',' + q[1])).size < 3) bad.push('items[' + i + '] 面不足 3 个不同点');
       if ((o.k === 'label' || o.k === 'pin') && !o.n) bad.push('items[' + i + '] 标注缺 n');
       if (o.k === 'bldg' && !(o.h > 0 && o.h < 600)) bad.push('items[' + i + '] 体块高度异常：' + o.h); }
     if (M.layers.some(q => q.id === L.id && q.L !== L)) bad.push('id 重复：' + L.id);
@@ -80,7 +86,7 @@
     const groups = {}; for (const o of L.items || []) { const key = (o.from == null && o.to == null) ? '' : o.from + '|' + o.to; (groups[key] = groups[key] || []).push(o); }
     for (const key in groups) { const gg = key ? new THREE.Group() : g; if (key) { g.add(gg); const [f, t] = key.split('|'); e.items.push({ g: gg, from: f === 'undefined' ? null : +f, to: t === 'undefined' ? null : +t }); } M._cur = gg;
       const its = groups[key], byC = {}; for (const o of its) { const c = o.c || ({ area: '#cfe0ea', line: '#5b88a8', road: '#ffffff', bldg: '#e6e1d7' })[o.k] || '#2a2622'; (byC[o.k + '|' + c + '|' + (o.w || '') + '|' + (o.y || '')] = byC[o.k + '|' + c + '|' + (o.w || '') + '|' + (o.y || '')] || []).push(o); }
-      for (const k in byC) { const [kind, c, w, y] = k.split('|'), list = byC[k], col = new THREE.Color(c).getHex(), Y = y ? +y : 0;
+      for (const k in byC) { const [kind, c, w, y] = k.split('|'), list = byC[k], col = new THREE.Color(c).getHex(), Y = y ? +y : 0, n0 = gg.children.length;
         if (kind === 'area') A.flat(list.filter(o => o.p.length >= 3).map(o => ({ p: o.p.length && (o.p[0][0] !== o.p[o.p.length - 1][0] || o.p[0][1] !== o.p[o.p.length - 1][1]) ? o.p.concat([o.p[0]]) : o.p })), col, Y || 0.2);
         else if (kind === 'line') A.line(segs(list, Y || 0.3, []), col, 1);
         else if (kind === 'road') A.mesh(ribbonTris(list, +w || 8, Y || 0.27, []), col);
@@ -89,7 +95,8 @@
           A.mesh(arr, col, 1); A.line(ed, COL.edge, 0.5); }
         else for (const o of list) { const yy = (o.y != null ? +o.y : 0) + (kind === 'pin' ? (o.h || 120) : 12);
           if (kind === 'pin') { const pinY = M.ground(o.p[0], o.p[1]); A.line([o.p[0], pinY, o.p[1], o.p[0], pinY + (o.h || 120), o.p[1]], col, 0.9); }
-            A.label(o.n, o.p[0], o.p[1], M.ground(o.p[0], o.p[1]) + yy, kind === 'pin' ? 'p' : 'l'); } } }
+            A.label(o.n, o.p[0], o.p[1], M.ground(o.p[0], o.p[1]) + yy, kind === 'pin' ? 'p' : 'l'); }
+        if (kind === 'area' || kind === 'line' || kind === 'road' || kind === 'bldg') for (const ch of gg.children.slice(n0)) M.drape(ch.geometry, kind === 'bldg' ? 'base' : 'each'); } }
     M._cur = g; if (typeof L.build === 'function') { try { L.build(Object.assign({}, A, { group: g, layer: L })); } catch (err) { console.warn('osmctx 图层 ' + L.id + ' build 失败', err); } }
     g.visible = e.on; M._lastT = null; if (M._uiAdd) M._uiAdd(e); return e;
   };

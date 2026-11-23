@@ -2,6 +2,7 @@
 # 规则见 docs/ctx-layers.md。坐标换算与 tools/hz/osmctx_build.py、web/mods/osmctx.js 的 M.ll 同一套（站心 30.3004N 119.9817E，转 4.3°、东移 10 m，模型系 x 东、z 南）。
 # 要素 → 图层条目：Point → label（properties.kind=pin 则竖针）；LineString / MultiLineString → line（有 width 则 road 带）；
 #   Polygon / MultiPolygon → area（有 height 则 bldg 体块，取外环）。properties 可带 name、height、width、color、y、from、to（工期 t 天）。
+# 源文件可为 .geojson 或 .geojson.gz（大于 100 KB 的源请 gzip 后入库）。
 # 用法：python3 tools/hz/ctxlayer.py <输入.geojson> --id place.names --name 地名 --by hark-fangyi --src "地名：© OpenStreetMap 贡献者" --license "ODbL 1.0" [--url …] [--from T] [--to T] [--off] [--simplify 2]
 import argparse, json, math, os, sys
 ap = argparse.ArgumentParser(); ap.add_argument('geojson'); ap.add_argument('--id', required=True); ap.add_argument('--name', required=True); ap.add_argument('--by', required=True)
@@ -20,7 +21,13 @@ def simp(P, tol):   # Douglas-Peucker（米）
         d = abs(dy * (P[k][0] - a0[0]) - dx * (P[k][1] - a0[1])) / L
         if d > dm: i, dm = k, d
     return simp(P[:i + 1], tol)[:-1] + simp(P[i:], tol) if dm > tol else [a0, b0]
-G = json.load(open(a.geojson)); feats = G['features'] if G.get('type') == 'FeatureCollection' else [G]; items = []
+import gzip
+def simp_ring(P, tol):   # 闭合环：首尾同点时从最远点劈开分别抽稀，避免退化
+    if tol <= 0 or len(P) < 5 or P[0] != P[-1]: return simp(P, tol)
+    k = max(range(len(P)), key=lambda i: (P[i][0] - P[0][0]) ** 2 + (P[i][1] - P[0][1]) ** 2)
+    R = simp(P[:k + 1], tol)[:-1] + simp(P[k:], tol)
+    return R if len(R) >= 4 else P
+G = json.load(gzip.open(a.geojson, 'rt', encoding='utf-8') if a.geojson.endswith('.gz') else open(a.geojson, encoding='utf-8')); feats = G['features'] if G.get('type') == 'FeatureCollection' else [G]; items = []
 for f in feats:
     g, pr = f['geometry'], f.get('properties') or {}; t = g['type']
     base = {k2: pr[k1] for k1, k2 in (('name', 'n'), ('color', 'c'), ('y', 'y'), ('from', 'from'), ('to', 'to')) if pr.get(k1) is not None}
@@ -32,7 +39,7 @@ for f in feats:
             items.append(e)
     elif t in ('Polygon', 'MultiPolygon'):
         for pg in ([g['coordinates']] if t == 'Polygon' else g['coordinates']):
-            e = dict(base, k='bldg' if pr.get('height') else 'area', p=simp([tm(c) for c in pg[0]], a.simplify))
+            e = dict(base, k='bldg' if pr.get('height') else 'area', p=simp_ring([tm(c) for c in pg[0]], a.simplify))
             if pr.get('height'): e['h'] = pr['height']
             items.append(e)
     else: print('跳过不支持的几何', t, file=sys.stderr)
