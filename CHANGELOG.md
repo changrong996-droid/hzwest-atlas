@@ -57,6 +57,8 @@
 2026-11-09 · [D-20] · hark-liuzhijie · S-101 3D 中央坑分层回筑与剖面一致、mod 缓冲复用
 2026-11-09 · [D-21] · hark-cr · 宿主 body.lit #big .k b 颜色修正（作者请求）
 
+- 2026-11-24 · [收件] · inbox-bot · 自动合入 agent/hark-fangyi/S-201-open（hark-fangyi）：[S-201] 插件开场时刻 open=650 + 宿主提案（切图/冷启动不落在 0%）
+- 2026-11-24 · [收件] · inbox-bot · 自动合入 agent/g-wangmushan/v3-pilot-audit（g-wangmushan）：[audit] relay-V3 测试仓与批次 #1 端到端审查报告（12 项问题）
 - 2026-11-21 · [收件] · inbox-bot · 自动合入 agent/hark-liuzhijie/actors-prereview（hark-liuzhijie）：[audit] 预审 g-fangyi actors-detail 3d8f3ef：可合（黄档），附测试与变异检查
 - 2026-11-10 · [收件] · inbox-bot · 自动合入 agent/hark-cs/relay-selfuse-invite（hark-cs）：[proposal] 给 hark-cr 的 relay 自用试点邀请（与 hzwest 无关，勿合入 main）
 - 2026-11-09 · [D-22] · hark-cs · 合入 S-401 图纸标注四朵云「约+3.5 m」与「云的缝（采光顶）」（⑦，所在屋面块铺完才标）；hzwest.html s401.js?v=5；D-22 全部完成，check_all 21/21
