@@ -44,6 +44,6 @@
 - `bldg.mid` 换成紧凑编码（`q.r` 实高 / `q.f` 估高，每栋 `[高, 点数, dx, dz…]` 差分整数）+ `build(api)`，取代样本的逐条 items；轮廓抽稀 0.8 m。约 4000 栋（实高 208），172 KB。
 - 分块标定：4 km 方格内有层数的住宅 ≥ 15 栋时用本格中位层数 × 3.2 m，否则用上表；本次只有两格够数（10 层、15 层）。
 - `road.mid`：motorway…tertiary，隧道不画，与 road.hub（外接道路）同位的段不重画，抽稀 1.5 m，约 2200 段，216 KB。
-- `place.names`：加 OSM place=suburb/town 节点里落在 Z2 的（仓前街道、蒋村街道）。五常、余杭老城、中泰在下载的 OSM 里没有片区点，未加，不硬凑坐标。
+- `place.names`：街道/镇名。有 OSM 片区点的直接用（仓前、蒋村）；没有的由 `mid/mk_adm.py` 从行政边界推代表点（Z2 内 200 m 格点取界内点平均、再取最近界内格点；界内 < 3 km² 不标）：五常、良渚、余杭、三墩、闲林、瓶窑。中泰在 Z2 内仅 0.1 km²，不标。
 - 未做：超过 8 km 合并街区块（本次体量不需要）；开工前是否存在（T1）。
 - 复现：`tools/hz/ctx_src/mid/parse.py`（在原始块目录跑）→ `mk_mid.py osm.pkl` → `ctxlayer.py` 重出 place-names.js。
