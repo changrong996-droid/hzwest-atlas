@@ -18,8 +18,8 @@
   const humanNote = $('human-note');
   const shutterGhost = $('shutter-ghost'), sgImg = $('sg-img');
   const flashStrip = $('flash-strip'), flashShutter = $('flash-shutter');
-  const fsImg = $('fs-img'), fsCode = $('fs-code'), fsTime = $('fs-time'), fsHash = $('fs-hash'), fsRate = $('fs-rate');
-  const timeGraph = $('time-burst-graph'), tbgClipRect = $('tbg-clip-rect'), tbgScan = $('tbg-scan'), tbgHeat = $('tbg-heat'), tbgPeakMark = $('tbg-peak-mark');
+  const fsImg = $('fs-img'), fsCode = $('fs-code'), fsTime = $('fs-time'), fsHash = $('fs-hash'), fsRate = $('fs-rate'), fsUnread = $('fs-unread');
+  const timeGraph = $('time-burst-graph'), tbgClipRect = $('tbg-clip-rect'), tbgScan = $('tbg-scan'), tbgHeat = $('tbg-heat'), tbgPeakMark = $('tbg-peak-mark'), tbgPeak = $('tbg-peak');
   const sheetsWall = $('sheets-wall'), wallGrid = $('wall-grid'), wallNum = $('wall-num');
   const crewPanel = $('crew-panel'), crewGrid = $('crew-grid'), crewZero = $('crew-zero');
   const burstCounter = $('burst-counter'), bcNum = $('bc-num');
@@ -66,37 +66,40 @@
     }
   }
 
-  // 预建 38 天真实改动密度 SVG 脉冲爆发曲线（2026-10-16 -> 2026-11-23，严格来自 git log）
-  const DAILY_DATA = [
-    ['10-16', 1], ['10-17', 0], ['10-18', 0], ['10-19', 0], ['10-20', 1], ['10-21', 4],
-    ['10-22', 0], ['10-23', 0], ['10-24', 0], ['10-25', 0], ['10-26', 0], ['10-27', 0],
-    ['10-28', 0], ['10-29', 0], ['10-30', 0], ['10-31', 0], ['11-01', 0], ['11-02', 0],
-    ['11-03', 0], ['11-04', 0], ['11-05', 0], ['11-06', 2], ['11-07', 8],
-    ['11-08', 296], ['11-09', 100], ['11-10', 103], ['11-11', 21], ['11-12', 2],
-    ['11-13', 0], ['11-14', 3], ['11-15', 0], ['11-16', 0], ['11-17', 0], ['11-18', 0],
-    ['11-19', 0], ['11-20', 0], ['11-21', 29], ['11-22', 29], ['11-23', 60]
+  // 预建核心 36 小时（11-08 09:00 -> 11-09 20:00）逐小时真实改动密度柱 + 心电脉冲线（严格来自 git log）
+  const HOURLY_36 = [
+    ['11-08 09:00', 3],  ['11-08 10:00', 11], ['11-08 11:00', 31], ['11-08 12:00', 40],
+    ['11-08 13:00', 43], ['11-08 14:00', 38], ['11-08 15:00', 44], ['11-08 16:00', 18],
+    ['11-08 17:00', 12], ['11-08 18:00', 11], ['11-08 19:00', 2],  ['11-08 20:00', 5],
+    ['11-08 21:00', 3],  ['11-08 22:00', 8],  ['11-08 23:00', 5],  ['11-09 00:00', 0],
+    ['11-09 01:00', 3],  ['11-09 02:00', 0],  ['11-09 03:00', 0],  ['11-09 04:00', 0],
+    ['11-09 05:00', 0],  ['11-09 06:00', 0],  ['11-09 07:00', 0],  ['11-09 08:00', 1],
+    ['11-09 09:00', 0],  ['11-09 10:00', 35], ['11-09 11:00', 8],  ['11-09 12:00', 1],
+    ['11-09 13:00', 0],  ['11-09 14:00', 11], ['11-09 15:00', 7],  ['11-09 16:00', 5],
+    ['11-09 17:00', 6],  ['11-09 18:00', 9],  ['11-09 19:00', 6],  ['11-09 20:00', 2]
   ];
   {
-    const W = 760, BASE = 116, TOP = 10, n = DAILY_DATA.length;
-    const pts = DAILY_DATA.map(([, cnt], i) => {
-      const x = +(i / (n - 1) * W).toFixed(1);
-      const h = cnt === 0 ? 0 : (cnt <= 10 ? 3 + cnt * 0.9 : Math.pow(cnt / 296, 0.78) * (BASE - TOP));
-      return [x, +(BASE - h).toFixed(1), cnt];
+    const W = 760, BASE = 114, TOP = 12, n = HOURLY_36.length;
+    const step = W / n, bw = +(step * 0.68).toFixed(1);
+    const barsG = $('tbg-bars-g');
+    const linePts = [];
+    HOURLY_36.forEach(([, cnt], i) => {
+      const x = +(i * step + step * 0.16).toFixed(1);
+      const cx = +(x + bw / 2).toFixed(1);
+      const h = cnt === 0 ? 0 : Math.max(4, Math.round((cnt / 44) * (BASE - TOP)));
+      const y = BASE - h;
+      linePts.push([cx, y]);
+      if (cnt > 0) {
+        const rc = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rc.setAttribute('x', x); rc.setAttribute('y', y);
+        rc.setAttribute('width', bw); rc.setAttribute('height', h);
+        rc.setAttribute('rx', '1.2');
+        rc.setAttribute('fill', cnt >= 30 ? 'url(#tbgBarHot)' : (cnt >= 10 ? 'url(#tbgBarMid)' : 'rgba(235,224,210,0.34)'));
+        if (cnt >= 30) rc.setAttribute('filter', 'url(#tbgGlow)');
+        barsG.appendChild(rc);
+      }
     });
-    const lineD = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ');
-    const areaD = lineD + ` L${W},${BASE} L0,${BASE} Z`;
-    $('tbg-line').setAttribute('d', lineD);
-    $('tbg-area').setAttribute('d', areaD);
-    const spG = $('tbg-spikes');
-    for (const [x, y, cnt] of pts) {
-      if (cnt <= 0) continue;
-      const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      ln.setAttribute('x1', x); ln.setAttribute('y1', BASE);
-      ln.setAttribute('x2', x); ln.setAttribute('y2', y);
-      ln.setAttribute('stroke', cnt >= 80 ? '#ff4a57' : 'rgba(255,244,225,0.42)');
-      ln.setAttribute('stroke-width', cnt >= 200 ? '3.2' : (cnt >= 80 ? '2' : '1.4'));
-      spG.appendChild(ln);
-    }
+    $('tbg-line').setAttribute('d', linePts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' '));
   }
 
   // 预加载 24 张仓库真实图纸/白模/法线/卫星图（零卡顿闪切）
@@ -446,11 +449,11 @@
     [48.0, 50.0, '屋顶被千斤顶整体抬起来。', false],
     [50.6, 55.2, '钻过云门，贴着轨道和站台一路穿进去。', true],
     [55.6, 60.4, '掠过网架，从四朵云屋顶上面翻出来。', true],
-    // Act 2b: 克制收口 + 17 秒不间断爆发（融入发起人真实体验：别说审了，连看一眼都来不及）
+    // Act 2b: 聚焦杭州西站核心一天半的分钟级高压密集提交（1 人根本看不过来）
     [64.2, 66.2, '接下来近三个小时，我没再说一句话。', true],
-    [66.8, 71.0, '前二十天零零散散，到了杭州西站，突然炸开。', false],
-    [71.4, 75.6, '三个小时 87 次改动，最快一小时 41 次。', false],
-    [76.0, 79.8, '那天，我别说审了，连看一眼都来不及。', true],
+    [66.8, 71.0, '这一天半里，最密的时候，几分钟就改一次。', false],
+    [71.4, 75.6, '三个小时 87 次，最快一小时 41 次。', false],
+    [76.0, 79.8, '我只有一个人，别说审了，连看都看不过来。', true],
     [80.1, 83.4, '最密的一天，它自己改了 296 次。', false],
     // Act 3: 2500 张图纸 vs 50 人团队数月工期
     [84.2, 87.4, '要是全靠人工来画——', false],
@@ -574,20 +577,27 @@
     }
 
     if (inStorm) {
-      const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1
-      const count = u < 0.45
-        ? Math.round(lerp(1, 87, Math.pow(u / 0.45, 1.4)))
-        : Math.round(lerp(87, 296, Math.pow((u - 0.45) / 0.55, 0.9)));
+      const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1 扫过核心 36 小时
+      const count = Math.round(lerp(1, 296, Math.pow(u, 0.92)));
       bcNum.textContent = String(count);
+      if (fsUnread) fsUnread.textContent = `未及查看 +${count}`;
 
-      // 暗黑脉冲爆发图：激光游标扫过 38 天，撞上 11-08 时点燃朱红尖峰热晕与震波环
+      // 36 小时逐小时高压节奏图：激光游标刚进 11:00–16:00 就连拉 5 小时朱红高墙！
       const scanX = +(u * 760).toFixed(1);
       tbgClipRect.setAttribute('width', scanX);
       tbgScan.setAttribute('x1', scanX);
       tbgScan.setAttribute('x2', scanX);
-      const hitPeak = scanX >= 455;
-      tbgHeat.setAttribute('opacity', hitPeak ? '1' : '0');
-      tbgPeakMark.setAttribute('opacity', hitPeak ? '1' : '0');
+      const hrIdx = Math.min(HOURLY_36.length - 1, Math.floor(u * HOURLY_36.length));
+      const [hrLabel, hrCnt] = HOURLY_36[hrIdx];
+      const inWall = hrCnt >= 30;
+      tbgHeat.setAttribute('opacity', inWall || scanX >= 80 ? '1' : '0');
+      tbgPeakMark.setAttribute('opacity', scanX >= 150 ? '1' : '0');
+      if (tbgPeak) {
+        const gapSec = hrCnt > 0 ? Math.max(82, Math.round(3600 / hrCnt)) : 0;
+        tbgPeak.textContent = hrCnt >= 30
+          ? `${hrLabel} · ${hrCnt} 次/小时 · 平均 ${gapSec} 秒 1 次！`
+          : (hrCnt > 0 ? `${hrLabel} · ${hrCnt} 次/小时` : `${hrLabel} · 深夜短歇`);
+      }
     }
 
     ticker.classList.toggle('on', inSlow);
