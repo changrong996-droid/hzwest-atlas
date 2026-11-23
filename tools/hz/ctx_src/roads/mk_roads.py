@@ -39,6 +39,33 @@ for f in sorted(glob.glob(os.path.join(sys.argv[1],'t_*.xml'))):
         t={x.get('k'):x.get('v') for x in w.iter('tag')}
         if t.get('highway') in ('motorway','trunk','primary','secondary','tertiary','motorway_link','trunk_link','primary_link','secondary_link','tertiary_link'):
             ways.append((w.get('id'),[x.get('ref') for x in w.iter('nd')],t))
+# —— R2 立体化：桥（bridge=yes / viaduct）按 layer 估桥面高；接地面路的一端 RAMP m 内线性落地 ——
+RAMP=220
+def bh(t):
+    if t.get('bridge') in (None,'no') : return 0
+    try: L=int(t.get('layer','1'))
+    except ValueError: L=1
+    return 12 if L<=1 else 4+8*L
+ends={}
+for wid,nds,t in ways:
+    for e in (nds[0],nds[-1]): ends.setdefault(e,[]).append(bh(t))
+def lift(l):
+    H=l['_H']; p=l['p']
+    if not H: return [[a,b] for a,b in p]
+    def tgt(nid):
+        hs=ends.get(nid,[H])
+        return 0 if min(hs)==0 else min(min(hs),H)
+    e0,e1=tgt(l['_n'][0]),tgt(l['_n'][-1])
+    s=[0]
+    for a,b in zip(p,p[1:]): s.append(s[-1]+math.hypot(b[0]-a[0],b[1]-a[1]))
+    T=s[-1] or 1; R=min(RAMP,T/2)
+    o=[]
+    for (x,z),d in zip(p,s):
+        h=H
+        if d<R: h=min(h,e0+(H-e0)*d/R)
+        if T-d<R: h=min(h,e1+(H-e1)*(T-d)/R)
+        o.append([x,z,round(h,1)])
+    return o
 seen=set(); out={pp['id']:[] for pp in P['projects']}; base=[]
 for wid,nds,t in ways:
     if wid in seen: continue
@@ -47,12 +74,12 @@ for wid,nds,t in ways:
     if len(p)<2: continue
     c=cls(t,p); pts=[[round(a),round(b)] for a,b in p]
     W3={'motorway':22,'trunk':22,'primary':22,'secondary':14,'tertiary':9}
-    if c: out[c].append({'w':W3.get(t['highway'],9),'p':pts})
+    if c: out[c].append({'w':W3.get(t['highway'],9),'p':pts,'_n':[i for i in nds if i in N],'_H':bh(t)})
     elif t['highway'] in('motorway','trunk','primary') and any(abs(a)<9000 and abs(b)<6000 for a,b in pts): base.append(pts)
 res={'t0':P['t0'],'site':[-1450,1450,-600,600],'open_station':1101,'base':base,'projects':[]}
 for pp in P['projects']:
     q=dict(pp); q['t_start']=tday(pp.get('start')); q['t_open']=tday(pp['open']); q['ms']=[[m[0],tday(m[0]) if len(m[0])==10 else tday(m[0]+'-15'),m[1]] for m in pp['milestones']]
-    q['lines']=out[pp['id']]; res['projects'].append(q)
+    q['lines']=[{'w':l['w'],'p':lift(l)} for l in out[pp['id']]]; res['projects'].append(q)
     print(pp['id'],q['t_start'],q['t_open'],len(out[pp['id']]),'段')
 dst=os.path.join(HERE,'../../../../web/plan/roads.json')
 json.dump(res,open(dst,'w'),ensure_ascii=False,separators=(',',':'))
@@ -64,8 +91,12 @@ def dens(p,st=40):
     for a_,b_ in zip(p,p[1:]):
         d=math.hypot(b_[0]-a_[0],b_[1]-a_[1]); k=int(d//st)
         for i in range(1,k+1):
-            if i*st<d: o.append([round(a_[0]+(b_[0]-a_[0])*i*st/d),round(a_[1]+(b_[1]-a_[1])*i*st/d)])
+            if i*st<d:
+                f=i*st/d; q=[round(a_[0]+(b_[0]-a_[0])*f),round(a_[1]+(b_[1]-a_[1])*f)]
+                if len(a_)>2: q.append(round(a_[2]+(b_[2]-a_[2])*f,1))
+                o.append(q)
         o.append(b_)
+    if all(len(q)<3 or q[2]==0 for q in o): o=[q[:2] for q in o]
     return o
 items=[]
 for q in res['projects']:

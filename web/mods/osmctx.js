@@ -21,9 +21,19 @@
     for (const o of list) for (let i = 1; i < o.p.length; i++) {
       const a = o.p[i - 1], b = o.p[i], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
       const ex = dx / L * w * 0.3, ez = dz / L * w * 0.3, nx = -dz / L * w / 2, nz = dx / L * w / 2;
-      const A = [a[0] - ex + nx, y, a[1] - ez + nz], B = [a[0] - ex - nx, y, a[1] - ez - nz], C = [b[0] + ex - nx, y, b[1] + ez - nz], Dd = [b[0] + ex + nx, y, b[1] + ez + nz];
+      const ya = y + (a[2] || 0), yb = y + (b[2] || 0);   // 第三个数 = 离地高（m，桥面），缺省贴地
+      const A = [a[0] - ex + nx, ya, a[1] - ez + nz], B = [a[0] - ex - nx, ya, a[1] - ez - nz], C = [b[0] + ex - nx, yb, b[1] + ez - nz], Dd = [b[0] + ex + nx, yb, b[1] + ez + nz];
       out.push(...A, ...B, ...C, ...A, ...C, ...Dd);
     }
+    return out;
+  }
+  function piers(list, w, step, out) {   // 桥：每 step m 一对墩线（地面到桥面）+ 两侧桥沿线；线段 xyz 平铺
+    for (const o of list) { let acc = step / 2;
+      for (let i = 1; i < o.p.length; i++) { const a = o.p[i - 1], b = o.p[i], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
+        const nx = -dz / L * w * 0.42, nz = dx / L * w * 0.42, ha = a[2] || 0, hb = b[2] || 0;
+        if (ha > 1 || hb > 1) out.push(a[0] + nx, ha, a[1] + nz, b[0] + nx, hb, b[1] + nz, a[0] - nx, ha, a[1] - nz, b[0] - nx, hb, b[1] - nz);
+        for (; acc < L; acc += step) { const f = acc / L, h = ha + (hb - ha) * f; if (h < 3) continue; const x = a[0] + dx * f, z = a[1] + dz * f; out.push(x + nx * 0.5, 0, z + nz * 0.5, x + nx * 0.5, h, z + nz * 0.5, x - nx * 0.5, 0, z - nz * 0.5, x - nx * 0.5, h, z - nz * 0.5); }
+        acc -= L; } }
     return out;
   }
   function segs(list, y, out) { for (const o of list) for (let i = 1; i < o.p.length; i++) { const a = o.p[i - 1], b = o.p[i]; out.push(a[0], y, a[1], b[0], y, b[1]); } return out; }
@@ -102,7 +112,8 @@
       for (const k in byC) { const [kind, c, w, y] = k.split('|'), list = byC[k], col = new THREE.Color(c).getHex(), Y = y ? +y : 0, n0 = gg.children.length;
         if (kind === 'area') A.flat(list.filter(o => o.p.length >= 3).map(o => ({ p: o.p.length && (o.p[0][0] !== o.p[o.p.length - 1][0] || o.p[0][1] !== o.p[o.p.length - 1][1]) ? o.p.concat([o.p[0]]) : o.p })), col, Y || 0.2);
         else if (kind === 'line') A.line(segs(list, Y || 0.3, []), col, 1);
-        else if (kind === 'road') A.mesh(ribbonTris(list, +w || 8, Y || 0.27, []), col);
+        else if (kind === 'road') { A.mesh(ribbonTris(list, +w || 8, Y || 0.27, []), col);
+          const hi = list.filter(o => o.p.some(q => q[2] > 0)); if (hi.length) A.line(piers(hi, +w || 8, 32, []), 0x8a847a, 0.9); }
         else if (kind === 'bldg') { const arr = [], ed = []; for (const o of list) { const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1]))), gq = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed();
             if (Y) gq.translate(0, Y, 0); const a = gq.attributes.position.array; for (let i = 0; i < a.length; i++) arr.push(a[i]); const eg = new THREE.EdgesGeometry(gq, 30), ea = eg.attributes.position.array; for (let i = 0; i < ea.length; i++) ed.push(ea[i]); gq.dispose(); eg.dispose(); }
           A.mesh(arr, col, 1); A.line(ed, COL.edge, 0.5); }
