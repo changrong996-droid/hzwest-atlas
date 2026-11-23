@@ -355,77 +355,27 @@
           PV.opt({ play: false, auto: false, mode: 'lit' });
           PV.set(1118);
           PV.setCam([-460, 150, 480], [0, 32, 30]);
-          if (hp.has('t')) {
+          if (hp.has('t') || hp.has('fpv')) {
             curtain.classList.add('gone');
-            seekTo(+hp.get('t') || 0, false);
+            seekTo(hp.has('t') ? (+hp.get('t') || 0) : 49.8, false);   // #fpv=<name> 直接停在 FPV 段前待飞
           }
         }
       }, 120);
     });
   }
 
-  // ---------- Catmull-Rom 样条插值（用于穿越机丝滑 3D 航线） ----------
-  function catmull3(pts, u) {
-    const n = pts.length - 1;
-    const f = Math.max(0, Math.min(1, u)) * n;
-    const i = Math.min(n - 1, Math.floor(f));
-    const t = f - i, t2 = t * t, t3 = t2 * t;
-    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[Math.min(n, i + 1)], p3 = pts[Math.min(n, i + 2)];
-    return [0, 1, 2].map(k =>
-      0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3)
-    );
-  }
-
-  // 零穿模建筑室内穿越机 FPV 航线（严格按 hzseq.js 实测净空：云门门洞 |x|<38 y<50 z∈[178,238]；
-  // 5F 空中连廊 z=143 y=30.4~31.4，因此 y=35.5 稳过连廊上方且低于屋盖吊顶 Hs≥40.2；
-  // 云谷中庭 |z|<14 从地铁 -9.2m 直通天窗 50m 完全无楼板，90° 转向东沿 500m 云谷峡谷高速冲出！）
-  const FPV_POS = [
-    [  0,  46,  355], // 0: 南广场高空对准云门中轴俯冲
-    [  0,  34,  248], // 1: 贴近云门南口（门洞净高 50m、净宽 76m）
-    [  0,  34.5,195], // 2: 慢速穿行 60m 深云门巨型门洞正中
-    [  0,  35.5,142], // 3: 越过 5F 空中连廊（31.4m）滑入 78m 无柱候车「云厅」
-    [  0,  35.5, 62], // 4: 慢镜滑过云厅穹顶下方（上顶 48m / 下楼面 24m）
-    [  4,  28,    4], // 5: 抵达十字采光顶正中心，压低机头准备切入 28m 宽「云谷」
-    [ 68,  21,    0], // 6: 90° 东转，在无楼板的云谷峡谷中高速冲刺（两侧站台与候车挑台飞掠）
-    [182,  22,    0], // 7: 贴着云谷中轴全速穿出东端站房
-    [278,  46,  -18], // 8: 冲出站房后拉升翻起
-    [195, 108, -140], // 9: 高空侧翻回望整座四朵云与光伏屋面
-    [-110, 128, 175]  // 10: 缓收至经典全景角度
-  ];
-  const FPV_TGT = [
-    [  0,  34,  180],
-    [  0,  34,  110],
-    [  0,  35,   40],
-    [  0,  36,  -10],
-    [ 18,  32,   -4],
-    [ 95,  22,    0],
-    [210,  21,    0],
-    [320,  28,    0],
-    [120,  48,  -30],
-    [  0,  36,    0],
-    [  0,  30,   15]
-  ];
-  // 变速节奏曲线（快进云门 -> 门洞与云厅放慢沉浸 -> 云谷峡谷加速冲刺 -> 拉升翻越缓收）
-  function fpvEase(u) {
-    const keys = [
-      [0.00, 0.00],
-      [0.14, 0.20],
-      [0.42, 0.42],
-      [0.54, 0.52],
-      [0.74, 0.78],
-      [1.00, 1.00]
-    ];
-    const x = Math.max(0, Math.min(1, u));
-    for (let i = 0; i < keys.length - 1; i++) {
-      const [x0, y0] = keys[i], [x1, y1] = keys[i + 1];
-      if (x <= x1) {
-        const t = (x - x0) / (x1 - x0);
-        const sm = t * t * (3 - 2 * t);
-        return y0 + (y1 - y0) * (0.35 * t + 0.65 * sm);
-      }
-    }
-    return 1;
-  }
+  // ---------- 穿越机 FPV 航线（任务 #38 底座：航线数据与取样器在 fpv-routes.js，按 URL #fpv=<name> 切换）----------
+  // fpv-routes.js 动态加载（不改 index.html）；FPV 段到来前（片时 50.2 秒）早已就绪；万一没加载上，FPV 段沿用上一段机位不动。
+  let FPV = null, fpvRoute = null;
+  const fpvWant = hp.get('fpv') || '';
+  function loadScript(src, cb) { const el = document.createElement('script'); el.src = src; el.onload = cb; el.onerror = () => console.warn('[film] 加载失败：' + src); document.head.appendChild(el); }
+  loadScript('fpv-routes.js?v=1', () => {
+    FPV = window.HZ_FPV || null; if (!FPV) return;
+    fpvRoute = (fpvWant && FPV.get(fpvWant)) || FPV.get(FPV.DEFAULT) || FPV.routes[0] || null;
+    if (fpvWant && (!fpvRoute || fpvRoute.name !== fpvWant)) console.warn('[film] #fpv=' + fpvWant + ' 不存在，退回 ' + (fpvRoute && fpvRoute.name) + '；可选：' + FPV.routes.map(r => r.name).join(', '));
+    if (hp.has('fpvcheck')) loadScript('fpv-selfcheck.js?v=1', () => {});
+  });
+  window.__fpv = { route: () => fpvRoute, use: name => { const r = FPV && FPV.get(name); if (r) fpvRoute = r; return !!r; } };
 
   // ---------- 剧本字幕表（v3：穿越机路线 + 不间断时间爆发 + 50人团队对照 + 新结尾句） ----------
   const SUBS = [
@@ -648,12 +598,11 @@
       const u = (s - 47.8) / 2.4;
       setEngine('S-301', lerp(659.2, 662.5, u), 'ink', [lerp(245, 205, u), lerp(52, 62, u), lerp(120, 92, u)], [80, 34, 42]);
     } else if (s < 64.2) {
-      // 零穿模变速室内穿越机（穿云门 -> 慢滑云厅穹顶下 -> 90° 东转高速冲过 500m 云谷峡谷 -> 拉升回望屋顶）
-      const uRaw = Math.min(1, (s - 50.2) / 11.2);
-      const u = fpvEase(uRaw);
-      const pos = catmull3(FPV_POS, u);
-      const tgt = catmull3(FPV_TGT, u);
-      setEngine('S-000', lerp(1096, 1118, uRaw), 'lit', pos, tgt);
+      // 穿越机 FPV 段：片时 s 对应航线时 t = s − 50.2；航线由 #fpv=<name> 选（缺省 route-classic）
+      if (fpvRoute) {
+        const t = s - FPV.FILM_T0, q = FPV.sample(fpvRoute, t);
+        setEngine('S-000', FPV.day(fpvRoute, t), 'lit', q.pos, q.look);
+      }
     } else if (s < 83.6) {
       // 17 秒不间断爆发背景：全站高速生长 + 大幅环绕推近
       const u = Math.max(0, (s - 66.2) / (83.6 - 66.2));
