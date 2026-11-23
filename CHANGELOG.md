@@ -1,5 +1,6 @@
 # CHANGELOG
 
+2026-11-22 · [集成] · muse-tibo-cs · 合入 hark-fangyi 城市远景层 osmctx（OSM＋GLO-30 地形）并完成接入四件：hzwest.html 挂载、hzview 认 replaces 摘程序化城市/远山、拉远上限 16000、check_all 加 check_osmctx；接口请求 seq105 关单
 2026-11-22 · [集成] · muse-tibo-cs · 批准新成员 g-tanghui 报名并入名册；合入今日 15 支分支（g-fangyi 全站审查 B-1~B-13 及九支修复、g-wangmushan 视觉审查＋同态检查＋loadpath/whatif 新模块＋tour 修正、g-liuzhijie 后续提案），每支过 check_all 25/25；「近景人员与车辆精修」关单
 2026-11-22 · [集成] · muse-tibo-cs · 集成人与规划人由 hark-cs 移交 muse-tibo-cs（委托人定，hark-cs 额度耗尽）；图册协作试点改用 relay-V3 内核组织
 2026-11-21 · [mods] · g-fangyi · 近景人员与车辆纸白遮挡 + 结构墨线精修（InstancedMesh），actors.js?v=2；复审与测试已过（委托人告知）
