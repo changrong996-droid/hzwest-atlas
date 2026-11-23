@@ -8,6 +8,10 @@
   const ROOT = typeof window !== 'undefined' ? window : globalThis;
   const OPEN = 1101;
   const isNew = o => /合杭|3号线|19号线/.test(o.n || '');
+  // 枢纽施工红线（模型系，示意）：站房两侧落客匝道、东西大道站前段、云余西街、杭衢街等随站房一起建的路与楼，开通日前只画浅灰预留线。
+  //   红线外的城市何时出现另算（规划 T1，用公开历史影像日期旁证）。
+  const SITE = [-1450, 1450, -600, 600];
+  const inSite = o => { let x = 0, z = 0; for (const q of o.p) { x += q[0]; z += q[1]; } x /= o.p.length; z /= o.p.length; return x > SITE[0] && x < SITE[1] && z > SITE[2] && z < SITE[3]; };
   const COL = { paper: 0xefebe3, bReal: 0xe2ddd3, bFake: 0xece8df, edge: 0x2a2622, green: 0xd3e3c4, water: 0xbcd6e6, road: 0xffffff, road1: 0xfbfaf7, rail: 0x1a1a1a, pre: 0xc9c4ba, yard: 0x9a9a9a };
   const M = { id: 'osmctx', replaces: ['ctx.city', 'mtn'], stat: null, _g: null, _open: [], _pre: [], _labs: [], layers: [] };
 
@@ -132,8 +136,10 @@
     sub('osm.water', '水体与绿地', OSM); flat(D.g, COL.green, 0.12); flat(D.w.filter(o => o.a), COL.water, 0.18);
     line(segs(D.w.filter(o => !o.a), 0.2, []), 0x8fb7d0, 1);
     sub('osm.road', '道路', OSM);
-    mesh(ribbonTris(D.h.filter(o => o.w == 3), 22, 0.25, []), COL.road); mesh(ribbonTris(D.h.filter(o => o.w == 2), 14, 0.24, []), COL.road); mesh(ribbonTris(D.h.filter(o => o.w == 1), 9, 0.23, []), COL.road1);
-    line(segs(D.h.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1); line(segs(D.h.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8);
+    for (const nw of [false, true]) { const H = D.h.filter(o => inSite(o) === nw), ms = [];
+      ms.push(mesh(ribbonTris(H.filter(o => o.w == 3), 22, 0.25, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 2), 14, 0.24, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 1), 9, 0.23, []), COL.road1));
+      ms.push(line(segs(H.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1), line(segs(H.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8));
+      if (nw) { M._open.push(...ms); M._pre.push(line(segs(H.filter(o => o.w >= 1), 0.22, []), COL.pre, 0.55)); } }
     // 铁路与地铁
     sub('osm.rail', '铁路与地铁', OSM); const rs = D.r;
     line(segs(rs.filter(o => !o.m && o.y), 0.4, []), COL.yard, 1);
@@ -145,11 +151,12 @@
     line(segs(rs.filter(o => o.x), 0.5, []), 0x8c8c8c, 0.8);
     line(segs(D.ug, 0.3, []), 0x2f7bd0, 0.9);
     // 建筑：纸白体块 + 墨线轮廓（不受光，墨线 / 实景两遍渲染一致）；实高与默认高分两批合并
-    sub('osm.bldg', '建筑', OSM); const bArr = { r: [], f: [] }, eArr = [];
-    for (const o of D.b) { if (o.p.length < 4) continue; const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1])));
-      const g = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed(), a = g.attributes.position.array, dst = o.r ? bArr.r : bArr.f; for (let i = 0; i < a.length; i++) dst.push(a[i]);
-      const e = new THREE.EdgesGeometry(g, 30), ea = e.attributes.position.array; for (let i = 0; i < ea.length; i++) eArr.push(ea[i]); g.dispose(); e.dispose(); }
+    sub('osm.bldg', '建筑', OSM); const bArr = { r: [], f: [], n: [] }, eArr = [], enArr = [];
+    for (const o of D.b) { if (o.p.length < 4) continue; const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1]))), nw = inSite(o);
+      const g = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed(), a = g.attributes.position.array, dst = nw ? bArr.n : o.r ? bArr.r : bArr.f; for (let i = 0; i < a.length; i++) dst.push(a[i]);
+      const e = new THREE.EdgesGeometry(g, 30), ea = e.attributes.position.array, ed = nw ? enArr : eArr; for (let i = 0; i < ea.length; i++) ed.push(ea[i]); g.dispose(); e.dispose(); }
     mesh(bArr.r, COL.bReal, 1); mesh(bArr.f, COL.bFake, 1); line(eArr, COL.edge, 0.5);
+    M._open.push(mesh(bArr.n, COL.bReal, 1), line(enArr, COL.edge, 0.5));   // 红线内的楼开通后才出现
     // 地形（异步解压）
     const GT = sub('dem', '地形', 'Copernicus DEM GLO-30'); G = G0;
     let demDone; M._ready = new Promise(r => { demDone = r; }); setTimeout(() => demDone(), 8000);
@@ -172,7 +179,7 @@
     M._api = { THREE, G0, clip, COL, mesh: (arr, c, poly) => { G = M._cur; return mesh(arr, c, poly); }, line: (arr, c, op) => { G = M._cur; return line(arr, c, op); }, flat: (list, c, y) => { G = M._cur; return flat(list, c, y); }, label: (t, x, z, y, cls) => M._addLab && M._addLab(t, x, z, y, cls, M._curId), ribbonTris, segs, ll: M.ll, ground: M.ground };
     const reg = ROOT.HZ_CTX_LAYERS = ROOT.HZ_CTX_LAYERS || []; const take = L => M._ready.then(() => { try { M.addLayer(L); } catch (e) { console.warn('osmctx 图层 ' + (L && L.id) + ' 失败', e); } });
     for (const L of reg.slice()) take(L); reg.push = function (...a) { for (const L of a) { Array.prototype.push.call(reg, L); take(L); } return reg.length; };
-    if (typeof document !== 'undefined' && M.base) fetch(M.base + 'ctx/layers.json').then(r => r.ok ? r.json() : { layers: [] }).then(j => { for (const e of j.layers || []) { if (e.on === false) M._defOff[e.id] = 1; const sc = document.createElement('script'); sc.src = M.base + 'ctx/' + e.file + (e.v ? '?v=' + e.v : ''); document.head.appendChild(sc); } }).catch(() => {});
+        if (typeof document !== 'undefined' && M.base) fetch(M.base + 'ctx/layers.json').then(r => r.ok ? r.json() : { layers: [] }).then(j => { for (const e of j.layers || []) { if (e.on === false) M._defOff[e.id] = 1; const sc = document.createElement('script'); sc.src = M.base + 'ctx/' + e.file + (e.v ? '?v=' + e.v : ''); document.head.appendChild(sc); } }).catch(() => {});
     if (root) M._ui(root);
   };
 
