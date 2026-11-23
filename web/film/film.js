@@ -1,6 +1,6 @@
 'use strict';
 // 《长出来的》交互短片小样 v3
-// 1) 6s 正式片头  2) 真实 3D 溯源图版（大阪城/码头/杭州西站）
+// 1) 6s 正式片头  2) 真实 3D 溯源图版（大阪城/筑城图/码头/杭州西站）
 // 3) 鼠标飞不出来的穿越机 FPV 路线（穿云门 -> 贴轨掠站台 -> 钻网架 -> 翻越四朵云屋顶）
 // 4) 去掉四朵云打断，集中节奏做 17s 机械战警式高频真实图纸闪切 + 38 天真实改动时间密度爆发曲线
 // 5) 2500+ 张蓝图阵列 + 50 人跨专业人体图标矩阵（对标数月工期 vs 实际到场 0 人）
@@ -382,13 +382,14 @@
     [13.0, 17.4, '一开始，我只是想做个大点的 3D 模型。', false],
     // Act 1: 起念
     [18.2, 21.4, '没想好做什么，随口说了句「大阪城」。', false],
-    [21.6, 24.2, '没画草图，做到哪儿算哪儿。', false],
-    [24.4, 27.0, '它自己看一眼，改一笔，又改一笔。', false],
-    [27.4, 30.0, '过了几天，我觉得不够大。', false],
-    [30.2, 32.8, '试了座码头，太散，看不清。', false],
-    [33.0, 35.6, '我说，换吧——大桥、车站、大坝都行。', false],
-    [35.8, 38.0, '它自己翻出了一个名字。', false],
-    [38.2, 40.4, '那天之前，我没听说过它。', false],
+    [21.6, 24.0, '没画草图，做到哪儿算哪儿。', false],
+    [24.2, 26.4, '它自己看一眼，改一笔，又改一笔。', false],
+    [26.6, 29.0, '后来，这座城长出了一张筑城图。', false],
+    [29.2, 31.4, '过了几天，我觉得不够大。', false],
+    [31.6, 33.8, '试了座码头，太散，看不清。', false],
+    [34.0, 36.4, '我说，换吧——大桥、车站、大坝都行。', false],
+    [36.6, 38.4, '它自己翻出了一个名字。', false],
+    [38.6, 40.6, '那天之前，我没听说过它。', false],
     // Act 2a: 生长 + 穿越机视角
     [41.2, 44.4, '纸上先铺出站台和轨道。', false],
     [44.8, 47.8, '整座站，落成了纸上的墨线。', false],
@@ -494,11 +495,13 @@
 
     originStage.classList.toggle('on', inOrigin);
     $('o-osaka').classList.toggle('show', s >= 18.2);
-    $('o-link-1').classList.toggle('show', s >= 28.8);
-    $('o-port').classList.toggle('show', s >= 29.6);
-    $('o-link-2').classList.toggle('show', s >= 35.0);
-    $('o-hz').classList.toggle('show', s >= 35.6);
-    heroName.classList.toggle('show', s >= 36.8);
+    $('o-link-1').classList.toggle('show', s >= 26.4);
+    $('o-build').classList.toggle('show', s >= 26.6);
+    $('o-link-2').classList.toggle('show', s >= 31.4);
+    $('o-port').classList.toggle('show', s >= 31.6);
+    $('o-link-3').classList.toggle('show', s >= 36.4);
+    $('o-hz').classList.toggle('show', s >= 36.6);
+    heroName.classList.toggle('show', s >= 38.6);
 
     // 顶部克制的 14:33 批注微条
     humanNote.classList.toggle('on', inHumanNote);
