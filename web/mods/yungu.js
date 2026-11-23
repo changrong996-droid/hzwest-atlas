@@ -81,7 +81,7 @@
       } else {
         const el = document.createElement('div'); el.className = 'hz-yg'; el.innerHTML = it.text; it.el = el;
       }
-      root.appendChild(el);
+      root.appendChild(it.el);
     }
     inited = true;
   }

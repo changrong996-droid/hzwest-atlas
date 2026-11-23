@@ -141,21 +141,27 @@ for (const pl of plugins) {
 
 // 3. 轻量桩 THREE（覆盖 Mesh / InstancedMesh / LineSegments / Sprite / Extrude / Shape / Edges / Color / Vector / Matrix）
 function mkVec3(x, y, z) {
-  return {
-    x: x || 0, y: y || 0, z: z || 0,
-    set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; },
-    copy(v) { this.x = v.x; this.y = v.y; this.z = v.z; return this; },
-    clone() { return mkVec3(this.x, this.y, this.z); },
-    add(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; },
-    sub(v) { this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; },
-    subVectors(a, b) { this.x = a.x - b.x; this.y = a.y - b.y; this.z = a.z - b.z; return this; },
-    multiplyScalar(s) { this.x *= s; this.y *= s; this.z *= s; return this; },
-    length() { return Math.hypot(this.x, this.y, this.z); },
-    distanceTo(v) { return Math.hypot(this.x - v.x, this.y - v.y, this.z - v.z); },
-    normalize() { const l = this.length() || 1; this.x /= l; this.y /= l; this.z /= l; return this; },
-    project() { this.x = 0; this.y = 0; this.z = 0.5; return this; },
-    applyMatrix4() { return this; },
-  };
+  if (!(this instanceof mkVec3)) return new mkVec3(x, y, z);
+  this.x = x || 0; this.y = y || 0; this.z = z || 0;
+  this.set = (a, b, c) => { this.x = a; this.y = b; this.z = c; return this; };
+  this.copy = (v) => { this.x = v.x; this.y = v.y; this.z = v.z; return this; };
+  this.clone = () => new mkVec3(this.x, this.y, this.z);
+  this.add = (v) => { this.x += v.x; this.y += v.y; this.z += v.z; return this; };
+  this.sub = (v) => { this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; };
+  this.subVectors = (a, b) => { this.x = a.x - b.x; this.y = a.y - b.y; this.z = a.z - b.z; return this; };
+  this.multiplyScalar = (s) => { this.x *= s; this.y *= s; this.z *= s; return this; };
+  this.length = () => Math.hypot(this.x, this.y, this.z);
+  this.distanceTo = (v) => Math.hypot(this.x - v.x, this.y - v.y, this.z - v.z);
+  this.normalize = () => { const l = this.length() || 1; this.x /= l; this.y /= l; this.z /= l; return this; };
+  this.project = () => { this.x = 0; this.y = 0; this.z = 0.5; return this; };
+  this.applyMatrix4 = () => this;
+}
+function mkVec4(x, y, z, w) {
+  if (!(this instanceof mkVec4)) return new mkVec4(x, y, z, w);
+  this.x = x || 0; this.y = y || 0; this.z = z || 0; this.w = w || 0;
+  this.set = (a, b, c, d) => { this.x = a; this.y = b; this.z = c; this.w = d; return this; };
+  this.copy = (v) => { this.x = v.x; this.y = v.y; this.z = v.z; this.w = v.w; return this; };
+  this.clone = () => new mkVec4(this.x, this.y, this.z, this.w);
 }
 function mkMat4() {
   return {
@@ -198,6 +204,7 @@ const THREE = {
   DoubleSide: 2, FrontSide: 0, BackSide: 1, DynamicDrawUsage: 35048, SRGBColorSpace: 'srgb',
   Vector2: function (x, y) { this.x = x || 0; this.y = y || 0; },
   Vector3: function (x, y, z) { return mkVec3(x, y, z); },
+  Vector4: function (x, y, z, w) { return mkVec4(x, y, z, w); },
   Quaternion: function () { this.setFromAxisAngle = () => this; this.setFromEuler = () => this; this.setFromUnitVectors = () => this; this.identity = () => this; },
   Euler: function () { this.set = () => this; },
   Matrix4: function () { return mkMat4(); },
