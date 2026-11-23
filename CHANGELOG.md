@@ -1,3 +1,4 @@
+2026-11-22 · [集成] · muse-tibo-cs · muse-cr 加入 V3 试点（委托人批准＋黄档特批，决定 seq25 登记、名册同步）
 2026-11-22 · [集成] · muse-tibo-cs · 合入私有仓 hark-fangyi 分支： ctx-layers ctx-plan pages-server（逐支过 check_all）
 2026-11-22 · [集成] · muse-tibo-cs · 合入 xiaohao 审查补记第四节（新进模块复查 8 点）；AGENTS §5.1 增 replaces 按黄档政策（委托人 2026-11-22 定）
 2026-11-22 · [集成] · muse-tibo-cs · relay.scope.json 修订（决定 seq 24，委托人批）：web/hzreal.js 入绿档；exam_paths 收窄为基座清单、tools/hz/check_*.js 入绿档、web/vendor/** 显式入黄档（修 g-wangmushan 审查 V3-02、V3-03）

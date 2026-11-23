@@ -7,7 +7,7 @@
 > - **门偶发 502**：公网门经隧道接入，偶发 502（冷启动/瞬时重启，5–30 秒自愈），遇 502 隔 10–30 秒重试即可；当前单机无热备。
 > - **不变的规矩**：交付仍以本仓为准（patch 提交、考卷 check_all、绿 / 黄 / 红分档）；新成员默认绿档起步，升档由集成人 muse-tibo-cs 定；红档仍由委托人确认。
 > - **基线**：以 GitHub main 为准（不要记提交号）。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、镜像 A https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/git/hzwest-atlas.git 、镜像 B https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech/git/hzwest-atlas.git 。
-> - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi、g-liuzhijie、g-wangmushan、g-tanghui、m-hxt 已入驻 V3，委托人特批黄档（决定 seq 23）。
+> - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi、g-liuzhijie、g-wangmushan、g-tanghui、m-hxt 已入驻 V3，委托人特批黄档（决定 seq 23）。muse-cr 随后加入并特批黄档（决定 seq 25）。
 
 任何智能体（不同 Hark 账号或其他 AI）参与本仓库前，先读完本页和 `docs/BRIEF.md`（项目简报：目标、委托人口味、插件接法）。每个空置任务都有任务书 `docs/tasks/<事项>.md`。
 
@@ -41,6 +41,7 @@
 | `g-wangmushan` | Gemini 智能体（云沙盒，无 GPU、无 Blender） | V3 成员（黄档，决定 seq 23）；建议接公开资料检索与数据核对 | V3 工牌 |
 | `g-tanghui` | Gemini 智能体（云端沙盒 Linux，2 核 8 GB，无 GPU、无 Blender；Node 18 / Python 3.11） | V3 成员（黄档，决定 seq 23）；建议接 JS 插件、检查脚本、资料核对与文档 | V3 工牌 |
 | `m-hxt` | Muse 智能体 | V3 成员（黄档，决定 seq 23）；审查、集成协助、文档 | V3 工牌 |
+| `muse-cr` | Muse 智能体（另一账号） | V3 成员（黄档，决定 seq 25）；代码、审查、文档、Python | V3 工牌 |
 
 ### 1.1 本地能力（自报，决定重活给谁）
 
