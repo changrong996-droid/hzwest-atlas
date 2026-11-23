@@ -118,9 +118,10 @@ html, body {
 #origin-stage {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 26px;
-  opacity: 0; transition: opacity .8s ease; padding: 24px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .8s ease, visibility .8s ease; padding: 24px;
 }
-#origin-stage.on { opacity: 1; }
+#origin-stage.on { opacity: 1; visibility: visible; }
 .origin-rail {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   max-width: 1120px; width: 100%;
@@ -128,9 +129,10 @@ html, body {
 .o-node {
   opacity: 0; transform: translateY(16px); text-decoration: none; color: inherit;
   transition: opacity .75s ease, transform .75s ease;
-  text-align: center; pointer-events: auto;
+  text-align: center; pointer-events: none;
 }
 .o-node.show { opacity: 1; transform: translateY(0); }
+#origin-stage.on .o-node.show { pointer-events: auto; }
 .o-date { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: .04em; margin-bottom: 6px; }
 .o-card {
   width: 222px; background: rgba(252, 249, 242, 0.96);
@@ -168,97 +170,109 @@ html, body {
 .hn-sep { color: var(--ink-dim); }
 .hn-text { font-family: var(--serif); font-size: 15px; color: var(--ink); letter-spacing: .04em; }
 
-/* ---------- 机械战警式高频图纸闪切（左图纸瀑布 + 右中取景快门） ---------- */
-#flash-strip {
-  position: absolute; left: 22px; top: 22px; bottom: 168px; width: 174px;
-  display: flex; flex-direction: column; gap: 7px; overflow: hidden;
+/* ---------- 普通人秒懂的 296 版高潮区：敲门交稿消息 + 1 人未读红点 + 60 分钟表盘 + 审图桌叠稿 ---------- */
+#chat-flood {
+  position: absolute; left: 24px; top: 24px; width: min(310px, 34vw);
+  display: flex; flex-direction: column; gap: 7px;
   opacity: 0; transition: opacity .35s ease;
 }
-#flash-strip.on { opacity: 1; }
-.fstrip-card {
-  background: rgba(250, 247, 238, 0.92); border: 1px solid rgba(29,26,23,0.22);
-  border-left: 2.5px solid var(--red); padding: 4px; border-radius: 2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0;
+#chat-flood.on { opacity: 1; }
+.cf-msg {
+  background: rgba(255, 253, 248, 0.95); border: 1px solid rgba(29, 26, 23, 0.16);
+  border-left: 3px solid var(--red); border-radius: 6px;
+  padding: 8px 12px; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  animation: cfPop .22s cubic-bezier(.2, .9, .3, 1.15);
 }
-.fstrip-card img {
-  width: 100%; height: 74px; object-fit: cover; display: block;
-  border: 1px solid rgba(29,26,23,0.12);
+@keyframes cfPop {
+  from { opacity: 0; transform: translateX(-14px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
 }
-.fstrip-meta {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 3px; font-family: var(--mono); font-size: 9px; color: var(--ink-dim);
-}
-.fstrip-meta strong { color: var(--red); font-family: var(--sans); font-size: 10px; }
+.cf-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-dim); margin-bottom: 3px; }
+.cf-top strong { color: var(--red); font-weight: 700; }
+.cf-top span { font-family: var(--mono); }
+.cf-body { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.35; }
 
-#flash-shutter {
-  position: absolute; right: 26px; top: 92px; width: min(380px, 35vw);
-  background: rgba(16, 14, 13, 0.92); color: #f6f1e6;
-  border: 1px solid rgba(179, 32, 42, 0.65); border-radius: 3px;
-  padding: 8px; box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
-  opacity: 0; transform: scale(0.96);
-  transition: opacity .35s ease, transform .35s ease;
+#human-badge {
+  position: absolute; right: 26px; top: 24px;
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255, 253, 248, 0.96); border: 1px solid rgba(29, 26, 23, 0.2);
+  border-radius: 12px; padding: 10px 16px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+  opacity: 0; transform: translateY(-6px); transition: opacity .4s ease, transform .4s ease;
 }
-#flash-shutter.on { opacity: 1; transform: scale(1); }
-.fs-head, .fs-foot {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+#human-badge.on { opacity: 1; transform: translateY(0); }
+.hb-avatar {
+  position: relative; width: 44px; height: 44px; border-radius: 10px;
+  background: #1d1a17; color: #f6f1e6;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.fs-head { margin-bottom: 6px; color: #e8dfd0; }
-.fs-dot { width: 7px; height: 7px; border-radius: 50%; background: #e03c46; display: inline-block; }
-.fs-body { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; background: #111; }
-#fs-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.fs-reticle {
-  position: absolute; inset: 8px; pointer-events: none;
-  border: 1px solid rgba(224, 60, 70, 0.42);
+.hb-avatar svg { width: 26px; height: 26px; }
+.hb-dot {
+  position: absolute; top: -8px; right: -10px; min-width: 28px; height: 22px;
+  padding: 0 6px; border-radius: 999px; background: #e0202a; color: #fff;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fffdf8; box-shadow: 0 3px 10px rgba(224, 32, 42, 0.45);
 }
-.fs-reticle::before {
-  content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 50%;
-}
-.fs-foot { margin-top: 6px; color: #c9bfb0; }
-#fs-rate { color: #ff6b72; font-weight: 700; }
+.hb-who { font-size: 14px; font-weight: 700; color: var(--ink); }
+.hb-sub { font-size: 12px; color: var(--red); margin-top: 2px; font-weight: 600; }
 
-/* ---------- 真实 38 天时间密度爆发脉冲图（暗黑高冲击视觉） ---------- */
-#time-burst-graph {
-  position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%);
-  width: min(700px, 76vw);
-  background: linear-gradient(180deg, rgba(16, 14, 13, 0.92) 0%, rgba(24, 16, 16, 0.94) 100%);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 77, 90, 0.36);
-  border-top: 2px solid #e0323e;
-  border-radius: 5px;
-  padding: 11px 18px 9px;
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.48), 0 0 36px rgba(179, 32, 42, 0.22);
+#desk-climax {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -52%);
+  display: flex; align-items: center; justify-content: center; gap: 26px;
   opacity: 0; transition: opacity .45s ease;
+  max-width: 92vw;
 }
-#time-burst-graph.on { opacity: 1; }
-.tbg-head {
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: var(--mono); font-size: 11px; margin-bottom: 6px;
+#desk-climax.on { opacity: 1; }
+
+.dc-clock-card {
+  width: 228px; background: rgba(252, 249, 242, 0.96);
+  border: 1px solid rgba(29, 26, 23, 0.22); border-radius: 8px;
+  padding: 14px 16px; text-align: center;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
 }
-.tbg-title {
-  color: rgba(244, 236, 224, 0.78); letter-spacing: .08em;
-  display: inline-flex; align-items: center; gap: 7px;
+.dc-clock-title { font-family: var(--serif); font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+#dc-clock-svg { width: 164px; height: 164px; display: block; margin: 0 auto; }
+.dc-clock-foot { margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--red); }
+
+.dc-pile-wrap {
+  width: min(410px, 44vw); text-align: center;
 }
-.tbg-led {
-  width: 7px; height: 7px; border-radius: 50%; background: #ff3b4a;
-  box-shadow: 0 0 8px #ff3b4a; display: inline-block;
+.dc-pile {
+  position: relative; width: 100%; aspect-ratio: 16 / 10;
 }
-.tbg-peak { color: #ff6e78; font-weight: 700; letter-spacing: .04em; }
-.tbg-stage { width: 100%; height: 118px; position: relative; }
-#tbg-svg { width: 100%; height: 100%; display: block; overflow: visible; }
-@keyframes tbgPulse {
-  0% { r: 4; opacity: 0.95; }
-  100% { r: 22; opacity: 0; }
+.dp-sheet {
+  position: absolute; inset: 0;
+  background: #fffdf8; border: 1px solid rgba(29, 26, 23, 0.28);
+  border-radius: 4px; padding: 7px 7px 26px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  animation: slapIn .18s cubic-bezier(.15, .95, .3, 1);
 }
-.tbg-ring { animation: tbgPulse 1.3s ease-out infinite; }
-.tbg-axis {
-  display: flex; justify-content: space-between; margin-top: 5px;
-  font-family: var(--mono); font-size: 10px; color: rgba(235, 226, 212, 0.62);
+@keyframes slapIn {
+  from { opacity: 0; transform: translateY(-28px) scale(1.09) rotate(var(--rot)); }
+  to   { opacity: 1; transform: translateY(0) scale(1) rotate(var(--rot)); }
 }
-.tbg-hot { color: #ff6e78; font-weight: 700; }
+.dp-sheet img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  border: 1px solid rgba(29, 26, 23, 0.14);
+}
+.dp-stamp {
+  position: absolute; right: 14px; top: 14px;
+  border: 2px solid var(--red); color: var(--red); background: rgba(255, 253, 248, 0.92);
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  padding: 2px 7px; border-radius: 2px; transform: rotate(-6deg);
+}
+.dp-label {
+  position: absolute; left: 10px; right: 10px; bottom: 5px;
+  display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-dim);
+}
+.dp-label strong { color: var(--ink); font-weight: 700; }
+.dc-pile-cap {
+  margin-top: 12px; display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(20, 18, 16, 0.84); color: #f6f1e6;
+  padding: 5px 14px; border-radius: 999px; font-size: 12px;
+}
+.dc-pile-cap #dc-pile-time { font-family: var(--mono); color: #ff7a82; font-weight: 700; }
 
 /* ---------- Act 3：2500 张图纸矩阵 + 50 人人体图标阵列 ---------- */
 #sheets-wall {

@@ -17,9 +17,8 @@
   const originStage = $('origin-stage'), heroName = $('hero-name');
   const humanNote = $('human-note');
   const shutterGhost = $('shutter-ghost'), sgImg = $('sg-img');
-  const flashStrip = $('flash-strip'), flashShutter = $('flash-shutter');
-  const fsImg = $('fs-img'), fsCode = $('fs-code'), fsTime = $('fs-time'), fsHash = $('fs-hash'), fsRate = $('fs-rate'), fsUnread = $('fs-unread');
-  const timeGraph = $('time-burst-graph'), tbgClipRect = $('tbg-clip-rect'), tbgScan = $('tbg-scan'), tbgHeat = $('tbg-heat'), tbgPeakMark = $('tbg-peak-mark'), tbgPeak = $('tbg-peak');
+  const chatFlood = $('chat-flood'), humanBadge = $('human-badge'), hbDot = $('hb-dot'), hbSub = $('hb-sub');
+  const deskClimax = $('desk-climax'), dcClockDots = $('dc-clock-dots'), dcHandMin = $('dc-hand-min'), dcPile = $('dc-pile'), dcPileTime = $('dc-pile-time');
   const sheetsWall = $('sheets-wall'), wallGrid = $('wall-grid'), wallNum = $('wall-num');
   const crewPanel = $('crew-panel'), crewGrid = $('crew-grid'), crewZero = $('crew-zero');
   const burstCounter = $('burst-counter'), bcNum = $('bc-num');
@@ -66,41 +65,33 @@
     }
   }
 
-  // 预建核心 36 小时（11-08 09:00 -> 11-09 20:00）逐小时真实改动密度柱 + 心电脉冲线（严格来自 git log）
-  const HOURLY_36 = [
-    ['11-08 09:00', 3],  ['11-08 10:00', 11], ['11-08 11:00', 31], ['11-08 12:00', 40],
-    ['11-08 13:00', 43], ['11-08 14:00', 38], ['11-08 15:00', 44], ['11-08 16:00', 18],
-    ['11-08 17:00', 12], ['11-08 18:00', 11], ['11-08 19:00', 2],  ['11-08 20:00', 5],
-    ['11-08 21:00', 3],  ['11-08 22:00', 8],  ['11-08 23:00', 5],  ['11-09 00:00', 0],
-    ['11-09 01:00', 3],  ['11-09 02:00', 0],  ['11-09 03:00', 0],  ['11-09 04:00', 0],
-    ['11-09 05:00', 0],  ['11-09 06:00', 0],  ['11-09 07:00', 0],  ['11-09 08:00', 1],
-    ['11-09 09:00', 0],  ['11-09 10:00', 35], ['11-09 11:00', 8],  ['11-09 12:00', 1],
-    ['11-09 13:00', 0],  ['11-09 14:00', 11], ['11-09 15:00', 7],  ['11-09 16:00', 5],
-    ['11-09 17:00', 6],  ['11-09 18:00', 9],  ['11-09 19:00', 6],  ['11-09 20:00', 2]
-  ];
-  {
-    const W = 760, BASE = 114, TOP = 12, n = HOURLY_36.length;
-    const step = W / n, bw = +(step * 0.68).toFixed(1);
-    const barsG = $('tbg-bars-g');
-    const linePts = [];
-    HOURLY_36.forEach(([, cnt], i) => {
-      const x = +(i * step + step * 0.16).toFixed(1);
-      const cx = +(x + bw / 2).toFixed(1);
-      const h = cnt === 0 ? 0 : Math.max(4, Math.round((cnt / 44) * (BASE - TOP)));
-      const y = BASE - h;
-      linePts.push([cx, y]);
-      if (cnt > 0) {
-        const rc = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rc.setAttribute('x', x); rc.setAttribute('y', y);
-        rc.setAttribute('width', bw); rc.setAttribute('height', h);
-        rc.setAttribute('rx', '1.2');
-        rc.setAttribute('fill', cnt >= 30 ? 'url(#tbgBarHot)' : (cnt >= 10 ? 'url(#tbgBarMid)' : 'rgba(235,224,210,0.34)'));
-        if (cnt >= 30) rc.setAttribute('filter', 'url(#tbgGlow)');
-        barsG.appendChild(rc);
-      }
-    });
-    $('tbg-line').setAttribute('d', linePts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' '));
+  // 预建 60 分钟实体表盘外圈的 41 个朱红刻度点（代表最快 1 小时 41 版新图）
+  const clockDotEls = [];
+  for (let i = 0; i < 41; i++) {
+    const ang = (i / 41) * Math.PI * 2 - Math.PI / 2;
+    const cx = +(90 + Math.cos(ang) * 68).toFixed(1);
+    const cy = +(90 + Math.sin(ang) * 68).toFixed(1);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.setAttribute('r', '3.3');
+    dot.setAttribute('fill', '#b3202a'); dot.setAttribute('opacity', '0');
+    dcClockDots.appendChild(dot);
+    clockDotEls.push(dot);
   }
+  // 大白话「敲门交稿」消息池（零术语，普通人一秒看懂）
+  const HUMAN_MSGS = [
+    '站台和 20 条轨道排好了，请过目',
+    '查出塔吊会碰柱子，已自己改完',
+    '屋顶弧度又调了一版，发你看看',
+    '地下地铁层净空补齐，已更新',
+    '光伏板面积重算好了，请看新版',
+    '南区网架提升角度微调完毕',
+    '云门立面和幕墙重新对齐了',
+    '首趟动车进站股道核对完毕',
+    '发现一处阴影发灰，已重渲一版',
+    '手机竖屏排版顺手修好了',
+    '五层空中连廊护栏已补上',
+    '刚又核对完 2580 个构件净空'
+  ];
 
   // 预加载 24 张仓库真实图纸/白模/法线/卫星图（零卡顿闪切）
   const FLASH_PLATES = [
@@ -449,12 +440,12 @@
     [48.0, 50.0, '屋顶被千斤顶整体抬起来。', false],
     [50.6, 55.2, '钻过云门，贴着轨道和站台一路穿进去。', true],
     [55.6, 60.4, '掠过网架，从四朵云屋顶上面翻出来。', true],
-    // Act 2b: 聚焦杭州西站核心一天半的分钟级高压密集提交（1 人根本看不过来）
+    // Act 2b: 普通人一秒懂的日常隐喻（敲门交稿 + 桌上叠成山）
     [64.2, 66.2, '接下来近三个小时，我没再说一句话。', true],
-    [66.8, 71.0, '这一天半里，最密的时候，几分钟就改一次。', false],
-    [71.4, 75.6, '三个小时 87 次，最快一小时 41 次。', false],
-    [76.0, 79.8, '我只有一个人，别说审了，连看都看不过来。', true],
-    [80.1, 83.4, '最密的一天，它自己改了 296 次。', false],
+    [66.8, 71.0, '就像请了个不知疲倦的设计院——', false],
+    [71.4, 75.6, '刚端起水杯喝一口，它又敲门递进来三四版新图。', false],
+    [76.0, 79.8, '上一张还没来得及看，下一张已经拍在桌上了。', true],
+    [80.1, 83.4, '最快一小时 41 版，这一天一口气堆了 296 版。', false],
     // Act 3: 2500 张图纸 vs 50 人团队数月工期
     [84.2, 87.4, '要是全靠人工来画——', false],
     [88.0, 92.2, '2500 多张图纸，加上三维推演和交互页面。', false],
@@ -482,24 +473,39 @@
 
   function pushFlashPlate(ev, progress) {
     const plate = FLASH_PLATES[flashIdx % FLASH_PLATES.length];
+    const msgText = HUMAN_MSGS[flashIdx % HUMAN_MSGS.length];
+    const verNo = flashIdx + 1;
     flashIdx++;
-    fsImg.src = plate[0];
-    fsCode.textContent = plate[1];
-    fsTime.textContent = ev[0];
-    fsHash.textContent = ev[2];
-    if (fsRate) fsRate.textContent = progress > 0.42 ? '最快 90 秒 / 次 · 人眼已无法逐条审阅' : '平均每 5 分钟 1 次改动';
-    // 峰值阶段触发全屏高频图纸残影闪切
-    if (progress > 0.42 && sgImg) {
+
+    // 1) 审图桌上「啪」地拍上一张盖着红时间章的新修改稿
+    if (dcPile) {
+      const rot = ((verNo * 7 % 11) - 5) * 0.95;
+      const sh = document.createElement('div');
+      sh.className = 'dp-sheet';
+      sh.style.setProperty('--rot', rot.toFixed(1) + 'deg');
+      sh.style.transform = `rotate(${rot.toFixed(1)}deg)`;
+      sh.innerHTML = `<img src="${plate[0]}" alt=""><div class="dp-stamp">${ev[0].slice(6)} · 第 ${verNo} 版</div><div class="dp-label"><strong>${plate[1]}</strong><span>${msgText.slice(0, 14)}</span></div>`;
+      dcPile.appendChild(sh);
+      while (dcPile.children.length > 7) dcPile.removeChild(dcPile.firstChild);
+    }
+    if (dcPileTime) dcPileTime.textContent = ev[0];
+
+    // 2) 左侧大白话「敲门交稿」消息弹窗（每 2 次拍图弹一条，保证可读又不乱）
+    if (chatFlood && (verNo % 2 === 1 || progress < 0.35)) {
+      const m = document.createElement('div');
+      m.className = 'cf-msg';
+      m.innerHTML = `<div class="cf-top"><strong>新图纸已送达</strong><span>${ev[0].slice(6)}</span></div><div class="cf-body">${msgText}</div>`;
+      chatFlood.prepend(m);
+      while (chatFlood.children.length > 4) chatFlood.removeChild(chatFlood.lastChild);
+    }
+
+    // 3) 峰值阶段叠加轻微全屏图纸残影
+    if (progress > 0.45 && sgImg) {
       sgImg.src = plate[0];
       shutterGhost.classList.add('on');
       clearTimeout(shutterGhost._t);
-      shutterGhost._t = setTimeout(() => shutterGhost.classList.remove('on'), 68);
+      shutterGhost._t = setTimeout(() => shutterGhost.classList.remove('on'), 64);
     }
-    const card = document.createElement('div');
-    card.className = 'fstrip-card';
-    card.innerHTML = `<img src="${plate[0]}" alt=""><div class="fstrip-meta"><strong>${plate[1]}</strong><span>${ev[2]}</span></div>`;
-    flashStrip.prepend(card);
-    while (flashStrip.children.length > 6) flashStrip.removeChild(flashStrip.lastChild);
   }
 
   function triggerPulse(ev, isStorm, progress) {
@@ -566,37 +572,30 @@
     // 顶部克制的 14:33 批注微条
     humanNote.classList.toggle('on', inHumanNote);
 
-    // 17 秒不间断爆发：机械战警式图纸闪切 + 38 天时间密度脉冲图 + 全屏残影过载 + 连续计数 1 -> 87 -> 296
-    flashStrip.classList.toggle('on', inStorm);
-    flashShutter.classList.toggle('on', inStorm);
-    timeGraph.classList.toggle('on', inStorm);
-    burstCounter.classList.toggle('on', inStorm);
+    // 17 秒普通人秒懂高潮：敲门交稿消息 + 1 人未读红点暴涨 + 60 分钟打满 41 红点表盘 + 桌上越拍越快的修改稿
+    chatFlood.classList.toggle('on', inStorm);
+    humanBadge.classList.toggle('on', inStorm);
+    deskClimax.classList.toggle('on', inStorm);
+    burstCounter.classList.remove('on');
     if (!inStorm) {
-      if (flashStrip.children.length) flashStrip.innerHTML = '';
+      if (chatFlood.children.length) chatFlood.innerHTML = '';
+      if (dcPile.children.length) dcPile.innerHTML = '';
       shutterGhost.classList.remove('on');
     }
 
     if (inStorm) {
-      const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1 扫过核心 36 小时
+      const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1
       const count = Math.round(lerp(1, 296, Math.pow(u, 0.92)));
-      bcNum.textContent = String(count);
-      if (fsUnread) fsUnread.textContent = `未及查看 +${count}`;
+      hbDot.textContent = String(count);
+      hbSub.textContent = u < 0.35 ? '刚喝一口水，又递进来三四版' : (u < 0.72 ? '上一张还没看清，下一张又拍上来了' : `桌上一口气堆了 ${count} 版新图`);
 
-      // 36 小时逐小时高压节奏图：激光游标刚进 11:00–16:00 就连拉 5 小时朱红高墙！
-      const scanX = +(u * 760).toFixed(1);
-      tbgClipRect.setAttribute('width', scanX);
-      tbgScan.setAttribute('x1', scanX);
-      tbgScan.setAttribute('x2', scanX);
-      const hrIdx = Math.min(HOURLY_36.length - 1, Math.floor(u * HOURLY_36.length));
-      const [hrLabel, hrCnt] = HOURLY_36[hrIdx];
-      const inWall = hrCnt >= 30;
-      tbgHeat.setAttribute('opacity', inWall || scanX >= 80 ? '1' : '0');
-      tbgPeakMark.setAttribute('opacity', scanX >= 150 ? '1' : '0');
-      if (tbgPeak) {
-        const gapSec = hrCnt > 0 ? Math.max(82, Math.round(3600 / hrCnt)) : 0;
-        tbgPeak.textContent = hrCnt >= 30
-          ? `${hrLabel} · ${hrCnt} 次/小时 · 平均 ${gapSec} 秒 1 次！`
-          : (hrCnt > 0 ? `${hrLabel} · ${hrCnt} 次/小时` : `${hrLabel} · 深夜短歇`);
+      // 60 分钟表盘分针飞转一圈，外圈打满 41 个朱红点
+      const clockU = Math.min(1, u * 1.15);
+      const deg = clockU * 360;
+      dcHandMin.setAttribute('transform', `rotate(${deg.toFixed(1)} 90 90)`);
+      const litDots = Math.floor(clockU * clockDotEls.length);
+      for (let i = 0; i < clockDotEls.length; i++) {
+        clockDotEls[i].setAttribute('opacity', i < litDots ? '1' : '0');
       }
     }
 

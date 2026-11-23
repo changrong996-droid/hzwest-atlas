@@ -82,84 +82,50 @@
       <span class="hn-text" id="hn-text">AI 效果图，别混进图纸里。</span>
     </div>
 
-    <!-- 机械战警式高频图纸闪切视图（右侧取景框 + 左侧图纸瀑布） -->
-    <div id="flash-strip" aria-hidden="true"></div>
-    <div id="flash-shutter" aria-hidden="true">
-      <div class="fs-head">
-        <span class="fs-dot"></span>
-        <span id="fs-code">S-401 · 线稿</span>
-        <span id="fs-time">11-08 12:16</span>
+    <!-- 普通人秒懂的 296 版高潮区：敲门交稿消息 + 60 分钟打满 41 红点表盘 + 桌上越拍越快的修改稿 + 1 人未读红点暴涨 -->
+    <div id="chat-flood" aria-hidden="true"></div>
+
+    <div id="human-badge" aria-hidden="true">
+      <div class="hb-avatar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor"/>
+          <path d="M4.5 20.5c0-4.2 3.2-6.5 7.5-6.5s7.5 2.3 7.5 6.5" fill="currentColor"/>
+        </svg>
+        <span class="hb-dot" id="hb-dot">1</span>
       </div>
-      <div class="fs-body">
-        <img id="fs-img" src="img/flash/f01.jpg" alt="实时工程图纸闪切">
-        <div class="fs-reticle"></div>
-        <div class="fs-unread" id="fs-unread">未及查看 +1</div>
-      </div>
-      <div class="fs-foot">
-        <span id="fs-hash">ce40c17</span>
-        <span id="fs-rate">间隔 ~90 秒 / 次</span>
+      <div class="hb-meta">
+        <div class="hb-who">我（就 1 个人）</div>
+        <div class="hb-sub" id="hb-sub">刚喝一口水，又递进来新图</div>
       </div>
     </div>
 
-    <!-- 核心 36 小时（一天半）逐小时真实密集节奏图（11-08 09:00 — 11-09 20:00，去掉无关十月空白） -->
-    <div id="time-burst-graph" aria-hidden="true">
-      <div class="tbg-head">
-        <span class="tbg-title"><i class="tbg-led"></i>核心 36 小时逐小时改动密度 · 11-08 09:00 — 11-09 20:00</span>
-        <span class="tbg-peak" id="tbg-peak">11:00–16:00 连续 5 小时 · 每 1.5 分钟 1 次</span>
-      </div>
-      <div class="tbg-stage">
-        <svg id="tbg-svg" viewBox="0 0 760 124" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <radialGradient id="tbgHeatGrad" cx="28%" cy="42%" r="42%">
-              <stop offset="0%" stop-color="#ff3344" stop-opacity="0.45"/>
-              <stop offset="55%" stop-color="#b3202a" stop-opacity="0.14"/>
-              <stop offset="100%" stop-color="#b3202a" stop-opacity="0"/>
-            </radialGradient>
-            <linearGradient id="tbgBarHot" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fff4db"/>
-              <stop offset="22%" stop-color="#ff3b4a"/>
-              <stop offset="100%" stop-color="#9e1822"/>
-            </linearGradient>
-            <linearGradient id="tbgBarMid" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#f2c48d"/>
-              <stop offset="100%" stop-color="#8c4a32"/>
-            </linearGradient>
-            <filter id="tbgGlow" x="-20%" y="-30%" width="140%" height="160%">
-              <feGaussianBlur stdDeviation="2.6" result="blur"/>
-              <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-            <clipPath id="tbgRevealClip">
-              <rect id="tbg-clip-rect" x="0" y="0" width="0" height="124"/>
-            </clipPath>
-          </defs>
-          <g class="tbg-grid" stroke="rgba(255,255,255,0.08)" stroke-width="1">
-            <line x1="0" y1="22" x2="760" y2="22" stroke-dasharray="3 5"/>
-            <line x1="0" y1="68" x2="760" y2="68" stroke-dasharray="3 5"/>
-            <line x1="0" y1="114" x2="760" y2="114" stroke="rgba(255,255,255,0.24)"/>
+    <div id="desk-climax" aria-hidden="true">
+      <!-- 左：极简 60 分钟实体表盘（1 小时打满 41 个朱红点） -->
+      <div class="dc-clock-card">
+        <div class="dc-clock-title">最快 1 小时 · 41 版新图</div>
+        <svg id="dc-clock-svg" viewBox="0 0 180 180" aria-hidden="true">
+          <circle cx="90" cy="90" r="78" fill="#faf6ec" stroke="#1d1a17" stroke-width="2"/>
+          <circle cx="90" cy="90" r="68" fill="none" stroke="rgba(29,26,23,0.14)" stroke-width="1" stroke-dasharray="2 4"/>
+          <g stroke="#1d1a17" stroke-width="2" stroke-linecap="round">
+            <line x1="90" y1="16" x2="90" y2="24"/>
+            <line x1="164" y1="90" x2="156" y2="90"/>
+            <line x1="90" y1="164" x2="90" y2="156"/>
+            <line x1="16" y1="90" x2="24" y2="90"/>
           </g>
-          <rect id="tbg-heat" x="0" y="0" width="760" height="124" fill="url(#tbgHeatGrad)" opacity="0"/>
-          <g clip-path="url(#tbgRevealClip)">
-            <g id="tbg-bars-g"></g>
-            <path id="tbg-line" fill="none" stroke="#fff0d4" stroke-width="1.8" opacity="0.88" filter="url(#tbgGlow)"/>
-          </g>
-          <g id="tbg-peak-mark" opacity="0">
-            <circle class="tbg-ring" cx="156" cy="14" r="5" fill="none" stroke="#ff4d5a" stroke-width="1.6"/>
-            <circle cx="156" cy="14" r="3" fill="#fff5df" filter="url(#tbgGlow)"/>
-            <text x="170" y="18" fill="#fff3db" font-size="11" font-family="ui-monospace,SF Mono,monospace" font-weight="700">11:00–16:00 连续 5h 高压（41 次/h）</text>
-          </g>
-          <line id="tbg-scan" x1="0" y1="0" x2="0" y2="118" stroke="#ff5c68" stroke-width="1.6" opacity="0.95"/>
+          <g id="dc-clock-dots"></g>
+          <line id="dc-hand-min" x1="90" y1="90" x2="90" y2="30" stroke="#1d1a17" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="90" cy="90" r="4.5" fill="#b3202a"/>
         </svg>
+        <div class="dc-clock-foot" id="dc-clock-foot">平均每 1 分半就敲一次门</div>
       </div>
-      <div class="tbg-axis">
-        <span>11-08 09:00</span>
-        <span class="tbg-hot">12:00–15:00 高密连发</span>
-        <span>21:00</span>
-        <span>11-09 01:00</span>
-        <span class="tbg-hot">10:00 再起波峰</span>
-        <span>20:00</span>
+
+      <!-- 右：审图桌上越拍越快、越叠越高的盖章修改稿 -->
+      <div class="dc-pile-wrap">
+        <div class="dc-pile" id="dc-pile"></div>
+        <div class="dc-pile-cap">
+          <span id="dc-pile-time">11-08 12:16</span>
+          <span class="dc-pile-note">上一张还没看完，下一张已经拍在桌上</span>
+        </div>
       </div>
     </div>
 
