@@ -3,6 +3,7 @@
 // 任一失败即整体失败（FAIL check_all at <项>）。
 //
 // 并行：默认按 CPU 核数并行（环境变量 HZ_JOBS 可改，HZ_JOBS=1 即顺序跑）；每项输出缓冲后按清单顺序整段打印，不串行。
+// 串行：CHECK_ALL_SERIAL=1 或 --serial 时逐项顺序跑（JOBS=1），每项完成即单独报一行 PASS/WARN/FAIL（含耗时；被信号杀掉或拉不起来也留痕），任何一项死掉都留下明确 FAIL 行而不是静默消失，适合小内存预检机。
 // 分片：--shard=i/n 只跑清单里第 i 片（1 起算，按序号取模），给单条命令有时长上限的环境分几次跑；CI 跑全量。
 // --list 只列清单。SOLO 里的项（有耗时断言）等其余项跑完后单独跑。
 //
@@ -30,7 +31,8 @@ if (argv.includes('--list')) { items.forEach((it, i) => console.log((i + 1) + '\
 const sh = (argv.find(a => a.startsWith('--shard=')) || '').slice(8).split('/').map(Number);
 const run = sh.length === 2 && sh[1] > 0 ? items.filter((_, i) => i % sh[1] === sh[0] - 1) : items;
 const label = run === items ? '' : ` shard ${sh[0]}/${sh[1]}`;
-const JOBS = Math.max(1, +process.env.HZ_JOBS || os.cpus().length || 1);
+const SERIAL = process.env.CHECK_ALL_SERIAL === '1' || argv.includes('--serial');
+const JOBS = SERIAL ? 1 : Math.max(1, +process.env.HZ_JOBS || os.cpus().length || 1);
 
 const res = new Array(run.length);
 let shown = 0, failed = null, running = 0;
@@ -38,9 +40,9 @@ const queue = run.map((_, i) => i).filter(i => !run[i].solo), solos = run.map((_
 function flush() {
   while (shown < run.length && res[shown]) {
     const r = res[shown], it = run[shown];
-    process.stdout.write(r.out);
+    if (!SERIAL) process.stdout.write(r.out);
     if (r.code !== 0 && !it.report && !failed) failed = it.name;
-    if (r.code !== 0 && it.report) console.log('WARN check_all: ' + it.name + ' 有违反（报告模式，不判失败）');
+    if (r.code !== 0 && it.report && !SERIAL) console.log('WARN check_all: ' + it.name + ' 有违反（报告模式，不判失败）');
     shown++;
   }
   if (shown === run.length) {
@@ -54,14 +56,24 @@ function start() {
   if (queue.length) i = queue.shift(); else if (solos.length && running === 0) i = solos.shift(); else return;
   running++; const it = run[i], t0 = Date.now();
   const p = spawn(process.execPath, [path.join(__dirname, it.args[0]), ...it.args.slice(1)], { stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '';
+  let out = '', settled = false;
   p.stdout.on('data', d => { out += d; });
   p.stderr.on('data', d => { out += d; });
-  p.on('close', code => {
-    if (process.env.HZ_TIMING) out += `  [${it.name} ${((Date.now() - t0) / 1000).toFixed(1)} s]\n`;
+  const settle = (code, signal) => {
+    if (settled) return; settled = true;
+    if (SERIAL) {
+      const secs = ((Date.now() - t0) / 1000).toFixed(1);
+      const tag = code === 0 ? 'PASS' : (it.report ? 'WARN' : 'FAIL');
+      process.stdout.write(out);
+      process.stdout.write(`[${i + 1}/${run.length}] ${tag} ${it.name} (${secs} s${signal ? ', signal ' + signal : ''})\n`);
+    }
+    if (process.env.HZ_TIMING && !SERIAL) out += `  [${it.name} ${((Date.now() - t0) / 1000).toFixed(1)} s]\n`;
     res[i] = { code: code === null ? 1 : code, out }; running--;
     flush(); for (let k = running; k < JOBS; k++) start();
-  });
+  };
+  p.on('close', (code, signal) => settle(code === null ? 1 : code, signal));
+  p.on('error', err => { out += `spawn error: ${err.code || err.message}\n`; settle(1, 'ERR'); });
 }
 if (!run.length) { console.log("OK check_all 0/0" + label); process.exit(0); }
+if (SERIAL) console.log(`serial mode: ${run.length} items, one at a time`);
 for (let k = 0; k < JOBS; k++) start();
