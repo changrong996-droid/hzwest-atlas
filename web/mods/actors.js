@@ -905,6 +905,87 @@
   const present = (p, t) => { const s = stOf(p, t); return s >= 0 && s !== 3; };
   const rng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) | 0; let q = Math.imul(s ^ s >>> 15, 1 | s); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; }; };
 
+  // ---------- V1 · 施工车辆动态行驶路线（任务 #34）----------
+  // 每张含车辆派工的单，按其构件簇（云谷以南 / 以北）冻结一条矩形环路：作业面包络离云谷 ≥ 28 m
+  // 用全包环，贴着云谷的用外侧走廊带；对工期窗口重叠（含早已建成仍在场的）的其它单构件盒，
+  // 四边单调外扩避让（步进 6 m、边缘安全半宽 5 m，10 轮内解不出则该簇退回静态停放）。
+  // 行驶：从环路角点进场 → 匀速绕行 → 作业面投影点停靠卸料（约 1.5 小时）→ 继续绕行；贴地 y=0。
+  const VR_V = 14, VR_DW = 0.9, VR_M = 5;
+  const vrHit = (b, x0, z0, x1, z1) => b.max[0] > x0 && b.min[0] < x1 && b.max[2] > z0 && b.min[2] < z1;
+  function vrPose(R, t, k, nV) {
+    const L = R.L, p = (VR_V * (t - R.t0) + k * (L + VR_DW) / nV) % (L + VR_DW);
+    const s = p < R.stopS ? p : (p < R.stopS + VR_DW ? R.stopS : p - VR_DW);
+    const W = R.W, H = R.H;
+    let x, z, dx = 1, dz = 0;
+    if (s < W) { x = R.x0 + s; z = R.z0; dx = 1; dz = 0; }
+    else if (s < W + H) { x = R.x1; z = R.z0 + s - W; dx = 0; dz = 1; }
+    else if (s < 2 * W + H) { x = R.x1 - (s - W - H); z = R.z1; dx = -1; dz = 0; }
+    else { x = R.x0; z = R.z1 - (s - 2 * W - H); dx = 0; dz = -1; }
+    return { x, z, yaw: Math.atan2(dz, dx) };
+  }
+  function vrBuild(HZ, a) {
+    const self = a.parts.filter(p => !p.grp && !p.cells && p.geo && p.geo.boxes && p.geo.boxes.length);
+    if (!self.length) return { S: null, N: null };
+    const cbs = [];
+    for (const o of HZ.acts) {
+      if (o === a || o.kind === 'untemp' || o.kind === 'milestone' || o.start >= a.end) continue;
+      for (const p of o.parts) { if (p.grp || p.cells || !p.geo || !p.geo.boxes) continue; for (const b of p.geo.boxes) cbs.push(b); }
+    }
+    const mk = (cl, south) => {
+      if (!cl.length) return null;
+      let bx0 = 1e9, bx1 = -1e9, bz0 = 1e9, bz1 = -1e9, cx = 0, cz = 0, n = 0;
+      for (const p of cl) for (const b of p.geo.boxes) {
+        bx0 = Math.min(bx0, b.min[0]); bx1 = Math.max(bx1, b.max[0]); bz0 = Math.min(bz0, b.min[2]); bz1 = Math.max(bz1, b.max[2]);
+        cx += (b.min[0] + b.max[0]) / 2; cz += (b.min[2] + b.max[2]) / 2; n++;
+      }
+      cx /= n; cz /= n;
+      const cands = [];
+      if (south ? bz0 >= 28 : bz1 <= -28) cands.push({ x0: bx0 - 8, x1: bx1 + 8, z0: bz0 - 8, z1: bz1 + 8, band: false });
+      // 多档深度走廊带：内边固定在作业面外 8+24k，外边只向外扩；某档被卡即换更深一档（任务 #34）
+      for (let kb = 0; kb < 9; kb++) {
+        const zA = south ? bz1 + 8 + 24 * kb : bz0 - 8 - 24 * kb;
+        cands.push({ x0: bx0 - 8, x1: bx1 + 8, z0: south ? zA : zA - 12, z1: south ? zA + 12 : zA, band: true });
+      }
+      for (const r of cands) {
+        if (!(r.x1 - r.x0 >= 20 && r.z1 - r.z0 >= 6)) continue;
+        let ok = true;
+        for (let it = 0; it < 10 && ok; it++) {
+          let hit = false;
+          for (const b of cbs) {
+            if (vrHit(b, r.x0 - VR_M, r.z0 - VR_M, r.x1 + VR_M, r.z0 + VR_M)) { if (r.band && south) r.z0 = Math.max(r.z0, b.max[2] + 8); else r.z0 = Math.min(r.z0, b.min[2] - 8); hit = true; continue; }
+            if (vrHit(b, r.x0 - VR_M, r.z1 - VR_M, r.x1 + VR_M, r.z1 + VR_M)) { if (r.band && !south) r.z1 = Math.min(r.z1, b.min[2] - 8); else r.z1 = Math.max(r.z1, b.max[2] + 8); hit = true; continue; }
+            if (vrHit(b, r.x0 - VR_M, r.z0, r.x0 + VR_M, r.z1)) { r.x0 = Math.min(r.x0, b.min[0] - 8); hit = true; continue; }
+            if (vrHit(b, r.x1 - VR_M, r.z0, r.x1 + VR_M, r.z1)) { r.x1 = Math.max(r.x1, b.max[0] + 8); hit = true; continue; }
+          }
+          if (!(r.x0 < r.x1 && r.z0 < r.z1)) { ok = false; break; }
+          if (south ? (r.z0 < 22 || r.z1 > 320 || r.x0 < -700 || r.x1 > 700) : (r.z1 > -22 || r.z0 < -320 || r.x0 < -700 || r.x1 > 700)) { ok = false; break; }
+          if (r.band) { if (r.z1 - r.z0 < 12 || (south ? r.z0 <= bz1 + 2 : r.z1 >= bz0 - 2)) { ok = false; break; } }
+          if (!hit) break;
+        }
+        if (!ok) continue;
+        const W = r.x1 - r.x0, H = r.z1 - r.z0;
+        const inX = cx >= r.x0 && cx <= r.x1, inZ = cz >= r.z0 && cz <= r.z1;
+        let px, pz;
+        if (inX && inZ) {
+          const dl = cx - r.x0, dr = r.x1 - cx, db = cz - r.z0, dt = r.z1 - cz, m = Math.min(dl, dr, db, dt);
+          if (m === db) { px = cx; pz = r.z0; } else if (m === dt) { px = cx; pz = r.z1; } else if (m === dl) { px = r.x0; pz = cz; } else { px = r.x1; pz = cz; }
+        } else { px = Math.min(Math.max(cx, r.x0), r.x1); pz = Math.min(Math.max(cz, r.z0), r.z1); }
+        let stopS;
+        if (pz === r.z0) stopS = px - r.x0;
+        else if (px === r.x1) stopS = W + (pz - r.z0);
+        else if (pz === r.z1) stopS = W + H + (r.x1 - px);
+        else stopS = 2 * W + H + (r.z1 - pz);
+        return { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1, W, H, L: 2 * (W + H), stopS, t0: a.start };
+      }
+      return null;
+    };
+    const cs = [], cn = [];
+    for (const p of self) (p.c[2] >= 0 ? cs : cn).push(p);
+    return { S: mk(cs, true), N: mk(cn, false) };
+  }
+
+
+
   // ---------- 场地索引 ----------
   function index(HZ) {
     const B = [], G = new Map();
@@ -1018,10 +1099,18 @@
         const nV = Math.min(4, Math.ceil(live.length / 3)), vPool = T.vehs || [T.veh];
         const prog = a.end > a.start ? (t - a.start) / (a.end - a.start) : 0;
         const rot = (Math.floor(t) + a.ix) % vPool.length;
+        if (!HZ.__vr) HZ.__vr = {};
+        if (!(a.ix in HZ.__vr)) HZ.__vr[a.ix] = vrBuild(HZ, a);
+        const RTS = HZ.__vr[a.ix];
         for (let k = 0; k < nV; k++) {
           let vk = vPool[(k + rot) % vPool.length];
           if (tr === 'civil' && vk === 'drill' && prog > 0.65) vk = 'dump';
           const V = VEH[vk];
+          // V1：有环路先走动态行驶路线；每台车按序号定死主侧（偶数南、奇数北），本侧无环路才用另一侧，全程不换边
+          if (k >= 2) break;   // V1 动态派车每单至多 2 台（环路必落位，不似静态有落地失败的自然限流）
+          const primS = k % 2 === 0;
+          const RT = (primS ? RTS.S : RTS.N) || (primS ? RTS.N : RTS.S);
+          if (RT) { const q = vrPose(RT, t, k, nV); out.vehs.push({ x: q.x, y: 0, z: q.z, yaw: q.yaw, kind: vk, act: a.key }); continue; }
           const p = live[Math.floor(R() * live.length)], mn = p.geo.min, mx = p.geo.max;
           for (let tryN = 0; tryN < 6; tryN++) {
             const side = Math.floor(R() * 4), d = 4 + R() * 10 + V.hx, u = R();
@@ -1184,6 +1273,8 @@
       }
     },
     build(scene, HZ, THREE, opts) {
+      // V1 预热：全量环路在 build 阶段一次算好，避免每小时重排帧承担预计算（任务 #34）
+      if (HZ && HZ.acts && !HZ.__vrW) { HZ.__vrW = true; HZ.__vr = HZ.__vr || {}; for (const a of HZ.acts) if (!(a.ix in HZ.__vr)) HZ.__vr[a.ix] = vrBuild(HZ, a); }
       opts = opts || {}; this.clip = Array.isArray(opts.clip) && opts.clip.length ? opts.clip : null;
       this.HZ = HZ; this.I = index(HZ); this.buf = new Float32Array(MAXSEG * 6); this.n = 0; this.key = null; this.P = null; this.lastCam = null;
       this.instFig = null; this.instVeh = null; this.instList = []; this.obj = null; this.lastLit = false;
