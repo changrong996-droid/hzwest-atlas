@@ -6,7 +6,7 @@
 // 5) 2500+ 张蓝图阵列 + 50 人跨专业人体图标矩阵（对标数月工期 vs 实际到场 0 人）
 // 6) 结尾字幕：「现在，它还在继续生长中……」并交出实时 3D 鼠标控制权
 (function () {
-  const DUR = 120; // 02:00
+  const DUR = 128; // 02:08（含 12 秒活图纸三连点联动演示）
   const $ = id => document.getElementById(id);
   const hp = new URLSearchParams(location.hash.slice(1));
   const qp = new URLSearchParams(location.search);
@@ -21,6 +21,7 @@
   const deskClimax = $('desk-climax'), dcClockDots = $('dc-clock-dots'), dcHandMin = $('dc-hand-min'), dcPile = $('dc-pile'), dcPileTime = $('dc-pile-time');
   const sheetsWall = $('sheets-wall'), wallGrid = $('wall-grid'), wallNum = $('wall-num');
   const crewPanel = $('crew-panel'), crewGrid = $('crew-grid'), crewZero = $('crew-zero');
+  const liveSheet = $('live-sheet'), lsMode = $('ls-mode'), lsCursor = $('ls-cursor'), lsRipple = $('ls-ripple'), lsBeam = $('ls-beam');
   const burstCounter = $('burst-counter'), bcNum = $('bc-num');
   const ticker = $('event-ticker'), etTag = $('et-tag'), etHash = $('et-hash');
   const clockBox = $('clock-box'), ckVal = $('ck-val');
@@ -303,10 +304,10 @@
     syncBgm(s, isPlaying) {
       if (!bgmEl || !useExternalBgm) return;
       bgmEl.muted = this.muted;
-      // 1:04-1:06 短促呼吸压低音量，1:55.5-2:00 平滑淡出收尾
+      // 1:04-1:06 短促呼吸压低音量，2:03.5-2:08 平滑淡出收尾
       let vol = 0.88;
       if (s >= 64.2 && s < 66.2) vol = 0.22;
-      else if (s >= 115.5) vol = Math.max(0, 0.88 * (1 - (s - 115.5) / 4.5));
+      else if (s >= 123.5) vol = Math.max(0, 0.88 * (1 - (s - 123.5) / 4.5));
       bgmEl.volume = Math.max(0, Math.min(1, vol));
       if (isPlaying) {
         if (Math.abs((bgmEl.currentTime || 0) - s) > 0.45 && bgmEl.readyState >= 1) {
@@ -438,8 +439,8 @@
     [41.2, 44.4, '纸上先铺出站台和轨道。', false],
     [44.8, 47.8, '整座站，落成了纸上的墨线。', false],
     [48.0, 50.0, '屋顶被千斤顶整体抬起来。', false],
-    [50.6, 55.2, '钻过云门，贴着轨道和站台一路穿进去。', true],
-    [55.6, 60.4, '掠过网架，从四朵云屋顶上面翻出来。', true],
+    [50.6, 55.2, '每一个构件，都是按施工顺序长出来的。', true],
+    [55.6, 60.4, '不是空壳，也不是效果图——飞进去，每一根梁都在。', true],
     // Act 2b: 普通人一秒懂的日常隐喻（敲门交稿 + 桌上叠成山）
     [64.2, 66.2, '接下来近三个小时，我没再说一句话。', true],
     [66.8, 71.0, '就像请了个不知疲倦的设计院——', false],
@@ -451,10 +452,62 @@
     [88.0, 92.2, '2500 多张图纸，加上三维推演和交互页面。', false],
     [92.6, 97.0, '正常至少要一支四五十人的团队，干上好几个月。', false],
     [97.4, 100.2, '这里，一个专业人员都没坐进来。', false],
-    [100.6, 104.2, '现在，整座站都在这一页里。', false],
+    [100.6, 103.4, '现在，整座站都在这一页里。', false],
+    // Act 3.5: 活图纸三连点演示（点右边图纸，镜头直接飞到现场）
+    [103.8, 106.8, '它不是一张死图——', false],
+    [107.2, 111.2, '点右边图纸的任意一块，镜头直接带你飞到现场。', false],
+    [111.6, 115.2, '图纸和实物之间的距离，只剩这一声点击。', true],
     // Act 4: 尾声
-    [110.5, 118.2, '现在，它还在继续生长中……', true],
+    [118.5, 126.2, '现在，它还在继续生长中……', true],
   ];
+
+  // 活图纸 6 个真实联动热点（1-4 主打墨线施工特征镜头，5-6 保留实景上盖与云门）
+  const LIVE_SPOTS = {
+    truss:  { xy: [37, 33], sheet: 'S-301', tDay: 661.2, mode: 'ink', pos: [-72, 27.5, 92],   tgt: [18, 36.5, -18] },
+    pit:    { xy: [50, 45], sheet: 'S-101', tDay: 185,   mode: 'ink', pos: [-195, 78, 175],   tgt: [0, -2, 0] },
+    asm:    { xy: [63, 58], sheet: 'S-251', tDay: 608,   mode: 'ink', pos: [-165, 86, 155],   tgt: [10, 32, 10] },
+    clad:   { xy: [28, 56], sheet: 'S-401', tDay: 752,   mode: 'ink', pos: [-235, 118, 225],  tgt: [0, 44, 0] },
+    tod:    { xy: [78, 27], sheet: 'S-000', tDay: 1088,  mode: 'lit', pos: [295, 76, -165],   tgt: [160, 34, -70] },
+    yunmen: { xy: [50, 85], sheet: 'S-000', tDay: 1118,  mode: 'lit', pos: [-290, 74, 345],   tgt: [-5, 34, 150] }
+  };
+  let activeSpot = '', lastDemoSpot = '', flyAnim = null, lastCamPos = [-405, 116, 415], lastCamTgt = [-10, 26, 20];
+
+  function highlightSpot(key, withPing) {
+    activeSpot = key;
+    document.querySelectorAll('[data-spot]').forEach(el => el.classList.toggle('active', el.dataset.spot === key));
+    const sp = LIVE_SPOTS[key];
+    if (sp && withPing) {
+      lsRipple.style.left = sp.xy[0] + '%';
+      lsRipple.style.top = sp.xy[1] + '%';
+      lsRipple.classList.remove('ping');
+      void lsRipple.offsetWidth;
+      lsRipple.classList.add('ping');
+      lsBeam.classList.add('fire');
+      clearTimeout(lsBeam._t);
+      lsBeam._t = setTimeout(() => lsBeam.classList.remove('fire'), 900);
+      Audio.mechClick(0.95, 0.2);
+    }
+  }
+
+  // 用户亲自点击右侧图纸任意部位：自动暂停时间轴并丝滑飞到目标机位
+  function userFlyTo(key) {
+    const sp = LIVE_SPOTS[key];
+    if (!sp || !PV) return;
+    Audio.init();
+    if (playing) {
+      playing = false;
+      document.body.classList.add('paused');
+      $('btn-play').textContent = '▶';
+      if (bgmEl) bgmEl.pause();
+    }
+    highlightSpot(key, true);
+    if (sp.sheet !== lastSheet) { lastSheet = sp.sheet; PV.setSheet(sp.sheet); }
+    if (sp.mode !== lastMode) { lastMode = sp.mode; PV.opt({ mode: sp.mode, play: false, auto: false }); }
+    PV.set(sp.tDay);
+    const startPos = flyAnim ? flyAnim.curPos : lastCamPos;
+    const startTgt = flyAnim ? flyAnim.curTgt : lastCamTgt;
+    flyAnim = { t0: performance.now(), dur: 850, p0: startPos, p1: sp.pos, g0: startTgt, g1: sp.tgt, curPos: startPos, curTgt: startTgt };
+  }
 
   // ---------- 状态机 ----------
   let playing = false, sec = 0, lastTs = 0, lastClickSec = -1, lastEventIdx = -1, flashIdx = 0;
@@ -468,7 +521,7 @@
     if (mode !== lastMode) { lastMode = mode; PV.opt({ mode, play: false, auto: false }); }
     if (PV.setCut) PV.setCut(0);
     PV.set(tDay);
-    if (camPos && camTgt && !ended) PV.setCam(camPos, camTgt);
+    if (camPos && camTgt && !ended) { lastCamPos = camPos; lastCamTgt = camTgt; PV.setCam(camPos, camTgt); }
   }
 
   function pushFlashPlate(ev, progress) {
@@ -552,8 +605,9 @@
     const inHumanNote = s >= 61.2 && s < 64.2;
     const inBlack = s >= 64.2 && s < 66.2;
     const inStorm = s >= 66.2 && s < 83.6;
-    const inWall = s >= 83.6 && s < 104.5;
-    const isEnd = s >= 116.0;
+    const inWall = s >= 83.6 && s < 103.5;
+    const inLiveDemo = s >= 103.5 && s < 115.5;
+    const isEnd = s >= 123.5;
 
     veil.classList.toggle('on', s >= 17.2 && s < 40.8);
     veil.classList.toggle('soft', s >= 11.2 && s < 17.2);
@@ -623,6 +677,24 @@
       crewZero.classList.toggle('show', ghostOut);
     }
 
+    // Act 3.5 活图纸自动演示（随时可点任意 6 个视角）+ 结尾常驻自由体验
+    liveSheet.classList.toggle('on', inLiveDemo || isEnd);
+    liveSheet.classList.toggle('interactive', inLiveDemo || isEnd);
+    lsCursor.classList.toggle('show', inLiveDemo && playing);
+    if (lsMode) lsMode.textContent = isEnd ? '6 个机位 · 点哪飞哪' : '活图纸 · 自动演示（也可直接点）';
+    if (inLiveDemo) {
+      const spotKey = s < 106.5 ? 'truss' : (s < 109.5 ? 'pit' : (s < 112.5 ? 'asm' : 'yunmen'));
+      const sp = LIVE_SPOTS[spotKey];
+      lsCursor.style.left = sp.xy[0] + '%';
+      lsCursor.style.top = sp.xy[1] + '%';
+      if (spotKey !== lastDemoSpot) {
+        lastDemoSpot = spotKey;
+        highlightSpot(spotKey, true);
+      }
+    } else if (!isEnd) {
+      lastDemoSpot = '';
+    }
+
     // 结尾交权
     if (isEnd !== ended) {
       ended = isEnd;
@@ -682,13 +754,37 @@
       const ang = lerp(-0.9, 1.4, u);
       const rad = lerp(450, 310, u);
       setEngine('S-000', lerp(220, 1085, u), 'ink', [rad * Math.cos(ang), lerp(205, 128, u), rad * Math.sin(ang)], [0, 28, 8]);
-    } else if (s < 104.5) {
-      const u = (s - 83.6) / (104.5 - 83.6);
+    } else if (s < 103.5) {
+      const u = (s - 83.6) / (103.5 - 83.6);
       setEngine('S-000', lerp(1050, 1095, u), 'ink', [lerp(-380, -480, u), lerp(180, 165, u), lerp(390, 460, u)], [0, 28, 20]);
+    } else if (s < 106.5) {
+      // 第 1 点：网架液压提升（S-301 候车层楼面仰视：红提升塔 + 梭形柱 + 工人 + 网架穹顶）
+      const u = Math.min(1, (s - 103.5) / 1.2), e = 1 - Math.pow(1 - u, 3);
+      setEngine('S-301', lerp(660.2, 662.2, (s - 103.5) / 3.0), 'ink',
+        [lerp(-130, -72, e), lerp(42, 27.5, e), lerp(145, 92, e)],
+        [lerp(0, 18, e), lerp(32, 36.5, e), lerp(0, -18, e)]);
+    } else if (s < 109.5) {
+      // 第 2 点：基坑出土与地下地铁层（S-101 墨线施工特征）
+      const u = Math.min(1, (s - 106.5) / 1.2), e = 1 - Math.pow(1 - u, 3);
+      setEngine('S-101', lerp(175, 198, (s - 106.5) / 3.0), 'ink',
+        [lerp(-72, -195, e), lerp(27.5, 78, e), lerp(92, 175, e)],
+        [lerp(18, 0, e), lerp(36.5, -2, e), lerp(-18, 0, e)]);
+    } else if (s < 112.5) {
+      // 第 3 点：屋盖拼装与内侧塔吊（S-251 墨线施工特征）
+      const u = Math.min(1, (s - 109.5) / 1.2), e = 1 - Math.pow(1 - u, 3);
+      setEngine('S-251', lerp(602, 612, (s - 109.5) / 3.0), 'ink',
+        [lerp(-195, -165, e), lerp(78, 86, e), lerp(175, 155, e)],
+        [lerp(0, 10, e), lerp(-2, 32, e), lerp(0, 10, e)]);
+    } else if (s < 115.5) {
+      // 第 4 点：南侧云门与黄昏全貌（由墨线图纸切回黄昏实景，自然接进结尾）
+      const u = Math.min(1, (s - 112.5) / 1.2), e = 1 - Math.pow(1 - u, 3);
+      setEngine('S-000', lerp(1112, 1120, (s - 112.5) / 3.0), 'lit',
+        [lerp(-165, -290, e), lerp(86, 74, e), lerp(155, 345, e)],
+        [lerp(10, -5, e), lerp(32, 34, e), lerp(10, 150, e)]);
     } else {
-      // 尾声：黄昏实景开通亮灯，交出控制权
-      const u = Math.min(1, (s - 104.5) / 11.5);
-      setEngine('S-000', lerp(1096, 1124, u), 'lit', [lerp(-500, -405, u), lerp(155, 116, u), lerp(480, 415, u)], [-10, 26, 20]);
+      // 尾声：黄昏实景开通亮灯，交出左侧 3D 拖拽 + 右侧活图纸真点击控制权
+      const u = Math.min(1, (s - 115.5) / 8.0);
+      setEngine('S-000', lerp(1116, 1124, u), 'lit', [lerp(-340, -405, u), lerp(88, 116, u), lerp(335, 415, u)], [-10, 26, 20]);
     }
   }
 
@@ -711,6 +807,17 @@
       sec += dt;
       if (sec >= DUR) { sec = DUR; playing = false; document.body.classList.add('paused'); $('btn-play').textContent = '▶'; if (bgmEl) bgmEl.pause(); }
       renderAt(sec);
+    }
+    // 结尾用户亲自点击右侧活图纸时的平滑飞行动画
+    if (flyAnim && PV) {
+      const u = Math.min(1, (now - flyAnim.t0) / flyAnim.dur);
+      const e = 1 - Math.pow(1 - u, 3);
+      const pos = [0, 1, 2].map(k => lerp(flyAnim.p0[k], flyAnim.p1[k], e));
+      const tgt = [0, 1, 2].map(k => lerp(flyAnim.g0[k], flyAnim.g1[k], e));
+      flyAnim.curPos = pos; flyAnim.curTgt = tgt;
+      lastCamPos = pos; lastCamTgt = tgt;
+      PV.setCam(pos, tgt);
+      if (u >= 1) flyAnim = null;
     }
   }
 
@@ -742,6 +849,9 @@
     else if (bgmEl && useExternalBgm) { try { bgmEl.currentTime = sec; } catch (e) {} bgmEl.play().catch(() => {}); }
   };
   $('btn-mute').onclick = () => Audio.toggleMute();
+  document.querySelectorAll('[data-spot]').forEach(el => {
+    el.onclick = () => userFlyTo(el.dataset.spot);
+  });
 
   {
     const sc = $('scrub');

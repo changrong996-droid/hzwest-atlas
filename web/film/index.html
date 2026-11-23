@@ -155,6 +155,54 @@
       </div>
     </div>
 
+    <!-- Act 3.5：活图纸右侧交互分屏面板（自动三连点演示 -> 结尾解锁真点击联动） -->
+    <div id="live-sheet" aria-hidden="true">
+      <div class="ls-beam" id="ls-beam"></div>
+      <div class="ls-head">
+        <span class="ls-code">活图纸 · 平面总图联动</span>
+        <span class="ls-mode" id="ls-mode">自动演示</span>
+      </div>
+      <div class="ls-canvas" id="ls-canvas">
+        <svg class="ls-svg" viewBox="0 0 320 220" aria-hidden="true">
+          <rect x="6" y="6" width="308" height="208" fill="#faf6ec" stroke="rgba(29,26,23,0.28)" stroke-width="1"/>
+          <g stroke="rgba(29,26,23,0.16)" stroke-width="0.9">
+            <line x1="18" y1="56" x2="302" y2="56"/><line x1="18" y1="66" x2="302" y2="66"/>
+            <line x1="18" y1="76" x2="302" y2="76"/><line x1="18" y1="86" x2="302" y2="86"/>
+            <line x1="18" y1="114" x2="302" y2="114"/><line x1="18" y1="124" x2="302" y2="124"/>
+            <line x1="18" y1="134" x2="302" y2="134"/><line x1="18" y1="144" x2="302" y2="144"/>
+          </g>
+          <rect x="18" y="93" width="284" height="14" fill="rgba(179,32,42,0.06)" stroke="rgba(179,32,42,0.28)" stroke-dasharray="4 3" stroke-width="0.9"/>
+          <rect x="74" y="40" width="172" height="120" rx="34" fill="rgba(239,233,221,0.72)" stroke="#1d1a17" stroke-width="1.6"/>
+          <line x1="160" y1="40" x2="160" y2="160" stroke="#1d1a17" stroke-width="6" stroke-opacity="0.12"/>
+          <line x1="74" y1="100" x2="246" y2="100" stroke="#1d1a17" stroke-width="6" stroke-opacity="0.12"/>
+          <g fill="none" stroke="rgba(29,26,23,0.34)" stroke-width="1" stroke-dasharray="3 2">
+            <ellipse cx="118" cy="72" rx="28" ry="18"/><ellipse cx="202" cy="72" rx="28" ry="18"/>
+            <ellipse cx="118" cy="128" rx="28" ry="18"/><ellipse cx="202" cy="128" rx="28" ry="18"/>
+          </g>
+          <rect x="112" y="174" width="96" height="26" fill="rgba(29,26,23,0.08)" stroke="#1d1a17" stroke-width="1.5"/>
+          <rect x="142" y="174" width="36" height="26" fill="#faf6ec" stroke="#1d1a17" stroke-dasharray="3 2" stroke-width="1"/>
+        </svg>
+        <button type="button" class="ls-pin" data-spot="truss"  style="left:37%;top:33%;" title="网架提升 · 候车层仰视"><span>1</span></button>
+        <button type="button" class="ls-pin" data-spot="pit"    style="left:50%;top:45%;" title="基坑与地铁层施工 · S-101"><span>2</span></button>
+        <button type="button" class="ls-pin" data-spot="asm"    style="left:63%;top:58%;" title="屋盖拼装与内侧塔吊 · S-251"><span>3</span></button>
+        <button type="button" class="ls-pin" data-spot="clad"   style="left:28%;top:56%;" title="屋面覆面闭水施工 · S-401"><span>4</span></button>
+        <button type="button" class="ls-pin" data-spot="tod"    style="left:78%;top:27%;" title="四角上盖综合体 · TOD"><span>5</span></button>
+        <button type="button" class="ls-pin" data-spot="yunmen" style="left:50%;top:85%;" title="云门 · 良渚玉琮大门"><span>6</span></button>
+        <div class="ls-ripple" id="ls-ripple"></div>
+        <div class="ls-cursor" id="ls-cursor" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 3l14 9-6.2 1.6L10 20z" fill="#b3202a" stroke="#fffdf8" stroke-width="1.6"/></svg>
+        </div>
+      </div>
+      <div class="ls-list">
+        <button type="button" class="ls-item" data-spot="truss"><i>1</i><span>网架提升</span><em>S-301</em></button>
+        <button type="button" class="ls-item" data-spot="pit"><i>2</i><span>基坑出土</span><em>S-101</em></button>
+        <button type="button" class="ls-item" data-spot="asm"><i>3</i><span>屋盖拼装</span><em>S-251</em></button>
+        <button type="button" class="ls-item" data-spot="clad"><i>4</i><span>屋面闭水</span><em>S-401</em></button>
+        <button type="button" class="ls-item" data-spot="tod"><i>5</i><span>四角上盖</span><em>TOD</em></button>
+        <button type="button" class="ls-item" data-spot="yunmen"><i>6</i><span>南侧云门</span><em>S-000</em></button>
+      </div>
+    </div>
+
     <!-- 右上改动计数器（1 -> 87 -> 296） -->
     <div id="burst-counter" aria-hidden="true">
       <span class="bc-num" id="bc-num">0</span>
@@ -181,7 +229,7 @@
 
     <!-- 结尾交权操作条 -->
     <div id="end-actions" aria-hidden="true">
-      <div class="end-hint">画面已解锁 · 拖拽可自由转动这座杭州西站</div>
+      <div class="end-hint">画面已解锁 · 拖拽左侧 3D，或直接点右侧图纸飞到现场</div>
       <div class="end-btns">
         <button type="button" id="btn-replay" class="pill">重播短片</button>
         <a href="../hzwest.html" class="pill pill-red">进入完整九图图册 →</a>
@@ -195,7 +243,7 @@
     <div id="scrub" title="拖动时间轴">
       <div id="scrub-fill"></div>
     </div>
-    <span id="time-read">00:00 / 02:00</span>
+    <span id="time-read">00:00 / 02:08</span>
     <button type="button" id="btn-mute" aria-label="静音切换">声</button>
     <a href="../hzwest.html" class="ctrl-exit">跳过 → 图册</a>
   </div>

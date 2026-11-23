@@ -356,6 +356,83 @@ html, body {
 .crew-legend span:nth-child(5) i { background: #8c4a32; }
 .crew-legend span:nth-child(6) i { background: #b3202a; }
 
+/* ---------- Act 3.5 & 结尾：活图纸右侧联动面板 ---------- */
+#live-sheet {
+  position: absolute; right: 24px; top: 50%; transform: translate(36px, -54%);
+  width: min(350px, 33vw);
+  background: rgba(250, 246, 236, 0.96); backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(29, 26, 23, 0.28); border-radius: 6px;
+  padding: 12px; box-shadow: 0 22px 54px rgba(0, 0, 0, 0.22);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .55s ease, transform .55s cubic-bezier(.2, .85, .3, 1), visibility .55s ease;
+}
+#live-sheet.on { opacity: 1; visibility: visible; transform: translate(0, -54%); }
+#live-sheet.interactive { pointer-events: auto; }
+.ls-beam {
+  position: absolute; right: 100%; top: 44%; width: 110px; height: 2px;
+  background: linear-gradient(90deg, rgba(179,32,42,0) 0%, rgba(179,32,42,0.92) 100%);
+  transform-origin: right; transform: scaleX(0); opacity: 0;
+  transition: transform .35s ease-out, opacity .35s ease;
+}
+.ls-beam.fire { transform: scaleX(1); opacity: 1; }
+.ls-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; font-family: var(--mono); font-size: 11px;
+}
+.ls-code { font-weight: 700; color: var(--ink); letter-spacing: .04em; }
+.ls-mode {
+  background: rgba(179, 32, 42, 0.12); color: var(--red);
+  padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 10px;
+}
+#live-sheet.interactive .ls-mode { background: var(--red); color: #fff; }
+.ls-canvas { position: relative; width: 100%; aspect-ratio: 320 / 220; }
+.ls-svg { width: 100%; height: 100%; display: block; }
+.ls-pin {
+  position: absolute; transform: translate(-50%, -50%);
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fffdf8;
+  background: #1d1a17; color: #fffdf8; font-family: var(--mono); font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.22); transition: background .2s ease, transform .2s ease;
+}
+.ls-pin.active, .ls-pin:hover { background: var(--red); transform: translate(-50%, -50%) scale(1.22); }
+.ls-ripple {
+  position: absolute; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--red); transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0; pointer-events: none;
+}
+.ls-ripple.ping { animation: lsPing .65s ease-out; }
+@keyframes lsPing {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
+}
+.ls-cursor {
+  position: absolute; width: 22px; height: 22px; left: 82%; top: 14%;
+  pointer-events: none; opacity: 0;
+  transition: left .62s cubic-bezier(.25, .9, .3, 1), top .62s cubic-bezier(.25, .9, .3, 1), opacity .3s ease;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+}
+.ls-cursor.show { opacity: 1; }
+.ls-cursor svg { width: 100%; height: 100%; display: block; }
+.ls-list { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.ls-item {
+  width: 100%; display: flex; align-items: center; gap: 6px;
+  padding: 5px 7px; border-radius: 4px; cursor: pointer; text-align: left;
+  background: rgba(255, 255, 255, 0.68); border: 1px solid rgba(29, 26, 23, 0.14);
+  font-family: var(--sans); font-size: 11px; color: var(--ink);
+  transition: all .18s ease;
+}
+.ls-item i {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--ink); color: #fff;
+  font-style: normal; font-family: var(--mono); font-size: 10px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ls-item span { flex: 1; font-weight: 600; }
+.ls-item em { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--ink-dim); }
+.ls-item.active, .ls-item:hover {
+  background: rgba(179, 32, 42, 0.1); border-color: var(--red);
+}
+.ls-item.active i, .ls-item:hover i { background: var(--red); }
+
 /* ---------- 右上改动计数 / 左上脉搏 / 右下时钟 ---------- */
 #burst-counter {
   position: absolute; right: 26px; top: 24px;
