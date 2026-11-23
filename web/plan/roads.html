@@ -32,7 +32,7 @@ fetch('roads.json').then(r=>r.json()).then(D=>{
  const s=D.site;svg.appendChild(el('rect',{x:s[0],y:s[2],width:s[1]-s[0],height:s[3]-s[2],fill:'#fff3',stroke:'#c33','stroke-width':16,'stroke-dasharray':'60 40'}));
  const st=el('text',{x:0,y:30,'text-anchor':'middle','font-size':260,fill:'#c33',opacity:.8});st.textContent='杭州西站';svg.appendChild(st);
  const defs=el('defs',{});defs.innerHTML='<pattern id="hz" width="80" height="80" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="40" height="80" fill="#e8a33c"/></pattern>';svg.appendChild(defs);
- const G=D.projects.map((p,i)=>{const g=el('g',{fill:'none','stroke-width':46,'stroke-linecap':'round'});p.lines.forEach(l=>g.appendChild(el('path',{d:pd(l)})));g.dataset.i=i;svg.appendChild(g);return g});
+ const G=D.projects.map((p,i)=>{const g=el('g',{fill:'none','stroke-width':46,'stroke-linecap':'round'});p.lines.forEach(l=>g.appendChild(el("path",{d:pd(l.p||l)})));g.dataset.i=i;svg.appendChild(g);return g});
  const tb=document.getElementById('tb');
  tb.innerHTML='<tr><td></td><td><b>工程</b></td><td><b>开工</b></td><td><b>通车</b></td></tr>'+D.projects.map((p,i)=>`<tr id="r${i}"><td><i class="sw" style="background:${C[i]}"></i></td><td>${p.id} ${p.name}<div class="st">${p.remark||''}${(p.ms||[]).map(m=>' · '+m[0]+' '+m[2]).join('')} ${(p.src||[]).map((u,k)=>`<a href="${u}" target="_blank">报道${k+1}</a>`).join(' ')}</div></td><td>${p.start?(p.start_est?'≈':'')+p.start.slice(0,7)+'<div class="st">t='+p.t_start+'</div>':'待查'}</td><td>${(p.open_est?'≤':'')+p.open+'<div class="st">t='+p.t_open+'</div>'}</td></tr>`).join('');
  const T=document.getElementById('t'),L=document.getElementById('lab');

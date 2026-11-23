@@ -46,7 +46,8 @@ for wid,nds,t in ways:
     p=[tm(N[i]) for i in nds if i in N]
     if len(p)<2: continue
     c=cls(t,p); pts=[[round(a),round(b)] for a,b in p]
-    if c: out[c].append(pts)
+    W3={'motorway':22,'trunk':22,'primary':22,'secondary':14,'tertiary':9}
+    if c: out[c].append({'w':W3.get(t['highway'],9),'p':pts})
     elif t['highway'] in('motorway','trunk','primary') and any(abs(a)<9000 and abs(b)<6000 for a,b in pts): base.append(pts)
 res={'t0':P['t0'],'site':[-1450,1450,-600,600],'open_station':1101,'base':base,'projects':[]}
 for pp in P['projects']:
@@ -56,3 +57,26 @@ for pp in P['projects']:
 dst=os.path.join(HERE,'../../../../web/plan/roads.json')
 json.dump(res,open(dst,'w'),ensure_ascii=False,separators=(',',':'))
 print('base',len(base),'→',os.path.normpath(dst),os.path.getsize(dst)//1024,'KB')
+# —— 三维图层 road.hub（R3）：cut=true 让底座不画这些路；施工期画橙色带，开通后画白路（与底座同宽同色）——
+BUILD='#e8a33c'
+def dens(p,st=40):
+    o=[p[0]]
+    for a_,b_ in zip(p,p[1:]):
+        d=math.hypot(b_[0]-a_[0],b_[1]-a_[1]); k=int(d//st)
+        for i in range(1,k+1):
+            if i*st<d: o.append([round(a_[0]+(b_[0]-a_[0])*i*st/d),round(a_[1]+(b_[1]-a_[1])*i*st/d)])
+        o.append(b_)
+    return o
+items=[]
+for q in res['projects']:
+    ts,to=q['t_start'],q['t_open']
+    for l in q['lines']:
+        p=dens(l['p']); w=l['w']
+        items.append({'k':'road','n':q['id'],'p':p,'w':w,'c':'#ffffff' if w>=14 else '#fbfaf7','y':0.25,'from':to})
+        it={'k':'road','n':q['id'],'p':p,'w':max(8,round(w*0.8)),'c':BUILD,'y':0.26,'to':to}
+        if ts is not None: it['from']=ts
+        items.append(it)
+L={'id':'road.hub','name':'外接道路（按工期）','by':'hark-fangyi','src':{'text':'路形：© OpenStreetMap 贡献者；工期：公开报道（docs/ctx-roads.md）','license':'ODbL 1.0'},'cut':True,'items':items}
+lay=os.path.join(HERE,'../../../../web/mods/ctx/road-hub.js')
+open(lay,'w').write('// 远景图层 road.hub（外接道路按工期显隐，R3）· 自动生成：tools/hz/ctx_src/roads/mk_roads.py，勿手改 · hark-fangyi\n(window.HZ_CTX_LAYERS = window.HZ_CTX_LAYERS || []).push('+json.dumps(L,ensure_ascii=False,separators=(',',':'))+');\n')
+print('layer',len(items),os.path.getsize(lay)//1024,'KB')

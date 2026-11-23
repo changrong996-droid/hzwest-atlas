@@ -82,6 +82,15 @@
     return bad;
   };
   M._defOff = {};
+  // 外挂图层接管底座道路：L.cut = true 时，图层里 k=road 的折线附近（≤ 18 m）的底座路段不再画，由图层按自己的 from/to 显示
+  M.cutBase = function (polys) {
+    const D = ROOT.HZ_OSMCTX; if (!D || !M._roads) return 0; const C = 60, idx = new Map(), key = (i, j) => i + ',' + j;
+    for (const p of polys) for (let i = 1; i < p.length; i++) { const a = p[i - 1], b = p[i]; for (let x = Math.floor(Math.min(a[0], b[0]) / C) - 1; x <= Math.floor(Math.max(a[0], b[0]) / C) + 1; x++) for (let z = Math.floor(Math.min(a[1], b[1]) / C) - 1; z <= Math.floor(Math.max(a[1], b[1]) / C) + 1; z++) { const k = key(x, z); if (!idx.has(k)) idx.set(k, []); idx.get(k).push([a, b]); } }
+    const near = q => { const L = idx.get(key(Math.floor(q[0] / C), Math.floor(q[1] / C))); if (!L) return false; for (const [a, b] of L) { const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dz) / l2)), ex = a[0] + u * dx - q[0], ez = a[1] + u * dz - q[1]; if (ex * ex + ez * ez < 324) return true; } return false; };
+    const skip = M._skip = M._skip || new Set(); let n = 0;
+    for (const o of D.h) { if (skip.has(o) || o.w < 1) continue; let hit = 0; for (const q of o.p) if (near(q)) hit++; if (hit >= Math.max(2, Math.ceil(o.p.length * 0.6))) { skip.add(o); n++; } }
+    if (n) M._roads(skip); return n;
+  };
   M.addLayer = function (L) {
     const bad = M.validate(L); if (bad.length) { console.warn('osmctx 图层 ' + (L && L.id) + ' 不合格：' + bad.join('；')); return null; }
     const e = { id: L.id, name: L.name, src: L.src.text, by: L.by, from: L.from, to: L.to, L, on: L.on !== false && !M._defOff[L.id], items: [] };
@@ -101,6 +110,7 @@
           if (kind === 'pin') { const pinY = M.ground(o.p[0], o.p[1]); A.line([o.p[0], pinY, o.p[1], o.p[0], pinY + (o.h || 120), o.p[1]], col, 0.9); }
             A.label(o.n, o.p[0], o.p[1], M.ground(o.p[0], o.p[1]) + yy, kind === 'pin' ? 'p' : 'l'); }
         if (kind === 'area' || kind === 'line' || kind === 'road' || kind === 'bldg') for (const ch of gg.children.slice(n0)) M.drape(ch.geometry, kind === 'bldg' ? 'base' : 'each'); } }
+    if (L.cut) e.cut = M.cutBase((L.items || []).filter(o => o.k === 'road').map(o => o.p));
     M._cur = g; if (typeof L.build === 'function') { try { L.build(Object.assign({}, A, { group: g, layer: L })); } catch (err) { console.warn('osmctx 图层 ' + L.id + ' build 失败', err); } }
     g.visible = e.on; M._lastT = null; if (M._uiAdd) M._uiAdd(e); return e;
   };
@@ -135,11 +145,17 @@
     const OSM = '© OpenStreetMap 贡献者（ODbL 1.0）';
     sub('osm.water', '水体与绿地', OSM); flat(D.g, COL.green, 0.12); flat(D.w.filter(o => o.a), COL.water, 0.18);
     line(segs(D.w.filter(o => !o.a), 0.2, []), 0x8fb7d0, 1);
-    sub('osm.road', '道路', OSM);
-    for (const nw of [false, true]) { const H = D.h.filter(o => inSite(o) === nw), ms = [];
-      ms.push(mesh(ribbonTris(H.filter(o => o.w == 3), 22, 0.25, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 2), 14, 0.24, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 1), 9, 0.23, []), COL.road1));
-      ms.push(line(segs(H.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1), line(segs(H.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8));
-      if (nw) { M._open.push(...ms); M._pre.push(line(segs(H.filter(o => o.w >= 1), 0.22, []), COL.pre, 0.55)); } }
+    const GR = sub('osm.road', '道路', OSM);
+    // 底座路网；skip 为被外挂图层接管的路（cut，见 M.cutBase），重建时整组换掉
+    M._roads = skip => { const mine = []; G = GR; for (const ch of GR.children.slice()) { GR.remove(ch); ch.geometry.dispose(); }
+      M._open = M._open.filter(m => !M._roadMs || !M._roadMs.includes(m)); M._pre = M._pre.filter(m => !M._roadMs || !M._roadMs.includes(m));
+      const Hall = skip ? D.h.filter(o => !skip.has(o)) : D.h;
+      for (const nw of [false, true]) { const H = Hall.filter(o => inSite(o) === nw), ms = [];
+        ms.push(mesh(ribbonTris(H.filter(o => o.w == 3), 22, 0.25, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 2), 14, 0.24, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 1), 9, 0.23, []), COL.road1));
+        ms.push(line(segs(H.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1), line(segs(H.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8));
+        mine.push(...ms); if (nw) { M._open.push(...ms); const pl = line(segs(H.filter(o => o.w >= 1), 0.22, []), COL.pre, 0.55); M._pre.push(pl); mine.push(pl); } }
+      M._roadMs = mine; lastOpen = null; G = G0; };
+    M._roads(null);
     // 铁路与地铁
     sub('osm.rail', '铁路与地铁', OSM); const rs = D.r;
     line(segs(rs.filter(o => !o.m && o.y), 0.4, []), COL.yard, 1);

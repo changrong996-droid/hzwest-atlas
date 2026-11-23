@@ -24,6 +24,12 @@
    "file": "road-mid.js",
    "by": "hark-fangyi",
    "v": 1
+  },
+  {
+   "id": "road.hub",
+   "file": "road-hub.js",
+   "by": "hark-fangyi",
+   "v": 1
   }
  ]
 }

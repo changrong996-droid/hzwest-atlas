@@ -490,14 +490,14 @@
     -900
    ],
    "owner": "wk",
-   "status": "next",
+   "status": "done",
    "title": "按路工期显隐",
    "what": "每条外接路按自己的开工—开通窗口显示：未开工不画、在建画施工态、通车后上色；替换现在一刀切的施工红线框。",
    "data": "R1 的工期表",
    "deps": [
     "R1"
    ],
-   "out": "osmctx / 图层 from-to"
+   "out": "图层 road.hub（web/mods/ctx/road-hub.js，cut=true 接管底座同位路段）"
   },
   {
    "id": "R4",
