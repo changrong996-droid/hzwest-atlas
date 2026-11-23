@@ -927,7 +927,20 @@
     }
     return true;
   }
-  function clear(I, t, x0, y0, z0, x1, y1, z1) { return near(I, x0, z0, x1, z1, e => { const b = e.b; if (b.max[0] <= x0 || b.min[0] >= x1 || b.max[2] <= z0 || b.min[2] >= z1 || b.max[1] <= y0 || b.min[1] >= y1) return; if (present(e.p, t)) return false; }); }
+  function clear(I, t, x0, y0, z0, x1, y1, z1) {
+    // Q#15 性能修复（任务 #43）：与 near 同一迭代形态但逐条目内联，省去每件一次闭包调用（放置热路径每轮数百次查询）
+    const cx0 = Math.floor(x0 / CELL), cx1 = Math.floor(x1 / CELL), cz0 = Math.floor(z0 / CELL), cz1 = Math.floor(z1 / CELL);
+    const multi = cx1 > cx0 || cz1 > cz0, g = multi ? ++I.gen : 0, st = I.stamp;
+    for (let cx = cx0; cx <= cx1; cx++) for (let cz = cz0; cz <= cz1; cz++) {
+      const l = I.G.get(cx * 4096 + cz); if (!l) continue;
+      for (let j = 0; j < l.length; j++) { const i = l[j]; if (multi) { if (st[i] === g) continue; st[i] = g; }
+        const e = I.B[i], b = e.b;
+        if (b.max[0] <= x0 || b.min[0] >= x1 || b.max[2] <= z0 || b.min[2] >= z1 || b.max[1] <= y0 || b.min[1] >= y1) continue;
+        if (present(e.p, t)) return false;
+      }
+    }
+    return true;
+  }
   const solidTop = (e, t) => { const s = stOf(e.p, t); return s >= 0 && s !== 3 && (s >= 0.96 || e.b.max[1] - e.p.geo.min[1] <= 1.5); };
   function supportAt(I, t, x, y, z) {
     let ok = false;
@@ -941,6 +954,24 @@
     if (y == null && ymax >= 0 && supportAt(I, t, x, 0, z)) y = 0; return y;
   }
   function supported(I, t, x, y, z, hx, hz, ca, sa) { for (const [u, v] of [[0, 0], [-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]]) if (!supportAt(I, t, x + u * ca - v * sa, y, z + u * sa + v * ca)) return false; return true; }
+  // Q#15 性能修复（任务 #43）：单遍合并探测。在候选点区域一次扫描里同时（a）按 surfaceAt 口径找可站立顶面 ≤ ymax；（b）收集与候选盒 x/z 重叠、
+  // 底面低于可放上限的在场件；调用方确定 y 后对收集件做一次 y 向重叠校验。等价于先 surfaceAt 再 clear 的两次网格扫描，条目遍历约省一半。
+  const PROBE_HITS = []; const PROBE_VH = []; let PROBE_Y = null, PROBE_N = 0, PROBE_VHN = 0;
+  function placeProbe(I, t, x, z, ymax, ex, ez) {
+    PROBE_Y = null; PROBE_N = 0; let hn = 0; let y = null;
+    const cx0 = Math.floor((x - ex) / CELL), cx1 = Math.floor((x + ex) / CELL), cz0 = Math.floor((z - ez) / CELL), cz1 = Math.floor((z + ez) / CELL);
+    const multi = cx1 > cx0 || cz1 > cz0, g = multi ? ++I.gen : 0, st = I.stamp;
+    for (let cx = cx0; cx <= cx1; cx++) for (let cz = cz0; cz <= cz1; cz++) {
+      const l = I.G.get(cx * 4096 + cz); if (!l) continue;
+      for (let j = 0; j < l.length; j++) { const i = l[j]; if (multi) { if (st[i] === g) continue; st[i] = g; }
+        const e = I.B[i], b = e.b;
+        if (b.max[0] <= x - ex || b.min[0] >= x + ex || b.max[2] <= z - ez || b.min[2] >= z + ez) continue;
+        if (x >= b.min[0] && x <= b.max[0] && z >= b.min[2] && z <= b.max[2] && b.max[1] <= ymax + EPS && solidTop(e, t) && (y == null || b.max[1] > y)) y = b.max[1];
+        if (b.min[1] < ymax + FH + EPS && b.max[1] > 0.02) PROBE_HITS[hn++] = e;
+      }
+    }
+    PROBE_Y = y; PROBE_N = hn; return y;
+  }
   function clearRot(I, t, x, y, z, hx, hz, h, ca, sa) { const ex = Math.abs(hx * ca) + Math.abs(hz * sa), ez = Math.abs(hx * sa) + Math.abs(hz * ca); return clear(I, t, x - ex, y + 0.02, z - ez, x + ex, y + h, z + ez); }
 
   // ---------- 布置 ----------
@@ -949,24 +980,36 @@
     if (HZ.P && t >= HZ.P.OPEN) { paxPlan(HZ, I, t, out); return out; }   // W2：开通运营后施工人员全部撤出，只有旅客（另列 out.pax，不混进施工工人 figs）
     const placed = [];
     const freeOf = (x0, z0, x1, z1, y0, y1) => { for (const q of placed) if (!(q[3] <= x0 || q[0] >= x1 || q[5] <= z0 || q[2] >= z1 || q[4] <= y0 || q[1] >= y1)) return false; return true; };
+    // Q#15 性能修复（任务 #43）：顶面可行走箱组合只依赖几何（b 尺寸与 p.top），不随 t 变，按 part 记忆化；live/pick 用手写循环去掉逐件闭包
+    const topsMemo = new WeakMap();
     for (const a of HZ.acts) {
       if (a.kind === 'milestone' || a.kind === 'untemp' || !(t >= a.start && t < a.end) || !a.parts.length) continue;
       const tr = tradeOf(a); if (!tr) continue;
-      const live = a.parts.filter(p => !p.grp && !p.cells && p.geo && p.geo.boxes && (() => { const s = stOf(p, t); return s >= 0 && s < 1; })()); if (!live.length) continue;
+      const live = []; for (const p of a.parts) { if (!p.grp && !p.cells && p.geo && p.geo.boxes) { const s = stOf(p, t); if (s >= 0 && s < 1) live.push(p); } }
+      if (!live.length) continue;
       const T = TRADE[tr], R = rng(hr * 7919 + a.ix * 104729 + 17); let nA = 0;
-      const pick = live.length > 24 ? live.filter((_, i) => i % Math.ceil(live.length / 24) === 0) : live;
+      let pick = live; if (live.length > 24) { const step = Math.ceil(live.length / 24); pick = []; for (let i = 0; i < live.length; i += step) pick.push(live[i]); }
       for (const p of pick) {
         const nP = Math.max(1, Math.round(T.n * (day ? 1 : 0.3)));
         const mn = p.geo.min, mx = p.geo.max, canStandTop = stOf(p, t) >= 0.96 || (p.top - mn[1] <= 1.5);
-        const tops = canStandTop ? p.geo.boxes.filter(b => b.max[0] - b.min[0] >= 1.4 && b.max[2] - b.min[2] >= 1.4 && b.max[1] >= p.top - 0.05 && (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) >= 6) : [];
+        let tops;
+        if (canStandTop) { tops = topsMemo.get(p); if (!tops) { tops = p.geo.boxes.filter(b => b.max[0] - b.min[0] >= 1.4 && b.max[2] - b.min[2] >= 1.4 && b.max[1] >= p.top - 0.05 && (b.max[0] - b.min[0]) * (b.max[2] - b.min[2]) >= 6); topsMemo.set(p, tops); } }
+        else tops = [];
         for (let k = 0; k < nP; k++) {
           for (let tryN = 0; tryN < 6; tryN++) {
             let x, y, z; const yaw = R() * Math.PI * 2;
             if (tops.length && tryN < 4) { const b = tops[Math.floor(R() * tops.length)]; x = b.min[0] + 0.5 + R() * (b.max[0] - b.min[0] - 1); z = b.min[2] + 0.5 + R() * (b.max[2] - b.min[2] - 1); y = b.max[1]; }
-            else { x = mn[0] - 2 + R() * (mx[0] - mn[0] + 4); z = mn[2] - 2 + R() * (mx[2] - mn[2] + 4); y = surfaceAt(I, t, x, z, p.top + 0.05); if (y == null || (p.top - y > 3 && Math.abs(y - mn[1]) > 0.05)) continue; }
+            else {
+              x = mn[0] - 2 + R() * (mx[0] - mn[0] + 4); z = mn[2] - 2 + R() * (mx[2] - mn[2] + 4);
+              y = placeProbe(I, t, x, z, p.top + 0.05, FW, FW);
+              if (y == null && p.top + 0.05 >= 0 && supportAt(I, t, x, 0, z)) y = 0;
+              if (y == null || (p.top - y > 3 && Math.abs(y - mn[1]) > 0.05)) continue;
+              let blocked = false; for (let hi = 0; hi < PROBE_N; hi++) { const b = PROBE_HITS[hi].b; if (b.max[1] <= y + 0.02 || b.min[1] >= y + FH) continue; if (present(PROBE_HITS[hi].p, t)) { blocked = true; break; } }
+              if (blocked) continue;
+            }
             const box = [x - FW, y + 0.02, z - FW, x + FW, y + FH, z + FW]; if (!freeOf(box[0], box[2], box[3], box[5], box[1], box[4])) continue;
-            if (!clear(I, t, box[0], box[1], box[2], box[3], box[4], box[5])) continue;
-            if (!(tops.length && tryN < 4) && !supportAt(I, t, x, y, z)) continue;
+            // on-top 分支未走合并扫描，仍需查网格碰撞；else 分支已在 placeProbe 收集件里校验过
+            if (tops.length && tryN < 4 && !clear(I, t, box[0], box[1], box[2], box[3], box[4], box[5])) continue;
             placed.push(box); out.figs.push({ x, y, z, yaw, pose: k === 0 && nP > 2 ? 'signal' : T.mix[Math.floor(R() * T.mix.length)], act: a.key }); nA++; break;
           }
         }
@@ -983,10 +1026,25 @@
           for (let tryN = 0; tryN < 6; tryN++) {
             const side = Math.floor(R() * 4), d = 4 + R() * 10 + V.hx, u = R();
             let x = side < 2 ? mn[0] + (mx[0] - mn[0]) * u : side === 2 ? mn[0] - d : mx[0] + d, z = side >= 2 ? mn[2] + (mx[2] - mn[2]) * u : side === 0 ? mn[2] - d : mx[2] + d;
-            let y = 0; near(I, x, z, x, z, e => { const b = e.b; if (x < b.min[0] || x > b.max[0] || z < b.min[2] || z > b.max[2] || !present(e.p, t)) return; if (b.max[1] <= mn[1] + 0.1 && b.max[1] > y) y = b.max[1]; });
             const yaw = Math.atan2(p.c[2] - z, p.c[0] - x), ca = Math.cos(yaw), sa = Math.sin(yaw), ex = Math.abs(V.hx * ca) + Math.abs(V.hz * sa), ez = Math.abs(V.hx * sa) + Math.abs(V.hz * ca);
+            // 单遍合并：车体盒区域一次扫描，找落点顶面（在场件顶面 ≤ mn[1]+0.1）并收集潜在碰撞件，替代 y 扫描 + clearRot 两次遍历
+            let y = 0; PROBE_VHN = 0;
+            const cx0 = Math.floor((x - ex) / CELL), cx1 = Math.floor((x + ex) / CELL), cz0 = Math.floor((z - ez) / CELL), cz1 = Math.floor((z + ez) / CELL);
+            const multi = cx1 > cx0 || cz1 > cz0, g = multi ? ++I.gen : 0, st = I.stamp;
+            for (let cx = cx0; cx <= cx1; cx++) for (let cz = cz0; cz <= cz1; cz++) {
+              const l = I.G.get(cx * 4096 + cz); if (!l) continue;
+              for (let j = 0; j < l.length; j++) { const i = l[j]; if (multi) { if (st[i] === g) continue; st[i] = g; }
+                const e = I.B[i], b = e.b;
+                if (b.max[0] <= x - ex || b.min[0] >= x + ex || b.max[2] <= z - ez || b.min[2] >= z + ez) continue;
+                if (x >= b.min[0] && x <= b.max[0] && z >= b.min[2] && z <= b.max[2] && present(e.p, t) && b.max[1] <= mn[1] + 0.1 && b.max[1] > y) y = b.max[1];
+                if (b.min[1] < mn[1] + 0.1 + V.h + EPS) PROBE_VH[PROBE_VHN++] = e;
+              }
+            }
+            // y 定型后再统一校验碰撞（收集期间 y 仍可能长高，边扫边查会漏判高处构件）
+            for (let vi = 0; vi < PROBE_VHN; vi++) { const b = PROBE_VH[vi].b; if (b.max[1] <= y + 0.02 || b.min[1] >= y + V.h) continue; if (present(PROBE_VH[vi].p, t)) { y = -1; break; } }
+            if (y < 0) continue;
             if (!freeOf(x - ex, z - ez, x + ex, z + ez, y + 0.02, y + V.h)) continue;
-            if (!clearRot(I, t, x, y, z, V.hx, V.hz, V.h, ca, sa) || !supported(I, t, x, y, z, V.hx * 0.9, V.hz * 0.9, ca, sa)) continue;
+            if (!supported(I, t, x, y, z, V.hx * 0.9, V.hz * 0.9, ca, sa)) continue;
             placed.push([x - ex, y + 0.02, z - ez, x + ex, y + V.h, z + ez]); out.vehs.push({ x, y, z, yaw, kind: vk, act: a.key }); break;
           }
         }
