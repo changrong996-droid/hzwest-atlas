@@ -1,0 +1,28 @@
+# 任务书 · 《长出来的》交互短片完善（可拆解母任务）
+
+> 现状：`web/film/` 已完成 v4 可运行小样（提交 `1d8556d`），含 6s 正式片头、定版 B 方案配乐（`audio/bgm.mp4`）、暗黑脉冲爆发图 + 24 张仓库真实图纸高频闪切、50 个人体剪影图标团队对照与结尾交权。
+> 协作模式：拆分为 **4 个独立可并行子分支任务**（`F1–F4`），严禁修改宿主 `web/hzwest.html` 与 `web/hzview.js`。
+
+## 子任务 F1 · 故事页真实四步溯源升级（绿档）
+- **背景**：项目真实演进是四步而非三步，需将 `web/film/index.html` 的前言溯源轨道从 3 卡升级为 **4 步真实演进链**，并采用原仓实拍截图替换过渡图版：
+  1. **规则生成大阪城（2026-10-16）**：https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/index.html#seed=1&lost=1&view=aerial&labels=1
+  2. **天守筑城图**：https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/build.html
+  3. **假想集装箱码头·纯测试用（2026-11-06 14:00）**：https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/port.html
+  4. **杭州西站（2026-11-06 15:49）**：`../hzwest.html`
+- **交付**：更新 `web/film/index.html`、`film.css`、`film.js` 及 `web/film/img/` 实拍图版；每张卡片可点击打开对应原页面，字幕节奏同步微调（不改第三节锁定事实）。
+- **验收**：桌面端与 1258×540 小屏均无溢出；4 张图版均为真实渲染截图且链接可点击。
+
+## 子任务 F2 · 穿越机 FPV 航线多路并行挑优（绿档 · 推荐多智能体并行）
+- **背景**：当前单条室内穿越机航线视觉冲击力仍有提升空间。采用「多路并行挑优」模式，多个智能体各自提交独立候选航线，供发起人直接对比挑选。
+- **交付**：新增 `web/film/fpv-routes.js`，至少提供 4 条零穿模、带变速曲线（慢-快-慢-快）的命名候选航线（例如：`route-yunmen-valley` 云门直穿+云谷纵冲、`route-train-chase` 贴轨迎复兴号+钻网架、`route-spindle-cathedral` 梭形柱阵穿梭+十字天窗仰拍、`route-cloud-dive` 四朵云屋面贴顶俯冲），支持 URL `#fpv=<name>` 直接切换试飞。
+- **硬约束**：严格依据 `web/hzseq.js` 与 `web/mods/yunmen.js` 真实净空坐标（云门洞 `|x|<38, y<50`；5F 连廊 `z=±143, y=30.4..31.4`；云谷 `|z|<14` 无楼板），全程 **0 穿楼板、0 穿柱、0 穿屋面**。
+- **验收**：每条航线提供 3 个关键秒数（入洞/室内中段/冲出回望）的真实 GPU 截图对比，附带碰撞自检脚本结果。
+
+## 子任务 F3 · 爆发段节奏卡点与 50 人对比精修（绿档）
+- **范围**：微调 `01:06–01:23` 暗黑脉冲爆发图与 B 方案配乐鼓点/高潮的逐拍对齐，扩充高频闪切图库至 36 张（覆盖 S-000 至 S-501 全套图号），优化 `01:24–01:44` 50 人人体剪影图标的逐排点亮与「实际到场：0 人」落章动效。
+- **交付**：更新 `web/film/film.js`、`film.css` 及 `web/film/img/flash/`。
+- **验收**：无掉帧、无文字遮挡，配乐高潮与 `11-08 296 次` 尖峰误差 ≤ 0.3s。
+
+## 子任务 F4 · 音频瘦身与移动端竖屏适配（绿档）
+- **范围**：将 `web/film/audio/bgm.mp4`（6.1 MB 含无用视频轨）无损抽离为纯 AAC 音频 `bgm.m4a`（目标 < 2.2 MB）；补齐手机竖屏（390×844）下四步溯源卡、高频取景框、脉冲图与 50 人矩阵的自适应布局。
+- **验收**：音频体积下降 ≥ 60% 且音质无损；390×844 与 1280×720 两个视口零截断、零重叠。
