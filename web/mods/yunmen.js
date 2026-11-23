@@ -337,6 +337,73 @@
     return sp;
   }
 
+
+  // ---------- 任务 #16：结尾实景云门建筑造型精修（仅在实景开通段 t >= OPEN - 12 显示） ----------
+  // 补齐东西侧立面幕墙水平腰线与竖挺、门洞内壁肋板与 50 m 洞顶格栅暖光带、80 m 顶冠金属收边，
+  // 消除 S-000 / S-501 结尾镜头中宿主 ym 粗模侧面素白无分格平板的廉价感。
+  function buildLitDetail(THREE, clip) {
+    if (!THREE || !THREE.Group || !THREE.BoxGeometry || !THREE.MeshStandardMaterial || !THREE.InstancedMesh || !THREE.Matrix4) return null;
+    const grp = new THREE.Group();
+    grp.name = "hz-yunmen-lit-detail";
+    grp.visible = false;
+    const clipOpt = clip ? { clippingPlanes: clip } : {};
+    const mGlass = new THREE.MeshStandardMaterial(Object.assign({ color: 0x26323e, roughness: 0.25, metalness: 0.45 }, clipOpt));
+    const mFrame = new THREE.MeshStandardMaterial(Object.assign({ color: 0xd8cfc0, roughness: 0.45, metalness: 0.35 }, clipOpt));
+    const mDark  = new THREE.MeshStandardMaterial(Object.assign({ color: 0x3b3834, roughness: 0.5,  metalness: 0.4  }, clipOpt));
+    const mGlow  = new THREE.MeshStandardMaterial(Object.assign({ color: 0xfff0d4, emissive: 0xffc878, emissiveIntensity: 0.9, roughness: 0.4 }, clipOpt));
+    const unitBox = new THREE.BoxGeometry(1, 1, 1);
+    const m4 = new THREE.Matrix4(), pos = new THREE.Vector3(), q = new THREE.Quaternion(), scl = new THREE.Vector3();
+
+    const addInst = (mat, boxes) => {
+      const im = new THREE.InstancedMesh(unitBox, mat, boxes.length);
+      for (let i = 0; i < boxes.length; i++) {
+        const [x, y, z, sx, sy, sz] = boxes[i];
+        pos.set(x, y, z); scl.set(sx, sy, sz);
+        m4.compose(pos, q, scl);
+        im.setMatrixAt(i, m4);
+      }
+      im.instanceMatrix.needsUpdate = true;
+      im.frustumCulled = false;
+      grp.add(im);
+    };
+
+    const glassBoxes = [], frameBoxes = [], darkBoxes = [], glowBoxes = [];
+    const zm = (ZA + ZB) / 2, zw = ZB - ZA; // z 中心 208，宽 60
+
+    // 1. 东西两侧立面（x = ±90.15）：玻璃幕墙底衬 + 16 道水平层间腰线 + 11 道竖向幕墙龙骨
+    for (const sx of [-1, 1]) {
+      const xf = sx * (X1 + 0.14);
+      glassBoxes.push([xf, YT / 2, zm, 0.12, YT - 1.2, zw - 1.2]);
+      for (let y = 5; y <= YT; y += 5) frameBoxes.push([xf + sx * 0.12, y, zm, 0.22, 0.55, zw + 0.2]);
+      for (let z = ZA; z <= ZB + 0.1; z += 6) darkBoxes.push([xf + sx * 0.14, YT / 2, z, 0.2, YT, 0.35]);
+    }
+
+    // 2. 门洞内壁（x = ±37.85，y ∈ [0, 50]）玻璃肋板与底部洗墙暖光带（绝不侵占 |x|<37.5 净空）
+    for (const sx of [-1, 1]) {
+      const xp = sx * (XP - 0.12);
+      glassBoxes.push([xp, YP / 2, zm, 0.12, YP - 0.6, zw - 0.6]);
+      for (let y = 5; y < YP; y += 5) frameBoxes.push([xp - sx * 0.1, y, zm, 0.16, 0.4, zw]);
+      for (let z = ZA + 6; z < ZB; z += 12) darkBoxes.push([xp - sx * 0.1, YP / 2, z, 0.18, YP, 0.35]);
+      glowBoxes.push([xp - sx * 0.12, 1.4, zm, 0.16, 0.45, zw - 4]);
+    }
+
+    // 3. 门洞 50 m 巨型顶棚（y = 49.88）：横向格栅肋 + 两条贯通南北的暖白采光灯带
+    for (let x = -XP + 7.6; x < XP; x += 7.6) darkBoxes.push([x, YP - 0.14, zm, 0.4, 0.28, zw - 0.8]);
+    for (const lx of [-15, 15]) glowBoxes.push([lx, YP - 0.18, zm, 1.8, 0.18, zw - 6]);
+
+    // 4. 80 m 顶冠收边女儿墙与柔和天际线暖光（南北+东西四边）
+    frameBoxes.push([0, YT + 0.2, ZA + 0.3, X1 * 2 + 0.4, 0.45, 0.6]);
+    frameBoxes.push([0, YT + 0.2, ZB - 0.3, X1 * 2 + 0.4, 0.45, 0.6]);
+    glowBoxes.push([0, YT - 0.45, ZA - 0.18, X1 * 2 - 2, 0.32, 0.18]);
+    glowBoxes.push([0, YT - 0.45, ZB + 0.18, X1 * 2 - 2, 0.32, 0.18]);
+
+    addInst(mGlass, glassBoxes);
+    addInst(mFrame, frameBoxes);
+    addInst(mDark,  darkBoxes);
+    addInst(mGlow,  glowBoxes);
+    return grp;
+  }
+
   const MOD = {
     id: 'yunmen',
     COL,
@@ -361,6 +428,7 @@
       this.obj = null;
       this.sobj = null;
       this.label = null;
+      this.litObj = null;
       THREE = THREE || ROOT.THREE;
       if (THREE && scene) {
         const g = new THREE.BufferGeometry();
@@ -389,13 +457,17 @@
         hid.frustumCulled = false; hid.renderOrder = 999; hid.name = 'hz-yunmen-schem-hidden'; this.shid = hid; scene.add(hid);
         this.label = makeLabel(THREE, this.clip); if (this.label && this.sobj.add) this.sobj.add(this.label);
         scene.add(this.sobj);
+        this.litObj = buildLitDetail(THREE, this.clip);
+        if (this.litObj) scene.add(this.litObj);
       }
       return this;
     },
     update(t, cam) {
       if (!this.HZ) return 0;
       const pv = ROOT.__pv, mode = this.modeFor(pv && pv.sheet);
-      const key = mode + ':' + Math.floor(t * 4);
+      const openT = (this.HZ && this.HZ.P && this.HZ.P.OPEN) || 1101;
+      const isLit = !!(pv && pv.st && pv.st.pref === "lit");
+      const key = mode + ':' + (isLit ? 1 : 0) + ':' + Math.floor(t * 4);
       if (key === this.key) return this.n;
       this.key = key; this.mode = mode;
       const C = this.C || (this.C = compile(this.HZ));
@@ -406,7 +478,8 @@
       this.stats.segs = n; this.stats.schem = ns;
       if (this.obj) this.obj.geometry.setDrawRange(0, n * 2);   // 缓冲在 build 时一次写满（按出现时刻排序），这里只改绘制范围，不重传
       if (this.sobj) this.sobj.geometry.setDrawRange(0, ns * 2);
-      if (this.label) this.label.visible = ns > 0;
+      if (this.litObj) this.litObj.visible = isLit && t >= openT - 12;
+      if (this.label) this.label.visible = ns > 0 && !(isLit && t >= openT - 12);
       return this.n;
     },
   };
