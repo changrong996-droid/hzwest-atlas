@@ -295,7 +295,7 @@
         ctx.gapHit = null; if (best) { const xx = X(best.z), ya = Y(P.floorTop), yb = Y(best.y), sd = best.z > 0 ? -1 : 1, on = ctx.cut === 2, hv = ctx.hoverK === 'gap';
           if (on || hv) { g.fillStyle = on ? 'rgba(179,32,42,.16)' : 'rgba(179,32,42,.10)'; g.fillRect(xx - 8, Math.min(ya, yb) - 6, 16, Math.abs(ya - yb) + 12); }
           g.strokeStyle = C.red; g.fillStyle = C.red; g.lineWidth = on || hv ? 2.4 : 1.2; g.beginPath(); g.moveTo(xx, ya); g.lineTo(xx, yb); for (const yy of [ya, yb]) { g.moveTo(xx - 5, yy); g.lineTo(xx + 5, yy); } g.stroke();
-          const n0 = labels.length, ok = label(g, '净空 ' + ctx.gapVal + ' m', xx + sd * 8, (ya + yb) / 2, C.red, sa, { fs: FS, b: true, al: sd < 0 ? 'r' : 'l' }), lb = ok && labels.length > n0 ? labels[labels.length - 1] : null;
+          const n0 = labels.length, ok = label(g, '剖面最低净空 ' + ctx.gapVal + ' m', xx + sd * 8, (ya + yb) / 2, C.red, sa, { fs: FS, b: true, al: sd < 0 ? 'r' : 'l' }), lb = ok && labels.length > n0 ? labels[labels.length - 1] : null;
           if (lb && (on || hv)) { g.strokeStyle = C.red; g.lineWidth = 1; g.strokeRect(lb[0] - 2, lb[1] - 1, lb[2] - lb[0] + 4, lb[3] - lb[1] + 2); }
           ctx.gapHit = { x: xx, y0: Math.min(ya, yb), y1: Math.max(ya, yb), lb, z: best.z, y: best.y }; }
         label(g, '剖面 x = 39 m · 竖向 ×' + VE, sa.x0 + 4, sa.y0 + FS * 0.6 + 2, C.ink, sa, { fs: FS, b: true, sans: true });

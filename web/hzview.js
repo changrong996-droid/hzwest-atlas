@@ -359,7 +359,7 @@
     const cellNear = (x, z, g) => { let b = null, bd = 1e9; for (const c of HZ.cells) { if (!c.grp || (g && c.grp !== g) || !(Math.abs(c.xc) <= P.floorX - 3 && Math.abs(c.zc) >= P.gap + 3 && Math.abs(c.zc) <= P.floorZ - 3)) continue; const d = Math.hypot(c.xc - x, c.zc - z); if (d < bd) { bd = d; b = c; } } return b; };
     // set2c：剖切时 3D 净空 = 剖面图同一个最低净空（HZ.secGap），尺寸线贴在剖切面（x = 39.4，避开切面本身）
     function secGap3(ps, t) { const b = HZ.secGap(ps, t); return b ? { at: [HZ.SEC_X + 0.4, b.y, b.z], v: b.v, sec: 1 } : null; }
-    function measureAt(ps, t) { const e = HZ.gapTab[1][0], q = HZ.xf(ps, 1, e.p0), y = q[1] - e.rr; return { at: [q[0], y, q[2]], v: y - P.floorTop }; }   // 南区内边最紧处那根下弦（拼装姿态净空 = 全屋盖最小 1.40 m），随姿态实时
+    function measureAt(ps, t) { const g = HZ.gap(ps, t); return g ? { at: g.at, v: g.v } : null; }   // S-301 统一口径（任务 #9）：非剖切 3D 引线与信息卡同源同值（HZ.gap 全屋盖最小），点位取其最低杆，随姿态实时
     let dynKey = ''; const DS = { cranesBusy: 0, crawlers: 0, trucks: 0, workers: 0 };
     function rebuildDyn(t) {
       const SH = SC_HIDE;
@@ -852,7 +852,7 @@
       if (SHEET === 'S-301') { const b = big301(t); put($('b-n'), b.h.toFixed(2)); put($('b-u'), '/ ' + HZ.D.toFixed(2) + ' m 提升'); put($('b-c'), b.cap); S.cap = b.cap; S.big = b;
         const kh = `<b>S-301</b>整体提升详图 · ${HZ.dayDate(d)} ${hhmm(t)}` + (b.st ? ' · ' + b.st : ''); if ($('b-k')._v !== kh) { $('b-k')._v = kh; $('b-k').innerHTML = kh; }
         put($('rd1'), b.J.sync.toFixed(1) + ' / ' + b.J.limit + ' mm'); $('rd1').className = 'v ' + (b.J.sync <= b.J.limit ? 'ok' : 'ng');
-        const gp = HZ.gap(S.pose || HZ.pose(t), t); put($('rd2l'), '楼面最小净空 · 碰撞 ' + (AU ? AU.liftClash : '…')); put($('rd2'), gp.v.toFixed(2) + ' m'); $('rd2').className = 'v ' + (gp.v >= P.jigMin && (!AU || !AU.liftClash) ? 'ok' : 'ng'); S.gapNow = gp; return; }
+        const gp = HZ.gap(S.pose || HZ.pose(t), t); put($('rd2l'), '全屋盖最小净空 · 碰撞 ' + (AU ? AU.liftClash : '…')); put($('rd2'), SH.f2(gp.v) + ' m'); $('rd2').className = 'v ' + (gp.v >= P.jigMin && (!AU || !AU.liftClash) ? 'ok' : 'ng'); S.gapNow = gp; return; }
       if (PLUG[SHEET]) { const pl = PLUG[SHEET]; let b = {}; try { b = pl.big(t) || {}; } catch (e) { b = { num: '—', label: String(e.message || e) }; }
         put($('b-n'), String(b.num)); put($('b-u'), b.unit || ''); put($('b-c'), b.label || ''); S.cap = b.label || '';
         const kh = `<b>${pl.id}</b>${pl.name} · ${HZ.dayDate(d)}`; if ($('b-k')._v !== kh) { $('b-k')._v = kh; $('b-k').innerHTML = kh; } return; }
@@ -1130,7 +1130,7 @@
     const CRS = CR.map(c => ({ mast: ITEMS.findIndex(it => it.key === c.key && Math.abs(it.p.c[0] - c.x) < 1 && Math.abs(it.p.c[2] - c.z) < 1), seq: c.seq.map(e => ({ i: ITEM_OF.has(e.p) ? ITEM_OF.get(e.p) : -1, t: e.t })) }));
     let SC_HIDE = null;   // 范围启用且 SCOPE_OUT = 'hide' 时 = 当前图的范围（rebuildDyn / scopeMods 用）；否则 null
     function lead301() { const t = S.st.t, r = v3.getBoundingClientRect(), W = r.width, H = r.height, b = S.big || big301(t), J = b.J, ps = S.pose, A = [], JL = HZ.jackLoad ? HZ.jackLoad(t) : null, ld = i => JL && JL.rows[i] >= 0.5 ? ' · 载荷≈' + Math.round(JL.rows[i]) + ' t' : '';   // 吊点载荷（HZ.jackLoad，推算）
-      const gp = S.gapAt; if (gp) A.push({ p: [gp.at[0], (gp.at[1] + P.floorTop) / 2, gp.at[2]], t1: '净空 ' + SH.f2(gp.v) + ' m', t2: gp.sec ? '剖面 B–B 最低处 · 下弦 → 楼面' : '此处下弦 → 候车层楼面', gap: 1 });
+      const gp = S.gapAt; if (gp) A.push({ p: [gp.at[0], (gp.at[1] + P.floorTop) / 2, gp.at[2]], t1: '净空 ' + SH.f2(gp.v) + ' m', t2: gp.sec ? '剖面 B–B 最低处 · 下弦 → 楼面' : '全屋盖最低处 · 下弦 → 楼面', gap: 1 });
       if (SV.sel >= 0) { const q = J.rows[SV.sel]; A.push({ p: [q.x, q.top + 2.2, q.z], t1: 'J' + String(q.i + 1).padStart(2, '0') + ' 提升器 · 行程 ' + fmt(q.disp * 1000) + ' mm', t2: '同步偏差 ' + (q.dev >= 0 ? '+' : '−') + Math.abs(q.dev).toFixed(1) + ' mm · ' + (q.on && J.m ? (STATE[J.m.state] || '') : '本段不动') + ld(q.i), sel: 1 }); }
       if (J.act && SV.sel < 0 && !SV.cut) { cam.updateMatrixWorld(); let best = null; for (const q of J.rows) { if (!q.on) continue; v3v.set(q.x, q.top + 2, q.z).project(cam); const x = (v3v.x + 1) / 2 * W, y = (1 - v3v.y) / 2 * H; if (v3v.z > 1 || x < 40 || x > W - 40 || y < 40 || y > H - 40) continue; const d = cam.position.distanceTo(v3v.set(q.x, q.top, q.z)); if (!best || d < best.d) best = { q, d }; }
         if (best) { const q = best.q; A.push({ p: [q.x, q.top + 2.2, q.z], t1: '提升器 J' + String(q.i + 1).padStart(2, '0') + ' ' + fmt(q.disp * 1000) + ' mm', t2: '同步偏差 ' + (q.dev >= 0 ? '+' : '') + q.dev.toFixed(1) + ' mm · ' + (STATE[J.m.state] || '') + ld(q.i) }); }
