@@ -14,6 +14,7 @@
   <div id="film-ui">
     <div id="paper-veil"></div>
     <div id="blackout"></div>
+    <div id="shutter-ghost" aria-hidden="true"><img id="sg-img" src="img/flash/f01.jpg" alt=""></div>
     <div id="red-pulse"></div>
 
     <!-- 正式片头序列（0–6s） -->
@@ -36,38 +37,40 @@
       </div>
     </div>
 
-    <!-- 起念溯源卡片（大阪城 -> 码头 -> 杭州西站，真实 3D 渲染底图） -->
+    <!-- 起念溯源卡片（真实四步：规则生成大阪城 -> 天守筑城图 -> 假想集装箱码头 -> 杭州西站） -->
     <div id="origin-stage" aria-hidden="true">
-      <div class="origin-rail">
-        <div class="o-node" id="o-osaka">
+      <div class="origin-rail origin-rail-4">
+        <a class="o-node" id="o-osaka" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/index.html#seed=1&lost=1&view=aerial&labels=1" target="_blank" rel="noopener">
           <div class="o-date">01 · 2026-10-16</div>
           <div class="o-card">
-            <div class="o-frame">
-              <img class="o-photo" src="img/osaka.jpg" alt="大阪城 3D 模型">
-            </div>
-            <div class="o-name">大阪城 <span>e3f7cdd</span></div>
+            <div class="o-frame"><img class="o-photo" src="img/osaka.jpg" alt="规则生成大阪城"></div>
+            <div class="o-name">规则大阪城 <span>e3f7cdd</span></div>
           </div>
-        </div>
+        </a>
         <div class="o-link" id="o-link-1"></div>
-        <div class="o-node" id="o-port">
-          <div class="o-date">02 · 2026-11-06 14:00</div>
+        <a class="o-node" id="o-build" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/build.html" target="_blank" rel="noopener">
+          <div class="o-date">02 · 天守筑城图</div>
           <div class="o-card">
-            <div class="o-frame">
-              <img class="o-photo" src="img/port.jpg" alt="集装箱码头 3D 小样">
-            </div>
-            <div class="o-name">集装箱码头 <span>8ca7639</span></div>
+            <div class="o-frame"><img class="o-photo" src="img/flash/f01.jpg" alt="天守筑城图"></div>
+            <div class="o-name">天守筑城图 <span>build</span></div>
           </div>
-        </div>
+        </a>
         <div class="o-link" id="o-link-2"></div>
-        <div class="o-node" id="o-hz">
-          <div class="o-date">03 · 2026-11-06 15:49</div>
+        <a class="o-node" id="o-port" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/port.html" target="_blank" rel="noopener">
+          <div class="o-date">03 · 11-06 14:00</div>
+          <div class="o-card">
+            <div class="o-frame"><img class="o-photo" src="img/port.jpg" alt="假想集装箱码头"></div>
+            <div class="o-name">假想码头 <span>8ca7639</span></div>
+          </div>
+        </a>
+        <div class="o-link" id="o-link-3"></div>
+        <a class="o-node" id="o-hz" href="../hzwest.html">
+          <div class="o-date">04 · 11-06 15:49</div>
           <div class="o-card o-card-hero">
-            <div class="o-frame">
-              <img class="o-photo" src="img/hzwest.jpg" alt="杭州西站 3D 实景">
-            </div>
+            <div class="o-frame"><img class="o-photo" src="img/hzwest.jpg" alt="杭州西站"></div>
             <div class="o-name">杭州西站 <span>ce40c17</span></div>
           </div>
-        </div>
+        </a>
       </div>
       <div id="hero-name">杭州西站</div>
     </div>
@@ -93,11 +96,11 @@
       </div>
       <div class="fs-foot">
         <span id="fs-hash">ce40c17</span>
-        <span id="fs-rate">PEAK · 41 / HR</span>
+        <span id="fs-rate">平均 5 分钟 / 次 · 最快 90 秒 / 次</span>
       </div>
     </div>
 
-    <!-- 真实 38 天时间密度爆发曲线（暗黑高冲击脉冲图：大阪城/码头平缓 -> 杭州西站 296 次朱红尖峰喷发） -->
+    <!-- 真实 38 天时间密度爆发曲线（暗黑高冲击脉冲图：柔光径向热晕，零硬边椭圆） -->
     <div id="time-burst-graph" aria-hidden="true">
       <div class="tbg-head">
         <span class="tbg-title"><i class="tbg-led"></i>GIT 改动爆发脉冲 · 2026-10-16 — 11-23</span>
@@ -106,11 +109,16 @@
       <div class="tbg-stage">
         <svg id="tbg-svg" viewBox="0 0 760 124" preserveAspectRatio="none" aria-hidden="true">
           <defs>
+            <radialGradient id="tbgHeatGrad" cx="50%" cy="42%" r="50%">
+              <stop offset="0%" stop-color="#ff3344" stop-opacity="0.46"/>
+              <stop offset="45%" stop-color="#b3202a" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#b3202a" stop-opacity="0"/>
+            </radialGradient>
             <linearGradient id="tbgAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fff0d4" stop-opacity="0.98"/>
-              <stop offset="18%" stop-color="#ff3344" stop-opacity="0.92"/>
-              <stop offset="65%" stop-color="#b3202a" stop-opacity="0.52"/>
-              <stop offset="100%" stop-color="#b3202a" stop-opacity="0.04"/>
+              <stop offset="0%" stop-color="#fff4db" stop-opacity="0.98"/>
+              <stop offset="16%" stop-color="#ff3344" stop-opacity="0.92"/>
+              <stop offset="65%" stop-color="#b3202a" stop-opacity="0.48"/>
+              <stop offset="100%" stop-color="#b3202a" stop-opacity="0.02"/>
             </linearGradient>
             <linearGradient id="tbgLineGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stop-color="#8b8276"/>
@@ -121,7 +129,7 @@
               <stop offset="100%" stop-color="#e05a63"/>
             </linearGradient>
             <filter id="tbgGlow" x="-20%" y="-30%" width="140%" height="160%">
-              <feGaussianBlur stdDeviation="3.2" result="blur"/>
+              <feGaussianBlur stdDeviation="2.8" result="blur"/>
               <feMerge>
                 <feMergeNode in="blur"/>
                 <feMergeNode in="SourceGraphic"/>
@@ -137,7 +145,7 @@
             <line x1="0" y1="100" x2="760" y2="100"/>
             <line x1="0" y1="118" x2="760" y2="118" stroke="rgba(255,255,255,0.22)"/>
           </g>
-          <ellipse id="tbg-heat" cx="458" cy="64" rx="88" ry="56" fill="rgba(224,42,56,0.28)" filter="url(#tbgGlow)" opacity="0"/>
+          <rect id="tbg-heat" x="320" y="0" width="280" height="124" fill="url(#tbgHeatGrad)" opacity="0"/>
           <g clip-path="url(#tbgRevealClip)">
             <path id="tbg-area" fill="url(#tbgAreaGrad)"/>
             <path id="tbg-line" fill="none" stroke="url(#tbgLineGrad)" stroke-width="2.4" filter="url(#tbgGlow)"/>

@@ -40,6 +40,15 @@ html, body {
 }
 #blackout.on { opacity: 0.92; }
 
+/* 峰值全屏高频残影闪切（人眼来不及审阅的信息洪流） */
+#shutter-ghost {
+  position: absolute; inset: 0; overflow: hidden;
+  opacity: 0; mix-blend-mode: multiply;
+  transition: opacity .08s linear;
+}
+#shutter-ghost.on { opacity: 0.17; }
+#shutter-ghost img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.28) saturate(0.75); }
+
 #red-pulse {
   position: absolute; inset: 0;
   box-shadow: inset 0 0 0 0 rgba(179, 32, 42, 0);
@@ -113,20 +122,20 @@ html, body {
 }
 #origin-stage.on { opacity: 1; }
 .origin-rail {
-  display: flex; align-items: center; justify-content: center; gap: 18px;
-  max-width: 1040px; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  max-width: 1120px; width: 100%;
 }
 .o-node {
-  opacity: 0; transform: translateY(16px);
+  opacity: 0; transform: translateY(16px); text-decoration: none; color: inherit;
   transition: opacity .75s ease, transform .75s ease;
-  text-align: center;
+  text-align: center; pointer-events: auto;
 }
 .o-node.show { opacity: 1; transform: translateY(0); }
-.o-date { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); letter-spacing: .06em; margin-bottom: 8px; }
+.o-date { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: .04em; margin-bottom: 6px; }
 .o-card {
-  width: 268px; background: rgba(252, 249, 242, 0.96);
+  width: 222px; background: rgba(252, 249, 242, 0.96);
   border: 1px solid rgba(29, 26, 23, 0.24); border-radius: 4px;
-  padding: 10px; box-shadow: 0 12px 30px rgba(29, 26, 23, 0.09);
+  padding: 8px; box-shadow: 0 12px 30px rgba(29, 26, 23, 0.09);
 }
 .o-card-hero { border-color: var(--red); border-width: 1.5px; box-shadow: 0 16px 38px rgba(179, 32, 42, 0.16); }
 .o-frame { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 2px; border: 1px solid rgba(29, 26, 23, 0.14); background: var(--paper); }
@@ -183,8 +192,8 @@ html, body {
 .fstrip-meta strong { color: var(--red); font-family: var(--sans); font-size: 10px; }
 
 #flash-shutter {
-  position: absolute; right: 26px; top: 104px; width: min(360px, 34vw);
-  background: rgba(20, 18, 16, 0.88); color: #f6f1e6;
+  position: absolute; right: 26px; top: 92px; width: min(380px, 35vw);
+  background: rgba(16, 14, 13, 0.92); color: #f6f1e6;
   border: 1px solid rgba(179, 32, 42, 0.65); border-radius: 3px;
   padding: 8px; box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
   opacity: 0; transform: scale(0.96);
@@ -213,8 +222,8 @@ html, body {
 
 /* ---------- 真实 38 天时间密度爆发脉冲图（暗黑高冲击视觉） ---------- */
 #time-burst-graph {
-  position: absolute; left: 50%; bottom: 132px; transform: translateX(-50%);
-  width: min(780px, 86vw);
+  position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%);
+  width: min(700px, 76vw);
   background: linear-gradient(180deg, rgba(16, 14, 13, 0.92) 0%, rgba(24, 16, 16, 0.94) 100%);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 77, 90, 0.36);

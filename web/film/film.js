@@ -16,8 +16,9 @@
   const veil = $('paper-veil'), blackout = $('blackout'), pulse = $('red-pulse');
   const originStage = $('origin-stage'), heroName = $('hero-name');
   const humanNote = $('human-note');
+  const shutterGhost = $('shutter-ghost'), sgImg = $('sg-img');
   const flashStrip = $('flash-strip'), flashShutter = $('flash-shutter');
-  const fsImg = $('fs-img'), fsCode = $('fs-code'), fsTime = $('fs-time'), fsHash = $('fs-hash');
+  const fsImg = $('fs-img'), fsCode = $('fs-code'), fsTime = $('fs-time'), fsHash = $('fs-hash'), fsRate = $('fs-rate');
   const timeGraph = $('time-burst-graph'), tbgClipRect = $('tbg-clip-rect'), tbgScan = $('tbg-scan'), tbgHeat = $('tbg-heat'), tbgPeakMark = $('tbg-peak-mark');
   const sheetsWall = $('sheets-wall'), wallGrid = $('wall-grid'), wallNum = $('wall-num');
   const crewPanel = $('crew-panel'), crewGrid = $('crew-grid'), crewZero = $('crew-zero');
@@ -445,11 +446,12 @@
     [48.0, 50.0, '屋顶被千斤顶整体抬起来。', false],
     [50.6, 55.2, '钻过云门，贴着轨道和站台一路穿进去。', true],
     [55.6, 60.4, '掠过网架，从四朵云屋顶上面翻出来。', true],
-    // Act 2b: 克制收口 + 17 秒不间断爆发
+    // Act 2b: 克制收口 + 17 秒不间断爆发（融入发起人真实体验：别说审了，连看一眼都来不及）
     [64.2, 66.2, '接下来近三个小时，我没再说一句话。', true],
-    [66.8, 71.2, '前二十天零零散散，到了杭州西站，突然炸开。', false],
-    [71.8, 76.6, '三个小时 87 次改动，最快一小时 41 次。', false],
-    [77.2, 82.8, '最密的一天，它自己改了 296 次。', false],
+    [66.8, 71.0, '前二十天零零散散，到了杭州西站，突然炸开。', false],
+    [71.4, 75.6, '三个小时 87 次改动，最快一小时 41 次。', false],
+    [76.0, 79.8, '那天，我别说审了，连看一眼都来不及。', true],
+    [80.1, 83.4, '最密的一天，它自己改了 296 次。', false],
     // Act 3: 2500 张图纸 vs 50 人团队数月工期
     [84.2, 87.4, '要是全靠人工来画——', false],
     [88.0, 92.2, '2500 多张图纸，加上三维推演和交互页面。', false],
@@ -475,15 +477,21 @@
     if (camPos && camTgt && !ended) PV.setCam(camPos, camTgt);
   }
 
-  function pushFlashPlate(ev) {
+  function pushFlashPlate(ev, progress) {
     const plate = FLASH_PLATES[flashIdx % FLASH_PLATES.length];
     flashIdx++;
-    // 更新右侧高频快门主框
     fsImg.src = plate[0];
     fsCode.textContent = plate[1];
     fsTime.textContent = ev[0];
     fsHash.textContent = ev[2];
-    // 往左侧图纸瀑布推入一张缩略图卡片
+    if (fsRate) fsRate.textContent = progress > 0.42 ? '最快 90 秒 / 次 · 人眼已无法逐条审阅' : '平均每 5 分钟 1 次改动';
+    // 峰值阶段触发全屏高频图纸残影闪切
+    if (progress > 0.42 && sgImg) {
+      sgImg.src = plate[0];
+      shutterGhost.classList.add('on');
+      clearTimeout(shutterGhost._t);
+      shutterGhost._t = setTimeout(() => shutterGhost.classList.remove('on'), 68);
+    }
     const card = document.createElement('div');
     card.className = 'fstrip-card';
     card.innerHTML = `<img src="${plate[0]}" alt=""><div class="fstrip-meta"><strong>${plate[1]}</strong><span>${ev[2]}</span></div>`;
@@ -495,7 +503,7 @@
     etTag.textContent = ev[1];
     etHash.textContent = ev[2];
     ckVal.textContent = ev[0];
-    if (isStorm) pushFlashPlate(ev);
+    if (isStorm) pushFlashPlate(ev, progress || 0);
     pulse.classList.add(isStorm ? 'storm' : 'flash');
     clearTimeout(pulse._t);
     pulse._t = setTimeout(() => pulse.classList.remove('flash', 'storm'), isStorm ? 75 : 130);
@@ -544,21 +552,26 @@
 
     originStage.classList.toggle('on', inOrigin);
     $('o-osaka').classList.toggle('show', s >= 18.2);
-    $('o-link-1').classList.toggle('show', s >= 28.8);
-    $('o-port').classList.toggle('show', s >= 29.6);
-    $('o-link-2').classList.toggle('show', s >= 35.0);
+    $('o-link-1').classList.toggle('show', s >= 23.2);
+    $('o-build').classList.toggle('show', s >= 24.0);
+    $('o-link-2').classList.toggle('show', s >= 29.2);
+    $('o-port').classList.toggle('show', s >= 29.8);
+    $('o-link-3').classList.toggle('show', s >= 35.0);
     $('o-hz').classList.toggle('show', s >= 35.6);
     heroName.classList.toggle('show', s >= 36.8);
 
     // 顶部克制的 14:33 批注微条
     humanNote.classList.toggle('on', inHumanNote);
 
-    // 17 秒不间断爆发：机械战警式图纸闪切 + 38 天时间密度柱图 + 连续计数 1 -> 87 -> 296
+    // 17 秒不间断爆发：机械战警式图纸闪切 + 38 天时间密度脉冲图 + 全屏残影过载 + 连续计数 1 -> 87 -> 296
     flashStrip.classList.toggle('on', inStorm);
     flashShutter.classList.toggle('on', inStorm);
     timeGraph.classList.toggle('on', inStorm);
     burstCounter.classList.toggle('on', inStorm);
-    if (!inStorm && flashStrip.children.length) flashStrip.innerHTML = '';
+    if (!inStorm) {
+      if (flashStrip.children.length) flashStrip.innerHTML = '';
+      shutterGhost.classList.remove('on');
+    }
 
     if (inStorm) {
       const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1
