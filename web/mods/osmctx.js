@@ -139,11 +139,44 @@
   };
   try { const cs = typeof document !== 'undefined' && document.currentScript; if (cs && cs.src) M.base = cs.src.replace(/[^/]*$/, ''); } catch (e) {}
 
+  M._loadData = function () {
+    if (M._loading || M._g) return;
+    const p = M._pending; if (!p) return;
+    if (ROOT.HZ_OSMCTX) { M._pending = null; M._populate(ROOT.HZ_OSMCTX, p.scene, p.HZ, p.THREE, p.opts); return; }
+    if (typeof document === 'undefined' || !document.head) return;
+    M._loading = true;
+    const sc = document.createElement('script');
+    sc.async = true;
+    sc.src = (M.base || 'mods/') + 'osmctx-data.js?v=1';
+    sc.onload = () => {
+      M._loading = false;
+      const D = ROOT.HZ_OSMCTX, pp = M._pending; M._pending = null;
+      if (D && pp) M._populate(D, pp.scene, pp.HZ, pp.THREE, pp.opts);
+    };
+    sc.onerror = e => { M._loading = false; M._pending = null; console.warn('osmctx-data.js 按需加载失败', e); };
+    document.head.appendChild(sc);
+  };
+
   M.build = function (scene, HZ, THREE, opts) {
-    const D = ROOT.HZ_OSMCTX; if (!D) throw new Error('缺 web/mods/osmctx-data.js');
     M._openDay = (HZ && HZ.P && HZ.P.OPEN != null) ? HZ.P.OPEN : OPEN_FALLBACK;
+    const D = ROOT.HZ_OSMCTX;
+    if (D) {
+      M.stat = { b: D.b.length, h: D.h.length, r: D.r.length };
+      if (!scene || !THREE) return;   // Node 检查：只登记
+      M._populate(D, scene, HZ, THREE, opts);
+      return;
+    }
+    if (!scene || !THREE) return;
+    // 首屏不阻塞：延迟到空闲帧（或镜头拉远时）按需异步拉取 582 KB osmctx-data.js
+    M._pending = { scene, HZ, THREE, opts };
+    const sched = typeof ROOT.requestIdleCallback === 'function'
+      ? fn => ROOT.requestIdleCallback(fn, { timeout: 1500 })
+      : fn => setTimeout(fn, 120);
+    sched(() => M._loadData());
+  };
+
+  M._populate = function (D, scene, HZ, THREE, opts) {
     M.stat = { b: D.b.length, h: D.h.length, r: D.r.length };
-    if (!scene || !THREE) return;   // Node 检查：只登记
     const clip = (opts && opts.clip) || [];
     const G0 = new THREE.Group(); G0.name = 'osmctx'; scene.add(G0); M._g = G0; let G = G0;
     const sub = (id, name, src) => { const g = new THREE.Group(); g.name = 'osmctx:' + id; G0.add(g); G = g; M.layers.push({ id, name, src, base: 1, g, on: true }); return g; };
@@ -215,7 +248,7 @@
 
   let lastOpen = null;
   M.update = function (t, cam) {
-    if (!M._g) return;
+    if (!M._g) { if (M._pending && cam && cam.position && cam.position.length() > 700) M._loadData(); return; }
     const op = t >= openDay(); if (op !== lastOpen) { lastOpen = op; for (const m of M._open) if (m) m.visible = op; for (const m of M._pre) if (m) m.visible = !op; }
     if (M._lastT !== t) { M._lastT = t; for (const e of M.layers) { if (!e.g) continue; e.g.visible = e.on && inWin(t, e.from, e.to); for (const it of e.items || []) it.g.visible = inWin(t, it.from, it.to); } }
     if (!M._box || !cam || !M._labs.length) return;
