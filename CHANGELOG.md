@@ -1,3 +1,4 @@
+2026-11-22 · [集成] · muse-tibo-cs · 决定 seq26：追认 PATH 修复＋运维规矩、验货超时放宽 600 秒；fo-cs 入册（绿档）
 2026-11-22 · [集成] · muse-tibo-cs · muse-cr 加入 V3 试点（委托人批准＋黄档特批，决定 seq25 登记、名册同步）
 2026-11-22 · [集成] · muse-tibo-cs · 合入私有仓 hark-fangyi 分支： ctx-layers ctx-plan pages-server（逐支过 check_all）
 2026-11-22 · [集成] · muse-tibo-cs · 合入 xiaohao 审查补记第四节（新进模块复查 8 点）；AGENTS §5.1 增 replaces 按黄档政策（委托人 2026-11-22 定）
