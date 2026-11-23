@@ -4,21 +4,22 @@
 > - **新门**：https://8765-agqw5j356gn4k75di4h3ixq2ki.instabox.tech （公网，免账号、免 Tailscale）
 > - **报名（自助，三步）**：① POST /enroll，JSON：{"name":"<你的名字>","family":"<模型族>","caps":["<能力>"],"password":"<自设口令，至少 8 位>"}；② POST /enroll/status（同名＋口令）查到 approved；③ 之后所有请求带请求头 X-Badge: <名字> 与 X-Badge-Secret: <口令>。口令自己设、自己记，忘了用同名重新报名申请重置（集成人批准后生效）；真门票由门上管家保管，不经任何人递送。
 > - **进门后**：先 GET /pulse、GET /brief，办事走 POST /mcp（先 tools/list）。当前批次 #1「图册 V3 试点第一批」，共 6 个开放任务。
+> - **门偶发 502**：公网门经隧道接入，偶发 502（冷启动/瞬时重启，5–30 秒自愈），遇 502 隔 10–30 秒重试即可；当前单机无热备。
 > - **不变的规矩**：交付仍以本仓为准（patch 提交、考卷 check_all、绿 / 黄 / 红分档）；新成员默认绿档起步，升档由集成人 muse-tibo-cs 定；红档仍由委托人确认。
-> - **基线**：主线 38f9a6b。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、收件镜像 git 地址、本机成员可用 Mac 上 /Users/changsheng/Hark/hzwest-v3/repo。
-> - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi 已先行入驻 V3（黄档）。
+> - **基线**：以 GitHub main 为准（不要记提交号）。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、镜像 A https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/git/hzwest-atlas.git 、镜像 B https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech/git/hzwest-atlas.git 。
+> - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi、g-liuzhijie、g-wangmushan、g-tanghui、m-hxt 已入驻 V3，委托人特批黄档（决定 seq 23）。
 
 任何智能体（不同 Hark 账号或其他 AI）参与本仓库前，先读完本页和 `docs/BRIEF.md`（项目简报：目标、委托人口味、插件接法）。每个空置任务都有任务书 `docs/tasks/<事项>.md`。
 
 ## 0. 开工三步（不需要委托人转述，一切以仓库为准）
 
-1. `curl -s "<收件地址>/board?agent=<你的名字>"`（`<收件地址>` = 当前主镜像，见第 6B 节；先试镜像 A，不通换 B）：你手上的事项、你的分支合了没、你的接口请求有没有回复、你上次来之后规矩改了什么。
-2. `git pull`，读本文件和你事项的任务书（`docs/tasks/`）、最新审查意见（`docs/review/`）。
-3. 有问题写进 `CLAIMS.md`「接口请求」，不经过委托人；muse-tibo-cs 每小时回复一次。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
+1. 带工牌头调新门 `GET /pulse`、`GET /brief`（新门地址与工牌用法见顶部迁移公告）：批次状态、派给你的任务、待你评审的提交、上次来之后的新事件。
+2. `git pull`（拉取地址见顶部公告），读本文件和你事项的任务书（`docs/tasks/`）、最新审查意见（`docs/review/`、`docs/audit/`）。
+3. 有问题走新门 ask 向集成人提问（POST /mcp 的 ask），不经过委托人。旧 `CLAIMS.md`「接口请求」只用于收尾旧事项，不再接新问题。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
 
-**派单**：muse-tibo-cs 每次合并、审查后，把发现的后续问题拆成小单写进 `CLAIMS.md`「派单」，指名给相关作者（或「全体」）。你的进门画面最上面就是派给你的单，**先做派单，再做自领事项**；派单不占 2 项认领名额。提交标题写 `[D-xx] ...`，合并后 muse-tibo-cs 关单。做不了就在该行写原因，muse-tibo-cs 改派。同一人同时待做的派单一般不超过 2 张；本地能力强的 `hark-cs`、`traycer-cs`、`muse-tibo-cs` 可同时持有 3 张（11-08 起，委托人要求少留多派）。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
+**派单**：muse-tibo-cs 每次合并、审查后，把发现的后续问题拆成小单建进 V3 当前批次（旧 `CLAIMS.md`「派单」只收尾）。`GET /brief` 里派给你的任务就是派单，**先做派单，再做自领任务**；派单不占认领名额。做不了就用 ask 说明原因，muse-tibo-cs 改派。同一人同时待做的派单一般不超过 2 张；本地能力强的 `traycer-cs`、`muse-tibo-cs` 可同时持有 3 张（11-08 起，委托人要求少留多派）。 （2026-11-09 起 `CLAIMS.md` 只放进行中的事，顶部「索引」表列出各小节所在文件：决定记录 → `docs/decisions.md`，已关单派单 → `docs/dispatch-archive.md`，已回复接口请求与 7 天前的报名/退回 → `docs/claims-archive.md`。）
 
-**建议**：在你自己那边设一个定时任务（每 1–2 小时），每次跑第 1 步；有派单或审查意见就接着做，没有就安静结束。这样委托人不用传话。
+**建议**：在你自己那边设一个定时任务（每 1–2 小时），每次跑第 1 步（`GET /pulse`）；有派单或审查意见就接着做，没有就安静结束。这样委托人不用传话。
 
 委托人只管三件事：做什么、先做哪个、好不好。他的意见由 muse-tibo-cs 写进 `docs/review/`，不靠转述。
 
@@ -32,13 +33,14 @@
 | `hark-fangyi` | Hark · 方熠账号 | S-201 | B 收件 |
 | `hark-liuzhijie` | Hark · 刘志杰账号 | S-101、S-501 | B 收件 |
 | `hark-darrio` | Hark · darronlangfnr 账号；云沙盒无 GPU，可跑无头浏览器截图 | 待认领；建议接 JS 插件、检查脚本、资料核对 | B 收件 |
-| `pi-t2`、`pi-t3` | pi 编码智能体（Gemini 3.8），跑在委托人 InstaBox test-2、test-3 上，由 hark-cs 定时唤醒。**同 marvis：只接「小活」、同时 1 项、交付人工审** | 小活 | B 收件 |
+| `pi-t2`、`pi-t3` | pi 编码智能体（Gemini 3.8），原跑在委托人 InstaBox test-2、test-3 上。**2026-11-22 已停用**，其旧认领（公开数据核对、小屏可读性检查）已释放回开放 | 已停用 | — |
 | `marvis` | Marvis · 委托人朋友的 Windows 本机智能体，试用本协作方式（无 GitHub 账号）。**只接备注标「小活」的事项，同时最多 1 项；交付一律人工审，不进自动合并档** | 待认领；建议 Windows 真机审查 | B 收件 |
 | `zcode-cs` | ZCode · 委托人本机智能体 | 认领板数据化提案；先接中小活 | B 收件 |
-| `g-fangyi` | Gemini · macOS 本机智能体（自报可调本地 Blender、浏览器、Python） | 待认领；建议先接图纸插件、检查脚本、资料核对（本地渲染待能力表核实后再派） | B 收件 |
-| `g-liuzhijie` | Gemini · G-刘志杰（云端沙盒 Linux，无 GPU、无 Blender） | 待认领；建议接 JS 插件、Node/Python 检查、资料核对与文档 | B 收件 |
-| `g-wangmushan` | Gemini 智能体（云沙盒，无 GPU、无 Blender） | 待认领；建议接公开资料检索与数据核对 | B 收件 |
-| `g-tanghui` | Gemini 智能体（云端沙盒 Linux，2 核 8 GB，无 GPU、无 Blender；Node 18 / Python 3.11） | 待认领；建议接 JS 插件、检查脚本、资料核对与文档 | B 收件 |
+| `g-fangyi` | Gemini · macOS 本机智能体（自报可调本地 Blender、浏览器、Python） | V3 成员（黄档，决定 seq 23）；建议先接图纸插件、检查脚本、资料核对（本地渲染待能力表核实后再派） | V3 工牌 |
+| `g-liuzhijie` | Gemini · G-刘志杰（云端沙盒 Linux，无 GPU、无 Blender） | V3 成员（黄档，决定 seq 23）；建议接 JS 插件、Node/Python 检查、资料核对与文档 | V3 工牌 |
+| `g-wangmushan` | Gemini 智能体（云沙盒，无 GPU、无 Blender） | V3 成员（黄档，决定 seq 23）；建议接公开资料检索与数据核对 | V3 工牌 |
+| `g-tanghui` | Gemini 智能体（云端沙盒 Linux，2 核 8 GB，无 GPU、无 Blender；Node 18 / Python 3.11） | V3 成员（黄档，决定 seq 23）；建议接 JS 插件、检查脚本、资料核对与文档 | V3 工牌 |
+| `m-hxt` | Muse 智能体 | V3 成员（黄档，决定 seq 23）；审查、集成协助、文档 | V3 工牌 |
 
 ### 1.1 本地能力（自报，决定重活给谁）
 
@@ -62,7 +64,7 @@
 
 分工原则：建模规则、图纸、数据在仓库里由大家做；**Blender 精细渲染与最后精修交给本地有 Blender + 视觉模型的智能体**，用视觉模型自评出图，再交结论与图。
 
-新智能体：在 `CLAIMS.md` 的「报名」区加一行（名字、身份、途径），由 muse-tibo-cs 合入名册（每小时整点收件，8:00–23:00 北京时间）。走收件仓库的，报名用分支 `agent/<名字>/join`（名册外的名字只能推这个分支）。名字用小写字母、数字、连字符，3–24 位，终身不变。
+新智能体：走新门工牌自助报名（`POST /enroll`，见顶部公告），集成人批准后由 muse-tibo-cs 补进名册。旧 `CLAIMS.md`「报名」区只收尾。名字用小写字母、数字、连字符，3–24 位，终身不变。
 
 ## 2. 统一标注
 
@@ -73,7 +75,7 @@
 
 ## 3. 认领（一条命令，实时生效）
 
-**实时认领板：`<收件地址>/board`（当前主镜像，见第 6B 节）** ——它是唯一的真相；`CLAIMS.md` 是它的每小时镜像，可能落后。聊天里口头分工不算数。
+**（迁移后：新认领一律走 V3 批次领单，本节只适用于旧板收尾事项。）实时认领板：`<收件地址>/board`（当前主镜像，见第 6B 节）** ——它是唯一的真相；`CLAIMS.md` 是它的每小时镜像，可能落后。聊天里口头分工不算数。
 
 ```bash
 curl -s <收件地址>/board                                              # 看谁在做什么、还剩什么、推荐下一项
@@ -109,7 +111,7 @@ CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、�
 - **交付必附证据**（委托人 2026-11-09 定）：每次交付在提交说明或 `docs/audit/` 里附截图（外链或入库小图）或命令原样输出（至少 `OK check_all N/N` 与本图检查的最后一行）；没有证据的交付按未完成处理。
 - **同一办法失败两次就停**（委托人 2026-11-09 定）：同一做法连续失败两次，不再第三次重试，把现象、已试的两次和卡在哪写进 `CLAIMS.md`（接口请求或派单备注），等 muse-tibo-cs / 委托人定。
 - **长单要有回执与进度**（委托人 2026-11-09 定）：预计超过 1 小时的单，开工时先推一个 `[D-xx] 开工` 提交（写打算怎么做、预计多久）；之后约每小时推一次进度提交（哪怕只是 CLAIMS 备注），做完再推交付提交。
-- 线上：https://changrong996-droid.github.io/hzwest-atlas/ （main 推送后约 1 分钟更新）。
+- 线上：https://changsheng0804-blip.github.io/hzwest-atlas/ （新仓 Pages，main 推送后约 1 分钟更新；老仓 changrong996-droid 由双仓同步保持一致，不再单独发布）。
 
 ### 5.1 合并分档
 - **自动合**：`check_all` 通过，且改动只落在你认领事项的文件里（`web/sheets/<图号>.js`、`tools/hz/check_<图号>.js`、`docs/tasks/<图号>.md`、`docs/audit/`、你本人的提案 `docs/proposals/<你的名字>-*.md`、`web/hzreal.js` 的新增记录、`CLAIMS.md` 的新增行）。收件时直接合入 main，记 CHANGELOG。
@@ -122,7 +124,7 @@ CLAIMS 备注标「大活 / 中活 / 小活」。大活：新图、新模块、�
 ## 6. 两条提交途径
 
 ### A. 有 GitHub 账号
-fork `changrong996-droid/hzwest-atlas` → 按第 2 节建分支、提交 → 向 `main` 提 PR。CI 自动跑 check_all，muse-tibo-cs 审查后合并。
+fork `changsheng0804-blip/hzwest-atlas` → 按第 2 节建分支、提交 → 向 `main` 提 PR。CI 自动跑 check_all，muse-tibo-cs 审查后合并。
 
 ### B. 没有 GitHub 账号（收件仓库）
 ```bash
