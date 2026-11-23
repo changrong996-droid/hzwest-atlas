@@ -48,8 +48,8 @@
 | 屋面云纹提案 | 波纹与云谷深度几何方案（docs/tasks/roof-waves.md） | hark-cs | 完成 | 2026-11-08 | 大活；提案 docs/proposals/roof-waves.md 已合入 |
 | 屋面云纹实施 | 按 roof-waves.md 推荐 C（四朵云 3.5 m + 外圈波纹 0.5 m，只改覆面 Hc）改 hzseq.js | hark-cr | 完成 | 2026-11-08 | 委托人 11-08 17:23 定 C 版。`web/hzseq.js` 新增 `HZ.Wv`（参数 `P.wv` = A1 3.5 / A2 0.5 / lob 0.32 / per 0.18 / gap 14），叠进覆面 `Hc`；`Ht` / `Hs` / D 不变；屋面最高点仍是天窗中心 57.3 m，云心约 +3.6 m；S-401 等高线读 `HZ.Hc` 自动跟随，check_s401 光伏 15,383 m²、59 孔、封闭 100%（时间窗问题照旧，见 D-22⑥）；光伏遮罩按 rho，PVGLSL / PVINK 不用改；check_make 加云纹断言；hzseq.js?v=10。剩：低角度阳光（提案第 3 条，页面上 0.5 m 波纹是否看得出，等 D-24 真机结论再定）、「四朵云」标注（D-22⑦）、最高点 57.3 vs 公开 60.75 m 并入「公开数据核对」 |
 | 履带吊臂长规则 | 吊距上限规则 + check_crane（docs/tasks/crane-reach.md） | hark-darrio | 完成 | 2026-11-08 | 中活；docs/rules/crane-reach.md + check_crane 已合入并进 check_all（报告模式）；超限站位见 D-18 |
-| 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | pi-t2 | 认领 | 2026-11-08 | 小活 |
-| 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | pi-t3 | 认领 | 2026-11-08 | 小活 |
+| 公开数据核对 | 模型数字对公开资料（docs/tasks/facts-check.md） | — | 空 |  | 小活；2026-11-22 委托人令释放：pi-t2 已停用，认领放回 |
+| 小屏可读性检查 | 1258×540 / 1366×768 逐图问题单（docs/tasks/read-audit.md） | — | 空 |  | 小活；2026-11-22 委托人令释放：pi-t3 已停用，认领放回 |
 | 难懂字幕改写 | 4 条字幕各给 2 个改写（docs/tasks/captions.md） | hark-darrio | 完成 | 2026-11-08 | 小活；改写见接口请求「字幕」行；11-08 hark-cr 已选定并改入 hzseq.js |
 | Windows 真机审查 | 在 Windows 本机浏览器（Chrome/Edge）逐图看 S-101/201/301/401/501：报错、空白图纸、文字重叠、镜头穿地、帧率；问题单写 docs/audit/<日期>-windows.md，不改代码 | — | 空 |  | 小活；适合 marvis；11-12 hark-cs 认领板同步：实时锁里已无 marvis 的锁，改回空（要继续请在 /board 重新认领） |
 | GPU 审计 | 新图真机 9 视口 + 帧率问题单（docs/tasks/gpu-audit.md） | hark-cr | 完成 | 2026-11-08 | 需本地 GPU；执行：Traycer CLI on Mac（Mac mini M4 真 Chrome/Metal，playwright）；traycer-cs 多次卡死，委托人 2026-11-08 17:26 决定改用 Traycer CLI；实时板因 Blender 自报规则拒认领，以本文件为准；11-08 第二轮：9 图 × 3 视口 0 页面错误、播放 60 fps，actors 注入 60 fps，问题单 #9–#13 见 docs/audit/2026-11-08-gpu.md；11-08 晚第三轮（hzview.js?v=21 上线后复测，见同文件） |
