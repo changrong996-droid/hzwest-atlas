@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>城市远景层 · 总体规划</title>
+<style>
+:root{--ink:#1f1d1a;--mute:#7a736a;--paper:#f4efe6;--card:#fbf8f2;--line:#d9d0c2;--red:#a31d1d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 "Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+header{padding:22px 28px 6px;max-width:1500px;margin:auto}
+h1{font:600 26px/1.3 "Noto Serif SC","Songti SC",serif;margin:0 0 4px;letter-spacing:.04em}
+.sub{color:var(--mute);font-size:13px}
+.goal{margin:10px 0 0;max-width:900px}
+.top{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:3px 12px;font-size:13px;cursor:pointer;user-select:none}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+a.btn{color:var(--red);text-decoration:none;border:1px solid var(--red);border-radius:20px;padding:3px 12px;font-size:13px}
+main{max-width:1500px;margin:auto;padding:10px 28px 40px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,1fr);gap:22px}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.mapbox{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mapbox svg{display:block;width:100%;height:auto}
+.mapnote{font-size:12px;color:var(--mute);padding:6px 12px;border-top:1px solid var(--line)}
+.zl{font:600 15px "Noto Sans SC",sans-serif;fill:#3b362f;paint-order:stroke;stroke:#f4efe6;stroke-width:4px}
+.zd{font:12px "Noto Sans SC",sans-serif;fill:#6a6258;paint-order:stroke;stroke:#f4efe6;stroke-width:3px}
+.mk{cursor:pointer}
+.mk text{font:600 12px ui-monospace,Menlo,monospace;fill:#fff;pointer-events:none}
+.mk.hl circle{stroke:#000;stroke-width:3}
+.mk.dim{opacity:.18}
+.side h2,.full h2{font:600 17px "Noto Serif SC",serif;margin:0 0 8px}
+.zone{border-left:3px solid var(--line);padding:2px 0 2px 10px;margin:0 0 8px;font-size:14px}
+.zone b{font-weight:600}
+.owners{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.own{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.own b{display:block;font-size:14px}
+.full{grid-column:1/-1}
+.ph{margin:18px 0 6px;font:600 15px "Noto Serif SC",serif;color:#3b362f}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #ece4d6;vertical-align:top}
+th{font-weight:600;font-size:12px;color:var(--mute);background:#f6f1e8}
+tr.hl td{background:#fff4d6}
+tr.dim{display:none}
+.id{font:600 13px ui-monospace,Menlo,monospace;white-space:nowrap}
+.st{font-size:12px;border-radius:10px;padding:1px 8px;white-space:nowrap}
+.st.done{background:#e3eedc;color:#3c6b2a}.st.next{background:#fde7c8;color:#8a5200}.st.todo{background:#eee8de;color:#6a6258}
+.who{white-space:nowrap;font-size:13px}
+.who i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.small{font-size:12px;color:var(--mute)}
+ol.iface{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 12px 12px 34px;margin:0;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="t">城市远景层 · 总体规划</h1>
+  <div class="sub" id="by"></div>
+  <p class="goal" id="goal"></p>
+  <div class="top" id="chips"></div>
+</header>
+<main>
+  <div>
+    <div class="mapbox"><svg id="map"></svg><div class="mapnote" id="mapnote"></div></div>
+  </div>
+  <div class="side">
+    <h2>片区</h2>
+    <div id="zones"></div>
+    <h2 style="margin-top:16px">分工</h2>
+    <div class="owners" id="owners"></div>
+    <div class="small">地图上圆点 = 工作包；实心已完成，粗圈下一步，空心待做。点圆点或表格行互相定位。</div>
+    <p style="margin-top:12px"><a class="btn" href="../hzwest.html">打开三维预览 →</a></p>
+  </div>
+  <div class="full">
+    <h2>工作包</h2>
+    <div id="tables"></div>
+    <h2 style="margin-top:22px">并行交件接口（给本地 GPU / Blender）</h2>
+    <ol class="iface" id="iface"></ol>
+  </div>
+</main>
+<script>
+const SV = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(SV, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ST = {done: '已完成', next: '下一步', todo: '待做'};
+fetch('plan.json', {cache: 'no-store'}).then(r => r.json()).then(P => {
+  document.getElementById('t').textContent = P.title;
+  document.title = P.title;
+  document.getElementById('by').textContent = P.by + ' · ' + P.date;
+  document.getElementById('goal').textContent = P.goal;
+  const M = P.map, svg = document.getElementById('map');
+  svg.setAttribute('viewBox', `0 0 ${M.W} ${M.H}`);
+  document.getElementById('mapnote').textContent = M.note;
+  const X = x => (x - M.x0) / (M.x1 - M.x0) * M.W, Y = y => (M.y1 - y) / (M.y1 - M.y0) * M.H;
+  el('image', {href: M.img, x: 0, y: 0, width: M.W, height: M.H}, svg);
+  // 比例尺
+  const sb = el('g', {}, svg); el('rect', {x: 24, y: M.H - 40, width: 5000 / (M.x1 - M.x0) * M.W, height: 5, fill: '#3b362f'}, sb);
+  el('text', {x: 24, y: M.H - 48, class: 'zd'}, sb).textContent = '5 km';
+  el('text', {x: M.W - 40, y: 40, class: 'zl'}, svg).textContent = '北↑';
+  // 片区
+  const zcol = {Z0: '#1f1d1a', Z1: '#a31d1d', Z2: '#b06a00', Z3: '#3a6a8a', 'Z3+': '#3a6a8a'};
+  for (const z of P.zones) {
+    const [a, b, c, d] = z.rect, col = zcol[z.id] || '#555';
+    el('rect', {x: X(a), y: Y(d), width: X(c) - X(a), height: Y(b) - Y(d), fill: z.id === 'Z0' ? 'rgba(31,29,26,.15)' : 'none', stroke: col, 'stroke-width': z.id === 'Z3' ? 2 : 2.5,
+      'stroke-dasharray': z.style === 'dash' ? '10 6' : z.style === 'dot' ? '2 6' : 'none', 'stroke-linecap': 'round'}, svg);
+    if (z.id !== 'Z0') el('text', {x: X(a) + 8, y: z.id === 'Z3+' ? Y(b) - 10 : Y(d) + 20, class: 'zl', fill: col}, svg).textContent = z.id + ' ' + z.name;
+  }
+  // 地名参考
+  for (const [n, x, y] of [['西湖', 15513, -6024], ['闲林水库', -1797, -11761], ['西溪湿地', 7814, -3803], ['杭州西站', 0, 0]])
+    el('text', {x: X(x) + (n === '西湖' ? -40 : 14), y: Y(y) + (n === '杭州西站' ? -14 : 30), class: 'zd'}, svg).textContent = n;
+  // 工作包
+  const O = P.owners, mk = {}, rows = {};
+  for (const it of P.items) {
+    const g = el('g', {class: 'mk', 'data-id': it.id, transform: `translate(${X(it.at[0])},${Y(it.at[1])})`}, svg);
+    const col = O[it.owner].color;
+    el('circle', {r: 15, fill: it.status === 'todo' ? '#fbf8f2' : col, stroke: col, 'stroke-width': it.status === 'next' ? 5 : 2.5}, g);
+    const tx = el('text', {'text-anchor': 'middle', y: 4}, g); tx.textContent = it.id; if (it.status === 'todo') tx.style.fill = col;
+    el('title', {}, g).textContent = `${it.id} ${it.title} · ${O[it.owner].name} · ${ST[it.status]}`;
+    g.onclick = () => focus(it.id, true); mk[it.id] = g;
+  }
+  // 片区说明
+  document.getElementById('zones').innerHTML = P.zones.map(z => `<div class="zone" style="border-color:${zcol[z.id]}"><b>${esc(z.id)} ${esc(z.name)}</b> · ${esc(z.desc)}</div>`).join('');
+  document.getElementById('owners').innerHTML = Object.values(O).map(o => `<div class="own" style="border-left:4px solid ${o.color}"><b>${esc(o.name)}</b>${esc(o.desc || '　')}<div class="small">${P.items.filter(i => O[i.owner] === o).length} 件</div></div>`).join('');
+  // 表格
+  const T = document.getElementById('tables');
+  for (const ph of P.phases) {
+    const its = P.items.filter(i => i.phase === ph.id); if (!its.length) continue;
+    T.insertAdjacentHTML('beforeend', `<div class="ph">${esc(ph.id)} · ${esc(ph.name)}</div><table><tr><th>号</th><th>做什么</th><th>片区</th><th>谁</th><th>状态</th><th>数据</th><th>依赖</th><th>产出</th></tr>${its.map(i =>
+      `<tr data-id="${i.id}" data-owner="${i.owner}"><td class="id">${esc(i.id)}</td><td><b>${esc(i.title)}</b><div class="small">${esc(i.what)}</div></td><td>${esc(i.zone)}</td><td class="who"><i style="background:${O[i.owner].color}"></i>${esc(O[i.owner].name)}</td><td><span class="st ${i.status}">${ST[i.status]}</span></td><td class="small">${esc(i.data)}</td><td class="id small">${esc(i.deps.join(' ') || '—')}</td><td class="small">${esc(i.out)}</td></tr>`).join('')}</table>`);
+  }
+  T.querySelectorAll('tr[data-id]').forEach(r => { rows[r.dataset.id] = r; r.onmouseenter = () => focus(r.dataset.id, false); r.onclick = () => focus(r.dataset.id, false); });
+  document.getElementById('iface').innerHTML = P.iface.map(s => `<li>${esc(s)}</li>`).join('');
+  function focus(id, scroll) {
+    for (const k in mk) mk[k].classList.toggle('hl', k === id);
+    for (const k in rows) rows[k].classList.toggle('hl', k === id);
+    if (scroll) rows[id].scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
+  // 按分工筛
+  const chips = document.getElementById('chips'); let on = null;
+  const all = [['', '全部', '#1f1d1a'], ...Object.entries(O).map(([k, o]) => [k, o.name, o.color])];
+  for (const [k, n, c] of all) {
+    const b = document.createElement('span'); b.className = 'chip' + (k === '' ? ' on' : ''); b.innerHTML = (k ? `<i style="background:${c}"></i>` : '') + esc(n);
+    b.onclick = () => { on = k || null; chips.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b));
+      for (const it of P.items) { const hide = on && it.owner !== on; mk[it.id].classList.toggle('dim', !!hide); rows[it.id].classList.toggle('dim', !!hide); } };
+    chips.appendChild(b);
+  }
+});
+</script>
+</body>
+</html>

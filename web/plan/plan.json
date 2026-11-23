@@ -1,0 +1,58 @@
+{
+ "title": "城市远景层 · 总体规划",
+ "by": "hark-fangyi（悟空）",
+ "date": "2026-11-23",
+ "goal": "把杭州西站放回真实的杭州：近处看得清城市肌理，中处认得出片区，远处有山有水有主城方向；全部随施工时间轴走，开放数据，可分工并行。",
+ "map": {"img": "map.jpg", "W": 1280, "H": 1080, "x0": -16000, "x1": 16000, "y0": -15000, "y1": 12000, "note": "底图：OSM 现状（ODbL）+ 哥白尼 GLO-30 地形晕渲；正北朝上，原点站心，单位 m。"},
+ "owners": {
+  "wk": {"name": "悟空", "desc": "数据、图层、脚本、检查、接入", "color": "#a31d1d"},
+  "gpu": {"name": "本地 GPU / Blender", "desc": "精模、渲染、贴图烘焙、出片", "color": "#2f6fa3"},
+  "host": {"name": "维护人", "desc": "共用文件小改、合入", "color": "#6b6b6b"},
+  "tbd": {"name": "待定", "desc": "", "color": "#b08a2e"}
+ },
+ "zones": [
+  {"id": "Z0", "name": "站房", "rect": [-800, -500, 800, 500], "style": "solid", "desc": "本仓库自己的施工模型，不在远景计划内。"},
+  {"id": "Z1", "name": "近景 · 城区框", "rect": [-3300, -2300, 3300, 2300], "style": "solid", "desc": "OSM 真实建筑与路网已铺（1115 栋体块）。看得清楼、路、地铁。"},
+  {"id": "Z2", "name": "中景 · 片区", "rect": [-8000, -7000, 9000, 4000], "style": "dash", "desc": "未来科技城、仓前、五常、余杭老城、中泰、西溪。现在只有水面，楼和路是空的。"},
+  {"id": "Z3", "name": "远景 · 山水与主城方向", "rect": [-16000, -12000, 16000, 12000], "style": "dash", "desc": "现有地形范围（80 m 网格）。西南丘陵、闲林水库、东边西湖与主城方向。"},
+  {"id": "Z3+", "name": "地形南扩", "rect": [-16000, -15000, 16000, -12000], "style": "dot", "desc": "计划把地形往南扩 3 km，包住闲林水库南半边的山。"}
+ ],
+ "phases": [
+  {"id": "P0", "name": "底座（已完成）"},
+  {"id": "P1", "name": "补齐中景"},
+  {"id": "P2", "name": "近景提质"},
+  {"id": "P3", "name": "远景氛围（适合 GPU / Blender）"},
+  {"id": "P4", "name": "时间维度"}
+ ],
+ "items": [
+  {"id": "A1", "phase": "P0", "zone": "Z1", "at": [0, 0], "owner": "wk", "status": "done", "title": "城区底座 osmctx", "what": "OSM 建筑、路网、铁路地铁、水、绿地 + 地形，替换随机城市与示意远山。", "data": "OSM、哥白尼 DEM", "deps": [], "out": "已合入上游 main"},
+  {"id": "A2", "phase": "P0", "zone": "Z3", "at": [-1800, 2000], "owner": "wk", "status": "done", "title": "远景图层机制", "what": "以后加远景一律是一个图层文件：清单登记、按工期显隐、右上开关。", "data": "—", "deps": ["A1"], "out": "分支 ctx-layers；接入需维护人两处小改"},
+  {"id": "A3", "phase": "P0", "zone": "Z1", "at": [-1800, 1000], "owner": "wk", "status": "done", "title": "分支网页预览 hz-pages", "what": "任一分支直接在浏览器看。", "data": "—", "deps": [], "out": "服务器 8083 已装"},
+  {"id": "A4", "phase": "P0", "zone": "Z2", "at": [7814, -3803], "owner": "wk", "status": "done", "title": "远处水面 + 地名", "what": "西溪湿地、闲林水库水面；五个地名示范。", "data": "OSM", "deps": ["A2"], "out": "图层 water.far、place.names"},
+  {"id": "H1", "phase": "P0", "zone": "Z3", "at": [-1200, 2600], "owner": "host", "status": "todo", "title": "接入两处小改", "what": "hzwest.html 里 osmctx.js?v=1→v=2；check_all 加 check_ctxlayers。", "data": "—", "deps": ["A2"], "out": "合入后 A2 起的图层才对外可见"},
+
+  {"id": "B1", "phase": "P1", "zone": "Z2", "at": [3547, -1172], "owner": "wk", "status": "next", "title": "中景建筑体块", "what": "OSM 扩框拉建筑，低模体块，按层数/类型估高；离站越远越合并成街区块，控制体量。", "data": "OSM", "deps": ["A2"], "out": "图层 bldg.mid，≤ 1 MB"},
+  {"id": "B2", "phase": "P1", "zone": "Z2", "at": [-3220, -4477], "owner": "wk", "status": "next", "title": "中景路网", "what": "高速、快速路、主干道（绕城西复线、文一西路、良睦路等），只画线不画面。", "data": "OSM", "deps": ["A2"], "out": "图层 road.mid"},
+  {"id": "B3", "phase": "P1", "zone": "Z2", "at": [4786, -5416], "owner": "wk", "status": "next", "title": "片区与地名", "what": "未来科技城、仓前、五常、余杭街道、中泰、紫金港等片区名，远看才显示。", "data": "OSM / Nominatim", "deps": ["A2"], "out": "扩 place.names"},
+  {"id": "B4", "phase": "P1", "zone": "Z3+", "at": [-1797, -11761], "owner": "wk", "status": "next", "title": "地形南扩 3 km", "what": "地形从南 12 km 扩到 15 km，闲林水库落进山里。", "data": "哥白尼 DEM", "deps": ["A1"], "out": "osmctx 地形数据（+约 70 KB）"},
+
+  {"id": "C1", "phase": "P2", "zone": "Z1", "at": [1500, 900], "owner": "wk", "status": "todo", "title": "近景楼高校核", "what": "OSM 没写高度的楼按层数、类型估，标可信度；60 m 以上逐栋核对公开资料。", "data": "OSM、公开资料", "deps": ["A1"], "out": "osmctx 数据更新"},
+  {"id": "C2", "phase": "P2", "zone": "Z1", "at": [600, -1500], "owner": "wk", "status": "todo", "title": "云城 TOD 规划体块（粗）", "what": "枢纽南北两侧规划地块按公开规划图做粗体块，作为「未来」开关。", "data": "公开规划图", "deps": ["A2"], "out": "图层 plan.tod"},
+  {"id": "C3", "phase": "P2", "zone": "Z1", "at": [600, -2100], "owner": "gpu", "status": "todo", "title": "云城重点楼精模", "what": "C2 里的标志性楼（如云门）在 Blender 精修，导出低面 glTF 给图层用。", "data": "C2 的体块与规划图", "deps": ["C2"], "out": "glb ≤ 1 MB / 栋，按下方接口交"},
+  {"id": "C4", "phase": "P2", "zone": "Z1", "at": [-600, -800], "owner": "host", "status": "todo", "title": "黄昏实景压暗", "what": "开通日黄昏城市偏亮；需宿主给 blend/duskK 读口，我按它压暗。", "data": "—", "deps": ["A1"], "out": "接口请求（我写）+ 宿主改"},
+
+  {"id": "D1", "phase": "P3", "zone": "Z3", "at": [15513, -6024], "owner": "gpu", "status": "todo", "title": "主城天际线剪影", "what": "西湖、主城方向的远景天际线：Blender 渲成长条透明贴图，我挂成图层（距离 15 km 外的环带）。", "data": "OSM 高楼 + 地形", "deps": ["A2"], "out": "PNG 长条 ≤ 1 MB + 我写 skyline 图层"},
+  {"id": "D2", "phase": "P3", "zone": "Z3", "at": [-9000, 6000], "owner": "gpu", "status": "todo", "title": "天空与空气透视", "what": "黄昏/白天天空贴图，远山按距离变淡变蓝；你出图调参，我写成图层开关。", "data": "—", "deps": ["A2"], "out": "天空贴图 + 参数表"},
+  {"id": "D3", "phase": "P3", "zone": "Z3", "at": [-9000, -9000], "owner": "gpu", "status": "todo", "title": "西南山体质感", "what": "地形高精度置换 + 植被色烘焙成颜色贴图，替换现在的纯色晕渲。", "data": "哥白尼 DEM 30 m", "deps": ["B4"], "out": "地形颜色贴图 ≤ 1 MB"},
+  {"id": "D4", "phase": "P3", "zone": "Z1", "at": [-2600, -1500], "owner": "gpu", "status": "todo", "title": "宣传级飞行动画", "what": "按导览镜头在 Blender 出片（施工生长 + 城市远景）。", "data": "导出的场景", "deps": ["B1", "D1"], "out": "视频，不入仓库"},
+
+  {"id": "T1", "phase": "P4", "zone": "Z2", "at": [2230, -2600], "owner": "wk", "status": "todo", "title": "开工前的城市", "what": "2018 年周边哪些楼还没有：用公开历史影像日期做旁证，给建筑标 from，时间轴拖回去城市跟着变空。", "data": "Esri Wayback 日期旁证（只存链接）", "deps": ["B1"], "out": "图层 from/to 字段"},
+  {"id": "T2", "phase": "P4", "zone": "Z2", "at": [-5623, -6610], "owner": "tbd", "status": "todo", "title": "远期规划层", "what": "2030 前后的规划路网、轨道（如机场快线）做虚线开关。", "data": "公开规划", "deps": ["A2"], "out": "图层 plan.future"}
+ ],
+ "iface": [
+  "坐标：模型系 x 向东、z 向南、y 向上，原点站心（30.3004N, 119.9817E），单位米；模型相对 OSM 已转 4.3°、东移 10 m，交件按 OSM 经纬度给也行，我来换算。",
+  "格式：体块与精模交 glb（低面，单件 ≤ 1 MB，无贴图或贴图 ≤ 512 px）；贴图交 PNG/JPG ≤ 1 MB；不交卫星或商业影像。",
+  "放哪：tools/hz/ctx_src/<工作包号>/，提交标题以 [工作包号] 开头，推到私人仓库的 agent/<你的名字>/<工作包号> 分支，我接成图层。",
+  "看效果：推上去后在分支预览里打开 web/hzwest.html，右上「远景图层」里开关。"
+ ]
+}
