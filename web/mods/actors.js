@@ -284,9 +284,27 @@
     return { headC, lHand: sk.lHand, rHand: sk.rHand };
   }
 
+  // W2 旅客（任务 #33）：同一套人体骨架，换便装配色（外套 / 头发），双臂自然下垂；paxbag 右手拖行李箱
+  const PAX_LP = { vest: [0.30, 0.34, 0.42], helmet: [0.13, 0.11, 0.10], shirt: [0.82, 0.80, 0.76], boot: [0.15, 0.15, 0.17], pants: [0.25, 0.26, 0.30] };
+  function paxFigure(o, P, C, hi, bag) {
+    const keep = {}; for (const k in PAX_LP) { keep[k] = LP[k]; LP[k] = PAX_LP[k]; }
+    try {
+      buildWorker(o, P, C, {
+        pelvis: [0, 0.92, 0], lean: 0.0, noVisor: true,
+        lKnee: [-0.1, 0.48, 0.01], lFoot: [-0.11, 0, 0.0],
+        rKnee: [0.1, 0.48, -0.01], rFoot: [0.11, 0, -0.01],
+        lElbow: [-0.24, 1.08, 0.0], lHand: [-0.25, 0.80, 0.03],
+        rElbow: [0.24, 1.08, 0.0], rHand: bag ? [0.28, 0.78, -0.08] : [0.25, 0.80, 0.03],
+      }, hi);
+      if (bag) { boxS(P, C, 0.22, 0.04, -0.42, 0.44, 0.62, -0.18, [0.62, 0.20, 0.16]); seg(o, [0.33, 0.62, -0.3], [0.29, 0.78, -0.1]);
+        for (const [a, b] of [[[0.22, 0.04, -0.42], [0.44, 0.04, -0.42]], [[0.22, 0.62, -0.42], [0.44, 0.62, -0.42]], [[0.22, 0.04, -0.42], [0.22, 0.62, -0.42]], [[0.44, 0.04, -0.42], [0.44, 0.62, -0.42]], [[0.22, 0.04, -0.18], [0.22, 0.62, -0.18]], [[0.44, 0.04, -0.18], [0.44, 0.62, -0.18]]]) seg(o, a, b); }
+    } finally { for (const k in keep) LP[k] = keep[k]; }
+  }
+
   function figure(kind, hi) {
     const o = [], P = [], C = [], CL = []; _CL = CL;
-    if (kind === 'stand') {
+    if (kind === 'pax' || kind === 'paxbag') paxFigure(o, P, C, hi, kind === 'paxbag');
+    else if (kind === 'stand') {
       buildWorker(o, P, C, {
         pelvis: [0, 0.90, 0], lean: 0.02, noVisor: false,
         lKnee: [-0.105, 0.47, 0.02], lFoot: [-0.115, 0, 0.0],
@@ -858,8 +876,9 @@
   }
 
   const mkFig = k => { const lo = figure(k, false), hi = figure(k, true); return { L: lo.L, P: lo.P, C: lo.C, CL: lo.CL, Lhi: hi.L, Phi: hi.P, Chi: hi.C, CLhi: hi.CL }; };
-  const FIG_OBJ = { stand: mkFig('stand'), push: mkFig('push'), weld: mkFig('weld'), signal: mkFig('signal') };
-  const FIG = { stand: FIG_OBJ.stand.L, push: FIG_OBJ.push.L, weld: FIG_OBJ.weld.L, signal: FIG_OBJ.signal.L };
+  const FIG_OBJ = { stand: mkFig('stand'), push: mkFig('push'), weld: mkFig('weld'), signal: mkFig('signal'), pax: mkFig('pax'), paxbag: mkFig('paxbag') };
+  const FIG = { stand: FIG_OBJ.stand.L, push: FIG_OBJ.push.L, weld: FIG_OBJ.weld.L, signal: FIG_OBJ.signal.L };   // 施工姿态（考卷按它判工人姿态）
+  const PAX = { pax: FIG_OBJ.pax.L, paxbag: FIG_OBJ.paxbag.L };
   const mkVeh = k => { const lo = vehicle(k, false), hi = vehicle(k, true); return { L: lo.L, P: lo.P, C: lo.C, CL: lo.CL, Lhi: hi.L, Phi: hi.P, Chi: hi.C, CLhi: hi.CL, hx: lo.hx, hz: lo.hz, h: lo.h }; };
   const VEH = {
     mixer: mkVeh('mixer'), flatbed: mkVeh('flatbed'), excavator: mkVeh('excavator'), scissor: mkVeh('scissor'),
@@ -926,7 +945,8 @@
 
   // ---------- 布置 ----------
   function plan(HZ, I, t) {
-    const hr = Math.floor(t * 24), hd = (t - Math.floor(t)) * 24, day = hd >= 7 && hd < 19, out = { t, figs: [], vehs: [], cranes: [], acts: [] };
+    const hr = Math.floor(t * 24), hd = (t - Math.floor(t)) * 24, day = hd >= 7 && hd < 19, out = { t, figs: [], vehs: [], cranes: [], acts: [], pax: [] };
+    if (HZ.P && t >= HZ.P.OPEN) { paxPlan(HZ, I, t, out); return out; }   // W2：开通运营后施工人员全部撤出，只有旅客（另列 out.pax，不混进施工工人 figs）
     const placed = [];
     const freeOf = (x0, z0, x1, z1, y0, y1) => { for (const q of placed) if (!(q[3] <= x0 || q[0] >= x1 || q[5] <= z0 || q[2] >= z1 || q[4] <= y0 || q[1] >= y1)) return false; return true; };
     for (const a of HZ.acts) {
@@ -981,6 +1001,45 @@
       out.cranes.push({ x, y, z, yaw, hd, tipY, hook: p.top + 1.5, act: a.key });
     }
     return out;
+  }
+
+  // ---------- W2 · 开通运营期旅客（任务 #33）----------
+  // 站台：每个站台面（platTop 14.5 m）上按小时换一批候车旅客，避开柱位（中段 fxs 柱、两端 cxs 柱）、离站台边 ≥ 0.9 m（不落轨）；
+  // 首趟 G9528 停稳后（车头到位），靠车一侧站台沿车门位置聚集、面向列车排队登车。
+  // 云厅：24 m 候车层楼面沿云谷两侧（|z| 16–60 m），朝向沿站房东西轴（顺着候车层纵向走）。
+  // 每人脚底都用 surfaceAt 取实际面、clear 查不穿构件，与施工工人同一套检查。
+  function paxPlan(HZ, I, t, out) {
+    // 位置用固定种子（每个站台 / 每侧楼面各一个），不随小时重排：3D 工期按天快放时一小时只占几帧，逐时重排会让人群闪烁
+    const P = HZ.P, busy = 1, placed = [];
+    let R = rng(991);
+    const colsX = []; for (let x = -90; x <= 90; x += 20) colsX.push(x); for (let x = 133; x <= 220; x += 17.4) colsX.push(x, -x);
+    const put = (x, y, z, yaw, pose) => {
+      const box = [x - FW, y + 0.02, z - FW, x + FW, y + FH, z + FW];
+      for (const q of placed) if (!(q[3] <= box[0] || q[0] >= box[3] || q[5] <= box[2] || q[2] >= box[5])) return false;
+      const sy = surfaceAt(I, t, x, z, y + 0.05); if (sy == null || Math.abs(sy - y) > 0.06) return false;
+      if (!clear(I, t, box[0], box[1], box[2], box[3], box[4], box[5])) return false;
+      placed.push(box); out.pax.push({ x, y, z, yaw, pose }); return true;
+    };
+    // 首趟列车：车头停位 x ≈ 111、全长 ≈ 199 m、南场第 1 股道 z = 16.5；到位（开通 + 21 天后基本停稳）才排队登车
+    const trainZ = HZ.tracks ? HZ.tracks(HZ.YARDS.S)[0] : 16.5, stopped = t >= P.OPEN + 21;
+    for (const yk of ['S', 'N']) for (const pl of HZ.platforms(HZ.YARDS[yk])) {
+      R = rng(Math.round(pl.z * 10) * 7 + (stopped ? 3 : 0) + 101);
+      const z0 = pl.z - pl.w / 2 + 0.9, z1 = pl.z + pl.w / 2 - 0.9, trainSide = yk === 'S' && Math.abs(pl.z - pl.w / 2 - trainZ) < 6;
+      const n = Math.round((trainSide ? 44 : 18) * busy);
+      for (let k = 0, tries = 0; k < n && tries < n * 8; tries++) {
+        let x, z, yaw;
+        if (trainSide && stopped && k < n * 0.8) { const door = Math.floor(R() * 8); x = 111 - 10.5 - door * 25.65 - 4 + R() * 3; z = z0 + R() * 1.6; yaw = -Math.PI / 2 + (R() - 0.5) * 0.5; }   // 车门前排队
+        else if (trainSide && k < n * 0.6) { x = -200 + R() * 330; z = z0 + 0.4 + R() * 1.6; yaw = -Math.PI / 2 + (R() - 0.5) * 1.2; }   // 安全线后候车，面向股道
+        else { x = -200 + R() * 400; z = z0 + R() * (z1 - z0); yaw = (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.8; }
+        if (colsX.some(cx => Math.abs(cx - x) < 1.4) && Math.abs(z - pl.z) < 1.4) continue;
+        if (put(x, P.platTop, z, yaw, R() < 0.45 ? 'paxbag' : 'pax')) k++;
+      }
+    }
+    R = rng(4099); const nF = Math.round(100 * busy);
+    for (let k = 0, tries = 0; k < nF && tries < nF * 8; tries++) {
+      const side = R() < 0.5 ? -1 : 1, x = -P.floorX + 3 + R() * (P.floorX * 2 - 6), z = side * (P.gap + 2 + R() * 44), yaw = (R() < 0.5 ? 0 : Math.PI) + (R() - 0.5) * 0.4;
+      if (put(x, P.floorTop, z, yaw, R() < 0.3 ? 'paxbag' : 'pax')) k++;
+    }
   }
 
   // ---------- 线段与实体写入 ----------
@@ -1055,7 +1114,7 @@
   const camPos = cam => cam ? (cam.position ? [cam.position.x, cam.position.y, cam.position.z] : cam) : null;
 
   const MOD = {
-    id: 'actors', R_SHOW, R_HI, FIG, VEH, TRADE, stOf, plan, _clear: clear, _supported: supported, _index: index,
+    id: 'actors', R_SHOW, R_HI, FIG, PAX, VEH, TRADE, stOf, plan, _clear: clear, _supported: supported, _index: index,
     stats: { figs: 0, vehs: 0, cranes: 0, shown: 0, segs: 0, insts: 0 },
     applyMode(isLit) {
       this.lastLit = !!isLit;
@@ -1117,7 +1176,7 @@
       if (this.obj && isLit !== this.lastLit) this.applyMode(isLit);
       const key = Math.floor(t * 24); let dirty = false; this.calls = (this.calls || 0) + 1;
       const lag = this.P && key !== this.key && this.calls - this.planCall < 6 && Math.abs(t - this.P.t) < 0.5;
-      if (key !== this.key && !lag) { this.planCall = this.calls; this.key = key; this.P = plan(this.HZ, this.I, t); dirty = true; Object.assign(this.stats, { figs: this.P.figs.length, vehs: this.P.vehs.length, cranes: this.P.cranes.length }); }
+      if (key !== this.key && !lag) { this.planCall = this.calls; this.key = key; this.P = plan(this.HZ, this.I, t); dirty = true; Object.assign(this.stats, { pax: (this.P.pax || []).length, figs: this.P.figs.length, vehs: this.P.vehs.length, cranes: this.P.cranes.length }); }
       const c = camPos(cam); if (!c) return this.n;
       if (!dirty && this.lastCam && Math.hypot(c[0] - this.lastCam[0], c[1] - this.lastCam[1], c[2] - this.lastCam[2]) < 1) return this.n;
       this.lastCam = c.slice(); const R2 = R_SHOW * R_SHOW, RHI2 = R_HI * R_HI, buf = this.buf;
@@ -1140,7 +1199,7 @@
         n = emitCraneBoom(buf, n, k, hi);
         shown++;
       }
-      for (const f of this.P.figs) {
+      for (const f of this.P.pax ? this.P.figs.concat(this.P.pax) : this.P.figs) {
         const dd = d2(f.x, f.y + 1, f.z); if (dd > R2) continue;
         const F = FIG_OBJ[f.pose], hi = dd < RHI2;
         n = emit(buf, n, hi ? F.Lhi : F.L, f.x, f.y, f.z, f.yaw);
