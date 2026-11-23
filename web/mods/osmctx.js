@@ -179,7 +179,8 @@
     M._api = { THREE, G0, clip, COL, mesh: (arr, c, poly) => { G = M._cur; return mesh(arr, c, poly); }, line: (arr, c, op) => { G = M._cur; return line(arr, c, op); }, flat: (list, c, y) => { G = M._cur; return flat(list, c, y); }, label: (t, x, z, y, cls) => M._addLab && M._addLab(t, x, z, y, cls, M._curId), ribbonTris, segs, ll: M.ll, ground: M.ground };
     const reg = ROOT.HZ_CTX_LAYERS = ROOT.HZ_CTX_LAYERS || []; const take = L => M._ready.then(() => { try { M.addLayer(L); } catch (e) { console.warn('osmctx 图层 ' + (L && L.id) + ' 失败', e); } });
     for (const L of reg.slice()) take(L); reg.push = function (...a) { for (const L of a) { Array.prototype.push.call(reg, L); take(L); } return reg.length; };
-        if (typeof document !== 'undefined' && M.base) fetch(M.base + 'ctx/layers.json').then(r => r.ok ? r.json() : { layers: [] }).then(j => { for (const e of j.layers || []) { if (e.on === false) M._defOff[e.id] = 1; const sc = document.createElement('script'); sc.src = M.base + 'ctx/' + e.file + (e.v ? '?v=' + e.v : ''); document.head.appendChild(sc); } }).catch(() => {});
+    if (typeof document !== 'undefined' && M.base && !window.__hzInfobar) { const sc = document.createElement('script'); sc.src = M.base + 'infobar.js?v=1'; document.head.appendChild(sc); }   // 信息栏收拢样机（宿主采纳前的预览挂法）
+    if (typeof document !== 'undefined' && M.base) fetch(M.base + 'ctx/layers.json').then(r => r.ok ? r.json() : { layers: [] }).then(j => { for (const e of j.layers || []) { if (e.on === false) M._defOff[e.id] = 1; const sc = document.createElement('script'); sc.src = M.base + 'ctx/' + e.file + (e.v ? '?v=' + e.v : ''); document.head.appendChild(sc); } }).catch(() => {});
     if (root) M._ui(root);
   };
 
