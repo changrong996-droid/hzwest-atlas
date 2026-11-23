@@ -265,7 +265,10 @@
 
   // 实物层记录（web/hzreal.js）若页面未加载，则按需补载一次（只读；已在 CLAIMS 请 hark-cr 在 hzwest.html 正式引入）
   if (G.document && G.document.createElement && !G.HZR && !G.__hzrLoading) { G.__hzrLoading = 1; const sc = G.document.createElement('script'); sc.src = 'hzreal.js'; (G.document.head || G.document.documentElement).appendChild(sc); }
-  (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push({ id: 'S-201', name: '承轨层', no: 'S-201-1', window: [T0, T1], big, draw, cam, stats, parts,
+  (G.HZ_SHEET_PLUGINS = G.HZ_SHEET_PLUGINS || []).push({ id: 'S-201', name: '承轨层', no: 'S-201-1', window: [T0, T1],
+    // 开场时刻（提案 docs/proposals/hark-fangyi-plugin-open.md）：冷启动无 t、或从别的图切进来时 t 落在窗口外，宿主若支持就停在这里而不是 0% 的窗口起点。
+    // t=650（2021-06-28）：承轨层已成、南场铺轨正酣，贯通 4/20 线，大数字 50%，三维与平面都最满。宿主未支持前此字段不生效。
+    open: 650, big, draw, cam, stats, parts,
     // D-33：图纸范围 = 本图 12 道承轨层工序（与 d.keys 同源）；6 m 夹层 mezzS/mezzN 图上未画，不算本图
     scope: () => ({ keys: data().keys.map(a => a.key) }),
     // D-32：铺轨时红点落在正在铺的那一段股道上（取铺设前沿），其它时段返回 null
