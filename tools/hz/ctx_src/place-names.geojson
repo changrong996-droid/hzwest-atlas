@@ -1,7 +1,216 @@
-{"type":"FeatureCollection","note":"坐标取自 OpenStreetMap（Nominatim 检索，2026-11-22）","features":[
-{"type":"Feature","properties":{"name":"西溪湿地","kind":"pin","height":160},"geometry":{"type":"Point","coordinates":[120.0632592,30.2673045]}},
-{"type":"Feature","properties":{"name":"闲林水库","kind":"pin","height":160},"geometry":{"type":"Point","coordinates":[119.9639367,30.1942248]}},
-{"type":"Feature","properties":{"name":"梦想小镇","kind":"pin","height":120},"geometry":{"type":"Point","coordinates":[120.0006942,30.2894880]}},
-{"type":"Feature","properties":{"name":"阿里巴巴西溪园区","kind":"pin","height":140},"geometry":{"type":"Point","coordinates":[120.0212235,30.2815002]}},
-{"type":"Feature","properties":{"name":"浙大紫金港","kind":"pin","height":140},"geometry":{"type":"Point","coordinates":[120.0753432,30.3050780]}}
-]}
+{
+ "type": "FeatureCollection",
+ "note": "坐标取自 OpenStreetMap（Nominatim 检索，2026-11-22；「未来科技城」是片区名，针落在标杆样本框中心，位置示意）",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "西溪湿地",
+    "kind": "pin",
+    "height": 160
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.0632592,
+     30.2673045
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "闲林水库",
+    "kind": "pin",
+    "height": 160
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.9639367,
+     30.1942248
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "梦想小镇",
+    "kind": "pin",
+    "height": 120
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.0006942,
+     30.289488
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "阿里巴巴西溪园区",
+    "kind": "pin",
+    "height": 140
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.0212235,
+     30.2815002
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "浙大紫金港",
+    "kind": "pin",
+    "height": 140
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.0753432,
+     30.305078
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "未来科技城",
+    "kind": "pin",
+    "height": 200
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.0337,
+     30.2914
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "仓前街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.00499,
+     30.28524
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "蒋村街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.05967,
+     30.28304
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "良渚街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.01414,
+     30.34878
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "五常街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.02997,
+     30.28631
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "闲林街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.01047,
+     30.27052
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "余杭街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.92643,
+     30.30132
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "三墩镇",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.04729,
+     30.32736
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "瓶窑镇",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.95095,
+     30.35554
+    ]
+   }
+  }
+ ]
+}

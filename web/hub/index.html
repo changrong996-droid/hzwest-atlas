@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hark-fangyi 交付</title>
+<style>
+body{margin:0;background:#f3efe7;font:15px/1.6 -apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif;color:#222}
+main{max-width:860px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#777;font-size:13px;margin-bottom:22px}
+.it{background:#fff;border:1px solid #e2dcd0;border-radius:10px;padding:14px 16px;margin:0 0 12px}
+.it.new{border-color:#b8322a;box-shadow:0 0 0 2px #b8322a22}
+.h{display:flex;gap:10px;align-items:baseline}.id{font:600 12px monospace;color:#b8322a}.d{color:#999;font-size:12px;margin-left:auto}
+.t{font-weight:600}.w{color:#555;margin:4px 0 8px}
+a.b{display:inline-block;margin:0 8px 4px 0;padding:5px 12px;border-radius:6px;background:#222;color:#fff;text-decoration:none;font-size:14px}
+a.b:hover{background:#b8322a}
+</style></head><body><main>
+<h1>杭州西站远景 · 交付整合页</h1><div class="sub">最新的在最上面。点按钮直接到那一样东西；浏览器「后退」回到这里，刷新看最新。</div>
+<div id="L">载入中…</div></main>
+<script>
+fetch('hub.json?'+Date.now()).then(r=>r.json()).then(j=>{const L=document.getElementById('L');L.innerHTML='';
+j.items.forEach((o,i)=>{const d=document.createElement('div');d.className='it'+(i?'':' new');
+d.innerHTML='<div class="h"><span class="id"></span><span class="t"></span><span class="d"></span></div><div class="w"></div><div class="ls"></div>';
+d.querySelector('.id').textContent=o.id;d.querySelector('.t').textContent=o.title;d.querySelector('.d').textContent=o.date;d.querySelector('.w').textContent=o.what;
+o.links.forEach(([n,h])=>{const a=document.createElement('a');a.className='b';a.textContent=n;a.href=h;d.querySelector('.ls').appendChild(a)});L.appendChild(d)})})
+.catch(e=>{document.getElementById('L').textContent='读不到 hub.json：'+e})
+</script></body></html>

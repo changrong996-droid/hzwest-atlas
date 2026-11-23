@@ -9,6 +9,10 @@
   const OPEN_FALLBACK = 1101;
   const openDay = () => (M._openDay != null ? M._openDay : (ROOT.HZ && ROOT.HZ.P && ROOT.HZ.P.OPEN != null ? ROOT.HZ.P.OPEN : OPEN_FALLBACK));
   const isNew = o => /合杭|3号线|19号线/.test(o.n || '');
+  // 枢纽施工红线（模型系，示意）：站房两侧落客匝道、东西大道站前段、云余西街、杭衢街等随站房一起建的路与楼，开通日前只画浅灰预留线。
+  //   红线外的城市何时出现另算（规划 T1，用公开历史影像日期旁证）。
+  const SITE = [-1450, 1450, -600, 600];
+  const inSite = o => { let x = 0, z = 0; for (const q of o.p) { x += q[0]; z += q[1]; } x /= o.p.length; z /= o.p.length; return x > SITE[0] && x < SITE[1] && z > SITE[2] && z < SITE[3]; };
   const COL = { paper: 0xefebe3, bReal: 0xe2ddd3, bFake: 0xece8df, edge: 0x2a2622, green: 0xd3e3c4, water: 0xbcd6e6, road: 0xffffff, road1: 0xfbfaf7, rail: 0x1a1a1a, pre: 0xc9c4ba, yard: 0x9a9a9a };
   const M = { id: 'osmctx', replaces: ['ctx.city', 'mtn'], stat: null, _g: null, _open: [], _pre: [], _labs: [], layers: [] };
 
@@ -18,9 +22,19 @@
     for (const o of list) for (let i = 1; i < o.p.length; i++) {
       const a = o.p[i - 1], b = o.p[i], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
       const ex = dx / L * w * 0.3, ez = dz / L * w * 0.3, nx = -dz / L * w / 2, nz = dx / L * w / 2;
-      const A = [a[0] - ex + nx, y, a[1] - ez + nz], B = [a[0] - ex - nx, y, a[1] - ez - nz], C = [b[0] + ex - nx, y, b[1] + ez - nz], Dd = [b[0] + ex + nx, y, b[1] + ez + nz];
+      const ya = y + (a[2] || 0), yb = y + (b[2] || 0);   // 第三个数 = 离地高（m，桥面），缺省贴地
+      const A = [a[0] - ex + nx, ya, a[1] - ez + nz], B = [a[0] - ex - nx, ya, a[1] - ez - nz], C = [b[0] + ex - nx, yb, b[1] + ez - nz], Dd = [b[0] + ex + nx, yb, b[1] + ez + nz];
       out.push(...A, ...B, ...C, ...A, ...C, ...Dd);
     }
+    return out;
+  }
+  function piers(list, w, step, out) {   // 桥：每 step m 一对墩线（地面到桥面）+ 两侧桥沿线；线段 xyz 平铺
+    for (const o of list) { let acc = step / 2;
+      for (let i = 1; i < o.p.length; i++) { const a = o.p[i - 1], b = o.p[i], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz); if (L < 0.5) continue;
+        const nx = -dz / L * w * 0.42, nz = dx / L * w * 0.42, ha = a[2] || 0, hb = b[2] || 0;
+        if (ha > 1 || hb > 1) out.push(a[0] + nx, ha, a[1] + nz, b[0] + nx, hb, b[1] + nz, a[0] - nx, ha, a[1] - nz, b[0] - nx, hb, b[1] - nz);
+        for (; acc < L; acc += step) { const f = acc / L, h = ha + (hb - ha) * f; if (h < 3) continue; const x = a[0] + dx * f, z = a[1] + dz * f; out.push(x + nx * 0.5, 0, z + nz * 0.5, x + nx * 0.5, h, z + nz * 0.5, x - nx * 0.5, 0, z - nz * 0.5, x - nx * 0.5, h, z - nz * 0.5); }
+        acc -= L; } }
     return out;
   }
   function segs(list, y, out) { for (const o of list) for (let i = 1; i < o.p.length; i++) { const a = o.p[i - 1], b = o.p[i]; out.push(a[0], y, a[1], b[0], y, b[1]); } return out; }
@@ -79,6 +93,15 @@
     return bad;
   };
   M._defOff = {};
+  // 外挂图层接管底座道路：L.cut = true 时，图层里 k=road 的折线附近（≤ 18 m）的底座路段不再画，由图层按自己的 from/to 显示
+  M.cutBase = function (polys) {
+    const D = ROOT.HZ_OSMCTX; if (!D || !M._roads) return 0; const C = 60, idx = new Map(), key = (i, j) => i + ',' + j;
+    for (const p of polys) for (let i = 1; i < p.length; i++) { const a = p[i - 1], b = p[i]; for (let x = Math.floor(Math.min(a[0], b[0]) / C) - 1; x <= Math.floor(Math.max(a[0], b[0]) / C) + 1; x++) for (let z = Math.floor(Math.min(a[1], b[1]) / C) - 1; z <= Math.floor(Math.max(a[1], b[1]) / C) + 1; z++) { const k = key(x, z); if (!idx.has(k)) idx.set(k, []); idx.get(k).push([a, b]); } }
+    const near = q => { const L = idx.get(key(Math.floor(q[0] / C), Math.floor(q[1] / C))); if (!L) return false; for (const [a, b] of L) { const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dz) / l2)), ex = a[0] + u * dx - q[0], ez = a[1] + u * dz - q[1]; if (ex * ex + ez * ez < 324) return true; } return false; };
+    const skip = M._skip = M._skip || new Set(); let n = 0;
+    for (const o of D.h) { if (skip.has(o) || o.w < 1) continue; let hit = 0; for (const q of o.p) if (near(q)) hit++; if (hit >= Math.max(2, Math.ceil(o.p.length * 0.6))) { skip.add(o); n++; } }
+    if (n) M._roads(skip); return n;
+  };
   M.addLayer = function (L) {
     const bad = M.validate(L); if (bad.length) { console.warn('osmctx 图层 ' + (L && L.id) + ' 不合格：' + bad.join('；')); return null; }
     const e = { id: L.id, name: L.name, src: L.src.text, by: L.by, from: L.from, to: L.to, L, on: L.on !== false && !M._defOff[L.id], items: [] };
@@ -90,7 +113,8 @@
       for (const k in byC) { const [kind, c, w, y] = k.split('|'), list = byC[k], col = new THREE.Color(c).getHex(), Y = y ? +y : 0, n0 = gg.children.length;
         if (kind === 'area') A.flat(list.filter(o => o.p.length >= 3).map(o => ({ p: o.p.length && (o.p[0][0] !== o.p[o.p.length - 1][0] || o.p[0][1] !== o.p[o.p.length - 1][1]) ? o.p.concat([o.p[0]]) : o.p })), col, Y || 0.2);
         else if (kind === 'line') A.line(segs(list, Y || 0.3, []), col, 1);
-        else if (kind === 'road') A.mesh(ribbonTris(list, +w || 8, Y || 0.27, []), col);
+        else if (kind === 'road') { A.mesh(ribbonTris(list, +w || 8, Y || 0.27, []), col);
+          const hi = list.filter(o => o.p.some(q => q[2] > 0)); if (hi.length) A.line(piers(hi, +w || 8, 32, []), 0x8a847a, 0.9); }
         else if (kind === 'bldg') { const arr = [], ed = []; for (const o of list) { const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1]))), gq = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed();
             if (Y) gq.translate(0, Y, 0); const a = gq.attributes.position.array; for (let i = 0; i < a.length; i++) arr.push(a[i]); const eg = new THREE.EdgesGeometry(gq, 30), ea = eg.attributes.position.array; for (let i = 0; i < ea.length; i++) ed.push(ea[i]); gq.dispose(); eg.dispose(); }
           A.mesh(arr, col, 1); A.line(ed, COL.edge, 0.5); }
@@ -98,6 +122,7 @@
           if (kind === 'pin') { const pinY = M.ground(o.p[0], o.p[1]); A.line([o.p[0], pinY, o.p[1], o.p[0], pinY + (o.h || 120), o.p[1]], col, 0.9); }
             A.label(o.n, o.p[0], o.p[1], M.ground(o.p[0], o.p[1]) + yy, kind === 'pin' ? 'p' : 'l'); }
         if (kind === 'area' || kind === 'line' || kind === 'road' || kind === 'bldg') for (const ch of gg.children.slice(n0)) M.drape(ch.geometry, kind === 'bldg' ? 'base' : 'each'); } }
+    if (L.cut) e.cut = M.cutBase((L.items || []).filter(o => o.k === 'road').map(o => o.p));
     M._cur = g; if (typeof L.build === 'function') { try { L.build(Object.assign({}, A, { group: g, layer: L })); } catch (err) { console.warn('osmctx 图层 ' + L.id + ' build 失败', err); } }
     g.visible = e.on; M._lastT = null; if (M._uiAdd) M._uiAdd(e); return e;
   };
@@ -133,9 +158,17 @@
     const OSM = '© OpenStreetMap 贡献者（ODbL 1.0）';
     sub('osm.water', '水体与绿地', OSM); flat(D.g, COL.green, 0.12); flat(D.w.filter(o => o.a), COL.water, 0.18);
     line(segs(D.w.filter(o => !o.a), 0.2, []), 0x8fb7d0, 1);
-    sub('osm.road', '道路', OSM);
-    mesh(ribbonTris(D.h.filter(o => o.w == 3), 22, 0.25, []), COL.road); mesh(ribbonTris(D.h.filter(o => o.w == 2), 14, 0.24, []), COL.road); mesh(ribbonTris(D.h.filter(o => o.w == 1), 9, 0.23, []), COL.road1);
-    line(segs(D.h.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1); line(segs(D.h.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8);
+    const GR = sub('osm.road', '道路', OSM);
+    // 底座路网；skip 为被外挂图层接管的路（cut，见 M.cutBase），重建时整组换掉
+    M._roads = skip => { const mine = []; G = GR; for (const ch of GR.children.slice()) { GR.remove(ch); ch.geometry.dispose(); }
+      M._open = M._open.filter(m => !M._roadMs || !M._roadMs.includes(m)); M._pre = M._pre.filter(m => !M._roadMs || !M._roadMs.includes(m));
+      const Hall = skip ? D.h.filter(o => !skip.has(o)) : D.h;
+      for (const nw of [false, true]) { const H = Hall.filter(o => inSite(o) === nw), ms = [];
+        ms.push(mesh(ribbonTris(H.filter(o => o.w == 3), 22, 0.25, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 2), 14, 0.24, []), COL.road), mesh(ribbonTris(H.filter(o => o.w == 1), 9, 0.23, []), COL.road1));
+        ms.push(line(segs(H.filter(o => o.w == 0), 0.22, []), 0xcfc9bd, 1), line(segs(H.filter(o => o.w >= 2), 0.26, []), 0xb9b2a4, 0.8));
+        mine.push(...ms); if (nw) { M._open.push(...ms); const pl = line(segs(H.filter(o => o.w >= 1), 0.22, []), COL.pre, 0.55); M._pre.push(pl); mine.push(pl); } }
+      M._roadMs = mine; lastOpen = null; G = G0; };
+    M._roads(null);
     // 铁路与地铁
     sub('osm.rail', '铁路与地铁', OSM); const rs = D.r;
     line(segs(rs.filter(o => !o.m && o.y), 0.4, []), COL.yard, 1);
@@ -147,11 +180,12 @@
     line(segs(rs.filter(o => o.x), 0.5, []), 0x8c8c8c, 0.8);
     line(segs(D.ug, 0.3, []), 0x2f7bd0, 0.9);
     // 建筑：纸白体块 + 墨线轮廓（不受光，墨线 / 实景两遍渲染一致）；实高与默认高分两批合并
-    sub('osm.bldg', '建筑', OSM); const bArr = { r: [], f: [] }, eArr = [];
-    for (const o of D.b) { if (o.p.length < 4) continue; const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1])));
-      const g = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed(), a = g.attributes.position.array, dst = o.r ? bArr.r : bArr.f; for (let i = 0; i < a.length; i++) dst.push(a[i]);
-      const e = new THREE.EdgesGeometry(g, 30), ea = e.attributes.position.array; for (let i = 0; i < ea.length; i++) eArr.push(ea[i]); g.dispose(); e.dispose(); }
+    sub('osm.bldg', '建筑', OSM); const bArr = { r: [], f: [], n: [] }, eArr = [], enArr = [];
+    for (const o of D.b) { if (o.p.length < 4) continue; const sh = new THREE.Shape(o.p.map(p => new THREE.Vector2(p[0], -p[1]))), nw = inSite(o);
+      const g = new THREE.ExtrudeGeometry(sh, { depth: o.h, bevelEnabled: false }).rotateX(-Math.PI / 2).toNonIndexed(), a = g.attributes.position.array, dst = nw ? bArr.n : o.r ? bArr.r : bArr.f; for (let i = 0; i < a.length; i++) dst.push(a[i]);
+      const e = new THREE.EdgesGeometry(g, 30), ea = e.attributes.position.array, ed = nw ? enArr : eArr; for (let i = 0; i < ea.length; i++) ed.push(ea[i]); g.dispose(); e.dispose(); }
     mesh(bArr.r, COL.bReal, 1); mesh(bArr.f, COL.bFake, 1); line(eArr, COL.edge, 0.5);
+    M._open.push(mesh(bArr.n, COL.bReal, 1), line(enArr, COL.edge, 0.5));   // 红线内的楼开通后才出现
     // 地形（异步解压）
     const GT = sub('dem', '地形', 'Copernicus DEM GLO-30'); G = G0;
     let demDone; M._ready = new Promise(r => { demDone = r; }); setTimeout(() => demDone(), 8000);
@@ -174,6 +208,7 @@
     M._api = { THREE, G0, clip, COL, mesh: (arr, c, poly) => { G = M._cur; return mesh(arr, c, poly); }, line: (arr, c, op) => { G = M._cur; return line(arr, c, op); }, flat: (list, c, y) => { G = M._cur; return flat(list, c, y); }, label: (t, x, z, y, cls) => M._addLab && M._addLab(t, x, z, y, cls, M._curId), ribbonTris, segs, ll: M.ll, ground: M.ground };
     const reg = ROOT.HZ_CTX_LAYERS = ROOT.HZ_CTX_LAYERS || []; const take = L => M._ready.then(() => { try { M.addLayer(L); } catch (e) { console.warn('osmctx 图层 ' + (L && L.id) + ' 失败', e); } });
     for (const L of reg.slice()) take(L); reg.push = function (...a) { for (const L of a) { Array.prototype.push.call(reg, L); take(L); } return reg.length; };
+    if (typeof document !== 'undefined' && M.base && !window.__hzInfobar) { const sc = document.createElement('script'); sc.src = M.base + 'infobar.js?v=1'; document.head.appendChild(sc); }   // 信息栏收拢样机（宿主采纳前的预览挂法）
     if (typeof document !== 'undefined' && M.base) fetch(M.base + 'ctx/layers.json').then(r => r.ok ? r.json() : { layers: [] }).then(j => { for (const e of j.layers || []) { if (e.on === false) M._defOff[e.id] = 1; const sc = document.createElement('script'); sc.src = M.base + 'ctx/' + e.file + (e.v ? '?v=' + e.v : ''); document.head.appendChild(sc); } }).catch(() => {});
     if (root) M._ui(root);
   };
