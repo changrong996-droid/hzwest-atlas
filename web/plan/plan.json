@@ -472,14 +472,14 @@
     400
    ],
    "owner": "wk",
-   "status": "todo",
+   "status": "done",
    "title": "疏解高架立体化",
    "what": "落客平台匝道、疏解高架现在是贴地白带；按 OSM bridge/layer 与公开资料抬成有高度的桥面加墩柱，墨线语言。",
    "data": "OSM + 公开报道",
    "deps": [
     "R1"
    ],
-   "out": "图层 road.hub（≤ 300 KB）"
+   "out": "road.hub 桥段带桥面高与墩线（docs/ctx-roads.md「立体化」）"
   },
   {
    "id": "R3",
