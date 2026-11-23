@@ -10,12 +10,8 @@ const src = fs.readFileSync(path.join(root, 'web/hzview.js'), 'utf8');
 const fail = m => { console.log('FAIL check_linkage: ' + m); process.exit(1); };
 const near = (a, b, e) => Math.abs(a - b) <= (e || 1e-9);
 
-// 0. 截取 <plugLink> 段在 vm 里求值
-const m = /\/\/ <plugLink>[\s\S]*?\n([\s\S]*?)\/\/ <\/plugLink>/.exec(src);
-if (!m) fail('hzview.js 缺少 // <plugLink> … // </plugLink> 段');
-const ctx = vm.createContext({ URLSearchParams, console });
-let PL;
-try { PL = vm.runInContext('(() => {\n' + m[1] + '\nreturn PL; })()', ctx, { filename: 'hzview.js#plugLink' }); } catch (e) { fail('plugLink 段求值失败 ' + (e && e.message)); }
+// 0. 直接加载独立纯函数核 web/core/pluglink.js（不再正则截取 hzview.js）
+const PL = require('../../web/core/pluglink.js');
 for (const k of ['apply', 'fwd', 'inv', 'clamp', 'zoomAt', 'centerOn', 'center', 'hitPart', 'pickBox', 'safeParts', 'byId', 'parseHash', 'hashWith', 'modsCall']) if (typeof PL[k] !== 'function') fail('PL.' + k + ' 不是函数');
 
 // 假插件：两个 part（一小一大，小的压在大的上面），parts 返回两个盒

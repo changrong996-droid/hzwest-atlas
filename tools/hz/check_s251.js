@@ -55,9 +55,7 @@ for (const r of RC) { if (!Number.isFinite(r.dev)) fail(`公开对照 ${r.date} 
 const devTxt = RC.map(r => r.date + '=' + (r.dev > 0 ? '+' : '') + r.dev + 'd').join(' ');
 // ---- D-37 拼装面基座：胎架底 = 候车层楼面顶 P.floorTop；胎架下方楼板已建且在本图范围（宿主同款 PL.scopeMask，keys 声明）；楼板的柱也在范围 ----
 let baseTxt = '', baseTxt0 = '';
-{ const fs = require('fs'), path = require('path'), vm = require('vm'), src = fs.readFileSync(path.join(__dirname, '../../web/hzview.js'), 'utf8');
-  const pm = /\/\/ <plugLink>[\s\S]*?\n([\s\S]*?)\/\/ <\/plugLink>/.exec(src); if (!pm) fail('hzview.js 缺 <plugLink> 段');
-  const PL = vm.runInContext('(() => {\n' + pm[1] + '\nreturn PL; })()', vm.createContext({ URLSearchParams, console }));
+{ const PL = require('../../web/core/pluglink.js');
   if (!P.scope || !Array.isArray(P.scope.keys)) fail('S-251 未声明 scope.keys（D-37）');
   const its = [], iof = new Map(); for (const a of HZ.acts) { if (a.kind === 'untemp' || !a.parts.length) continue; for (const p of a.parts) { if (!iof.has(p)) iof.set(p, its.length); its.push({ key: a.key, min: p.geo.min, max: p.geo.max, st: p.st, rm: p.rm, p }); } }
   const [w0, w1] = P.window, parts = []; for (let i = 0; i <= 6; i++) for (const q of PL.safeParts(P, w0 + (w1 - w0) * i / 6, { w: 560, h: 420 })) parts.push(q);
