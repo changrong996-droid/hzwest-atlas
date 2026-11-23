@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>外接道路工期（R1）</title>
+<style>
+body{margin:0;font:13px/1.45 system-ui,"Noto Sans CJK SC",sans-serif;background:#f6f5f2;color:#222}
+#top{display:flex;gap:12px;align-items:center;padding:8px 12px;background:#fff;border-bottom:1px solid #ddd;flex-wrap:wrap}
+#top b{font-size:15px} #t{flex:1;min-width:240px} #lab{min-width:190px;font-variant-numeric:tabular-nums}
+#wrap{display:flex;flex-wrap:wrap}
+svg{flex:1 1 640px;height:calc(100vh - 50px);min-height:420px;background:#eef0ec}
+#side{flex:0 0 380px;max-height:calc(100vh - 50px);overflow:auto;padding:8px 12px;box-sizing:border-box}
+table{border-collapse:collapse;width:100%} td{padding:4px 4px;border-bottom:1px solid #e3e3e3;vertical-align:top}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px}
+tr.hi{background:#fff6d8} .st{font-size:11px;color:#666} a{color:#36c}
+.k{display:flex;gap:10px;margin:6px 0 10px;font-size:12px;color:#444}
+</style>
+<div id="top"><b>外接道路工期</b><input id="t" type="range" min="-480" max="1460" value="1101"><span id="lab"></span>
+<button id="go">▶</button></div>
+<div id="wrap"><svg id="m"></svg><div id="side">
+<div class="k"><span><i class="sw" style="background:#ccc"></i> 未开工</span><span><i class="sw" style="background:repeating-linear-gradient(45deg,#e8a33c 0 3px,#fff 3px 6px)"></i> 在建</span><span><i class="sw" style="background:#2a7"></i> 已通车（各工程本色）</span></div>
+<table id="tb"></table>
+<p class="st">t 为距杭州西站开工（2019-09-17）的天数，西站开通 t=1101。日期取自公开报道，带 ≈ 的是估计。灰色底图与路形来自 OpenStreetMap（ODbL），为 2026 年现状；红框为站房施工红线。</p>
+</div></div>
+<script>
+const C=['#1f77b4','#17becf','#9467bd','#d62728','#8c564b','#2ca02c','#e377c2','#ff7f0e','#bcbd22','#444'];
+const T0=new Date('2019-09-17');
+const ds=t=>{const d=new Date(T0.getTime()+t*864e5);return d.toISOString().slice(0,10)};
+fetch('roads.json').then(r=>r.json()).then(D=>{
+ const svg=document.getElementById('m'),NS='http://www.w3.org/2000/svg';
+ const X0=-7000,X1=9000,Z0=-5200,Z1=4800;svg.setAttribute('viewBox',`${X0} ${Z0} ${X1-X0} ${Z1-Z0}`);
+ const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e};
+ const pd=l=>'M'+l.map(p=>p.join(',')).join('L');
+ const g0=el('g',{fill:'none',stroke:'#c9ccc5','stroke-width':22});D.base.forEach(l=>g0.appendChild(el('path',{d:pd(l)})));svg.appendChild(g0);
+ const s=D.site;svg.appendChild(el('rect',{x:s[0],y:s[2],width:s[1]-s[0],height:s[3]-s[2],fill:'#fff3',stroke:'#c33','stroke-width':16,'stroke-dasharray':'60 40'}));
+ const st=el('text',{x:0,y:30,'text-anchor':'middle','font-size':260,fill:'#c33',opacity:.8});st.textContent='杭州西站';svg.appendChild(st);
+ const defs=el('defs',{});defs.innerHTML='<pattern id="hz" width="80" height="80" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="40" height="80" fill="#e8a33c"/></pattern>';svg.appendChild(defs);
+ const G=D.projects.map((p,i)=>{const g=el('g',{fill:'none','stroke-width':46,'stroke-linecap':'round'});p.lines.forEach(l=>g.appendChild(el('path',{d:pd(l)})));g.dataset.i=i;svg.appendChild(g);return g});
+ const tb=document.getElementById('tb');
+ tb.innerHTML='<tr><td></td><td><b>工程</b></td><td><b>开工</b></td><td><b>通车</b></td></tr>'+D.projects.map((p,i)=>`<tr id="r${i}"><td><i class="sw" style="background:${C[i]}"></i></td><td>${p.id} ${p.name}<div class="st">${p.remark||''}${(p.ms||[]).map(m=>' · '+m[0]+' '+m[2]).join('')} ${(p.src||[]).map((u,k)=>`<a href="${u}" target="_blank">报道${k+1}</a>`).join(' ')}</div></td><td>${p.start?(p.start_est?'≈':'')+p.start.slice(0,7)+'<div class="st">t='+p.t_start+'</div>':'待查'}</td><td>${(p.open_est?'≤':'')+p.open+'<div class="st">t='+p.t_open+'</div>'}</td></tr>`).join('');
+ const T=document.getElementById('t'),L=document.getElementById('lab');
+ function up(){const t=+T.value;L.textContent=`t=${t}  ${ds(t)}${t>=1101?'  西站已开通':''}`;
+  D.projects.forEach((p,i)=>{const g=G[i],ts=p.t_start==null?-1e9:p.t_start;let c,o=1,w=46;
+   if(t>=p.t_open){c=C[i]}else if(t>=ts){c='url(#hz)';w=40}else{c='#bbb';o=.5;w=24}
+   g.setAttribute('stroke',c);g.setAttribute('opacity',o);g.setAttribute('stroke-width',w);
+   document.getElementById('r'+i).className=(t>=ts&&t<p.t_open)?'hi':''})}
+ T.oninput=up;up();
+ let timer;document.getElementById('go').onclick=e=>{if(timer){clearInterval(timer);timer=0;e.target.textContent='▶';return}
+  if(+T.value>=1460)T.value=-480;e.target.textContent='❚❚';timer=setInterval(()=>{T.value=+T.value+8;up();if(+T.value>=1460){clearInterval(timer);timer=0;e.target.textContent='▶'}},40)};
+});
+</script></html>

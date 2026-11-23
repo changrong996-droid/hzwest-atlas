@@ -454,14 +454,14 @@
     -200
    ],
    "owner": "wk",
-   "status": "next",
+   "status": "done",
    "title": "外接道路清单与工期",
    "what": "把随枢纽建的外接路逐条列出：站西 I/II 标疏解高架、站东进出通道、运溪高架、留石高架西延、235 国道先行段、文一西路隧道、良睦路连接线等；每条记开工、贯通、开通日期并附公开报道链接，换算成工期 t（t=0 为 2019-09-17 开工，t=1101 为开通）。",
    "data": "政府与媒体公开报道（只存链接）",
    "deps": [
     "A2"
    ],
-   "out": "tools/hz/ctx_src/roads/roads.json + 说明"
+   "out": "web/plan/roads.html（时间轴预览）+ roads.json；源与归类规则 tools/hz/ctx_src/roads/"
   },
   {
    "id": "R2",
@@ -490,7 +490,7 @@
     -900
    ],
    "owner": "wk",
-   "status": "todo",
+   "status": "next",
    "title": "按路工期显隐",
    "what": "每条外接路按自己的开工—开通窗口显示：未开工不画、在建画施工态、通车后上色；替换现在一刀切的施工红线框。",
    "data": "R1 的工期表",

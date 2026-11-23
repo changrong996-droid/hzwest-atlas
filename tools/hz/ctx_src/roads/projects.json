@@ -1,0 +1,150 @@
+{
+ "t0": "2019-09-17",
+ "note": "外接道路工期表（R1）。t 为距西站开工日天数；start/open 为公开报道日期；est=true 表示估计值。规则见 mk_roads.py。",
+ "projects": [
+  {
+   "id": "P01",
+   "name": "运溪高架路（东西向快速路）",
+   "owner": "余杭、临平两区交通部门（中交投资）",
+   "start": "2018-06-01",
+   "start_est": true,
+   "open": "2021-08-01",
+   "milestones": [
+    [
+     "2021-01",
+     "上跨湖杭铁路节点完成"
+    ]
+   ],
+   "src": [
+    "https://hznews.hangzhou.com.cn/chengshi/content/2021-08/01/content_8021924_0.htm"
+   ]
+  },
+  {
+   "id": "P02",
+   "name": "运溪地面路（东西大道/320国道地面段）",
+   "owner": "余杭区",
+   "start": null,
+   "open": "2022-08-31",
+   "milestones": [],
+   "src": [
+    "https://www.hzzx.gov.cn/cshz/content/2022-09/01/content_8343196.htm"
+   ],
+   "remark": "文二西路至站城南街段双向通车；开工日未查到，按与 P01 同期显示"
+  },
+  {
+   "id": "P03",
+   "name": "留石高架（蒋墩路—绕城）+三墩互通改建",
+   "owner": "杭州交投",
+   "start": "2020-06-01",
+   "start_est": true,
+   "open": "2022-06-28",
+   "milestones": [],
+   "src": [
+    "https://www.hangzhou.gov.cn/art/2022/7/7/art_812262_59060914.html",
+    "https://cxjw.hangzhou.gov.cn/art/2021/1/18/art_1692516_58914561.html"
+   ],
+   "remark": "报道只说 2020 年开工，月份待查"
+  },
+  {
+   "id": "P04",
+   "name": "235国道先行段（东西大道以东 + 320国道互通 + 西站进出匝道）",
+   "owner": "杭州西站枢纽开发公司 / 杭州交投",
+   "start": "2021-01-26",
+   "open": "2022-07-31",
+   "milestones": [],
+   "src": [
+    "https://www.hangzhou.gov.cn/art/2023/8/26/art_812262_59086699.html",
+    "https://www.hangzhou.gov.cn/art/2022/6/27/art_812269_59060012.html"
+   ],
+   "remark": "320国道互通 8 条匝道中 4 条 2023-08-25 才开通，图上整座互通按先行段计（OSM 分不出哪 4 条）"
+  },
+  {
+   "id": "P05",
+   "name": "235国道后续段 / 留石高架西延（东西大道以西、两山隧道余下匝道）",
+   "owner": "杭州交投",
+   "start": "2021-01-26",
+   "open": "2023-08-25",
+   "milestones": [],
+   "src": [
+    "https://hznews.hangzhou.com.cn/chengshi/content/2023-08/25/content_8607672.htm",
+    "https://hznews.hangzhou.com.cn/chengshi/content/2023-08/25/content_8607115.htm"
+   ],
+   "remark": "开通晚于西站 337 天，见 R4"
+  },
+  {
+   "id": "P06",
+   "name": "文一西路隧道（荆长大道—东西大道）",
+   "owner": "杭州市建委",
+   "start": null,
+   "open": "2022-06-30",
+   "milestones": [],
+   "src": [
+    "https://www.hangzhou.gov.cn/art/2022/7/7/art_812262_59060914.html"
+   ],
+   "remark": "开工日待查，暂按 t0 前已在建显示"
+  },
+  {
+   "id": "P07",
+   "name": "站西疏解高架（I 标、II 标）",
+   "owner": "西站枢纽开发公司",
+   "start": "2020-09-30",
+   "open": "2022-09-22",
+   "milestones": [
+    [
+     "2020-12",
+     "首联现浇箱梁"
+    ],
+    [
+     "2021-12-14",
+     "II 标贯通"
+    ],
+    [
+     "2022-01-08",
+     "I 标贯通"
+    ]
+   ],
+   "src": [
+    "https://zjnews.zjol.com.cn/zjnews/hznews/202201/t20220108_23615791.shtml",
+    "https://z.hangzhou.com.cn/2021/jd100zn/content/content_8119421.html"
+   ]
+  },
+  {
+   "id": "P08",
+   "name": "站东进出通道 + 良睦路高架连接线 + 东落客平台",
+   "owner": "西站枢纽开发公司",
+   "start": "2021-07-20",
+   "start_est": true,
+   "open": "2022-11-12",
+   "open_est": true,
+   "milestones": [],
+   "src": [
+    "https://hznews.hangzhou.com.cn/chengshi/content/2022-09/22/content_8359447.htm",
+    "https://hznews.hangzhou.com.cn/chengshi/content/2022-11/12/content_8397938.htm"
+   ],
+   "remark": "开站当天东平台和东高架未开通；11-12 交警指南已列入。开工取规划许可日"
+  },
+  {
+   "id": "P09",
+   "name": "良睦路北延（235国道二标南侧便道）",
+   "owner": "杭州萧宏集团",
+   "start": null,
+   "open": "2022-05-31",
+   "open_est": true,
+   "milestones": [],
+   "src": [
+    "https://pic.hangzhou.com.cn/hzyx/content/content_8240838_2.html"
+   ],
+   "remark": "4 月底报道 5 月底完工，按计划日"
+  },
+  {
+   "id": "P10",
+   "name": "站区配套地面路（云余/云彤/访云街等）",
+   "owner": "随站房",
+   "start": null,
+   "open": "2022-09-22",
+   "milestones": [],
+   "src": [],
+   "remark": "沿用施工红线规则"
+  }
+ ]
+}
