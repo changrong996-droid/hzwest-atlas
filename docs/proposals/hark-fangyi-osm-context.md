@@ -24,6 +24,9 @@
 5. **和工期联动**：合杭高铁、地铁 3 / 19 号线开通日（第 1101 天，2022-09-22）前画浅灰预留线，之后上色；其余城市为 2026-11 现状（OSM 没有建成年份，不硬编）。
 6. **标注**：只挂地铁站和 60 m 以上楼名，镜头距原点 > 900 m 才显示，近景不干扰宿主引线。
 
+## 图层机制（之后谁都能补）
+底座之外的内容一律走图层：`web/mods/ctx/<id>.js` + 清单 `web/mods/ctx/layers.json`，osmctx 动态加载、按工期显隐、进右上「远景图层」开关。工具 `tools/hz/ctxlayer.py`（GeoJSON → 图层），检查 `tools/hz/check_ctxlayers.js`（字段、许可、范围、体积、漏登记）。底座自己也拆成 osm.water / osm.road / osm.rail / osm.bldg / dem 五层可开关。示范图层 `place.names`（西溪湿地、闲林水库、梦想小镇等 5 处竖针，坐标取自 OSM）。规则与格式见 `docs/ctx-layers.md`。加图层不需要宿主再改任何文件。
+
 ## 接入要宿主做的（接口请求，等 hark-cr 定）
 1. `web/hzwest.html` 在 `mods/tour.js` 之后、`hzview.js` 之前加两行：`mods/osmctx-data.js?v=1`、`mods/osmctx.js?v=1`。
 2. **模块声明替换**：`HZ_MODS` 建完后，若有模块声明 `replaces` 含 `'ctx.city'`，把 `CTX.city` / `CTX.lines` 从 `LITONLY` / `INKONLY` 摘掉并隐藏；含 `'mtn'` 同理摘 `MTN`。本地测试补丁约 1 行，放在 `function modOff` 前：

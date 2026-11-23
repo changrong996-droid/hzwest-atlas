@@ -27,3 +27,7 @@
 - 单个图层文件 < 300 KB，全部图层 < 1 MB；太大用 `--simplify` 抽稀或拆层。`web/mods/ctx/` 下的 .js 都要登记。
 - 不动宿主几何：站房、股道、云门归宿主模型；图层只画站外环境。
 - 加载：osmctx 读 `ctx/layers.json` 动态加载，所以**加图层不用改 hzwest.html**；地形解压后才建图层，竖针高度才对。
+
+## 接入要宿主做的两件小事（hark-fangyi 2026-11-22，红档共用文件，等集成人）
+1. `web/hzwest.html`：`mods/osmctx.js?v=1` 改 `?v=2`（osmctx.js 已加图层机制，避免浏览器用旧缓存）。
+2. `tools/hz/check_all.js`：清单加 `check_ctxlayers.js`。
