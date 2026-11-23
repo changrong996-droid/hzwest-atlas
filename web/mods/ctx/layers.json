@@ -1,0 +1,17 @@
+{
+ "note": "远景图层清单：osmctx 按序加载。规则见 docs/ctx-layers.md",
+ "layers": [
+  {
+   "id": "place.names",
+   "file": "place-names.js",
+   "by": "hark-fangyi",
+   "v": 1
+  },
+  {
+   "id": "water.far",
+   "file": "water-far.js",
+   "by": "hark-fangyi",
+   "v": 1
+  }
+ ]
+}
