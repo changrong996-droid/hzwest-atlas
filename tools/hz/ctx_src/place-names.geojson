@@ -121,6 +121,96 @@
      30.28304
     ]
    }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "良渚街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.01414,
+     30.34878
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "五常街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.02997,
+     30.28631
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "闲林街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.01047,
+     30.27052
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "余杭街道",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.92643,
+     30.30132
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "三墩镇",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     120.04729,
+     30.32736
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "name": "瓶窑镇",
+    "kind": "pin",
+    "height": 170
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     119.95095,
+     30.35554
+    ]
+   }
   }
  ]
 }
