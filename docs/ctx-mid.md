@@ -38,3 +38,12 @@
 
 ## 复现
 `tools/hz/ctx_src/bench/parse.py` → `mk_fsc.py` → `tools/hz/ctxlayer.py`（参数见各图层文件头）。
+
+## 铺开（B1–B3，2026-11-23）
+- 范围：规划 Z2（x −8000…9000、z −7000…4000）减去底座城区框 Z1（x ±3300、z ±2300）。OSM api 0.6 原始块 75 块（站周 45 + 西、北补 30）。
+- `bldg.mid` 换成紧凑编码（`q.r` 实高 / `q.f` 估高，每栋 `[高, 点数, dx, dz…]` 差分整数）+ `build(api)`，取代样本的逐条 items；轮廓抽稀 0.8 m。约 4000 栋（实高 208），172 KB。
+- 分块标定：4 km 方格内有层数的住宅 ≥ 15 栋时用本格中位层数 × 3.2 m，否则用上表；本次只有两格够数（10 层、15 层）。
+- `road.mid`：motorway…tertiary，隧道不画，与 road.hub（外接道路）同位的段不重画，抽稀 1.5 m，约 2200 段，216 KB。
+- `place.names`：加 OSM place=suburb/town 节点里落在 Z2 的（仓前街道、蒋村街道）。五常、余杭老城、中泰在下载的 OSM 里没有片区点，未加，不硬凑坐标。
+- 未做：超过 8 km 合并街区块（本次体量不需要）；开工前是否存在（T1）。
+- 复现：`tools/hz/ctx_src/mid/parse.py`（在原始块目录跑）→ `mk_mid.py osm.pkl` → `ctxlayer.py` 重出 place-names.js。

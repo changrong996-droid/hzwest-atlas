@@ -5,7 +5,7 @@
    "id": "place.names",
    "file": "place-names.js",
    "by": "hark-fangyi",
-   "v": 2
+   "v": 4
   },
   {
    "id": "water.far",
@@ -17,13 +17,13 @@
    "id": "bldg.mid",
    "file": "bldg-mid.js",
    "by": "hark-fangyi",
-   "v": 1
+   "v": 2
   },
   {
    "id": "road.mid",
    "file": "road-mid.js",
    "by": "hark-fangyi",
-   "v": 1
+   "v": 2
   },
   {
    "id": "road.hub",
