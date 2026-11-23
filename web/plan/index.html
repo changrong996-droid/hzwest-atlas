@@ -22,10 +22,10 @@ main{max-width:1500px;margin:auto;padding:10px 28px 40px;display:grid;grid-templ
 .mapbox{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .mapbox svg{display:block;width:100%;height:auto}
 .mapnote{font-size:12px;color:var(--mute);padding:6px 12px;border-top:1px solid var(--line)}
-.zl{font:600 15px "Noto Sans SC",sans-serif;fill:#3b362f;paint-order:stroke;stroke:#f4efe6;stroke-width:4px}
-.zd{font:12px "Noto Sans SC",sans-serif;fill:#6a6258;paint-order:stroke;stroke:#f4efe6;stroke-width:3px}
+.zl{font:600 20px "Noto Sans SC",sans-serif;fill:#3b362f;paint-order:stroke;stroke:#f4efe6;stroke-width:4px}
+.zd{font:16px "Noto Sans SC",sans-serif;fill:#6a6258;paint-order:stroke;stroke:#f4efe6;stroke-width:3px}
 .mk{cursor:pointer}
-.mk text{font:600 12px ui-monospace,Menlo,monospace;fill:#fff;pointer-events:none}
+.mk text{font:600 14px ui-monospace,Menlo,monospace;fill:#fff;pointer-events:none}
 .mk.hl circle{stroke:#000;stroke-width:3}
 .mk.dim{opacity:.18}
 .side h2,.full h2{font:600 17px "Noto Serif SC",serif;margin:0 0 8px}
@@ -101,18 +101,19 @@ fetch('plan.json', {cache: 'no-store'}).then(r => r.json()).then(P => {
     const [a, b, c, d] = z.rect, col = zcol[z.id] || '#555';
     el('rect', {x: X(a), y: Y(d), width: X(c) - X(a), height: Y(b) - Y(d), fill: z.id === 'Z0' ? 'rgba(31,29,26,.15)' : 'none', stroke: col, 'stroke-width': z.id === 'Z3' ? 2 : 2.5,
       'stroke-dasharray': z.style === 'dash' ? '10 6' : z.style === 'dot' ? '2 6' : 'none', 'stroke-linecap': 'round'}, svg);
-    if (z.id !== 'Z0') el('text', {x: X(a) + 8, y: z.id === 'Z3+' ? Y(b) - 10 : Y(d) + 20, class: 'zl', fill: col}, svg).textContent = z.id + ' ' + z.name;
+    if (z.id !== 'Z0') el('text', {x: X(a) + 8, y: z.id === 'Z3+' ? Y(b) - 10 : z.id === 'Z1' ? Y(d) - 8 : Y(d) + 24, class: 'zl', fill: col}, svg).textContent = z.id + ' ' + z.name;
   }
   // 地名参考
   for (const [n, x, y] of [['西湖', 15513, -6024], ['闲林水库', -1797, -11761], ['西溪湿地', 7814, -3803], ['杭州西站', 0, 0]])
     el('text', {x: X(x) + (n === '西湖' ? -40 : 14), y: Y(y) + (n === '杭州西站' ? -14 : 30), class: 'zd'}, svg).textContent = n;
+  if (P.global) el('text', {x: X(P.global.at[0]) - 40, y: Y(P.global.at[1]), class: 'zd'}, svg).textContent = P.global.text;
   // 工作包
   const O = P.owners, mk = {}, rows = {};
   for (const it of P.items) {
     const g = el('g', {class: 'mk', 'data-id': it.id, transform: `translate(${X(it.at[0])},${Y(it.at[1])})`}, svg);
     const col = O[it.owner].color;
-    el('circle', {r: 15, fill: it.status === 'todo' ? '#fbf8f2' : col, stroke: col, 'stroke-width': it.status === 'next' ? 5 : 2.5}, g);
-    const tx = el('text', {'text-anchor': 'middle', y: 4}, g); tx.textContent = it.id; if (it.status === 'todo') tx.style.fill = col;
+    el('circle', {r: 19, fill: it.status === 'todo' ? '#fbf8f2' : col, stroke: col, 'stroke-width': it.status === 'next' ? 5 : 2.5}, g);
+    const tx = el('text', {'text-anchor': 'middle', y: 5}, g); tx.textContent = it.id; if (it.status === 'todo') tx.style.fill = col;
     el('title', {}, g).textContent = `${it.id} ${it.title} · ${O[it.owner].name} · ${ST[it.status]}`;
     g.onclick = () => focus(it.id, true); mk[it.id] = g;
   }
