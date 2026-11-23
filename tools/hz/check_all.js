@@ -1,5 +1,5 @@
 'use strict';
-// 一键运行全部检查：HZ-01…HZ-05、联动接口 v2 宿主检查、近景人员、吊距、引线标注、插件检查、认领板数据（check_claims）、履带吊同日台数（check_cranecount --strict），以及插件镜头扫描（check_cams 逐图一项）。
+// 一键运行全部检查：HZ-01…HZ-05、联动接口 v2 宿主检查、近景人员、吊距、引线标注、插件检查、认领板数据（check_claims）、履带吊同日台数（check_cranecount --strict）、FPV 航线验收（check_fpv，#50 接线；报告档——其判定依赖的 HZ_FPV 口径未落地，SKIP/违反先报不拦，落地后转严格），以及插件镜头扫描（check_cams 逐图一项）。
 // 任一失败即整体失败（FAIL check_all at <项>）。
 //
 // 并行：默认按 CPU 核数并行（环境变量 HZ_JOBS 可改，HZ_JOBS=1 即顺序跑）；每项输出缓冲后按清单顺序整段打印，不串行。
@@ -11,7 +11,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js', 'check_info.js', 'check_scopecam.js', 'check_claims.js', 'check_rel.js', 'check_tour.js', 'check_osmctx.js'];
+const scripts = ['check_make.js', 'check_sheets.js', 'check_atlas.js', 'check_real.js', 'check_realparts.js', 'check_linkage.js', 'check_actors.js', 'check_crane.js', 'check_callouts.js', 'check_s001.js', 'check_s002.js', 'check_yunmen.js', 'check_info.js', 'check_scopecam.js', 'check_claims.js', 'check_rel.js', 'check_tour.js', 'check_osmctx.js', 'check_fpv.js'];
 // 带参数跑的检查：check_cranecount --strict（履带吊全场同日在吊 ≤ 14 台；hzseq 同工序同日 ≤ 5 台限流后接入，11-10）
 const STRICT = [['check_cranecount.js', '--strict'], ['check_homomorph.js', '--strict']];
 const CAMS = ['S-001', 'S-002', 'S-101', 'S-201', 'S-251', 'S-401', 'S-501'];
@@ -20,7 +20,7 @@ const CAMS = ['S-001', 'S-002', 'S-101', 'S-201', 'S-251', 'S-401', 'S-501'];
 const CAMS_REPORT = [];
 // 含耗时断言的检查（check_actors 断言 update / 重排帧耗时）单独跑：并行时 CPU 被占满会误报，等其余项跑完、没有别的进程时再跑
 const SOLO = new Set(['check_actors.js']);
-const items = scripts.map(s => ({ name: s, args: [s], report: false, solo: SOLO.has(s) }))
+const items = scripts.map(s => ({ name: s, args: [s], report: s === 'check_fpv.js', solo: SOLO.has(s) }))
   .concat(STRICT.map(([s, ...a]) => ({ name: [s, ...a].join(' '), args: [s, ...a], report: false })))
   .concat(CAMS.map(id => ({ name: 'check_cams.js ' + id, args: ['check_cams.js', id], report: false })))
   .concat(CAMS_REPORT.map(id => ({ name: 'check_cams.js ' + id + '（报告模式）', args: ['check_cams.js', id], report: true })));
