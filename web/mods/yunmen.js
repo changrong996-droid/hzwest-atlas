@@ -2,6 +2,7 @@
 // 用途：将杭州西站南侧「云门」（180×60×80 m，中间门洞）由简模灰盒细化为分阶段生长的建筑墨线模型（基础→主体→幕墙），全部用线段绘制，不画实体面。
 // 数据来源：杭州市政府网 2022-09-20（云门长 180 m、宽 60 m、高 80 m，中间门洞）；包络与排程同 web/hzseq.js 第 303–313 行（HZ.K.ymf / HZ.K.ym / HZ.K.ymc）。
 // 接口：window.HZ_MODS.push({ id:'yunmen', build(scene, HZ, THREE, opts), update(t, cam), lines(HZ, t) })；支持 opts.clip（THREE.Plane[]）剖切平面。
+// A1（任务 #29，fo-cs 2026-11-23）：实景造型与幕墙精修——四角 8 m 圆角柱面（主体期逐层成形）、幕墙窗台线与顶部体量窗带加密竖梃、门洞套框双层收边、冠带檐口与女儿墙压顶；全部仍为线段，包络与门洞净空检查不变。
 // D-41（11-10，hark-cs 接手）：S-000 总图上云门改为示意线型——只画外轮廓与门洞轮廓的双点画线（长划 + 两点），旁注「云门 · 示意」；
 //   其余图纸（如 S-501）仍用细化墨线。总图判断读 window.__pv.sheet（运行中切图也跟着换）。schemLines(HZ, t) 给出示意线段。
 // 检查：node tools/hz/check_yunmen.js（登记、opts.clip、随 t 单调生长、包络越界、门洞净空 9 点采样、与 ym 包围盒一致、update 耗时 < 1 ms）。
@@ -197,6 +198,31 @@
       }
     }
 
+    // ---------- 2c. 实景造型精修（A1 / 任务 #29）：四角 8 m 圆角柱面，主体期逐层成形 ----------
+    // 实景照片上云门四角为圆角柱面而非直角；这里在主体期按每层进度补四分之一圆弧（半径 8 m，每弧 6 段）。
+    {
+      const R = 8;
+      const corners = [
+        [X0 + R, ZA + R, Math.PI, Math.PI * 1.5],
+        [X1 - R, ZA + R, 0, Math.PI * 1.5],
+        [X0 + R, ZB - R, Math.PI, Math.PI * 0.5],
+        [X1 - R, ZB - R, 0, Math.PI * 0.5],
+      ];
+      for (let k = 0; k < 16; k++) {
+        const y = k * 5;
+        const tA = ym.start + ym.dur * (k / 16), tB = ym.start + ym.dur * ((k + 0.55) / 16);
+        corners.forEach((cn, ci) => {
+          const [cx, cz, a0, a1] = cn, n = 6;
+          for (let i = 0; i < n; i++) {
+            const u0 = i / n, u1 = (i + 1) / n;
+            const p = a => [cx + R * Math.cos(a), cz + R * Math.sin(a)];
+            const [ax, az] = p(a0 + (a1 - a0) * u0), [bx, bz] = p(a0 + (a1 - a0) * u1);
+            add(tA + (tB - tA) * (ci * 0.06 + u0 * 0.4), ax, y, az, bx, y, bz);
+          }
+        });
+      }
+    }
+
     // ---------- 3. 幕墙期（ymc）：立面每 4 m 一根竖梃、横向每层一根，自下而上覆盖南北两立面与东西端面 ----------
     {
       const t0 = ymc.start, dur = ymc.dur, nFloors = 16, dt = dur / nFloors;
@@ -215,6 +241,20 @@
               // 每层横向横梁与窗带中横梃（良渚玉琮横向密纹）
               add(fc0 + dt * (0.35 + 0.55 * u), x, y1, z, x + 4, y1, z);
               add(fc0 + dt * (0.45 + 0.5 * u), x, ymMid, z, x + 4, ymMid, z);
+              // A1 精修：窗台线（y = 楼层 +0.9 m）；塔楼层隔跨画、全宽层逐跨画，控制段数总量
+              if (k >= 10 || Math.floor((x - X0) / 4) % 2 === 0) {
+                add(fc0 + dt * (0.25 + 0.5 * u), x, y0 + 0.9, z, x + 4, y0 + 0.9, z);
+              }
+            }
+          }
+        }
+
+        // 3a-2. 顶部体量窗带加密竖梃（A1）：全宽层在 4 m 竖梃之间加窗带内剖分短梃（y = 层 +1.0 → +3.9）
+        if (k >= 10) {
+          for (const z of [ZA, ZB]) {
+            for (let x = X0 + 6; x < X1; x += 8) {
+              const u2 = (x - X0) / (X1 - X0);
+              add(fc0 + dt * (0.3 + 0.4 * u2), x, y0 + 1, z, x, y0 + 3.9, z);
             }
           }
         }
@@ -227,6 +267,8 @@
             if (z + 4 <= ZB) {
               add(fc0 + dt * (0.4 + 0.5 * v), x, y1, z, x, y1, z + 4);
               add(fc0 + dt * (0.5 + 0.45 * v), x, ymMid, z, x, ymMid, z + 4);
+              // A1 精修：端面窗台线（y = 楼层 +0.9 m）
+              add(fc0 + dt * (0.3 + 0.45 * v), x, y0 + 0.9, z, x, y0 + 0.9, z + 4);
             }
           }
         }
@@ -245,6 +287,36 @@
             const u = (x + XP) / (2 * XP);
             addPhased(fc0 + dt * 0.15, fc0 + dt * (0.5 + 0.45 * u), x, YP, ZA, x, YP, ZB, 10);
           }
+          // 3c-2. 门洞套框（A1）：南北两立面门洞周边双层收边（外框 x=±44 / 楣 y=52，内框 x=±39.5 / 楣 y=50.5）
+          for (const z of [ZA, ZB]) {
+            addPhased(fc0 + dt * 0.2, fc0 + dt * 0.75, -44, 50.5, z, 44, 50.5, z, 8);
+            addPhased(fc0 + dt * 0.25, fc0 + dt * 0.8, -44, 52, z, 44, 52, z, 8);
+            for (const xx of [-44, -39.5, 39.5, 44]) {
+              const us = (Math.abs(xx) - 39.5) / 4.5;
+              add(fc0 + dt * (0.3 + 0.3 * us), xx, 0, z, xx, 50.5, z);
+            }
+          }
+        }
+      }
+
+      // 3d. 冠带檐口与女儿墙（A1）：顶层檐口双线（y=79.5 / 80.5）、女儿墙压顶竖向短柱（y=80 → 80.5）
+      {
+        const tA = t0 + dur * (15 / 16), span = dur - dur * (15 / 16);
+        addPhased(tA, tA + span * 0.35, X0, 79.5, ZA, X1, 79.5, ZA, 10);
+        addPhased(tA, tA + span * 0.35, X0, 79.5, ZB, X1, 79.5, ZB, 10);
+        addPhased(tA + span * 0.2, tA + span * 0.55, X0, 80.5, ZA, X1, 80.5, ZA, 10);
+        addPhased(tA + span * 0.2, tA + span * 0.55, X0, 80.5, ZB, X1, 80.5, ZB, 10);
+        addPhased(tA + span * 0.3, tA + span * 0.65, X0, 79.5, ZA, X0, 79.5, ZB, 6);
+        addPhased(tA + span * 0.3, tA + span * 0.65, X1, 79.5, ZA, X1, 79.5, ZB, 6);
+        addPhased(tA + span * 0.4, tA + span * 0.75, X0, 80.5, ZA, X0, 80.5, ZB, 6);
+        addPhased(tA + span * 0.4, tA + span * 0.75, X1, 80.5, ZA, X1, 80.5, ZB, 6);
+        for (let x = X0; x <= X1; x += 10) {
+          const u = (x - X0) / (X1 - X0);
+          for (const z of [ZA, ZB]) add(tA + span * (0.5 + 0.3 * u), x, 80, z, x, 80.5, z);
+        }
+        for (let z = ZA + 10; z < ZB; z += 10) {
+          const u = (z - ZA) / (ZB - ZA);
+          for (const x of [X0, X1]) add(tA + span * (0.5 + 0.3 * u), x, 80, z, x, 80.5, z);
         }
       }
     }
