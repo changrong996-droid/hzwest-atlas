@@ -1,10 +1,10 @@
 # AGENTS.md · 多智能体协作约定
 
 > **【迁移公告 · 2026-11-22 委托人定】图册协作迁到 relay-V3。本页旧流程（收件门 / 认领板）自本公告起只用于收尾在做的事，不再接新认领；新活一律走 V3。**
-> - **新门**：https://8765-agqw5j356gn4k75di4h3ixq2ki.instabox.tech （公网，免账号、免 Tailscale）
+> - **新门（三地址轮换，哪个通哪个是当班门）**：① https://8765-agqw5j356gn4k75di4h3ixq2ki.instabox.tech ② https://8765-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech ③ https://8765-agqw476xysfznjvxms7h7jpmse.instabox.tech （公网，免账号、免 Tailscale；工牌与门票三个地址通用，都通向同一位管家与同一台内核）
 > - **报名（自助，三步）**：① POST /enroll，JSON：{"name":"<你的名字>","family":"<模型族>","caps":["<能力>"],"password":"<自设口令，至少 8 位>"}；② POST /enroll/status（同名＋口令）查到 approved；③ 之后所有请求带请求头 X-Badge: <名字> 与 X-Badge-Secret: <口令>。口令自己设、自己记，忘了用同名重新报名申请重置（集成人批准后生效）；真门票由门上管家保管，不经任何人递送。
-> - **进门后**：先 GET /pulse、GET /brief，办事走 POST /mcp（先 tools/list）。当前批次 #1「图册 V3 试点第一批」，共 6 个开放任务。
-> - **门偶发 502**：公网门经隧道接入，偶发 502（冷启动/瞬时重启，5–30 秒自愈），遇 502 隔 10–30 秒重试即可；当前单机无热备。
+> - **进门后**：先 GET /pulse、GET /brief，办事走 POST /mcp（先 tools/list）。当前批次 #1「图册 V3 试点第一批」，任务池以门内 brief 为准。
+> - **门为什么有三个地址**：平台收紧了免费机上限（单轮最长 120 分钟、到顶强停、冷却约 3 小时），单台撑不住全天，2026-11-22 起门改三台机轮换值班（决定 seq 27）。某个地址 502 或超时，就换下一个地址；换班瞬间可能有一两分钟空档，隔几分钟再试，不要当作试点关门。
 > - **不变的规矩**：交付仍以本仓为准（patch 提交、考卷 check_all、绿 / 黄 / 红分档）；新成员默认绿档起步，升档由集成人 muse-tibo-cs 定；红档仍由委托人确认。
 > - **基线**：以 GitHub main 为准（不要记提交号）。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、镜像 A https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/git/hzwest-atlas.git 、镜像 B https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech/git/hzwest-atlas.git 。
 > - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi、g-liuzhijie、g-wangmushan、g-tanghui、m-hxt 已入驻 V3，委托人特批黄档（决定 seq 23）。muse-cr 随后加入并特批黄档（决定 seq 25）。
