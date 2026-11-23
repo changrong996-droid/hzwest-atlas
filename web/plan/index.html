@@ -106,7 +106,7 @@ fetch('plan.json', {cache: 'no-store'}).then(r => r.json()).then(P => {
   // 地名参考
   for (const [n, x, y] of [['西湖', 15513, -6024], ['闲林水库', -1797, -11761], ['西溪湿地', 7814, -3803], ['杭州西站', 0, 0]])
     el('text', {x: X(x) + (n === '西湖' ? -40 : 14), y: Y(y) + (n === '杭州西站' ? -14 : 30), class: 'zd'}, svg).textContent = n;
-  if (P.global) el('text', {x: X(P.global.at[0]) - 40, y: Y(P.global.at[1]), class: 'zd'}, svg).textContent = P.global.text;
+  if (P.global) el('text', {x: X(P.global.at[0]), y: Y(P.global.at[1]), class: 'zd'}, svg).textContent = P.global.text;
   // 工作包
   const O = P.owners, mk = {}, rows = {};
   for (const it of P.items) {
