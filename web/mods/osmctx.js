@@ -1,12 +1,13 @@
 // 城市远景层（OSM 现状 + 哥白尼地形）· hark-fangyi · 提案 docs/proposals/hark-fangyi-osm-context.md
 // 数据 web/mods/osmctx-data.js（window.HZ_OSMCTX，已换到模型系：x 东、z 南，原点站房中心，OSM 铁路方位对齐 4.3°、东移 10 m）。
 // 内容：真实建筑体块（有 height / 层数的按实高，其余 8 m）、道路、水体、绿地、国铁与地铁线、地下站轮廓、站周 32 × 24 km 地形（城区框内压平）。
-// 与工期联动：合杭高铁、地铁 3 / 19 号线在开通日（HZ.P/TL OPEN = 1101）前画成浅灰预留线，开通后上色。
-// 只增不改：不碰宿主几何；宿主的程序化城市 CTX.city / 远山 MTN 是否让位，见提案「接口请求」（替换开关由 hark-cr 定）。
+// 与工期联动：合杭高铁、地铁 3 / 19 号线在开通日（读 HZ.P.OPEN，兜底 1101）前画成浅灰预留线，开通后上色。
+// 只增不改：不碰宿主几何；通过 replaces: ['ctx.city', 'mtn'] 声明替换宿主的程序化城市与远山（已于 38f9a6b 接线）。
 (function () {
   'use strict';
   const ROOT = typeof window !== 'undefined' ? window : globalThis;
-  const OPEN = 1101;
+  const OPEN_FALLBACK = 1101;
+  const openDay = () => (M._openDay != null ? M._openDay : (ROOT.HZ && ROOT.HZ.P && ROOT.HZ.P.OPEN != null ? ROOT.HZ.P.OPEN : OPEN_FALLBACK));
   const isNew = o => /合杭|3号线|19号线/.test(o.n || '');
   const COL = { paper: 0xefebe3, bReal: 0xe2ddd3, bFake: 0xece8df, edge: 0x2a2622, green: 0xd3e3c4, water: 0xbcd6e6, road: 0xffffff, road1: 0xfbfaf7, rail: 0x1a1a1a, pre: 0xc9c4ba, yard: 0x9a9a9a };
   const M = { id: 'osmctx', replaces: ['ctx.city', 'mtn'], stat: null, _g: null, _open: [], _pre: [], _labs: [], layers: [] };
@@ -115,6 +116,7 @@
 
   M.build = function (scene, HZ, THREE, opts) {
     const D = ROOT.HZ_OSMCTX; if (!D) throw new Error('缺 web/mods/osmctx-data.js');
+    M._openDay = (HZ && HZ.P && HZ.P.OPEN != null) ? HZ.P.OPEN : OPEN_FALLBACK;
     M.stat = { b: D.b.length, h: D.h.length, r: D.r.length };
     if (!scene || !THREE) return;   // Node 检查：只登记
     const clip = (opts && opts.clip) || [];
@@ -179,7 +181,7 @@
   let lastOpen = null;
   M.update = function (t, cam) {
     if (!M._g) return;
-    const op = t >= OPEN; if (op !== lastOpen) { lastOpen = op; for (const m of M._open) if (m) m.visible = op; for (const m of M._pre) if (m) m.visible = !op; }
+    const op = t >= openDay(); if (op !== lastOpen) { lastOpen = op; for (const m of M._open) if (m) m.visible = op; for (const m of M._pre) if (m) m.visible = !op; }
     if (M._lastT !== t) { M._lastT = t; for (const e of M.layers) { if (!e.g) continue; e.g.visible = e.on && inWin(t, e.from, e.to); for (const it of e.items || []) it.g.visible = inWin(t, it.from, it.to); } }
     if (!M._box || !cam || !M._labs.length) return;
     const W = M._box.clientWidth, H = M._box.clientHeight, far = cam.position.length() > 900; M._box.style.display = far ? '' : 'none'; if (!far) return;
