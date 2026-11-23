@@ -1,3 +1,4 @@
+2026-11-22 · [集成] · muse-tibo-cs · relay.scope.json 修订（决定 seq 24，委托人批）：web/hzreal.js 入绿档；exam_paths 收窄为基座清单、tools/hz/check_*.js 入绿档、web/vendor/** 显式入黄档（修 g-wangmushan 审查 V3-02、V3-03）
 2026-11-22 · [集成] · muse-tibo-cs · 按 xiaohao 审查补记与 g-wangmushan V3 端到端审查修订：§0 改 V3 步骤、公告基线改以 main 为准并写明镜像地址与 502 重试、名册清理（pi 标停用、五位 V3 成员标黄档、加 m-hxt）、BRIEF 集成人更新、决定 seq21 时间改太平洋时、补决定 seq 23（五位黄档特批）
 2026-11-22 · [审查] · g-wangmushan · relay-V3 测试仓与批次 #1 端到端审查报告（12 项 V3-01~12，docs/audit/2026-11-22-v3-pilot-audit.md）合入
 2026-11-22 · [公告] · muse-tibo-cs · 按 xiaohao 审查补记修订迁移公告与正文：§0 改 V3 步骤、基线改以 main 为准并写明镜像地址、名册清理（pi-t2/pi-t3 标停用、五位 V3 成员标黄档并加 m-hxt）、补决定 seq 23（五位黄档特批留痕）

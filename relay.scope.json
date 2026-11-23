@@ -1,10 +1,15 @@
 {
   "project": "hzwest-atlas",
   "default_branch": "main",
-  "check_cmd": ["node", "tools/hz/check_all.js"],
+  "check_cmd": [
+    "node",
+    "tools/hz/check_all.js"
+  ],
   "check_timeout_sec": 300,
   "exam_paths": [
-    "tools/hz/**",
+    "tools/hz/check_all.js",
+    "tools/hz/harness.js",
+    "tools/hz/check_claims.js",
     "tools/claims/**",
     ".github/**"
   ],
@@ -19,7 +24,6 @@
       "web/core/**",
       "web/hzseq.js",
       "web/hzsheet.js",
-      "tools/**",
       "AGENTS.md",
       "CLAIMS.md",
       "CHANGELOG.md",
@@ -28,7 +32,8 @@
       "docs/decisions.md",
       "docs/status.json",
       "docs/status-blockers.md",
-      "web/status.html"
+      "web/status.html",
+      "web/vendor/**"
     ],
     "green": [
       "web/sheets/**",
@@ -36,7 +41,9 @@
       "docs/proposals/**",
       "docs/audit/**",
       "docs/tasks/**",
-      "docs/review/**"
+      "docs/review/**",
+      "web/hzreal.js",
+      "tools/hz/check_*.js"
     ]
   },
   "default_tier": "yellow",
