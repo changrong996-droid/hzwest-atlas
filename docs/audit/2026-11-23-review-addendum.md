@@ -32,3 +32,15 @@
 4. **基线过时**：公告写的基线 38f9a6b 已经落后 main 三个提交，建议写「以 main 为准」。
 5. **拉取地址**：「收件镜像 git 地址」没写具体地址；本机 Mac 路径对其他成员没用，还暴露了本机用户名。
 6. **名册过时**：hark-cs 已经交接，却仍在「可同时持有 3 张派单」的名单里；pi-t2/pi-t3 已停用，名册仍写着「由 hark-cs 定时唤醒」；g-fangyi 直接进了黄档，与「默认绿档起步」不一致，应在 decisions 里记录是谁、在什么时候批准的。
+
+## 四、main 9717243 新进内容复查（2026-11-23 10:50）
+本地 check_all：**OK 26/26**（新增了 check_osmctx）。本轮没有截图：沙盒里的无头 Chromium 缺系统库，启动失败，视觉复核留到下一轮。
+
+1. **高 · 同态检查只报告、不拦截，而且它确实报出了真问题。** check_homomorph 默认是报告模式，退出码为 0，所以 check_all 显示 OK；但它报出 S-201 有 8 处「3D 引线进度 vs 图纸进度」不一致，最大差 36%（G-S11 @t=721.7：5% vs 41%；G-N08 @t=864.3：5% vs 41%；G-N06 @t=828.7：0% vs 29%）。这正是它要抓的「第二真相源」。建议先修 S-201 的 leadAt 与 draw 口径，然后在 check_all 里打开 --strict，或者至少不能让 diffs>0 的结果显示成 OK。
+2. **中 · 绿档权限过宽。** relay.scope.json 把 web/mods/** 定为绿档（可自动合），但模块可以声明 `replaces` 来摘掉宿主的城市和远山，并把拉远上限放宽到 16000（hzview.js 1248 行）。这样一个绿档 mod 就能改动宿主画面。建议：声明了 replaces 的 mod 按黄档处理，或者让宿主维护 replaces 白名单。
+3. **中 · osmctx 的加载代价。** osmctx-data.js 有 582 KB，在 hzview.js 之前同步加载，每张图都要先下载解析完它才能首屏；里面 1115 栋楼、每栋都要做一次 EdgesGeometry。建议改成按需或延迟加载（拉远或首帧后再加载），首屏不阻塞。
+4. **中 · osmctx 兜底不完整。** 宿主的远山 MTN 一被 replaces 摘掉，就完全依赖异步解压的 DEM；浏览器没有 DecompressionStream 或解压失败时，只打一条 console.warn，地平线就会空掉。建议解压失败时恢复 MTN。
+5. **低 · 开通日写死。** osmctx.js 里 `OPEN = 1101` 是写死的，没有读 HZ 的 P.OPEN（hzseq.js 57 行），以后排程一改就会和宿主脱节。
+6. **低 · 注释和提案已过时。** osmctx.js 第 5 行、docs/proposals/hark-fangyi-osm-context.md 第 27 行仍写「由 hark-cr 定」；接入请求 seq105 已经由 muse-tibo-cs 接线关单。
+7. **低 · 文档漂移依旧。** README 49 行仍写「OK check_all 4/4」（实际 26/26）；BRIEF 图表状态里 S-101/S-201/S-401 仍是「待出图」。
+8. **信息 · s101 冲突的解决方式和我的建议不同。** 集成人先合了 fix-s101-xray，再在 cc4d1aa 用 batch2 的整版重写解决冲突，结果和「作废 xray」等价。check_s101 已通过，S-000 的土方块需要在下一轮截图里确认。
