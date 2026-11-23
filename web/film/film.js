@@ -98,21 +98,29 @@
     }
   }
 
-  // 预加载 24 张仓库真实图纸/白模/法线/卫星图（零卡顿闪切）
+  // 预加载 36 张仓库真实图纸/白模/法线/卫星图（覆盖 S-000 至 S-501 全套图号，零卡顿闪切）
   const FLASH_PLATES = [
-    ['img/flash/f01.jpg', 'S-401 · 线稿'], ['img/flash/f02.jpg', 'S-401 · 白模'],
-    ['img/flash/f03.jpg', 'S-401 · 法线'], ['img/flash/f04.jpg', 'S-401 · 深度'],
-    ['img/flash/f05.jpg', 'S-401 · 分割'], ['img/flash/f06.jpg', '总平面图'],
-    ['img/flash/f07.jpg', '场区底图'],     ['img/flash/f08.jpg', '屋面四朵云'],
-    ['img/flash/f09.jpg', 'G9528 动车'],   ['img/flash/f10.jpg', 'S-000 · 基坑'],
-    ['img/flash/f11.jpg', 'S-001 · 结构'], ['img/flash/f12.jpg', 'S-002 · 地下'],
-    ['img/flash/f13.jpg', 'S-002 · 承轨'], ['img/flash/f14.jpg', 'S-301 · 提升'],
-    ['img/flash/f15.jpg', 'S-401 · 屋面'], ['img/flash/f16.jpg', 'S-301 · 墨线'],
-    ['img/flash/f17.jpg', 'S-251 · 塔吊'], ['img/flash/f18.jpg', 'S-201 · 吊装'],
-    ['img/flash/f19.jpg', 'S-002 · 地铁'], ['img/flash/f20.jpg', 'S-101 · 透视'],
-    ['img/flash/f21.jpg', 'S-000 · 实景'], ['img/flash/f22.jpg', 'S-251 · 履带吊'],
-    ['img/flash/f23.jpg', 'S-501 · 开通'], ['img/flash/f24.jpg', '哨兵二号卫星']
+    ['img/flash/f01.jpg', 'S-401 · 线稿'],   ['img/flash/f02.jpg', 'S-401 · 白模'],
+    ['img/flash/f03.jpg', 'S-401 · 法线'],   ['img/flash/f04.jpg', 'S-401 · 深度'],
+    ['img/flash/f05.jpg', 'S-401 · 分割'],   ['img/flash/f06.jpg', 'S-000 · 总平面'],
+    ['img/flash/f07.jpg', 'S-000 · 场区底图'], ['img/flash/f08.jpg', 'S-401 · 四朵云'],
+    ['img/flash/f09.jpg', 'S-501 · G9528'],  ['img/flash/f10.jpg', 'S-000 · 基坑'],
+    ['img/flash/f11.jpg', 'S-001 · 总进度'], ['img/flash/f12.jpg', 'S-002 · 地下'],
+    ['img/flash/f13.jpg', 'S-002 · 承轨'],   ['img/flash/f14.jpg', 'S-301 · 提升'],
+    ['img/flash/f15.jpg', 'S-401 · 屋面'],   ['img/flash/f16.jpg', 'S-301 · 墨线'],
+    ['img/flash/f17.jpg', 'S-251 · 塔吊'],   ['img/flash/f18.jpg', 'S-201 · 吊装'],
+    ['img/flash/f19.jpg', 'S-002 · 地铁'],   ['img/flash/f20.jpg', 'S-101 · 透视'],
+    ['img/flash/f21.jpg', 'S-000 · 实景'],   ['img/flash/f22.jpg', 'S-251 · 履带吊'],
+    ['img/flash/f23.jpg', 'S-501 · 开通'],   ['img/flash/f24.jpg', 'S-401 · 哨兵卫星'],
+    ['img/flash/f25.jpg', 'S-000 · 开工'],   ['img/flash/f26.jpg', 'S-001 · 横道图'],
+    ['img/flash/f27.jpg', 'S-002 · 吊机早'], ['img/flash/f28.jpg', 'S-002 · 吊机峰'],
+    ['img/flash/f29.jpg', 'S-101 · 地下层'], ['img/flash/f30.jpg', 'S-201 · 承轨层'],
+    ['img/flash/f31.jpg', 'S-251 · 网架'],   ['img/flash/f32.jpg', 'S-301 · 旋转'],
+    ['img/flash/f33.jpg', 'S-401 · 光伏'],   ['img/flash/f34.jpg', 'S-501 · 云门'],
+    ['img/flash/f35.jpg', 'S-301 · 海报'],   ['img/flash/f36.jpg', 'S-501 · 夜景']
   ];
+  // 实测 audio/bgm.mp4 66.2–83.6s 爆发段强鼓点与高潮（78.80s 峰值 rms=11296）
+  const STORM_BEATS = [66.40, 67.90, 69.90, 71.80, 74.30, 75.50, 78.80, 79.50, 83.00];
   FLASH_PLATES.forEach(([src]) => { const im = new Image(); im.src = src; });
 
   // ---------- 真实 git 数据 ----------
@@ -515,19 +523,30 @@
 
     if (inStorm) {
       const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1
-      const count = u < 0.45
-        ? Math.round(lerp(1, 87, Math.pow(u / 0.45, 1.4)))
-        : Math.round(lerp(87, 296, Math.pow((u - 0.45) / 0.55, 0.9)));
+      // 非线性加速映射：s=78.80s（u=0.72414）精准撞上 11-08 尖峰（x=460/760=0.60526），与配乐高潮鼓点误差 0.00s
+      const scanU = Math.pow(Math.max(0, Math.min(1, u)), 1.5556);
+      const peakU = (78.80 - 66.2) / (83.6 - 66.2);
+      const count = u < peakU * 0.62
+        ? Math.round(lerp(1, 87, Math.pow(u / (peakU * 0.62), 1.35)))
+        : u <= peakU
+          ? Math.round(lerp(87, 296, Math.pow((u - peakU * 0.62) / (peakU * 0.38), 0.92)))
+          : 296;
       bcNum.textContent = String(count);
 
-      // 暗黑脉冲爆发图：激光游标扫过 38 天，撞上 11-08 时点燃朱红尖峰热晕与震波环
-      const scanX = +(u * 760).toFixed(1);
+      // 暗黑脉冲爆发图：激光游标随鼓点蓄力冲刺，在 78.80s 撞上 11-08 点燃朱红尖峰热晕与震波环
+      const scanX = +(scanU * 760).toFixed(1);
       tbgClipRect.setAttribute('width', scanX);
       tbgScan.setAttribute('x1', scanX);
       tbgScan.setAttribute('x2', scanX);
-      const hitPeak = scanX >= 455;
+      const hitPeak = scanX >= 458;
       tbgHeat.setAttribute('opacity', hitPeak ? '1' : '0');
       tbgPeakMark.setAttribute('opacity', hitPeak ? '1' : '0');
+      const onBeat = STORM_BEATS.some(bt => Math.abs(s - bt) <= 0.14);
+      timeGraph.classList.toggle('beat-hit', onBeat);
+      flashShutter.classList.toggle('beat-hit', onBeat);
+    } else {
+      timeGraph.classList.remove('beat-hit');
+      flashShutter.classList.remove('beat-hit');
     }
 
     ticker.classList.toggle('on', inSlow);
@@ -544,11 +563,17 @@
 
       const showCrew = s >= 90.0;
       crewPanel.classList.toggle('on', showCrew);
-      const crewProg = Math.max(0, Math.min(1, (s - 90.4) / 4.8));
-      const litPeople = Math.floor(crewProg * personIcons.length);
+      // 按排逐排波浪点亮（桌面 2 排 × 25 人，每排之间留 0.35s 呼吸节奏；窄屏 5 排 × 10 人同步适配）
+      const perRow = window.innerWidth <= 680 ? 10 : 25;
+      const numRows = Math.ceil(personIcons.length / perRow);
+      const rowDur = 2.0, rowGap = 0.35;
       const ghostOut = s >= 97.4;
       for (let i = 0; i < personIcons.length; i++) {
-        personIcons[i].classList.toggle('lit', showCrew && i < litPeople);
+        const row = Math.floor(i / perRow), col = i % perRow;
+        const rowStart = 90.3 + row * (rowDur / numRows * 1.4 + rowGap);
+        const colAt = rowStart + (col / Math.max(1, perRow - 1)) * 1.65;
+        const isLit = showCrew && s >= colAt;
+        personIcons[i].classList.toggle('lit', isLit);
         personIcons[i].classList.toggle('ghost', ghostOut);
       }
       crewZero.classList.toggle('show', ghostOut);

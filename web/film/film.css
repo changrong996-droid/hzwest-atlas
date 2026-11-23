@@ -305,20 +305,29 @@ a.o-card:hover .o-frame { border-color: rgba(179, 32, 42, 0.5); }
   font-size: 13px; color: var(--ink-dim); margin-bottom: 12px;
 }
 .crew-head strong { color: var(--ink); font-weight: 700; }
+@keyframes crewStamp {
+  0%   { opacity: 0; transform: scale(2.1) rotate(-9deg); box-shadow: 0 0 0 rgba(179,32,42,0); }
+  58%  { opacity: 1; transform: scale(0.92) rotate(-1.5deg); box-shadow: 0 0 22px rgba(179,32,42,0.55); }
+  100% { opacity: 1; transform: scale(1) rotate(-2deg); box-shadow: 0 2px 10px rgba(179,32,42,0.28); }
+}
 .crew-zero {
   font-family: var(--mono); font-size: 12px; font-weight: 700; color: #fff;
-  background: var(--red); padding: 3px 10px; border-radius: 2px;
-  opacity: 0; transform: scale(0.9); transition: opacity .5s ease, transform .5s ease;
+  background: var(--red); padding: 3px 11px; border-radius: 2px;
+  border: 1.5px solid rgba(255,244,225,0.65); outline: 1.5px solid var(--red); outline-offset: 2px;
+  opacity: 0; transform: scale(1.8) rotate(-6deg); will-change: transform, opacity;
 }
-.crew-zero.show { opacity: 1; transform: scale(1); }
+.crew-zero.show { animation: crewStamp 0.42s cubic-bezier(.16,.88,.32,1.15) forwards; }
+#time-burst-graph.beat-hit { border-color: rgba(255,74,87,0.72); box-shadow: 0 0 26px rgba(255,74,87,0.26); }
+#flash-shutter.beat-hit { border-color: rgba(255,74,87,0.85); transform: scale(1.018); }
 
 .crew-grid {
   display: grid; grid-template-columns: repeat(25, 1fr); gap: 6px 4px;
   justify-items: center; align-items: center; padding: 6px 0;
 }
 .person-ico {
-  width: 18px; height: 26px; opacity: 0; transform: translateY(6px) scale(0.85);
-  transition: opacity .35s ease, transform .35s ease, filter .6s ease;
+  width: 18px; height: 26px; opacity: 0; transform: translateY(8px) scale(0.76);
+  transition: opacity .28s ease, transform .36s cubic-bezier(.22,1.25,.36,1), filter .55s ease;
+  will-change: transform, opacity;
 }
 .person-ico.lit { opacity: 1; transform: translateY(0) scale(1); }
 .person-ico.ghost { opacity: 0.16; filter: grayscale(1); }
