@@ -70,7 +70,7 @@
     4000
    ],
    "style": "dash",
-   "desc": "未来科技城、仓前、五常、余杭老城、中泰、西溪。现在只有水面，楼和路是空的。"
+   "desc": "未来科技城、仓前、五常、余杭老城、中泰、西溪。OSM 建筑与主干路网已铺（B1–B3）。"
   },
   {
    "id": "Z3",
@@ -237,14 +237,14 @@
     -500
    ],
    "owner": "wk",
-   "status": "next",
+   "status": "done",
    "title": "中景建筑体块",
    "what": "OSM 扩框拉建筑，低模体块，按层数/类型估高；离站越远越合并成街区块，控制体量。 标杆样本（未来科技城核心 3.5×4 km）已做，标准见 docs/ctx-mid.md。",
    "data": "OSM",
    "deps": [
     "A2"
    ],
-   "out": "图层 bldg.mid，≤ 1 MB"
+   "out": "图层 bldg.mid 铺满 Z2（约 4000 栋，172 KB）"
   },
   {
    "id": "B2",
@@ -255,14 +255,14 @@
     -4477
    ],
    "owner": "wk",
-   "status": "next",
+   "status": "done",
    "title": "中景路网",
    "what": "高速、快速路、主干道（绕城西复线、文一西路、良睦路等），只画线不画面。 标杆样本（未来科技城核心 3.5×4 km）已做，标准见 docs/ctx-mid.md。",
    "data": "OSM",
    "deps": [
     "A2"
    ],
-   "out": "图层 road.mid"
+   "out": "图层 road.mid 铺满 Z2（约 2200 段，216 KB）"
   },
   {
    "id": "B3",
@@ -273,14 +273,14 @@
     -5416
    ],
    "owner": "wk",
-   "status": "next",
+   "status": "done",
    "title": "片区与地名",
    "what": "未来科技城、仓前、五常、余杭街道、中泰、紫金港等片区名，远看才显示。 标杆样本（未来科技城核心 3.5×4 km）已做，标准见 docs/ctx-mid.md。",
    "data": "OSM / Nominatim",
    "deps": [
     "A2"
    ],
-   "out": "扩 place.names"
+   "out": "place.names 加仓前街道、蒋村街道（五常、余杭老城、中泰 OSM 无点，待补）"
   },
   {
    "id": "B4",
