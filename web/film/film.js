@@ -44,7 +44,6 @@
   const subText = $('sub-text'), endActions = $('end-actions');
   const curtain = $('curtain'), scrubFill = $('scrub-fill'), timeRead = $('time-read');
   const bgmEl = $('bgm');
-  const useExternalBgm = true;
 
   // 预建 50 张纸面缩略图格（2500+ 蓝图阵列）
   const CODES = ['S-101', 'S-201', 'S-251', 'S-301', 'S-401', 'S-501', 'S-001', 'S-002', 'S-000'];
@@ -135,11 +134,7 @@
 
   // ---------- 音频引擎：极简毡音钢琴 + 立体声大厅混响 + 高密度机械提交雨 ----------
   const Audio = {
-    ctx: null, muted: false, master: null, dryBus: null, wetBus: null,
-    padGain: null, noiseBuf: null,
-    nextNoteAt: 0, noteStep: 0, lastMood: '', titleChordPlayed: false,
-
-    midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); },
+    ctx: null, muted: false, master: null, dryBus: null, noiseBuf: null,
 
     init() {
       if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -159,126 +154,6 @@
       this.dryBus.gain.value = 0.78;
       this.dryBus.connect(comp);
 
-      const conv = ctx.createConvolver();
-      const irLen = Math.floor(ctx.sampleRate * 2.4);
-      const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
-      for (let ch = 0; ch < 2; ch++) {
-        const d = ir.getChannelData(ch);
-        let lp = 0;
-        for (let i = 0; i < irLen; i++) {
-          const env = Math.pow(1 - i / irLen, 2.8);
-          lp = lp * 0.72 + (Math.random() * 2 - 1) * 0.28;
-          d[i] = lp * env * 0.48;
-        }
-      }
-      conv.buffer = ir;
-      this.wetBus = ctx.createGain();
-      this.wetBus.gain.value = 0.42;
-      this.wetBus.connect(conv); conv.connect(comp);
-
-      const nLen = Math.floor(ctx.sampleRate * 0.022);
-      const nb = this.noiseBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
-      const nd = nb.getChannelData(0);
-      for (let i = 0; i < nLen; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nLen, 2.2);
-
-      const pg = this.padGain = ctx.createGain();
-      pg.gain.value = 0.0001;
-      pg.connect(this.wetBus);
-      for (const [midi, vol] of [[38, 0.055], [45, 0.042], [50, 0.026]]) {
-        const osc = ctx.createOscillator(), g = ctx.createGain();
-        osc.type = 'sine'; osc.frequency.value = this.midiToFreq(midi); g.gain.value = vol;
-        osc.connect(g); g.connect(pg); osc.start();
-      }
-    },
-
-    setPad(level) {
-      if (!this.ctx || !this.padGain) return;
-      this.padGain.gain.setTargetAtTime(Math.max(0.0001, level), this.ctx.currentTime, 0.6);
-    },
-
-    playPiano(midi, vel = 0.22, dur = 2.6, pan = 0) {
-      if (!this.ctx || this.muted) return;
-      const ctx = this.ctx, t = ctx.currentTime, freq = this.midiToFreq(midi);
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(Math.min(2400, freq * 4.5), t);
-      lp.frequency.exponentialRampToValueAtTime(Math.max(380, freq * 1.6), t + dur * 0.7);
-
-      const env = ctx.createGain();
-      env.gain.setValueAtTime(0.0001, t);
-      env.gain.linearRampToValueAtTime(vel, t + 0.016);
-      env.gain.exponentialRampToValueAtTime(vel * 0.36, t + 0.45);
-      env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-
-      const osc1 = ctx.createOscillator(); osc1.type = 'sine'; osc1.frequency.setValueAtTime(freq, t);
-      const osc2 = ctx.createOscillator(), g2 = ctx.createGain();
-      osc2.type = 'sine'; osc2.frequency.setValueAtTime(freq * 2, t);
-      g2.gain.setValueAtTime(0.24, t); g2.gain.exponentialRampToValueAtTime(0.02, t + 0.55);
-      const osc3 = ctx.createOscillator(), g3 = ctx.createGain();
-      osc3.type = 'triangle'; osc3.frequency.setValueAtTime(freq * 3, t);
-      g3.gain.setValueAtTime(0.06, t); g3.gain.exponentialRampToValueAtTime(0.005, t + 0.22);
-
-      osc1.connect(lp); osc2.connect(g2); g2.connect(lp); osc3.connect(g3); g3.connect(lp);
-      lp.connect(env);
-      if (ctx.createStereoPanner) {
-        const p = ctx.createStereoPanner(); p.pan.value = Math.max(-0.5, Math.min(0.5, pan));
-        env.connect(p); p.connect(this.dryBus); p.connect(this.wetBus);
-      } else {
-        env.connect(this.dryBus); env.connect(this.wetBus);
-      }
-      const stopT = t + dur + 0.08;
-      osc1.start(t); osc2.start(t); osc3.start(t);
-      osc1.stop(stopT); osc2.stop(stopT); osc3.stop(stopT);
-    },
-
-    playChord(midis, vel = 0.16, dur = 3.8, spread = 0.09) {
-      if (!this.ctx || this.muted) return;
-      midis.forEach((m, i) => setTimeout(() => {
-        if (!this.muted) this.playPiano(m, vel * (1 - i * 0.08), dur, (i - 1.5) * 0.18);
-      }, i * spread * 1000));
-    },
-
-    tickScore(s) {
-      if (!this.ctx || this.muted) return;
-      if (s >= 64.2 && s < 66.2) { this.setPad(0.0001); return; } // 短促呼吸静默
-      if (s < 6.0) {
-        this.setPad(0.32);
-        if (!this.titleChordPlayed && s >= 0.25) {
-          this.titleChordPlayed = true;
-          this.playChord([50, 57, 64, 66], 0.15, 4.4, 0.14);
-        }
-        return;
-      }
-
-      let mood = 'contemplate', notes = [50, 57, 62, 65, 64, 57, 46, 53, 57, 62, 43, 50, 57, 60, 45, 52, 57, 61], stepGap = 1.32, padLvl = 0.28, vel = 0.13;
-      if (s < 11.2 || s >= 104.5) {
-        mood = 'golden';
-        notes = [50, 57, 62, 66, 69, 66, 64, 57, 47, 54, 62, 66, 43, 50, 59, 64];
-        stepGap = s >= 104.5 ? 1.1 : 0.95; padLvl = 0.45; vel = 0.15;
-      } else if (s >= 50.2 && s < 61.2) {
-        // 穿越机飞行段：流淌上扬的动感分解和弦
-        mood = 'fpv';
-        notes = [50, 57, 62, 66, 69, 74, 69, 66, 55, 62, 67, 71, 57, 64, 69, 73];
-        stepGap = 0.44; padLvl = 0.36; vel = 0.14;
-      } else if (s >= 66.2 && s < 83.6) {
-        // 17 秒不间断爆发段：紧迫推升的脉冲低音
-        mood = 'storm';
-        notes = [50, 57, 62, 57, 48, 55, 60, 55, 46, 53, 58, 53, 45, 52, 57, 61];
-        stepGap = 0.46; padLvl = 0.26; vel = 0.095;
-      } else if (s >= 83.6 && s < 104.5) {
-        mood = 'wall';
-        notes = [50, 57, 62, 64, 66, 62, 57, 69, 55, 62, 66, 71, 57, 64, 69, 74];
-        stepGap = 0.62; padLvl = 0.36; vel = 0.135;
-      }
-
-      this.setPad(padLvl);
-      if (mood !== this.lastMood) { this.lastMood = mood; this.noteStep = 0; this.nextNoteAt = s + 0.12; }
-      if (s >= this.nextNoteAt) {
-        const midi = notes[this.noteStep % notes.length];
-        this.playPiano(midi, vel * (0.88 + Math.random() * 0.24), mood === 'fpv' ? 1.7 : 2.8, ((this.noteStep % 5) - 2) * 0.14);
-        this.noteStep++;
-        this.nextNoteAt = s + stepGap;
-      }
     },
 
     mechClick(intensity = 1, pitchBoost = 0) {
@@ -318,7 +193,7 @@
     },
 
     syncBgm(s, isPlaying) {
-      if (!bgmEl || !useExternalBgm) return;
+      if (!bgmEl) return;
       bgmEl.muted = this.muted;
       // 1:04-1:06 短促呼吸压低音量，2:03.5-2:08 平滑淡出收尾
       let vol = 0.88;
@@ -868,12 +743,10 @@
       endActions.classList.toggle('on', ended);
       if (ended && PV) {
         PV.opt({ mode: 'lit', play: false, auto: false });
-        if (!useExternalBgm) Audio.playChord([50, 57, 62, 66, 69], 0.16, 4.8, 0.12);
       }
     }
 
-    if (useExternalBgm) Audio.syncBgm(s, playing);
-    else if (playing) Audio.tickScore(s);
+    Audio.syncBgm(s, playing);
 
     // 脉冲与高频图纸闪切调度（爆发段从每秒 6 帧加速到每秒 16 帧！）
     if (inSlow || inStorm) {
@@ -965,10 +838,8 @@
   function seekTo(targetSec, keepPlay) {
     sec = Math.max(0, Math.min(DUR, targetSec));
     lastClickSec = -1;
-    Audio.nextNoteAt = sec + 0.1;
-    if (sec < 0.25) Audio.titleChordPlayed = false;
     if (keepPlay === false) { playing = false; document.body.classList.add('paused'); $('btn-play').textContent = '▶'; }
-    if (bgmEl && useExternalBgm && bgmEl.readyState >= 1) { try { bgmEl.currentTime = sec; } catch (e) {} }
+    if (bgmEl && bgmEl.readyState >= 1) { try { bgmEl.currentTime = sec; } catch (e) {} }
     renderAt(sec);
   }
 
@@ -997,14 +868,13 @@
 
   function startFilm() {
     Audio.init();
-    Audio.titleChordPlayed = false; Audio.nextNoteAt = 0; Audio.lastMood = '';
     curtain.classList.add('gone');
     ended = false;
     document.body.classList.remove('ended', 'paused');
     $('btn-play').textContent = '❚❚';
     playing = true;
     lastTs = performance.now();
-    if (bgmEl && useExternalBgm) {
+    if (bgmEl) {
       try { bgmEl.currentTime = sec; } catch (e) {}
       bgmEl.play().catch(() => {});
     }
@@ -1019,8 +889,8 @@
     playing = !playing;
     document.body.classList.toggle('paused', !playing);
     $('btn-play').textContent = playing ? '❚❚' : '▶';
-    if (!playing) { Audio.setPad(0.0001); if (bgmEl) bgmEl.pause(); }
-    else if (bgmEl && useExternalBgm) { try { bgmEl.currentTime = sec; } catch (e) {} bgmEl.play().catch(() => {}); }
+    if (!playing) { if (bgmEl) bgmEl.pause(); }
+    else if (bgmEl) { try { bgmEl.currentTime = sec; } catch (e) {} bgmEl.play().catch(() => {}); }
   };
   $('btn-mute').onclick = () => Audio.toggleMute();
   if ($('btn-lang')) $('btn-lang').onclick = toggleLang;

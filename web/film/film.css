@@ -550,3 +550,50 @@ html, body {
   #flash-strip { display: none; }
   #flash-shutter { width: 220px; top: 82px; }
 }
+
+/* ---------- 手机竖屏适配（#28）---------- */
+@media (orientation: portrait) and (max-width: 640px) {
+  /* 序章标题 */
+  .ts-inner { padding: 20px 22px; }
+  .ts-title { font-size: clamp(30px, 11vw, 46px); }
+  .ts-rule { width: min(240px, 62vw); }
+
+  /* 开场四卡片：竖排更紧凑 */
+  .origin-rail { gap: 8px; }
+  .o-card { width: min(46vw, 200px); }
+
+  /* 角标与弹幕：贴边收窄，避免盖住字幕 */
+  #chat-flood { width: min(78vw, 280px); }
+  #human-badge { right: 14px; top: 14px; padding: 8px 12px; }
+  #event-ticker { left: 14px; top: 14px; max-width: 52vw; }
+  #burst-counter { right: 14px; top: 14px; padding: 6px 12px; }
+  .bc-num { font-size: 26px; }
+  #clock-box { right: 14px; bottom: 56px; }
+
+  /* 人注横幅与工牌桌高潮 */
+  #human-note { width: min(88vw, 420px); top: 18px; }
+  #desk-climax { flex-direction: column; gap: 10px; }
+  .dc-pile-wrap { width: min(88vw, 420px); }
+
+  /* 图纸墙与 50 人团队 */
+  .wall-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 14px; }
+  .crew-grid { grid-template-columns: repeat(5, 1fr); }
+  .crew-panel { padding: 12px 14px; }
+  .wall-num { font-size: clamp(34px, 11vw, 56px); }
+
+  /* 活图纸联动面板：竖屏全宽居中 */
+  #live-sheet { right: 50%; transform: translate(50%, -54%); width: min(90vw, 420px); }
+  #live-sheet.on { transform: translate(50%, -54%); }
+
+  /* 字幕：抬高避开控制条，字号收一档 */
+  #sub-wrap { bottom: 64px; padding: 0 14px; }
+  #sub-text { font-size: clamp(15px, 4.4vw, 20px); }
+  #sub-text.dark { font-size: clamp(13px, 3.8vw, 17px); }
+
+  /* 控制条、结尾交权与幕布 */
+  #ctrl-bar { padding: 8px 12px; }
+  #time-read { min-width: 76px; font-size: 11px; }
+  .pill { font-size: 13px; padding: 10px 18px; }
+  .curtain-inner { padding: 22px; max-width: 92vw; }
+  #curtain h1 { font-size: clamp(28px, 9vw, 44px); }
+}
