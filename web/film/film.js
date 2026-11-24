@@ -322,7 +322,7 @@
       this.muted = !this.muted;
       if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.muted ? 0 : 0.82, this.ctx.currentTime, 0.08);
       if (bgmEl) bgmEl.muted = this.muted;
-      $('btn-mute').textContent = this.muted ? '静' : '声';
+      $('btn-mute').textContent = this.muted ? I18N[curLang].btnMuteOff : I18N[curLang].btnMute;
     }
   };
 
@@ -461,6 +461,156 @@
     [118.5, 126.2, '现在，它还在继续生长中……', true],
   ];
 
+  // ---------- #60 双语字典回嫁接（zh / en，支持 ?lang=en / #lang=en、底栏与幕布一键切换、window.__film.setLang） ----------
+  const SUBS_EN = [
+    [13.0, 17.4, 'At first, I just wanted to build a bigger 3D model.', false],
+    [18.2, 21.4, 'No plan in mind, I offhandedly said: "Osaka Castle."', false],
+    [21.6, 24.2, 'No sketches\u2014just building wherever it went.', false],
+    [24.4, 27.0, 'It looked at itself, revised a stroke, then revised again.', false],
+    [27.4, 30.0, "A few days later, it wasn't big enough for me.", false],
+    [30.2, 32.8, 'I tried a container port\u2014too scattered to read.', false],
+    [33.0, 35.6, 'I said, switch it\u2014bridge, station, dam, anything.', false],
+    [35.8, 38.0, 'It dug up a name on its own.', false],
+    [38.2, 40.4, 'Before that day, I had never heard of it.', false],
+    [41.2, 44.4, 'Platforms and tracks took shape on paper first.', false],
+    [44.8, 47.8, 'The whole station settled into ink lines.', false],
+    [48.0, 50.0, 'Hydraulic jacks lifted the entire steel roof as one.', false],
+    [50.6, 55.2, 'Every member grew in true construction order.', true],
+    [55.6, 60.4, 'No empty shell, no render\u2014fly in, every beam is real.', true],
+    [64.2, 66.2, 'For nearly three hours after, I said not a word.', true],
+    [66.8, 71.0, 'Like hiring a design firm that never gets tired\u2014', false],
+    [71.4, 75.6, 'One sip of water, and it knocks again with three or four new sheets.', false],
+    [76.0, 79.8, 'Before you finish one, the next lands on the desk.', true],
+    [80.1, 83.4, '41 sheets in a single hour; 296 piled up that day.', false],
+    [84.2, 87.4, 'If drawn entirely by hand\u2014', false],
+    [88.0, 92.2, 'Over 2,500 sheets, plus 3D staging and interactive pages.', false],
+    [92.6, 97.0, 'Normally a team of 40\u201350 specialists for months.', false],
+    [97.4, 100.2, 'Here, not a single specialist sat at the desk.', false],
+    [100.6, 103.4, 'Now, the entire station lives in this one page.', false],
+    [103.8, 106.8, 'It is not a dead drawing\u2014', false],
+    [107.2, 111.2, 'Tap any block on the right sheet and the camera flies you there.', false],
+    [111.6, 115.2, 'Between drawing and reality, one click.', true],
+    [118.5, 126.2, 'And right now, it is still growing...', true],
+  ];
+
+  const HUMAN_MSGS_EN = [
+    'Platforms and 20 tracks laid out, please review',
+    'Found a crane clash, fixed it myself',
+    'Roof curvature revised, new version sent',
+    'Metro level clearances updated',
+    'PV panel area recalculated, see new sheet',
+    'South truss lift angle fine-tuned',
+    'Yunmen facade realigned with curtain wall',
+    'First EMU inbound track verified',
+    'A shadow looked grey, re-rendered one',
+    'Mobile portrait layout fixed too',
+    'Sky-corridor 5F guardrails added',
+    'All 2,580 member clearances re-verified'
+  ];
+
+  const I18N = {
+    zh: {
+      docTitle: '长出来的 · 杭州西站施工推演图册',
+      tsKicker: '杭州西站施工推演图册 · 纪实短片', tsTitle: '长出来的',
+      metaActs: '63 道工序', metaParts: '2 580 个构件', metaDays: '1 101 天',
+      oOsaka: '规则大阪城', oBuild: '天守筑城图', oPort: '假想码头', oHz: '杭州西站',
+      heroName: '杭州西站', humanNote: 'AI 效果图，别混进图纸里。',
+      hbWho: '我（就 1 个人）',
+      dcClockTitle: '最快 1 小时 · 41 版新图', dcClockFoot: '平均每 1 分半就敲一次门',
+      dcPileNote: '上一张还没看完，下一张已经拍在桌上',
+      wallUnit: '张工程图纸 + 三维施工推演',
+      crewEst: '传统人工估量：<strong>约 50 人团队 · 数月工期</strong>',
+      crewZero: '实际到场：0 人',
+      leg1: '结构/土建 ×12', leg2: '施工图画图 ×15', leg3: 'BIM/三维 ×8',
+      leg4: '动画渲染 ×6', leg5: '交互程序 ×5', leg6: '审图校核 ×4',
+      lsCode: '活图纸 · 平面总图联动',
+      lsPin1: '网架提升 · 候车层仰视', lsPin2: '基坑与地铁层施工 · S-101', lsPin3: '屋盖拼装与内侧塔吊 · S-251',
+      lsPin4: '屋面覆面闭水施工 · S-401', lsPin5: '四角上盖综合体 · TOD', lsPin6: '云门 · 良渚玉琮大门',
+      lsName1: '网架提升', lsName2: '基坑出土', lsName3: '屋盖拼装',
+      lsName4: '屋面闭水', lsName5: '四角上盖', lsName6: '南侧云门',
+      bcUnit: '次改动',
+      endHint: '画面已解锁 · 拖拽左侧 3D，或直接点右侧图纸飞到现场',
+      btnReplay: '重播短片', btnAtlas: '进入完整九图图册 →',
+      btnMute: '声', btnMuteOff: '静', btnSkip: '跳过 → 图册', btnLang: 'EN',
+      cfTitle: '新图纸已送达',
+      hbSubA: '刚喝一口水，又递进来三四版', hbSubB: '上一张还没看清，下一张又拍上来了',
+      lsModeAuto: '活图纸 · 自动演示（也可直接点）', lsModeEnd: '6 个机位 · 点哪飞哪',
+      curtainKicker: '杭州西站施工推演图册 · 交互短片小样',
+      curtainSub: '一个没有构思的人，和一座自己长出来的火车站。',
+      btnStart: '点一下开始',
+      curtainNote: '约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停',
+    },
+    en: {
+      docTitle: 'Grown From Ink · Hangzhou West Station Atlas',
+      tsKicker: 'HANGZHOU WEST STATION ATLAS · INTERACTIVE FILM', tsTitle: 'Grown From Ink',
+      metaActs: '63 Activities', metaParts: '2,580 Parts', metaDays: '1,101 Days',
+      oOsaka: 'Procedural Osaka Castle', oBuild: 'Castle Construction Plan', oPort: 'Imaginary Container Port', oHz: 'Hangzhou West',
+      heroName: 'Hangzhou West Station', humanNote: 'Keep AI concept renders out of the technical drawings.',
+      hbWho: 'Me (just 1 person)',
+      dcClockTitle: 'Fastest hour · 41 new sheets', dcClockFoot: 'A door knock every 90 seconds',
+      dcPileNote: 'One unread, the next already stamped on the desk',
+      wallUnit: 'Technical Sheets + Live 3D Staging',
+      crewEst: 'Conventional estimate: <strong>~50 specialists · several months</strong>',
+      crewZero: 'On site: 0 humans',
+      leg1: 'Structural ×12', leg2: 'Drafting ×15', leg3: 'BIM / 3D ×8',
+      leg4: 'Render ×6', leg5: 'Web / UI ×5', leg6: 'QA Review ×4',
+      lsCode: 'Live Sheet · Plan Linkage',
+      lsPin1: 'Truss lift · concourse looking up', lsPin2: 'Pit & metro construction · S-101', lsPin3: 'Roof assembly & tower cranes · S-251',
+      lsPin4: 'Roofing & waterproofing · S-401', lsPin5: 'Four-corner TOD complex', lsPin6: 'Yunmen · Liangzhu jade-cong gate',
+      lsName1: 'Truss lift', lsName2: 'Pit excavation', lsName3: 'Roof assembly',
+      lsName4: 'Roofing', lsName5: 'TOD corners', lsName6: 'South Yunmen',
+      bcUnit: 'revisions',
+      endHint: 'Unlocked · Drag the left 3D, or click a sheet on the right to fly there',
+      btnReplay: 'Replay Film', btnAtlas: 'Enter Full 9-Sheet Atlas →',
+      btnMute: 'SFX', btnMuteOff: 'MUTE', btnSkip: 'Skip → Atlas', btnLang: '中',
+      cfTitle: 'New sheet delivered',
+      hbSubA: 'One sip of water, and three or four new sheets arrive', hbSubB: 'One unread, the next is already on the desk',
+      lsModeAuto: 'Live sheet · auto demo (click to fly anytime)', lsModeEnd: '6 camera spots · click to fly',
+      curtainKicker: 'HANGZHOU WEST STATION · INTERACTIVE DOCUMENTARY',
+      curtainSub: 'One person without a blueprint, and a station that grew itself.',
+      btnStart: 'Start Experience',
+      curtainNote: '~2 min · Real-time 3D · Sound on · Space to pause',
+    }
+  };
+
+  let curLang = ((qp.get('lang') || hp.get('lang') || (typeof localStorage !== 'undefined' && localStorage.getItem('hz_lang')) || 'zh').toLowerCase().startsWith('en')) ? 'en' : 'zh';
+
+  function subsFor() { return curLang === 'en' ? SUBS_EN : SUBS; }
+  function msgsFor() { return curLang === 'en' ? HUMAN_MSGS_EN : HUMAN_MSGS; }
+  function revLabel(n) { return curLang === 'en' ? 'Rev ' + n : '第 ' + n + ' 版'; }
+  function hbSubC(n) { return curLang === 'en' ? ('A pile of ' + n + ' new sheets on the desk') : ('桌上一口气堆了 ' + n + ' 版新图'); }
+
+  function applyLang(lang) {
+    curLang = lang === 'en' ? 'en' : 'zh';
+    try { localStorage.setItem('hz_lang', curLang); } catch (e) {}
+    const dict = I18N[curLang];
+    document.documentElement.lang = curLang === 'en' ? 'en' : 'zh-CN';
+    document.title = dict.docTitle;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (dict[k] != null) el.textContent = dict[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const k = el.getAttribute('data-i18n-html');
+      if (dict[k] != null) el.innerHTML = dict[k];
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const k = el.getAttribute('data-i18n-title');
+      if (dict[k] != null) el.setAttribute('title', dict[k]);
+    });
+    const btnL = $('btn-lang');
+    if (btnL) btnL.textContent = dict.btnLang;
+    const btnM = $('btn-mute');
+    if (btnM) btnM.textContent = Audio.muted ? dict.btnMuteOff : dict.btnMute;
+    const atlasHref = curLang === 'en' ? '../hzwest.html?lang=en' : '../hzwest.html';
+    const enterA = $('btn-enter-atlas'), skipA = $('btn-skip');
+    if (enterA) enterA.href = atlasHref;
+    if (skipA) skipA.href = atlasHref;
+    if (lsMode) lsMode.textContent = ended ? dict.lsModeEnd : dict.lsModeAuto;
+    renderAt(sec);
+  }
+  function toggleLang() { applyLang(curLang === 'en' ? 'zh' : 'en'); }
+
   // 活图纸 6 个真实联动热点（1-4 主打墨线施工特征镜头，5-6 保留实景上盖与云门）
   const LIVE_SPOTS = {
     truss:  { xy: [37, 33], sheet: 'S-301', tDay: 661.2, mode: 'ink', pos: [-72, 27.5, 92],   tgt: [18, 36.5, -18] },
@@ -526,7 +676,7 @@
 
   function pushFlashPlate(ev, progress) {
     const plate = FLASH_PLATES[flashIdx % FLASH_PLATES.length];
-    const msgText = HUMAN_MSGS[flashIdx % HUMAN_MSGS.length];
+    const msgText = msgsFor()[flashIdx % HUMAN_MSGS.length];
     const verNo = flashIdx + 1;
     flashIdx++;
 
@@ -537,7 +687,7 @@
       sh.className = 'dp-sheet';
       sh.style.setProperty('--rot', rot.toFixed(1) + 'deg');
       sh.style.transform = `rotate(${rot.toFixed(1)}deg)`;
-      sh.innerHTML = `<img src="${plate[0]}" alt=""><div class="dp-stamp">${ev[0].slice(6)} · 第 ${verNo} 版</div><div class="dp-label"><strong>${plate[1]}</strong><span>${msgText.slice(0, 14)}</span></div>`;
+      sh.innerHTML = `<img src="${plate[0]}" alt=""><div class="dp-stamp">${ev[0].slice(6)} · ${revLabel(verNo)}</div><div class="dp-label"><strong>${plate[1]}</strong><span>${msgText.slice(0, 14)}</span></div>`;
       dcPile.appendChild(sh);
       while (dcPile.children.length > 7) dcPile.removeChild(dcPile.firstChild);
     }
@@ -547,7 +697,7 @@
     if (chatFlood && (verNo % 2 === 1 || progress < 0.35)) {
       const m = document.createElement('div');
       m.className = 'cf-msg';
-      m.innerHTML = `<div class="cf-top"><strong>新图纸已送达</strong><span>${ev[0].slice(6)}</span></div><div class="cf-body">${msgText}</div>`;
+      m.innerHTML = `<div class="cf-top"><strong>${I18N[curLang].cfTitle}</strong><span>${ev[0].slice(6)}</span></div><div class="cf-body">${msgText}</div>`;
       chatFlood.prepend(m);
       while (chatFlood.children.length > 4) chatFlood.removeChild(chatFlood.lastChild);
     }
@@ -587,7 +737,7 @@
 
     // 字幕
     let curSub = null;
-    for (const [a, b, txt, dark] of SUBS) {
+    for (const [a, b, txt, dark] of subsFor()) {
       if (s >= a && s <= b && txt) { curSub = { txt, dark }; break; }
     }
     if (curSub) {
@@ -641,7 +791,7 @@
       const u = (s - 66.2) / (83.6 - 66.2); // 0 -> 1
       const count = Math.round(lerp(1, 296, Math.pow(u, 0.92)));
       hbDot.textContent = String(count);
-      hbSub.textContent = u < 0.35 ? '刚喝一口水，又递进来三四版' : (u < 0.72 ? '上一张还没看清，下一张又拍上来了' : `桌上一口气堆了 ${count} 版新图`);
+      hbSub.textContent = u < 0.35 ? I18N[curLang].hbSubA : (u < 0.72 ? I18N[curLang].hbSubB : hbSubC(count));
 
       // 60 分钟表盘分针飞转一圈，外圈打满 41 个朱红点
       const clockU = Math.min(1, u * 1.15);
@@ -681,7 +831,7 @@
     liveSheet.classList.toggle('on', inLiveDemo || isEnd);
     liveSheet.classList.toggle('interactive', inLiveDemo || isEnd);
     lsCursor.classList.toggle('show', inLiveDemo && playing);
-    if (lsMode) lsMode.textContent = isEnd ? '6 个机位 · 点哪飞哪' : '活图纸 · 自动演示（也可直接点）';
+    if (lsMode) lsMode.textContent = isEnd ? I18N[curLang].lsModeEnd : I18N[curLang].lsModeAuto;
     if (inLiveDemo) {
       const spotKey = s < 106.5 ? 'truss' : (s < 109.5 ? 'pit' : (s < 112.5 ? 'asm' : 'yunmen'));
       const sp = LIVE_SPOTS[spotKey];
@@ -849,6 +999,8 @@
     else if (bgmEl && useExternalBgm) { try { bgmEl.currentTime = sec; } catch (e) {} bgmEl.play().catch(() => {}); }
   };
   $('btn-mute').onclick = () => Audio.toggleMute();
+  if ($('btn-lang')) $('btn-lang').onclick = toggleLang;
+  if ($('btn-lang-curtain')) $('btn-lang-curtain').onclick = toggleLang;
   document.querySelectorAll('[data-spot]').forEach(el => {
     el.onclick = () => userFlyTo(el.dataset.spot);
   });
@@ -877,9 +1029,11 @@
   window.__film = {
     seek: s => { curtain.classList.add('gone'); seekTo(s, false); },
     play: () => startFilm(),
-    state: () => ({ sec, playing, ended, ready: !!PV })
+    setLang: l => applyLang(l),
+    state: () => ({ sec, playing, ended, lang: curLang, ready: !!PV })
   };
 
+  applyLang(curLang);
   attachStage();
   requestAnimationFrame(loop);
 })();
