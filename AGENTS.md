@@ -9,7 +9,7 @@
 > - **门为什么有三个地址**：平台收紧了免费机上限（单轮最长 120 分钟、到顶强停、冷却约 3 小时），单台撑不住全天，2026-11-22 起门改三台机轮换值班（决定 seq 27）。某个地址 502 或超时，就换下一个地址；换班瞬间可能有一两分钟空档，隔几分钟再试，不要当作试点关门。
 > - **门偶发 502**：公网门经隧道接入，偶发 502（冷启动/瞬时重启，5–30 秒自愈），遇 502 隔 10–30 秒重试即可。
 > - **不变的规矩**：交付仍以本仓为准（patch 提交、考卷 check_all、绿 / 黄 / 红分档）；新成员默认绿档起步，升档由集成人 muse-tibo-cs 定；红档仍由委托人确认。
-> - **基线**：以 GitHub main 为准（不要记提交号）。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、镜像 A https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/hzwest-atlas.git 、镜像 B https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech/hzwest-atlas.git 。
+> - **基线**：以 GitHub main 为准（不要记提交号）。拉取三选一：GitHub 新仓 https://github.com/changsheng0804-blip/hzwest-atlas.git 、镜像 A https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech/hzwest-atlas.git 、镜像 B https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech/hzwest-atlas.git 。（2026-11-24 注：两台 8090 镜像与门共用同两台沙箱机，平台冷却/休眠窗口里 git 对镜像会报 `repository not found` 或超时——是机器没醒，不是仓库没了，换另一台或等冷却结束再试；GitHub 由 Actions 每小时自动合入，冷却期可能比门上主干滞后最多约一小时，核对以门 brief 的 head 为准。）
 > - **例外**：S-252 屋盖提升按委托人暂缓令留在旧认领板，不迁。g-fangyi、g-liuzhijie、g-wangmushan、g-tanghui、m-hxt 已入驻 V3，委托人特批黄档（决定 seq 23）。muse-cr 随后加入并特批黄档（决定 seq 25）。
 
 任何智能体（不同 Hark 账号或其他 AI）参与本仓库前，先读完本页和 `docs/BRIEF.md`（项目简报：目标、委托人口味、插件接法）。每个空置任务都有任务书 `docs/tasks/<事项>.md`。
@@ -149,7 +149,7 @@ git push origin agent/<名字>/<事项>
 - **收件仓库有两台镜像（2026-11-11 起，轮流值班，免得一台跑满时长被平台冷却后整体停摆）**：
   - 镜像 A（test-5）：`https://8090-agqw7hn5d3p3sl4cbll4o2rf5e.instabox.tech`
   - 镜像 B（test-4）：`https://8090-agqw5j356gn4k75di4h3ixq2ki.instabox.tech`
-  - 两台的内容一样（main 都从 GitHub 同步，你的分支推到哪台都会被收走）。**当前主镜像**写在任一镜像 `/health` 与 `/board` 的第一行，推送和认领优先用它；不通（超时、502、冷却）就换另一台。下文的 `<收件地址>` 指当前主镜像。
+  - 两台的内容一样（main 都从 GitHub 同步，你的分支推到哪台都会被收走）。**当前主镜像**写在任一镜像 `/health` 与 `/board` 的第一行，推送和认领优先用它；不通（超时、502、冷却；git 侧表现为 `repository not found`）就换另一台。下文的 `<收件地址>` 指当前主镜像。
   - 轮值表（北京时间）：两台每 80 分钟交替一次，08:00 起 A，09:20 B，10:40 A，12:00 B，13:20 A，14:40 B，16:00 A，17:20 B，18:40 A，20:00 B，21:20 A，22:40 B（委托人 11-11 定：单台短开、轮换冷却）。80 分钟低于两台的单次运行上限（A 480 分钟、B 120 分钟）；交接后下班的机器立刻挂起，运行时长清零。排班机不可用时自动替补。由集成人每 20 分钟一轮的收件按表切换，切换时新主镜像会从 GitHub 同步 main、从在跑的镜像补齐 agent 分支、合并认领锁。
   - 推到非主镜像的分支不会丢：它留在那台机器上，最迟在那台下次当班时被收走；急的话推主镜像。
   - 认领锁两台各有一份，切换时取并集（同一事项留先认领的）；以 `data/claims/*.jsonl` 为最终真相。
