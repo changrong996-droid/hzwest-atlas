@@ -20,18 +20,18 @@
     <div id="title-seq" aria-hidden="true">
       <div class="ts-grid"></div>
       <div class="ts-inner">
-        <div class="ts-kicker">杭州西站施工推演图册 · 纪实短片</div>
+        <div class="ts-kicker" data-i18n="tsKicker">杭州西站施工推演图册 · 纪实短片</div>
         <div class="ts-rule"></div>
-        <div class="ts-title">长出来的</div>
+        <div class="ts-title" data-i18n="tsTitle">长出来的</div>
         <div class="ts-en">GROWN FROM INK · HANGZHOU WEST STATION</div>
         <div class="ts-meta">
           <span>2026-10-16 — 2026-11-23</span>
           <i>·</i>
-          <span>63 道工序</span>
+          <span data-i18n="metaActs">63 道工序</span>
           <i>·</i>
-          <span>2 580 个构件</span>
+          <span data-i18n="metaParts">2 580 个构件</span>
           <i>·</i>
-          <span>1 101 天</span>
+          <span data-i18n="metaDays">1 101 天</span>
         </div>
       </div>
     </div>
@@ -45,7 +45,7 @@
             <div class="o-frame">
               <img class="o-photo" src="img/osaka.jpg" alt="大阪城 3D 模型">
             </div>
-            <div class="o-name">大阪城 <span>e3f7cdd</span></div>
+            <div class="o-name"><em data-i18n="oOsaka">大阪城</em> <span>e3f7cdd</span></div>
           </a>
         </div>
         <div class="o-link" id="o-link-1"></div>
@@ -65,7 +65,7 @@
             <div class="o-frame">
               <img class="o-photo" src="img/port.jpg" alt="集装箱码头 3D 小样">
             </div>
-            <div class="o-name">集装箱码头 <span>8ca7639</span></div>
+            <div class="o-name"><em data-i18n="oPort">集装箱码头</em> <span>8ca7639</span></div>
           </a>
         </div>
         <div class="o-link" id="o-link-3"></div>
@@ -75,18 +75,18 @@
             <div class="o-frame">
               <img class="o-photo" src="img/hzwest.jpg" alt="杭州西站 3D 实景">
             </div>
-            <div class="o-name">杭州西站 <span>ce40c17</span></div>
+            <div class="o-name"><em data-i18n="oHz">杭州西站</em> <span>ce40c17</span></div>
           </a>
         </div>
       </div>
-      <div id="hero-name">杭州西站</div>
+      <div id="hero-name" data-i18n="heroName">杭州西站</div>
     </div>
 
     <!-- 克制的 14:33 批注微条（不打断主画面） -->
     <div id="human-note" aria-hidden="true">
       <span class="hn-time">11-08 14:33</span>
       <span class="hn-sep">·</span>
-      <span class="hn-text" id="hn-text">AI 效果图，别混进图纸里。</span>
+      <span class="hn-text" id="hn-text" data-i18n="humanNote">AI 效果图，别混进图纸里。</span>
     </div>
 
     <!-- 机械战警式高频图纸闪切视图（右侧取景框 + 左侧图纸瀑布） -->
@@ -110,8 +110,8 @@
     <!-- 真实 38 天时间密度爆发曲线（暗黑高冲击脉冲图：大阪城/码头平缓 -> 杭州西站 296 次朱红尖峰喷发） -->
     <div id="time-burst-graph" aria-hidden="true">
       <div class="tbg-head">
-        <span class="tbg-title"><i class="tbg-led"></i>GIT 改动爆发脉冲 · 2026-10-16 — 11-23</span>
-        <span class="tbg-peak" id="tbg-peak">11-08 峰值 · 296 次 / 24h · 最快 41 次 / h</span>
+        <span class="tbg-title"><i class="tbg-led"></i><em data-i18n="tbgTitle">GIT 改动爆发脉冲 · 2026-10-16 — 11-23</em></span>
+        <span class="tbg-peak" id="tbg-peak" data-i18n="tbgPeak">11-08 峰值 · 296 次 / 24h · 最快 41 次 / h</span>
       </div>
       <div class="tbg-stage">
         <svg id="tbg-svg" viewBox="0 0 760 124" preserveAspectRatio="none" aria-hidden="true">
@@ -157,15 +157,15 @@
             <circle class="tbg-ring" cx="458" cy="10" r="6" fill="none" stroke="#ff4d5a" stroke-width="1.6"/>
             <circle cx="458" cy="10" r="3.4" fill="#fff5df" filter="url(#tbgGlow)"/>
             <line x1="466" y1="10" x2="508" y2="10" stroke="#ff4d5a" stroke-width="1.2"/>
-            <text x="514" y="14" fill="#fff3db" font-size="11" font-family="ui-monospace,SF Mono,monospace" font-weight="700">▲ 296 次 / 24h</text>
+            <text x="514" y="14" fill="#fff3db" font-size="11" font-family="ui-monospace,SF Mono,monospace" font-weight="700" id="tbg-peak-svg">▲ 296 次 / 24h</text>
           </g>
           <line id="tbg-scan" x1="0" y1="0" x2="0" y2="120" stroke="#ff5c68" stroke-width="1.4" opacity="0.9"/>
         </svg>
       </div>
       <div class="tbg-axis">
-        <span>10-16 大阪城（零星）</span>
-        <span>11-06 码头 / 杭州西站</span>
-        <span class="tbg-hot">▲ 11-08 火山爆发</span>
+        <span data-i18n="ax1">10-16 大阪城（零星）</span>
+        <span data-i18n="ax2">11-06 码头 / 杭州西站</span>
+        <span class="tbg-hot" data-i18n="ax3">▲ 11-08 火山爆发</span>
         <span>11-23</span>
       </div>
     </div>
@@ -176,21 +176,21 @@
       <div class="wall-hud">
         <div class="wall-top">
           <div class="wall-num" id="wall-num">0</div>
-          <div class="wall-unit">张工程图纸 + 三维施工推演</div>
+          <div class="wall-unit" data-i18n="wallUnit">张工程图纸 + 三维施工推演</div>
         </div>
         <div class="crew-panel" id="crew-panel">
           <div class="crew-head">
-            <span>传统人工估量：<strong>约 50 人团队 · 数月工期</strong></span>
-            <span class="crew-zero" id="crew-zero">实际到场：0 人</span>
+            <span data-i18n-html="crewEst">传统人工估量：<strong>约 50 人团队 · 数月工期</strong></span>
+            <span class="crew-zero" id="crew-zero" data-i18n="crewZero">实际到场：0 人</span>
           </div>
           <div class="crew-grid" id="crew-grid"></div>
           <div class="crew-legend">
-            <span><i></i>结构/土建 ×12</span>
-            <span><i></i>施工图画图 ×15</span>
-            <span><i></i>BIM/三维 ×8</span>
-            <span><i></i>动画渲染 ×6</span>
-            <span><i></i>交互程序 ×5</span>
-            <span><i></i>审图校核 ×4</span>
+            <span><i></i><em data-i18n="leg1">结构/土建 ×12</em></span>
+            <span><i></i><em data-i18n="leg2">施工图画图 ×15</em></span>
+            <span><i></i><em data-i18n="leg3">BIM/三维 ×8</em></span>
+            <span><i></i><em data-i18n="leg4">动画渲染 ×6</em></span>
+            <span><i></i><em data-i18n="leg5">交互程序 ×5</em></span>
+            <span><i></i><em data-i18n="leg6">审图校核 ×4</em></span>
           </div>
         </div>
       </div>
@@ -199,7 +199,7 @@
     <!-- 右上改动计数器（1 -> 87 -> 296） -->
     <div id="burst-counter" aria-hidden="true">
       <span class="bc-num" id="bc-num">0</span>
-      <span class="bc-unit">次改动</span>
+      <span class="bc-unit" data-i18n="bcUnit">次改动</span>
     </div>
 
     <!-- 左上单行脉搏（慢段显示） -->
@@ -222,10 +222,10 @@
 
     <!-- 结尾交权操作条 -->
     <div id="end-actions" aria-hidden="true">
-      <div class="end-hint">画面已解锁 · 拖拽可自由转动这座杭州西站</div>
+      <div class="end-hint" data-i18n="endHint">画面已解锁 · 拖拽可自由转动这座杭州西站</div>
       <div class="end-btns">
-        <button type="button" id="btn-replay" class="pill">重播短片</button>
-        <a href="../hzwest.html" class="pill pill-red">进入完整九图图册 →</a>
+        <button type="button" id="btn-replay" class="pill" data-i18n="btnReplay">重播短片</button>
+        <a href="../hzwest.html" id="btn-enter-atlas" class="pill pill-red" data-i18n="btnAtlas">进入完整九图图册 →</a>
       </div>
     </div>
   </div>
@@ -237,8 +237,10 @@
       <div id="scrub-fill"></div>
     </div>
     <span id="time-read">00:00 / 02:00</span>
-    <button type="button" id="btn-mute" aria-label="静音切换">声</button>
-    <a href="../hzwest.html" class="ctrl-exit">跳过 → 图册</a>
+    <button type="button" id="btn-speed" class="ctrl-spd" aria-label="播放倍速">1×</button>
+    <button type="button" id="btn-lang" class="ctrl-lang" aria-label="中英文切换">EN</button>
+    <button type="button" id="btn-mute" aria-label="静音切换" data-i18n="btnMute">声</button>
+    <a href="../hzwest.html" id="btn-skip" class="ctrl-exit" data-i18n="btnSkip">跳过 → 图册</a>
   </div>
 
   <!-- 定版配乐（方案 B · 工业史诗，自动同步进度条并叠保留机械提交雨音效） -->
@@ -246,12 +248,13 @@
 
   <!-- 开场白纸幕 -->
   <div id="curtain">
+    <button type="button" id="btn-lang-curtain" class="curtain-lang" aria-label="Switch language">EN / 中文</button>
     <div class="curtain-inner">
-      <div class="curtain-kicker">杭州西站施工推演图册 · 交互短片小样</div>
-      <h1>长出来的</h1>
-      <p class="curtain-sub">一个没有构思的人，和一座自己长出来的火车站。</p>
-      <button type="button" id="btn-start">点一下开始</button>
-      <div class="curtain-note">约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停</div>
+      <div class="curtain-kicker" data-i18n="curtainKicker">杭州西站施工推演图册 · 交互短片小样</div>
+      <h1 data-i18n="tsTitle">长出来的</h1>
+      <p class="curtain-sub" data-i18n="curtainSub">一个没有构思的人，和一座自己长出来的火车站。</p>
+      <button type="button" id="btn-start" data-i18n="btnStart">点一下开始</button>
+      <div class="curtain-note" data-i18n="curtainNote">约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停</div>
     </div>
   </div>
 

@@ -419,6 +419,119 @@
     [110.5, 118.2, '现在，它还在继续生长中……', true],
   ];
 
+  // ---------- #58 中英文双语字典（zh / en，支持 ?lang=en / #lang=en 与底栏一键切换） ----------
+  const SUBS_EN = [
+    [13.0, 17.4, 'At first, I only wanted to build a larger 3D model.', false],
+    [18.2, 21.4, 'Without a real plan, I casually said: "Osaka Castle."', false],
+    [21.6, 24.0, 'No sketches—just building step by step.', false],
+    [24.2, 26.4, 'It looked at itself, revised a stroke, then revised again.', false],
+    [26.6, 29.0, 'Soon, the castle grew its own construction drawings.', false],
+    [29.2, 31.4, 'A few days later, I wanted something even bigger.', false],
+    [31.6, 33.8, 'Tried a container port—too scattered to read cleanly.', false],
+    [34.0, 36.4, 'I said: switch it—a bridge, a station, a dam, anything.', false],
+    [36.6, 38.4, 'It picked a name on its own.', false],
+    [38.6, 40.6, 'Before that day, I had never even heard of it.', false],
+    [41.2, 44.4, 'Platforms and tracks took shape on paper first.', false],
+    [44.8, 47.8, 'The entire station settled into ink lines.', false],
+    [48.0, 50.0, 'Hydraulic jacks lifted the entire steel roof as one.', false],
+    [50.6, 55.2, 'Diving through Cloud Gate, skimming right along the tracks.', true],
+    [55.6, 60.4, 'Sweeping past the space truss and out over the four-cloud roof.', true],
+    [64.2, 66.2, 'For the next three hours, I did not say another word.', true],
+    [66.8, 71.2, 'Quiet for twenty days—then Hangzhou West erupted.', false],
+    [71.8, 76.6, '87 commits in three hours; 41 in a single hour at peak.', false],
+    [77.2, 82.8, 'On its busiest day, it revised itself 296 times.', false],
+    [84.2, 87.4, 'If drawn entirely by hand—', false],
+    [88.0, 92.2, 'Over 2,500 drawings, plus 3D staging and an interactive atlas.', false],
+    [92.6, 97.0, 'Normally a team of 50 specialists working for months.', false],
+    [97.4, 100.2, 'Here, not a single specialist sat at the desk.', false],
+    [100.6, 104.2, 'Now, the entire station lives inside this one page.', false],
+    [110.5, 118.2, 'And right now, it is still growing...', true],
+  ];
+
+  const I18N = {
+    zh: {
+      docTitle: '长出来的 · 杭州西站施工推演图册',
+      tsKicker: '杭州西站施工推演图册 · 纪实短片',
+      tsTitle: '长出来的',
+      metaActs: '63 道工序', metaParts: '2 580 个构件', metaDays: '1 101 天',
+      oOsaka: '大阪城', oPort: '集装箱码头', oHz: '杭州西站', heroName: '杭州西站',
+      humanNote: 'AI 效果图，别混进图纸里。',
+      tbgTitle: 'GIT 改动爆发脉冲 · 2026-10-16 — 11-23',
+      tbgPeak: '11-08 峰值 · 296 次 / 24h · 最快 41 次 / h',
+      tbgPeakSvg: '▲ 296 次 / 24h',
+      ax1: '10-16 大阪城（零星）', ax2: '11-06 码头 / 杭州西站', ax3: '▲ 11-08 火山爆发',
+      wallUnit: '张工程图纸 + 三维施工推演',
+      crewEst: '传统人工估量：<strong>约 50 人团队 · 数月工期</strong>',
+      crewZero: '实际到场：0 人',
+      leg1: '结构/土建 ×12', leg2: '施工图画图 ×15', leg3: 'BIM/三维 ×8',
+      leg4: '动画渲染 ×6', leg5: '交互程序 ×5', leg6: '审图校核 ×4',
+      bcUnit: '次改动',
+      endHint: '画面已解锁 · 拖拽可自由转动这座杭州西站',
+      btnReplay: '重播短片', btnAtlas: '进入完整九图图册 →',
+      btnMute: '声', btnMuteOff: '静', btnSkip: '跳过 → 图册', btnLang: 'EN',
+      curtainKicker: '杭州西站施工推演图册 · 交互短片小样',
+      curtainSub: '一个没有构思的人，和一座自己长出来的火车站。',
+      btnStart: '点一下开始',
+      curtainNote: '约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停',
+    },
+    en: {
+      docTitle: 'Grown From Ink · Hangzhou West Station Atlas',
+      tsKicker: 'HANGZHOU WEST STATION ATLAS · INTERACTIVE FILM',
+      tsTitle: 'Grown From Ink',
+      metaActs: '63 Activities', metaParts: '2,580 Parts', metaDays: '1,101 Days',
+      oOsaka: 'Osaka Castle', oPort: 'Container Port', oHz: 'Hangzhou West', heroName: 'Hangzhou West Station',
+      humanNote: 'Keep AI concept renders out of the technical drawings.',
+      tbgTitle: 'GIT COMMIT BURST · 2026-10-16 — 11-23',
+      tbgPeak: 'Nov 8 Peak · 296 / 24h · Up to 41 / hr',
+      tbgPeakSvg: '▲ 296 / 24h',
+      ax1: 'Oct 16 Osaka', ax2: 'Nov 6 Port / HZ West', ax3: '▲ Nov 8 Surge',
+      wallUnit: 'Technical Sheets + Live 3D Staging',
+      crewEst: 'Conventional estimate: <strong>~50 specialists · several months</strong>',
+      crewZero: 'On site: 0 humans',
+      leg1: 'Structural ×12', leg2: 'Drafting ×15', leg3: 'BIM / 3D ×8',
+      leg4: 'Render ×6', leg5: 'Web / UI ×5', leg6: 'QA Review ×4',
+      bcUnit: 'commits',
+      endHint: 'Unlocked · Drag to orbit Hangzhou West Station freely',
+      btnReplay: 'Replay Film', btnAtlas: 'Enter Full 9-Sheet Atlas →',
+      btnMute: 'SFX', btnMuteOff: 'MUTE', btnSkip: 'Skip → Atlas', btnLang: '中',
+      curtainKicker: 'HANGZHOU WEST STATION · INTERACTIVE DOCUMENTARY',
+      curtainSub: 'One person without a blueprint, and a station that grew itself.',
+      btnStart: 'Start Experience',
+      curtainNote: '~2 min · Real-time 3D · Sound on · Space to pause',
+    }
+  };
+
+  let curLang = ((qp.get('lang') || hp.get('lang') || (typeof localStorage !== 'undefined' && localStorage.getItem('hz_lang')) || 'zh').toLowerCase().startsWith('en')) ? 'en' : 'zh';
+  const SPEEDS = [1, 1.5, 2, 0.5];
+  let spdIdx = 0;
+
+  function applyLang(lang) {
+    curLang = lang === 'en' ? 'en' : 'zh';
+    try { localStorage.setItem('hz_lang', curLang); } catch (e) {}
+    const dict = I18N[curLang];
+    document.documentElement.lang = curLang === 'en' ? 'en' : 'zh-CN';
+    document.title = dict.docTitle;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.getAttribute('data-i18n');
+      if (dict[k] != null) el.textContent = dict[k];
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const k = el.getAttribute('data-i18n-html');
+      if (dict[k] != null) el.innerHTML = dict[k];
+    });
+    const peakSvg = $('tbg-peak-svg');
+    if (peakSvg) peakSvg.textContent = dict.tbgPeakSvg;
+    const btnL = $('btn-lang');
+    if (btnL) btnL.textContent = dict.btnLang;
+    const btnM = $('btn-mute');
+    if (btnM) btnM.textContent = Audio.muted ? dict.btnMuteOff : dict.btnMute;
+    const atlasHref = curLang === 'en' ? '../hzwest.html?lang=en' : '../hzwest.html';
+    const enterA = $('btn-enter-atlas'), skipA = $('btn-skip');
+    if (enterA) enterA.href = atlasHref;
+    if (skipA) skipA.href = atlasHref;
+    renderAt(sec);
+  }
+
   // ---------- 状态机 ----------
   let playing = false, sec = 0, lastTs = 0, lastClickSec = -1, lastEventIdx = -1, flashIdx = 0;
   let lastMode = '', lastSheet = '', ended = false;
@@ -476,7 +589,7 @@
 
     // 字幕
     let curSub = null;
-    for (const [a, b, txt, dark] of SUBS) {
+    for (const [a, b, txt, dark] of (curLang === 'en' ? SUBS_EN : SUBS)) {
       if (s >= a && s <= b && txt) { curSub = { txt, dark }; break; }
     }
     if (curSub) {
@@ -663,7 +776,7 @@
     const dt = Math.min(0.1, (now - lastTs) / 1000);
     lastTs = now;
     if (playing) {
-      sec += dt;
+      sec += dt * SPEEDS[spdIdx];
       if (sec >= DUR) { sec = DUR; playing = false; document.body.classList.add('paused'); $('btn-play').textContent = '▶'; if (bgmEl) bgmEl.pause(); }
       renderAt(sec);
     }
@@ -696,7 +809,17 @@
     if (!playing) { Audio.setPad(0.0001); if (bgmEl) bgmEl.pause(); }
     else if (bgmEl && useExternalBgm) { try { bgmEl.currentTime = sec; } catch (e) {} bgmEl.play().catch(() => {}); }
   };
-  $('btn-mute').onclick = () => Audio.toggleMute();
+  $('btn-mute').onclick = () => { Audio.toggleMute(); const d = I18N[curLang]; $('btn-mute').textContent = Audio.muted ? d.btnMuteOff : d.btnMute; };
+  const btnSpeed = $('btn-speed');
+  if (btnSpeed) btnSpeed.onclick = () => {
+    spdIdx = (spdIdx + 1) % SPEEDS.length;
+    const rate = SPEEDS[spdIdx];
+    btnSpeed.textContent = rate + '×';
+    if (bgmEl) try { bgmEl.playbackRate = rate; } catch (e) {}
+  };
+  const toggleLang = () => applyLang(curLang === 'zh' ? 'en' : 'zh');
+  if ($('btn-lang')) $('btn-lang').onclick = toggleLang;
+  if ($('btn-lang-curtain')) $('btn-lang-curtain').onclick = toggleLang;
 
   {
     const sc = $('scrub');
@@ -722,8 +845,11 @@
   window.__film = {
     seek: s => { curtain.classList.add('gone'); seekTo(s, false); },
     play: () => startFilm(),
-    state: () => ({ sec, playing, ended, ready: !!PV })
+    setLang: l => applyLang(l),
+    setSpeed: r => { const i = SPEEDS.indexOf(r); if (i >= 0) { spdIdx = i; if (btnSpeed) btnSpeed.textContent = r + '×'; if (bgmEl) try { bgmEl.playbackRate = r; } catch (e) {} } },
+    state: () => ({ sec, playing, ended, lang: curLang, speed: SPEEDS[spdIdx], ready: !!PV })
   };
+  applyLang(curLang);
 
   attachStage();
   requestAnimationFrame(loop);

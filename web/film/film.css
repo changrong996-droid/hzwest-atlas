@@ -462,3 +462,76 @@ a.o-card:hover .o-frame { border-color: rgba(179, 32, 42, 0.5); }
   #flash-strip { display: none; }
   #flash-shutter { width: 220px; top: 82px; }
 }
+
+/* ---------- #58 双语（zh/en）与桌面倍速按钮、390×844 手机竖屏一体化适配 ---------- */
+.o-name em, .tbg-title em, .crew-legend em { font-style: normal; }
+.ctrl-spd, .ctrl-lang {
+  font-family: var(--mono) !important; font-size: 11px !important; min-width: 28px;
+  color: var(--ink-dim) !important; padding: 3px 5px !important;
+  border-left: 1px solid rgba(29,26,23,0.14) !important;
+}
+.ctrl-spd:hover, .ctrl-lang:hover { color: var(--red) !important; }
+.curtain-lang {
+  position: fixed; top: 18px; right: 20px; z-index: 32;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--ink-dim); background: rgba(250,247,238,0.85);
+  border: 1px solid rgba(29,26,23,0.22); border-radius: 999px;
+  padding: 5px 12px; cursor: pointer; transition: color .2s, border-color .2s;
+}
+.curtain-lang:hover { color: var(--red); border-color: var(--red); }
+
+html[lang="en"] #curtain h1,
+html[lang="en"] .ts-title { letter-spacing: .04em; padding-left: .04em; font-size: clamp(34px, 5.5vw, 58px); }
+html[lang="en"] .ts-kicker,
+html[lang="en"] .curtain-kicker { letter-spacing: .08em; }
+html[lang="en"] #sub-text { font-size: clamp(15px, 1.8vw, 20px); line-height: 1.42; max-width: min(820px, 92vw); }
+
+@media (max-width: 680px) {
+  #ctrl-bar {
+    width: calc(100vw - 16px); left: 50%; bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 6px 10px; gap: 6px; opacity: 0.92;
+  }
+  .ctrl-spd { display: none !important; }
+  #time-read { min-width: 72px; font-size: 10.5px; }
+  .ctrl-exit { font-size: 11px; padding-left: 5px; white-space: nowrap; }
+  #sub-wrap { bottom: calc(56px + env(safe-area-inset-bottom)); padding: 0 12px; }
+  #sub-text { font-size: 14px; line-height: 1.45; padding: 7px 12px; max-width: 94vw; }
+
+  .curtain-inner { padding: 20px 18px; }
+  .curtain-sub { font-size: 15px; margin-top: 14px; }
+  #btn-start { margin-top: 22px; padding: 11px 26px; font-size: 15px; }
+
+  .ts-inner { padding: 0 16px; }
+  .ts-meta { flex-wrap: wrap; justify-content: center; gap: 4px 8px; font-size: 11px; }
+
+  .origin-rail { gap: 6px; padding: 0 12px; }
+  .o-card { width: min(240px, 76vw); }
+  .o-frame { height: 86px; }
+  .o-link { height: 12px; }
+  #hero-name { font-size: 24px; margin-top: 10px; }
+
+  #burst-counter { top: 10px; right: 10px; padding: 6px 10px; }
+  .bc-num { font-size: 28px; }
+  #flash-shutter { width: min(195px, 52vw); top: 68px; right: 10px; }
+  #clock-box { bottom: calc(122px + env(safe-area-inset-bottom)); right: 10px; padding: 4px 8px; }
+
+  #time-burst-graph {
+    width: calc(100vw - 20px); left: 10px; transform: none;
+    bottom: calc(108px + env(safe-area-inset-bottom)); padding: 8px 10px;
+  }
+  .tbg-head { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 10px; }
+  .tbg-stage { height: 84px; }
+  .tbg-axis { font-size: 9.5px; }
+  .tbg-axis span:nth-child(2) { display: none; }
+
+  .wall-hud { width: calc(100vw - 20px); padding: 14px 12px; }
+  .wall-num { font-size: 36px; }
+  .wall-unit { font-size: 12px; }
+  .crew-head { flex-direction: column; align-items: flex-start; gap: 6px; font-size: 12px; }
+  .crew-grid { grid-template-columns: repeat(10, 1fr); gap: 4px 2px; }
+  .person-ico { width: 15px; height: 22px; }
+  .crew-legend { gap: 6px 10px; font-size: 10px; }
+
+  #end-actions { bottom: calc(64px + env(safe-area-inset-bottom)); width: calc(100vw - 24px); padding: 12px; }
+  .end-btns { flex-wrap: wrap; justify-content: center; gap: 8px; }
+}
