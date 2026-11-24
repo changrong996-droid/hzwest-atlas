@@ -215,9 +215,10 @@ if (doSelf) {
   const rel = path.relative(path.join(__dirname, '../..'), abs);
   const G2 = load({ extra: [rel] }).G;
   const F = G2.HZ_FPV;
-  if (!F || typeof F.routes !== 'function') skip(rel + ' 未登记 HZ_FPV（须按 #38 底座格式提供 HZ_FPV.add/get/routes）');
-  routes = F.routes();
-  if (!Array.isArray(routes) || !routes.length) skip(rel + ' HZ_FPV.routes() 为空');
+  const rawRoutes = F && (typeof F.routes === 'function' ? F.routes() : (Array.isArray(F.routes) ? F.routes : null));
+  if (!F || !Array.isArray(rawRoutes)) skip(rel + ' 未登记 HZ_FPV（须按 #38 底座格式提供 HZ_FPV.add/get/routes）');
+  routes = rawRoutes;
+  if (!routes.length) skip(rel + ' HZ_FPV.routes 为空');
 }
 if (onlyName) routes = routes.filter(r => r.name === onlyName);
 if (!routes.length) fail('--route ' + onlyName + ' 未匹配到航线');
