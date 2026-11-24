@@ -14,159 +14,118 @@
   <div id="film-ui">
     <div id="paper-veil"></div>
     <div id="blackout"></div>
+    <div id="shutter-ghost" aria-hidden="true"><img id="sg-img" src="img/flash/f01.jpg" alt=""></div>
     <div id="red-pulse"></div>
 
     <!-- 正式片头序列（0–6s） -->
     <div id="title-seq" aria-hidden="true">
       <div class="ts-grid"></div>
       <div class="ts-inner">
-        <div class="ts-kicker" data-i18n="tsKicker">杭州西站施工推演图册 · 纪实短片</div>
+        <div class="ts-kicker">杭州西站施工推演图册 · 纪实短片</div>
         <div class="ts-rule"></div>
-        <div class="ts-title" data-i18n="tsTitle">长出来的</div>
+        <div class="ts-title">长出来的</div>
         <div class="ts-en">GROWN FROM INK · HANGZHOU WEST STATION</div>
         <div class="ts-meta">
           <span>2026-10-16 — 2026-11-23</span>
           <i>·</i>
-          <span data-i18n="metaActs">63 道工序</span>
+          <span>63 道工序</span>
           <i>·</i>
-          <span data-i18n="metaParts">2 580 个构件</span>
+          <span>2 580 个构件</span>
           <i>·</i>
-          <span data-i18n="metaDays">1 101 天</span>
+          <span>1 101 天</span>
         </div>
       </div>
     </div>
 
-    <!-- 起念溯源卡片（大阪城 → 筑城图 → 码头 → 杭州西站，真实 3D 渲染底图，点卡片打开原页面） -->
-    <div id="origin-stage">
-      <div class="origin-rail">
-        <div class="o-node" id="o-osaka">
+    <!-- 起念溯源卡片（真实四步：规则生成大阪城 -> 天守筑城图 -> 假想集装箱码头 -> 杭州西站） -->
+    <div id="origin-stage" aria-hidden="true">
+      <div class="origin-rail origin-rail-4">
+        <a class="o-node" id="o-osaka" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/index.html#seed=1&lost=1&view=aerial&labels=1" target="_blank" rel="noopener">
           <div class="o-date">01 · 2026-10-16</div>
-          <a class="o-card" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/index.html#seed=1&amp;lost=1&amp;view=aerial&amp;labels=1" target="_blank" rel="noopener">
-            <div class="o-frame">
-              <img class="o-photo" src="img/osaka.jpg" alt="大阪城 3D 模型">
-            </div>
-            <div class="o-name"><em data-i18n="oOsaka">大阪城</em> <span>e3f7cdd</span></div>
-          </a>
-        </div>
+          <div class="o-card">
+            <div class="o-frame"><img class="o-photo" src="img/osaka-aerial.jpg" alt="规则生成大阪城"></div>
+            <div class="o-name">规则大阪城 <span>e3f7cdd</span></div>
+          </div>
+        </a>
         <div class="o-link" id="o-link-1"></div>
-        <div class="o-node" id="o-build">
-          <div class="o-date">02 · 2026-11-06</div>
-          <a class="o-card" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/build.html" target="_blank" rel="noopener">
-            <div class="o-frame">
-              <img class="o-photo" src="img/build.jpg" alt="天守筑城图 施工推演">
-            </div>
-            <div class="o-name">天守筑城图 <span>2db983e</span></div>
-          </a>
-        </div>
+        <a class="o-node" id="o-build" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/build.html" target="_blank" rel="noopener">
+          <div class="o-date">02 · 天守筑城图</div>
+          <div class="o-card">
+            <div class="o-frame"><img class="o-photo" src="img/osaka-build.jpg" alt="天守筑城图"></div>
+            <div class="o-name">天守筑城图 <span>build</span></div>
+          </div>
+        </a>
         <div class="o-link" id="o-link-2"></div>
-        <div class="o-node" id="o-port">
-          <div class="o-date">03 · 2026-11-06 14:00</div>
-          <a class="o-card" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/port.html" target="_blank" rel="noopener">
-            <div class="o-frame">
-              <img class="o-photo" src="img/port.jpg" alt="集装箱码头 3D 小样">
-            </div>
-            <div class="o-name"><em data-i18n="oPort">集装箱码头</em> <span>8ca7639</span></div>
-          </a>
-        </div>
+        <a class="o-node" id="o-port" href="https://htmlpreview.github.io/?https://github.com/changrong996-droid/osaka-castle-3d/blob/main/web/port.html" target="_blank" rel="noopener">
+          <div class="o-date">03 · 11-06 14:00</div>
+          <div class="o-card">
+            <div class="o-frame"><img class="o-photo" src="img/port.jpg" alt="假想集装箱码头"></div>
+            <div class="o-name">假想码头 <span>8ca7639</span></div>
+          </div>
+        </a>
         <div class="o-link" id="o-link-3"></div>
-        <div class="o-node" id="o-hz">
-          <div class="o-date">04 · 2026-11-06 15:49</div>
-          <a class="o-card o-card-hero" href="../hzwest.html" target="_blank" rel="noopener">
-            <div class="o-frame">
-              <img class="o-photo" src="img/hzwest.jpg" alt="杭州西站 3D 实景">
-            </div>
-            <div class="o-name"><em data-i18n="oHz">杭州西站</em> <span>ce40c17</span></div>
-          </a>
-        </div>
+        <a class="o-node" id="o-hz" href="../hzwest.html">
+          <div class="o-date">04 · 11-06 15:49</div>
+          <div class="o-card o-card-hero">
+            <div class="o-frame"><img class="o-photo" src="img/hzwest.jpg" alt="杭州西站"></div>
+            <div class="o-name">杭州西站 <span>ce40c17</span></div>
+          </div>
+        </a>
       </div>
-      <div id="hero-name" data-i18n="heroName">杭州西站</div>
+      <div id="hero-name">杭州西站</div>
     </div>
 
     <!-- 克制的 14:33 批注微条（不打断主画面） -->
     <div id="human-note" aria-hidden="true">
       <span class="hn-time">11-08 14:33</span>
       <span class="hn-sep">·</span>
-      <span class="hn-text" id="hn-text" data-i18n="humanNote">AI 效果图，别混进图纸里。</span>
+      <span class="hn-text" id="hn-text">AI 效果图，别混进图纸里。</span>
     </div>
 
-    <!-- 机械战警式高频图纸闪切视图（右侧取景框 + 左侧图纸瀑布） -->
-    <div id="flash-strip" aria-hidden="true"></div>
-    <div id="flash-shutter" aria-hidden="true">
-      <div class="fs-head">
-        <span class="fs-dot"></span>
-        <span id="fs-code">S-401 · LINE</span>
-        <span id="fs-time">11-08 12:16</span>
-      </div>
-      <div class="fs-body">
-        <img id="fs-img" src="img/flash/f01.jpg" alt="实时工程图纸闪切">
-        <div class="fs-reticle"></div>
-      </div>
-      <div class="fs-foot">
-        <span id="fs-hash">ce40c17</span>
-        <span id="fs-rate">PEAK · 41 / HR</span>
-      </div>
-    </div>
+    <!-- 普通人秒懂的 296 版高潮区：敲门交稿消息 + 60 分钟打满 41 红点表盘 + 桌上越拍越快的修改稿 + 1 人未读红点暴涨 -->
+    <div id="chat-flood" aria-hidden="true"></div>
 
-    <!-- 真实 38 天时间密度爆发曲线（暗黑高冲击脉冲图：大阪城/码头平缓 -> 杭州西站 296 次朱红尖峰喷发） -->
-    <div id="time-burst-graph" aria-hidden="true">
-      <div class="tbg-head">
-        <span class="tbg-title"><i class="tbg-led"></i><em data-i18n="tbgTitle">GIT 改动爆发脉冲 · 2026-10-16 — 11-23</em></span>
-        <span class="tbg-peak" id="tbg-peak" data-i18n="tbgPeak">11-08 峰值 · 296 次 / 24h · 最快 41 次 / h</span>
-      </div>
-      <div class="tbg-stage">
-        <svg id="tbg-svg" viewBox="0 0 760 124" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="tbgAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fff0d4" stop-opacity="0.98"/>
-              <stop offset="18%" stop-color="#ff3344" stop-opacity="0.92"/>
-              <stop offset="65%" stop-color="#b3202a" stop-opacity="0.52"/>
-              <stop offset="100%" stop-color="#b3202a" stop-opacity="0.04"/>
-            </linearGradient>
-            <linearGradient id="tbgLineGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#8b8276"/>
-              <stop offset="52%" stop-color="#d8cdc0"/>
-              <stop offset="58%" stop-color="#ff3344"/>
-              <stop offset="63%" stop-color="#fff4db"/>
-              <stop offset="75%" stop-color="#ff3344"/>
-              <stop offset="100%" stop-color="#e05a63"/>
-            </linearGradient>
-            <filter id="tbgGlow" x="-20%" y="-30%" width="140%" height="160%">
-              <feGaussianBlur stdDeviation="3.2" result="blur"/>
-              <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-            <clipPath id="tbgRevealClip">
-              <rect id="tbg-clip-rect" x="0" y="0" width="0" height="124"/>
-            </clipPath>
-          </defs>
-          <g class="tbg-grid" stroke="rgba(255,255,255,0.07)" stroke-width="1">
-            <line x1="0" y1="24" x2="760" y2="24" stroke-dasharray="3 5"/>
-            <line x1="0" y1="62" x2="760" y2="62" stroke-dasharray="3 5"/>
-            <line x1="0" y1="100" x2="760" y2="100"/>
-            <line x1="0" y1="118" x2="760" y2="118" stroke="rgba(255,255,255,0.22)"/>
-          </g>
-          <ellipse id="tbg-heat" cx="458" cy="64" rx="88" ry="56" fill="rgba(224,42,56,0.28)" filter="url(#tbgGlow)" opacity="0"/>
-          <g clip-path="url(#tbgRevealClip)">
-            <path id="tbg-area" fill="url(#tbgAreaGrad)"/>
-            <path id="tbg-line" fill="none" stroke="url(#tbgLineGrad)" stroke-width="2.4" filter="url(#tbgGlow)"/>
-            <g id="tbg-spikes"></g>
-          </g>
-          <g id="tbg-peak-mark" opacity="0">
-            <circle class="tbg-ring" cx="458" cy="10" r="6" fill="none" stroke="#ff4d5a" stroke-width="1.6"/>
-            <circle cx="458" cy="10" r="3.4" fill="#fff5df" filter="url(#tbgGlow)"/>
-            <line x1="466" y1="10" x2="508" y2="10" stroke="#ff4d5a" stroke-width="1.2"/>
-            <text x="514" y="14" fill="#fff3db" font-size="11" font-family="ui-monospace,SF Mono,monospace" font-weight="700" id="tbg-peak-svg">▲ 296 次 / 24h</text>
-          </g>
-          <line id="tbg-scan" x1="0" y1="0" x2="0" y2="120" stroke="#ff5c68" stroke-width="1.4" opacity="0.9"/>
+    <div id="human-badge" aria-hidden="true">
+      <div class="hb-avatar">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" fill="currentColor"/>
+          <path d="M4.5 20.5c0-4.2 3.2-6.5 7.5-6.5s7.5 2.3 7.5 6.5" fill="currentColor"/>
         </svg>
+        <span class="hb-dot" id="hb-dot">1</span>
       </div>
-      <div class="tbg-axis">
-        <span data-i18n="ax1">10-16 大阪城（零星）</span>
-        <span data-i18n="ax2">11-06 码头 / 杭州西站</span>
-        <span class="tbg-hot" data-i18n="ax3">▲ 11-08 火山爆发</span>
-        <span>11-23</span>
+      <div class="hb-meta">
+        <div class="hb-who">我（就 1 个人）</div>
+        <div class="hb-sub" id="hb-sub">刚喝一口水，又递进来新图</div>
+      </div>
+    </div>
+
+    <div id="desk-climax" aria-hidden="true">
+      <!-- 左：极简 60 分钟实体表盘（1 小时打满 41 个朱红点） -->
+      <div class="dc-clock-card">
+        <div class="dc-clock-title">最快 1 小时 · 41 版新图</div>
+        <svg id="dc-clock-svg" viewBox="0 0 180 180" aria-hidden="true">
+          <circle cx="90" cy="90" r="78" fill="#faf6ec" stroke="#1d1a17" stroke-width="2"/>
+          <circle cx="90" cy="90" r="68" fill="none" stroke="rgba(29,26,23,0.14)" stroke-width="1" stroke-dasharray="2 4"/>
+          <g stroke="#1d1a17" stroke-width="2" stroke-linecap="round">
+            <line x1="90" y1="16" x2="90" y2="24"/>
+            <line x1="164" y1="90" x2="156" y2="90"/>
+            <line x1="90" y1="164" x2="90" y2="156"/>
+            <line x1="16" y1="90" x2="24" y2="90"/>
+          </g>
+          <g id="dc-clock-dots"></g>
+          <line id="dc-hand-min" x1="90" y1="90" x2="90" y2="30" stroke="#1d1a17" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="90" cy="90" r="4.5" fill="#b3202a"/>
+        </svg>
+        <div class="dc-clock-foot" id="dc-clock-foot">平均每 1 分半就敲一次门</div>
+      </div>
+
+      <!-- 右：审图桌上越拍越快、越叠越高的盖章修改稿 -->
+      <div class="dc-pile-wrap">
+        <div class="dc-pile" id="dc-pile"></div>
+        <div class="dc-pile-cap">
+          <span id="dc-pile-time">11-08 12:16</span>
+          <span class="dc-pile-note">上一张还没看完，下一张已经拍在桌上</span>
+        </div>
       </div>
     </div>
 
@@ -176,30 +135,78 @@
       <div class="wall-hud">
         <div class="wall-top">
           <div class="wall-num" id="wall-num">0</div>
-          <div class="wall-unit" data-i18n="wallUnit">张工程图纸 + 三维施工推演</div>
+          <div class="wall-unit">张工程图纸 + 三维施工推演</div>
         </div>
         <div class="crew-panel" id="crew-panel">
           <div class="crew-head">
-            <span data-i18n-html="crewEst">传统人工估量：<strong>约 50 人团队 · 数月工期</strong></span>
-            <span class="crew-zero" id="crew-zero" data-i18n="crewZero">实际到场：0 人</span>
+            <span>传统人工估量：<strong>约 50 人团队 · 数月工期</strong></span>
+            <span class="crew-zero" id="crew-zero">实际到场：0 人</span>
           </div>
           <div class="crew-grid" id="crew-grid"></div>
           <div class="crew-legend">
-            <span><i></i><em data-i18n="leg1">结构/土建 ×12</em></span>
-            <span><i></i><em data-i18n="leg2">施工图画图 ×15</em></span>
-            <span><i></i><em data-i18n="leg3">BIM/三维 ×8</em></span>
-            <span><i></i><em data-i18n="leg4">动画渲染 ×6</em></span>
-            <span><i></i><em data-i18n="leg5">交互程序 ×5</em></span>
-            <span><i></i><em data-i18n="leg6">审图校核 ×4</em></span>
+            <span><i></i>结构/土建 ×12</span>
+            <span><i></i>施工图画图 ×15</span>
+            <span><i></i>BIM/三维 ×8</span>
+            <span><i></i>动画渲染 ×6</span>
+            <span><i></i>交互程序 ×5</span>
+            <span><i></i>审图校核 ×4</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Act 3.5：活图纸右侧交互分屏面板（自动三连点演示 -> 结尾解锁真点击联动） -->
+    <div id="live-sheet" aria-hidden="true">
+      <div class="ls-beam" id="ls-beam"></div>
+      <div class="ls-head">
+        <span class="ls-code">活图纸 · 平面总图联动</span>
+        <span class="ls-mode" id="ls-mode">自动演示</span>
+      </div>
+      <div class="ls-canvas" id="ls-canvas">
+        <svg class="ls-svg" viewBox="0 0 320 220" aria-hidden="true">
+          <rect x="6" y="6" width="308" height="208" fill="#faf6ec" stroke="rgba(29,26,23,0.28)" stroke-width="1"/>
+          <g stroke="rgba(29,26,23,0.16)" stroke-width="0.9">
+            <line x1="18" y1="56" x2="302" y2="56"/><line x1="18" y1="66" x2="302" y2="66"/>
+            <line x1="18" y1="76" x2="302" y2="76"/><line x1="18" y1="86" x2="302" y2="86"/>
+            <line x1="18" y1="114" x2="302" y2="114"/><line x1="18" y1="124" x2="302" y2="124"/>
+            <line x1="18" y1="134" x2="302" y2="134"/><line x1="18" y1="144" x2="302" y2="144"/>
+          </g>
+          <rect x="18" y="93" width="284" height="14" fill="rgba(179,32,42,0.06)" stroke="rgba(179,32,42,0.28)" stroke-dasharray="4 3" stroke-width="0.9"/>
+          <rect x="74" y="40" width="172" height="120" rx="34" fill="rgba(239,233,221,0.72)" stroke="#1d1a17" stroke-width="1.6"/>
+          <line x1="160" y1="40" x2="160" y2="160" stroke="#1d1a17" stroke-width="6" stroke-opacity="0.12"/>
+          <line x1="74" y1="100" x2="246" y2="100" stroke="#1d1a17" stroke-width="6" stroke-opacity="0.12"/>
+          <g fill="none" stroke="rgba(29,26,23,0.34)" stroke-width="1" stroke-dasharray="3 2">
+            <ellipse cx="118" cy="72" rx="28" ry="18"/><ellipse cx="202" cy="72" rx="28" ry="18"/>
+            <ellipse cx="118" cy="128" rx="28" ry="18"/><ellipse cx="202" cy="128" rx="28" ry="18"/>
+          </g>
+          <rect x="112" y="174" width="96" height="26" fill="rgba(29,26,23,0.08)" stroke="#1d1a17" stroke-width="1.5"/>
+          <rect x="142" y="174" width="36" height="26" fill="#faf6ec" stroke="#1d1a17" stroke-dasharray="3 2" stroke-width="1"/>
+        </svg>
+        <button type="button" class="ls-pin" data-spot="truss"  style="left:37%;top:33%;" title="网架提升 · 候车层仰视"><span>1</span></button>
+        <button type="button" class="ls-pin" data-spot="pit"    style="left:50%;top:45%;" title="基坑与地铁层施工 · S-101"><span>2</span></button>
+        <button type="button" class="ls-pin" data-spot="asm"    style="left:63%;top:58%;" title="屋盖拼装与内侧塔吊 · S-251"><span>3</span></button>
+        <button type="button" class="ls-pin" data-spot="clad"   style="left:28%;top:56%;" title="屋面覆面闭水施工 · S-401"><span>4</span></button>
+        <button type="button" class="ls-pin" data-spot="tod"    style="left:78%;top:27%;" title="四角上盖综合体 · TOD"><span>5</span></button>
+        <button type="button" class="ls-pin" data-spot="yunmen" style="left:50%;top:85%;" title="云门 · 良渚玉琮大门"><span>6</span></button>
+        <div class="ls-ripple" id="ls-ripple"></div>
+        <div class="ls-cursor" id="ls-cursor" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 3l14 9-6.2 1.6L10 20z" fill="#b3202a" stroke="#fffdf8" stroke-width="1.6"/></svg>
+        </div>
+      </div>
+      <div class="ls-list">
+        <button type="button" class="ls-item" data-spot="truss"><i>1</i><span>网架提升</span><em>S-301</em></button>
+        <button type="button" class="ls-item" data-spot="pit"><i>2</i><span>基坑出土</span><em>S-101</em></button>
+        <button type="button" class="ls-item" data-spot="asm"><i>3</i><span>屋盖拼装</span><em>S-251</em></button>
+        <button type="button" class="ls-item" data-spot="clad"><i>4</i><span>屋面闭水</span><em>S-401</em></button>
+        <button type="button" class="ls-item" data-spot="tod"><i>5</i><span>四角上盖</span><em>TOD</em></button>
+        <button type="button" class="ls-item" data-spot="yunmen"><i>6</i><span>南侧云门</span><em>S-000</em></button>
       </div>
     </div>
 
     <!-- 右上改动计数器（1 -> 87 -> 296） -->
     <div id="burst-counter" aria-hidden="true">
       <span class="bc-num" id="bc-num">0</span>
-      <span class="bc-unit" data-i18n="bcUnit">次改动</span>
+      <span class="bc-unit">次改动</span>
     </div>
 
     <!-- 左上单行脉搏（慢段显示） -->
@@ -222,10 +229,10 @@
 
     <!-- 结尾交权操作条 -->
     <div id="end-actions" aria-hidden="true">
-      <div class="end-hint" data-i18n="endHint">画面已解锁 · 拖拽可自由转动这座杭州西站</div>
+      <div class="end-hint">画面已解锁 · 拖拽左侧 3D，或直接点右侧图纸飞到现场</div>
       <div class="end-btns">
-        <button type="button" id="btn-replay" class="pill" data-i18n="btnReplay">重播短片</button>
-        <a href="../hzwest.html" id="btn-enter-atlas" class="pill pill-red" data-i18n="btnAtlas">进入完整九图图册 →</a>
+        <button type="button" id="btn-replay" class="pill">重播短片</button>
+        <a href="../hzwest.html" class="pill pill-red">进入完整九图图册 →</a>
       </div>
     </div>
   </div>
@@ -236,11 +243,9 @@
     <div id="scrub" title="拖动时间轴">
       <div id="scrub-fill"></div>
     </div>
-    <span id="time-read">00:00 / 02:00</span>
-    <button type="button" id="btn-speed" class="ctrl-spd" aria-label="播放倍速">1×</button>
-    <button type="button" id="btn-lang" class="ctrl-lang" aria-label="中英文切换">EN</button>
-    <button type="button" id="btn-mute" aria-label="静音切换" data-i18n="btnMute">声</button>
-    <a href="../hzwest.html" id="btn-skip" class="ctrl-exit" data-i18n="btnSkip">跳过 → 图册</a>
+    <span id="time-read">00:00 / 02:08</span>
+    <button type="button" id="btn-mute" aria-label="静音切换">声</button>
+    <a href="../hzwest.html" class="ctrl-exit">跳过 → 图册</a>
   </div>
 
   <!-- 定版配乐（方案 B · 工业史诗，自动同步进度条并叠保留机械提交雨音效） -->
@@ -248,13 +253,12 @@
 
   <!-- 开场白纸幕 -->
   <div id="curtain">
-    <button type="button" id="btn-lang-curtain" class="curtain-lang" aria-label="Switch language">EN / 中文</button>
     <div class="curtain-inner">
-      <div class="curtain-kicker" data-i18n="curtainKicker">杭州西站施工推演图册 · 交互短片小样</div>
-      <h1 data-i18n="tsTitle">长出来的</h1>
-      <p class="curtain-sub" data-i18n="curtainSub">一个没有构思的人，和一座自己长出来的火车站。</p>
-      <button type="button" id="btn-start" data-i18n="btnStart">点一下开始</button>
-      <div class="curtain-note" data-i18n="curtainNote">约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停</div>
+      <div class="curtain-kicker">杭州西站施工推演图册 · 交互短片小样</div>
+      <h1>长出来的</h1>
+      <p class="curtain-sub">一个没有构思的人，和一座自己长出来的火车站。</p>
+      <button type="button" id="btn-start">点一下开始</button>
+      <div class="curtain-note">约 2 分钟 · 实时 3D 渲染 · 建议开声音 · 空格可暂停</div>
     </div>
   </div>
 
