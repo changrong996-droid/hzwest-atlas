@@ -11,6 +11,22 @@
   const hp = new URLSearchParams(location.hash.slice(1));
   const qp = new URLSearchParams(location.search);
 
+  // ---------- F2 #61：穿越段接回航线机制 ----------
+  // fpv-routes.js（#38 底座）动态加载：FPV 段（片时 50.2–64.2s）到来前早已就绪；万一没加载上，
+  // 沿用本文件原写死航线（FPV_POS/FPV_TGT），观感不变。URL #fpv=<name> 选航线，缺省 route-train-chase（F2 挑优赛赢家）。
+  let fpvRoute = null;
+  const fpvWant = hp.get('fpv') || '';
+  (function loadFpvRoutes() {
+    const sc = document.createElement('script');
+    sc.src = 'fpv-routes.js?v=1';
+    sc.onload = () => {
+      const F = window.HZ_FPV; if (!F) return;
+      fpvRoute = (fpvWant && F.get(fpvWant)) || F.get(F.DEFAULT) || F.routes[0] || null;
+      if (fpvWant && (!fpvRoute || fpvRoute.name !== fpvWant)) console.warn('[film] #fpv=' + fpvWant + ' 不存在，退回 ' + (fpvRoute && fpvRoute.name) + '；可选：' + F.routes.map(r => r.name).join(', '));
+    };
+    document.head.appendChild(sc);
+  })();
+
   const stage = $('stage');
   const titleSeq = $('title-seq');
   const veil = $('paper-veil'), blackout = $('blackout'), pulse = $('red-pulse');
@@ -892,12 +908,20 @@
       const u = (s - 47.8) / 2.4;
       setEngine('S-301', lerp(659.2, 662.5, u), 'ink', [lerp(245, 205, u), lerp(52, 62, u), lerp(120, 92, u)], [80, 34, 42]);
     } else if (s < 64.2) {
-      // 零穿模变速室内穿越机（穿云门 -> 慢滑云厅穹顶下 -> 90° 东转高速冲过 500m 云谷峡谷 -> 拉升回望屋顶）
-      const uRaw = Math.min(1, (s - 50.2) / 11.2);
-      const u = fpvEase(uRaw);
-      const pos = catmull3(FPV_POS, u);
-      const tgt = catmull3(FPV_TGT, u);
-      setEngine('S-000', lerp(1096, 1118, uRaw), 'lit', pos, tgt);
+      // 穿越机 FPV 段（#61 接回航线机制）：片时 s 对应航线时 t = s − 50.2（14s 全程，变速由关键帧间距表达）；
+      // 航线默认 route-train-chase（F2 挑优赛赢家），URL #fpv=<name> 可选；fpv-routes.js 未就绪时沿用原写死航线。
+      const t = s - 50.2;
+      if (fpvRoute && window.HZ_FPV) {
+        const q = window.HZ_FPV.sample(fpvRoute, t);
+        setEngine('S-000', window.HZ_FPV.day(fpvRoute, t), 'lit', q.pos, q.look);
+      } else {
+        // 兜底：零穿模变速室内穿越机（穿云门 -> 慢滑云厅穹顶下 -> 90° 东转高速冲过 500m 云谷峡谷 -> 拉升回望屋顶）
+        const uRaw = Math.min(1, (s - 50.2) / 11.2);
+        const u = fpvEase(uRaw);
+        const pos = catmull3(FPV_POS, u);
+        const tgt = catmull3(FPV_TGT, u);
+        setEngine('S-000', lerp(1096, 1118, uRaw), 'lit', pos, tgt);
+      }
     } else if (s < 83.6) {
       // 17 秒不间断爆发背景：全站高速生长 + 大幅环绕推近
       const u = Math.max(0, (s - 66.2) / (83.6 - 66.2));

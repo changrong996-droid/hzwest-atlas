@@ -71,7 +71,7 @@
 
   const routes = [];
   const FPV = ROOT.HZ_FPV = {
-    version: 1, T_MAX, FILM_T0: 50.2, DEFAULT: 'route-classic', DAY: [1096, 1118],
+    version: 1, T_MAX, FILM_T0: 50.2, DEFAULT: 'route-train-chase', DAY: [1096, 1118], // DEFAULT：#61 正片默认航线改为 F2 挑优赛赢家
     routes, check, sample,
     add(r) {
       const e = check(r);
