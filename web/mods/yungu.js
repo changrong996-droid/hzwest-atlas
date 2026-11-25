@@ -129,7 +129,8 @@
       it._v.set(it.pos[0], it.pos[1], it.pos[2]).project(cam);
       const off = it._v.z > 1 || it._v.z < -1 || !isFinite(it._v.x) || !isFinite(it._v.y);
       const sx = (it._v.x * 0.5 + 0.5) * w, sy = (-it._v.y * 0.5 + 0.5) * h;
-      const show = !off && w > 60 && h > 60 && sx > -M && sx < w + M && sy > -M && sy < h + M;
+      // 主人 2026-11-25 定：三条图注是辅助解说，不默认占首页版面；只留「谷」标注，点开解说卡才看内容。
+      const show = !!it.pin && !off && w > 60 && h > 60 && sx > -M && sx < w + M && sy > -M && sy < h + M;
       it.sx = show ? sx : 0; it.sy = show ? sy : 0;
       if (!show) { if (it.el && it.el.parentNode) it.el.style.display = 'none'; continue; }
       if (it.el.parentNode !== root) root.appendChild(it.el);
