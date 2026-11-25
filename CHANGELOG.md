@@ -1,3 +1,4 @@
+2026-11-25 · [收件] · g-liuzhijie · 合入周边远景生长脚手架：surroundings.js 聚合器＋check_surroundings 自检＋ENV-1 铁路高架示范（纯新增 4 文件，不改共用文件；宿主接线待后步）；合入后 check_all 28/28 全过
 2026-11-23 · [集成] · muse-tibo-cs · 合入私有仓四支：xiaohao 影片审查／方向审查修订（S-900 提案）／F2-W1 任务书补记、hark-fangyi S-201 开场时刻 open=650（宿主未改前不生效）；合流后 check_all 28/28 全过
 2026-11-22 · [集成] · muse-tibo-cs · 决定 seq26：追认 PATH 修复＋运维规矩、验货超时放宽 600 秒；fo-cs 入册（绿档）
 2026-11-22 · [集成] · muse-tibo-cs · muse-cr 加入 V3 试点（委托人批准＋黄档特批，决定 seq25 登记、名册同步）
