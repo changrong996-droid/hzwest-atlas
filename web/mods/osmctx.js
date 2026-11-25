@@ -219,16 +219,32 @@
       const e = new THREE.EdgesGeometry(g, 30), ea = e.attributes.position.array, ed = nw ? enArr : eArr; for (let i = 0; i < ea.length; i++) ed.push(ea[i]); g.dispose(); e.dispose(); }
     mesh(bArr.r, COL.bReal, 1); mesh(bArr.f, COL.bFake, 1); line(eArr, COL.edge, 0.5);
     M._open.push(mesh(bArr.n, COL.bReal, 1), line(enArr, COL.edge, 0.5));   // 红线内的楼开通后才出现
-    // 地形（异步解压）
+    // 地形（异步解压；无 DecompressionStream / 解压失败 / 超时时兜底恢复宿主远山 MTN）
     const GT = sub('dem', '地形', 'Copernicus DEM GLO-30'); G = G0;
-    let demDone; M._ready = new Promise(r => { demDone = r; }); setTimeout(() => demDone(), 8000);
-    if (!(D.dem && typeof DecompressionStream !== 'undefined')) demDone();
-    else gunzipB64(D.dem.h).then(hq => { const t = demGrid(D.dem, D.frame, hq), g = new THREE.BufferGeometry();
+    M._hostMtn = (scene.children || []).find(o => o && o.material && o.material.uniforms && o.material.uniforms.near && o.material.uniforms.far) || null;
+    M._mtnFallback = false; M.demOk = false;
+    const restoreMtn = reason => {
+      if (M.demOk || M._mtnFallback) return;
+      M._mtnFallback = true;
+      const ri = M.replaces.indexOf('mtn'); if (ri >= 0) M.replaces.splice(ri, 1);
+      if (M._hostMtn) { const pv = ROOT.__pv; M._hostMtn.visible = pv && typeof pv.blend === 'number' ? pv.blend > 0.001 : true; }
+      console.warn('osmctx 地形不可用（' + reason + '），已恢复宿主远山 MTN');
+    };
+    M._restoreMtn = restoreMtn;
+    let demDone; M._ready = new Promise(r => { demDone = r; });
+    const demTimer = setTimeout(() => { if (!M.demOk) restoreMtn('超时'); demDone(); }, 8000);
+    if (!(D.dem && typeof DecompressionStream !== 'undefined')) { clearTimeout(demTimer); restoreMtn(!D.dem ? '缺 DEM 数据' : '无 DecompressionStream'); demDone(); }
+    else gunzipB64(D.dem.h).then(hq => {
+      if (!hq || hq.length !== D.dem.nx * D.dem.ny) throw new Error('DEM 网格长度不符');
+      const t = demGrid(D.dem, D.frame, hq), g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(t.pos, 3)); g.setIndex(new THREE.BufferAttribute(t.idx, 1)); g.computeVertexNormals();
       const nr = g.attributes.normal.array, col = new Float32Array(t.pos.length), c0 = new THREE.Color(0xe9e5dc), c1 = new THREE.Color(0xc3c9ad), c2 = new THREE.Color(0x8e9a78), cc = new THREE.Color();
       for (let k = 0; k < t.pos.length / 3; k++) { const h = t.pos[3 * k + 1]; cc.copy(c0).lerp(c1, Math.min(1, Math.max(0, h / 40))); if (h > 60) cc.lerp(c2, Math.min(1, (h - 60) / 250)); const sh = Math.max(0.55, Math.min(1.08, 0.35 + 0.75 * (nr[3 * k] * -0.45 + nr[3 * k + 1] * 0.78 + nr[3 * k + 2] * 0.43))); col[3 * k] = cc.r * sh; col[3 * k + 1] = cc.g * sh; col[3 * k + 2] = cc.b * sh; }
       g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, clippingPlanes: clip })); GT.add(m); M.demH = { D: D.dem, F: D.frame, hq }; M.demOk = true; demDone(); }).catch(e => { console.warn('osmctx 地形解压失败', e); demDone(); });
+      const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, clippingPlanes: clip })); GT.add(m); M.demH = { D: D.dem, F: D.frame, hq }; M.demOk = true;
+      if (M._mtnFallback && M._hostMtn) { M._mtnFallback = false; M._hostMtn.visible = false; }
+      clearTimeout(demTimer); demDone();
+    }).catch(e => { clearTimeout(demTimer); restoreMtn(e && e.message || String(e)); demDone(); });
     // 标注（#mod-ui 内的小字，按投影摆放）
     const root = typeof document !== 'undefined' && document.getElementById('mod-ui');
     if (root) { const box = document.createElement('div'); box.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden'; root.appendChild(box); M._box = box;
@@ -249,6 +265,7 @@
   let lastOpen = null;
   M.update = function (t, cam) {
     if (!M._g) { if (M._pending && cam && cam.position && cam.position.length() > 700) M._loadData(); return; }
+    if (M._mtnFallback && M._hostMtn && !M.demOk) { const pv = ROOT.__pv; M._hostMtn.visible = pv && typeof pv.blend === 'number' ? pv.blend > 0.001 : true; }
     const op = t >= openDay(); if (op !== lastOpen) { lastOpen = op; for (const m of M._open) if (m) m.visible = op; for (const m of M._pre) if (m) m.visible = !op; }
     if (M._lastT !== t) { M._lastT = t; for (const e of M.layers) { if (!e.g) continue; e.g.visible = e.on && inWin(t, e.from, e.to); for (const it of e.items || []) it.g.visible = inWin(t, it.from, it.to); } }
     if (!M._box || !cam || !M._labs.length) return;
